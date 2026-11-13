@@ -1,0 +1,8 @@
+{
+  "_doc": "Агуулах. mvp-spec.md §4.2. 1 л сүү = 1 кг ноос = 1 нэгж.",
+  "levels": [
+    { "capacity": 20,  "price": 0 },
+    { "capacity": 60,  "price": 960000 },
+    { "capacity": 150, "price": 2900000 }
+  ]
+}

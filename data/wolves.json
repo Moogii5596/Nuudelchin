@@ -1,0 +1,11 @@
+{
+  "_doc": "Чоно (зөвхөн өдөр). mvp-spec.md §8, prototype-rules.md §6.",
+  "densPerCamp": 3,
+  "denDistance": [120, 145],
+  "territoryRadius": [22, 28],
+  "wolvesPerDen": [1, 2],
+  "protectRadius": { "herder": 15, "herderMounted": 20, "dog": 10, "stallion": 15, "helper": 15 },
+  "scareRadius": { "onFoot": 45, "mounted": 60 },
+  "scaredSeconds": 45,
+  "fearDistance": { "onFoot": 6, "mounted": 8.5 }
+}

@@ -1,0 +1,19 @@
+{
+  "app.title": "Nuudelchin — Zuslan (summer camp)",
+  "hud.day": "Day {day}",
+  "hud.money": "Money",
+  "hud.animals": "Livestock",
+  "hud.speed": "Speed",
+  "hud.milestone": "M0 · foundation",
+  "species.sheep": "Sheep (khoni)",
+  "species.goat": "Goat (yamaa)",
+  "species.cow": "Cattle (ükher)",
+  "species.horse": "Horse (aduu)",
+  "product.milk": "Milk (süü)",
+  "product.tarag": "Tarag (yogurt)",
+  "product.aaruul": "Aaruul (dried curd)",
+  "product.urum": "Öröm (clotted cream)",
+  "product.wool": "Wool (noos)",
+  "product.felt": "Felt (esgii)",
+  "product.cashmere": "Cashmere (nooluur)"
+}

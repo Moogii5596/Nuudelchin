@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="mn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Нүүдэлчин — Зуслан</title>
+    <link rel="icon" href="data:," />
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #9fcbee; font-family: system-ui, sans-serif; }
+      #app { position: fixed; inset: 0; }
+      #hud { position: fixed; top: 12px; left: 12px; padding: 10px 14px; border-radius: 10px;
+             background: rgba(30, 24, 18, 0.72); color: #f4ead6; font-size: 14px; line-height: 1.5; pointer-events: none; }
+      #hud b { color: #e8b64c; }
+      #err { position: fixed; inset: 0; display: none; place-items: center; background: #2b1d14; color: #f4ead6; padding: 24px; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="hud"></div>
+    <div id="err"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

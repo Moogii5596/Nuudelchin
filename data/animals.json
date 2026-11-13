@@ -1,0 +1,32 @@
+{
+  "_doc": "Мал. grazing-livestock.md §1–2, mvp-spec.md §5.1, §9, water-horses-transport.md §1. Нас = хийсвэр мөчлөг (20 өдөр).",
+  "species": {
+    "sheep": { "matureKg": { "f": 50, "m": 65 }, "birthKg": 3.5, "adultAge": 4, "oldAge": 8, "deathAge": 10,
+               "birthChance": 0.85, "breedAge": 1, "pricePerKg": 7500, "sheepUnits": 1, "thirstDaysToFull": 2,
+               "minGrassCm": 1, "femalesPerMale": 30 },
+    "goat":  { "matureKg": { "f": 40, "m": 55 }, "birthKg": 2.5, "adultAge": 4, "oldAge": 8, "deathAge": 10,
+               "birthChance": 0.85, "breedAge": 1, "pricePerKg": 5800, "sheepUnits": 0.9, "thirstDaysToFull": 2,
+               "minGrassCm": 1, "femalesPerMale": 30 },
+    "cow":   { "matureKg": { "f": 350, "m": 420 }, "birthKg": 25, "adultAge": 4, "oldAge": 9, "deathAge": 12,
+               "birthChance": 0.75, "breedAge": 2, "pricePerKg": 8700, "sheepUnits": 6, "thirstDaysToFull": 1,
+               "minGrassCm": 5, "femalesPerMale": 25 },
+    "horse": { "matureKg": { "f": 300, "m": 350 }, "birthKg": 30, "adultAge": 4, "oldAge": 12, "deathAge": 16,
+               "birthChance": 0.6, "breedAge": 2, "pricePerKg": 12500, "sheepUnits": 7, "thirstDaysToFull": 0.67,
+               "minGrassCm": 0.5, "femalesPerMale": 20 }
+  },
+  "growthCurve": [0.5, 0.72, 0.86, 0.95, 1.0],
+  "oldSizeFactor": 0.95,
+  "youngSheepUnitFactor": 0.5,
+  "condition": {
+    "weightBase": 0.75,
+    "weightRange": 0.4,
+    "maintenanceThreshold": 0.54,
+    "gainK": 0.25,
+    "maxGainPerDay": 0.06,
+    "maxLossPerDay": 0.135,
+    "lactationNeedMult": 1.15,
+    "zeroConditionHealthLossPerDay": 8
+  },
+  "thirst": { "seekWaterAt": 50, "eatSlowAt": 75, "eatSlowMult": 0.7, "fullConditionLossPerDay": 0.03, "fullHealthLossPerDay": 5 },
+  "price": { "oldPerKgMult": 0.7, "breedingMaleMult": 1.2, "buyMarkup": 1.2 }
+}

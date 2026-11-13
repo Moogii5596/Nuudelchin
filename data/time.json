@@ -1,0 +1,9 @@
+{
+  "_doc": "Цаг. mvp-spec.md §2, §9. Тоглоомын минут бол симуляцын нэг алхам.",
+  "dayStartMinute": 360,
+  "dayEndMinute": 1200,
+  "realSecondsPerGameHour": 10,
+  "speeds": [1, 2, 4],
+  "monthDays": 5,
+  "animalYearDays": 20
+}

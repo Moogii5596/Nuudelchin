@@ -1,0 +1,17 @@
+{
+  "_doc": "Туслах малчид. mvp-spec.md §6. dailyWage = ганц бие туслахын өдрийн цалин.",
+  "roles": {
+    "collector":   { "dailyWage": 19000 },
+    "driver":      { "dailyWage": 26000 },
+    "shepherd":    { "dailyWage": 26000, "protectRadius": 15 },
+    "cowherd":     { "dailyWage": 26000, "protectRadius": 15 },
+    "horseherder": { "dailyWage": 32000, "horseWolfAttack": 0 }
+  },
+  "familyWageMult": 0.8,
+  "payEveryDays": 5,
+  "housing": {
+    "helperTent": { "beds": 2, "price": 480000,  "cargoUnits": 10 },
+    "helperGer":  { "beds": 4, "price": 3800000, "cargoUnits": 30 }
+  },
+  "board": { "minCandidates": 2, "maxCandidates": 4, "refreshDays": 5, "familyShare": 0.4 }
+}

@@ -1,0 +1,8 @@
+{
+  "_doc": "Тээвэр. mvp-spec.md §5.2, water-horses-transport.md §3.",
+  "fuelPricePerL": 3600,
+  "sumCenterKm": 25,
+  "campDistanceKm": 15,
+  "horseCart": { "capacity": 30,  "oneWayHours": 1.5,  "fuelPer100km": 0,  "price": 0,        "sheepSlots": 3,  "cowSlots": 1 },
+  "truck":     { "capacity": 150, "oneWayHours": 0.42, "fuelPer100km": 15, "price": 19000000, "sheepSlots": 15, "cowSlots": 4 }
+}

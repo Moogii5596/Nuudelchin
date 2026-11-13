@@ -1,0 +1,6 @@
+{
+  "_doc": "Боловсруулалт. mvp-spec.md §4.3. hours = тоглоомын цаг.",
+  "pot":       { "price": 380000,  "input": { "milk": 4 }, "output": { "aaruul": 1 }, "hours": 2 },
+  "separator": { "price": 2100000, "input": { "milk": 4 }, "output": { "urum": 1 },   "hours": 3 },
+  "feltKit":   { "price": 640000,  "input": { "wool": 5 }, "output": { "felt": 1 },   "hours": 14 }
+}

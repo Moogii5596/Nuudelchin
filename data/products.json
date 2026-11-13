@@ -1,0 +1,19 @@
+{
+  "_doc": "Бүтээгдэхүүн. mvp-spec.md §4, §5.1 (түр үнэ ×3.2 — хэрэглэгч шалгана).",
+  "drops": {
+    "milk":     { "from": "cow",   "amount": 1,   "everyHours": 2, "minGutFill": 0.5, "requiresLactating": true },
+    "wool":     { "from": "sheep", "amount": 0.5, "everyDays": 4,  "minCondition": 0.2 },
+    "cashmere": { "from": "goat",  "amount": 0.1, "everyDays": 6,  "minCondition": 0.4 }
+  },
+  "ground": {
+    "milkSourHours": 4,
+    "taragSpoilHours": 6,
+    "fiberBlowAwayDays": 2
+  },
+  "storage": { "milkSourDays": 1, "milkSpoilDays": 2 },
+  "carryUnits": 10,
+  "prices": {
+    "milk": 6400, "tarag": 3800, "aaruul": 45000, "urum": 70000,
+    "wool": 4800, "felt": 48000, "cashmere": 135000
+  }
+}

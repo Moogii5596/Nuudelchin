@@ -1,0 +1,19 @@
+{
+  "app.title": "Нүүдэлчин — Зуслан",
+  "hud.day": "{day}-р өдөр",
+  "hud.money": "Мөнгө",
+  "hud.animals": "Мал",
+  "hud.speed": "Хурд",
+  "hud.milestone": "M0 · суурь бүтэц",
+  "species.sheep": "Хонь",
+  "species.goat": "Ямаа",
+  "species.cow": "Үхэр",
+  "species.horse": "Адуу",
+  "product.milk": "Сүү",
+  "product.tarag": "Тараг",
+  "product.aaruul": "Ааруул",
+  "product.urum": "Өрөм",
+  "product.wool": "Ноос",
+  "product.felt": "Эсгий",
+  "product.cashmere": "Ноолуур"
+}
