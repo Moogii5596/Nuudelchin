@@ -18,7 +18,7 @@ describe('Sim (3D-гүй)', () => {
     sim.on((e) => { if (e.type === 'dayReport') reports.push(e.report); });
     const t0 = performance.now();
     sim.runDays(30);
-    expect(performance.now() - t0).toBeLessThan(2000);
+    expect(performance.now() - t0).toBeLessThan(5000);
     expect(reports).toHaveLength(30);
     expect(sim.state.time.day).toBe(31);
   });

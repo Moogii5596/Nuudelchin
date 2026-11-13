@@ -1,11 +1,95 @@
 {
   "_doc": "Зуслангийн бууцнууд. mvp-spec.md §7.1. rings = төвөөс зайгаар (м) бэлчээрийн төрөл.",
   "camps": {
-    "river":      { "water": "river",  "wolfLevel": "low",    "rings": [[25, "camp"], [70, "meadow"], [120, "steppe"], [999, "foothill"]] },
-    "northSlope": { "water": "stream", "wolfLevel": "high",   "rings": [[25, "camp"], [70, "foothill"], [999, "northSlope"]] },
-    "valley":     { "water": "spring", "wolfLevel": "medium", "rings": [[25, "camp"], [80, "meadow"], [130, "foothill"], [999, "steppe"]] }
+    "river": {
+      "water": "river",
+      "wolfLevel": "low",
+      "rings": [
+        [
+          25,
+          "camp"
+        ],
+        [
+          70,
+          "meadow"
+        ],
+        [
+          120,
+          "steppe"
+        ],
+        [
+          999,
+          "foothill"
+        ]
+      ],
+      "waterShape": {
+        "kind": "lineZ",
+        "z": -60
+      }
+    },
+    "northSlope": {
+      "water": "stream",
+      "wolfLevel": "high",
+      "rings": [
+        [
+          25,
+          "camp"
+        ],
+        [
+          70,
+          "foothill"
+        ],
+        [
+          999,
+          "northSlope"
+        ]
+      ],
+      "waterShape": {
+        "kind": "point",
+        "x": -40,
+        "z": 30,
+        "r": 4
+      }
+    },
+    "valley": {
+      "water": "spring",
+      "wolfLevel": "medium",
+      "rings": [
+        [
+          25,
+          "camp"
+        ],
+        [
+          80,
+          "meadow"
+        ],
+        [
+          130,
+          "foothill"
+        ],
+        [
+          999,
+          "steppe"
+        ]
+      ],
+      "waterShape": {
+        "kind": "point",
+        "x": 30,
+        "z": -35,
+        "r": 3
+      }
+    }
   },
   "move": {
-    "tentCartTrips": 2, "gerCartTrips": 4, "tripHoursCart": 7, "tripHoursTruck": 2
+    "tentCartTrips": 2,
+    "gerCartTrips": 4,
+    "tripHoursCart": 7,
+    "tripHoursTruck": 2
+  },
+  "home": {
+    "_doc": "Гэр/майхан бууцны төвд (0,0). Агуулах майхны хажууд.",
+    "x": 0,
+    "z": 0,
+    "storageRadius": 6
   }
 }

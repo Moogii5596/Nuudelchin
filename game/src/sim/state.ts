@@ -5,69 +5,205 @@
 import type { GameConfig, Sex, Species } from './config';
 import { newTime, type TimeState } from './clock';
 import { Rng } from './rng';
+import { buildGrid, type GrassGrid } from './systems/pasture';
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
+
+export type ProductId = 'milk' | 'tarag' | 'aaruul' | 'urum' | 'wool' | 'felt' | 'cashmere';
+export const PRODUCTS: readonly ProductId[] = ['milk', 'tarag', 'aaruul', 'urum', 'wool', 'felt', 'cashmere'];
+
+export type AnimalMode = 'graze' | 'drink' | 'rest' | 'driven';
 
 export interface Animal {
   id: number;
   species: Species;
   sex: Sex;
-  age: number;           // хийсвэр нас
+  age: number;           // хийсвэр нас (бутархай). 1 = animalYearDays өдөр
   condition: number;     // тарга 0–1
   health: number;        // 0–100
-  gutFill: number;       // өнөөдрийн идэш 0–1
-  dietQuality: number;   // өнөөдрийн идсэн өвсний дундаж чанар
+  gutFill: number;       // өнөөдрийн идэш 0–1 (өдрийн тааз = 1)
+  dietSum: number;       // Σ(идсэн хэмжээ × чанар) — dietQuality = dietSum / gutFill
   thirst: number;        // 0–100
+  thirstMaxedToday: boolean;
   lactating: boolean;
   riding: boolean;
+  cycleOffset: number;   // төллөлтийн мөчлөгийн өдөр (бүх мал нэг өдөр төллөхгүй)
+  milkTimer: number;     // сүү унах хүртэлх минут
+  fiberDays: number;     // ноос/ноолуур унах хүртэлх өдөр
+  mode: AnimalMode;
   x: number;
   z: number;
+  tx: number;            // зорилтот цэг
+  tz: number;
   heading: number;
+  motherId?: number;
+}
+
+export interface GroundItem {
+  id: number;
+  product: ProductId;
+  amount: number;
+  x: number;
+  z: number;
+  age: number;           // газарт байсан тоглоомын минут
+}
+
+export interface Batch {
+  product: ProductId;
+  amount: number;
+  ageDays: number;
+}
+
+export type ProcessorKind = 'pot' | 'separator' | 'feltKit';
+
+export interface ProcessorState {
+  kind: ProcessorKind;
+  remaining: number;     // үлдсэн минут (0 = сул)
+  pending: Partial<Record<ProductId, number>>;   // дууссан ч агуулахад багтаагүй гаралт
+}
+
+export type VehicleId = 'horseCart' | 'truck';
+
+export type BuyOrder =
+  | { kind: 'animal'; species: Species; sex: Sex; age: number }
+  | { kind: 'processor'; id: ProcessorKind }
+  | { kind: 'storage' }
+  | { kind: 'ger' }
+  | { kind: 'vehicle'; id: VehicleId };
+
+export interface TripState {
+  vehicle: VehicleId;
+  elapsed: number;       // минут
+  total: number;
+  arrived: boolean;      // сумын төвд хүрсэн эсэх
+  cargo: Partial<Record<ProductId, number>>;
+  buy: BuyOrder[];
+  income: number;
+  bought: BuyOrder[];    // амжилттай худалдан авсан, буцахад хүргэгдэнэ
+}
+
+export interface CampState {
+  degrade: number;       // 0–1
+  daysSpent: number;
+}
+
+export interface DayStats {
+  income: Partial<Record<ProductId | 'animals', number>>;
+  expenses: Record<string, number>;
+  dropped: Partial<Record<ProductId, number>>;
+  collected: Partial<Record<ProductId, number>>;
+  spoiled: Partial<Record<ProductId, number>>;
+  births: number;
+  deaths: number;
+}
+
+export interface PlayerState {
+  x: number;
+  z: number;
+  carry: { product: ProductId; amount: number; age: number }[];
+  away: boolean;         // сумын төв рүү явсан
 }
 
 export interface GameState {
   version: number;
   seed: number;
   rngState: number;
+  step: number;          // нийт алхам (минут)
   time: TimeState;
   money: number;
+  home: 'tent' | 'ger';
   campId: string;
-  storageLevel: number;
+  camps: Record<string, CampState>;
+  grass: GrassGrid;
   nextId: number;
   animals: Animal[];
+  items: GroundItem[];
+  storageLevel: number;
+  storage: Batch[];
+  processors: ProcessorState[];
+  vehicles: VehicleId[];
+  trip: TripState | null;
+  neighborBull: boolean;
+  player: PlayerState;
+  today: DayStats;
+  goalReachedDay: number | null;
+}
+
+export function emptyDayStats(): DayStats {
+  return { income: {}, expenses: {}, dropped: {}, collected: {}, spoiled: {}, births: 0, deaths: 0 };
+}
+
+export function newAnimal(
+  cfg: GameConfig,
+  rng: Rng,
+  id: number,
+  o: { species: Species; sex: Sex; age: number; x: number; z: number; condition?: number; lactating?: boolean; riding?: boolean },
+): Animal {
+  return {
+    id,
+    species: o.species,
+    sex: o.sex,
+    age: o.age,
+    condition: o.condition ?? 0.6,
+    health: 100,
+    gutFill: 0,
+    dietSum: 0,
+    thirst: rng.range(0, 30),
+    thirstMaxedToday: false,
+    lactating: Boolean(o.lactating),
+    riding: Boolean(o.riding),
+    cycleOffset: rng.int(0, cfg.time.animalYearDays - 1),
+    milkTimer: rng.range(0, 60),
+    fiberDays: rng.range(0, 3),
+    mode: 'graze',
+    x: o.x,
+    z: o.z,
+    tx: o.x,
+    tz: o.z,
+    heading: rng.range(0, Math.PI * 2),
+  };
 }
 
 export function createInitialState(cfg: GameConfig, seed: number): GameState {
   const rng = new Rng(seed);
   const animals: Animal[] = cfg.start.animals.map((a, i) => {
-    const r = rng.range(4, 18);
+    const r = rng.range(8, 22);
     const ang = rng.range(0, Math.PI * 2);
-    return {
-      id: i + 1,
+    return newAnimal(cfg, rng, i + 1, {
       species: a.species,
       sex: a.sex,
       age: a.age,
-      condition: 0.6,
-      health: 100,
-      gutFill: 0,
-      dietQuality: 0,
-      thirst: rng.range(0, 30),
-      lactating: Boolean(a.lactating),
-      riding: Boolean(a.riding),
-      x: a.riding ? -7 : Math.cos(ang) * r + 20,
+      lactating: a.lactating,
+      riding: a.riding,
+      x: a.riding ? -7 : Math.cos(ang) * r + 25,
       z: a.riding ? 6 : Math.sin(ang) * r,
-      heading: rng.range(0, Math.PI * 2),
-    };
+    });
   });
+  const camps: Record<string, CampState> = {};
+  for (const id of Object.keys(cfg.camps.camps)) camps[id] = { degrade: 0, daysSpent: 0 };
+  const grass = buildGrid(cfg, cfg.start.camp, 0, rng);
   return {
     version: SAVE_VERSION,
     seed,
     rngState: rng.state,
+    step: 0,
     time: newTime(cfg.time),
     money: cfg.economy.startMoney,
+    home: cfg.start.home === 'ger' ? 'ger' : 'tent',
     campId: cfg.start.camp,
-    storageLevel: cfg.start.storageLevel,
+    camps,
+    grass,
     nextId: animals.length + 1,
     animals,
+    items: [],
+    storageLevel: cfg.start.storageLevel,
+    storage: [],
+    processors: [],
+    vehicles: cfg.start.vehicles as VehicleId[],
+    trip: null,
+    neighborBull: false,
+    player: { x: 2, z: 6, carry: [], away: false },
+    today: emptyDayStats(),
+    goalReachedDay: null,
   };
 }

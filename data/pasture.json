@@ -1,6 +1,9 @@
 {
   "_doc": "Бэлчээр. grazing-livestock.md §3–5, mvp-spec.md §7. MVP-д зөвхөн summer чанар хэрэглэгдэнэ.",
-  "grid": { "cellSize": 2, "cells": 190 },
+  "grid": {
+    "cellSize": 2,
+    "cells": 190
+  },
   "regrowthR": 0.35,
   "intakeHalfBiomass": 0.25,
   "degradation": {
@@ -12,25 +15,205 @@
     "overgrazeThreshold": 0.3
   },
   "species": {
-    "ulalj":     { "latin": "Carex",                 "quality": { "spring": 0.75, "summer": 0.65, "autumn": 0.55, "winter": 0.40 } },
-    "khyalgana": { "latin": "Stipa",                 "quality": { "spring": 0.60, "summer": 0.65, "autumn": 0.60, "winter": 0.40 } },
-    "erkhug":    { "latin": "Agropyron cristatum",   "quality": { "spring": 0.65, "summer": 0.80, "autumn": 0.80, "winter": 0.45 } },
-    "khiag":     { "latin": "Leymus chinensis",      "quality": { "spring": 0.60, "summer": 0.75, "autumn": 0.65, "winter": 0.40 } },
-    "botuul":    { "latin": "Festuca",               "quality": { "spring": 0.60, "summer": 0.80, "autumn": 0.75, "winter": 0.45 } },
-    "agi":       { "latin": "Artemisia frigida",     "quality": { "spring": 0.65, "summer": 0.60, "autumn": 0.85, "winter": 0.55 } },
-    "mangir":    { "latin": "Allium",                "quality": { "spring": 0.60, "summer": 0.75, "autumn": 0.85, "winter": 0.30 } },
-    "khoshoongor": { "latin": "Trifolium, Medicago", "quality": { "spring": 0.65, "summer": 0.90, "autumn": 0.80, "winter": 0.35 } },
-    "sharilj":   { "latin": "Artemisia spp.",        "quality": { "spring": 0.35, "summer": 0.40, "autumn": 0.45, "winter": 0.30 } },
-    "luul":      { "latin": "Chenopodium",           "quality": { "spring": 0.30, "summer": 0.40, "autumn": 0.25, "winter": 0.10 } },
-    "khamkhag":  { "latin": "Salsola",               "quality": { "spring": 0.20, "summer": 0.30, "autumn": 0.20, "winter": 0.10 } }
+    "ulalj": {
+      "latin": "Carex",
+      "quality": {
+        "spring": 0.75,
+        "summer": 0.65,
+        "autumn": 0.55,
+        "winter": 0.4
+      }
+    },
+    "khyalgana": {
+      "latin": "Stipa",
+      "quality": {
+        "spring": 0.6,
+        "summer": 0.65,
+        "autumn": 0.6,
+        "winter": 0.4
+      }
+    },
+    "erkhug": {
+      "latin": "Agropyron cristatum",
+      "quality": {
+        "spring": 0.65,
+        "summer": 0.8,
+        "autumn": 0.8,
+        "winter": 0.45
+      }
+    },
+    "khiag": {
+      "latin": "Leymus chinensis",
+      "quality": {
+        "spring": 0.6,
+        "summer": 0.75,
+        "autumn": 0.65,
+        "winter": 0.4
+      }
+    },
+    "botuul": {
+      "latin": "Festuca",
+      "quality": {
+        "spring": 0.6,
+        "summer": 0.8,
+        "autumn": 0.75,
+        "winter": 0.45
+      }
+    },
+    "agi": {
+      "latin": "Artemisia frigida",
+      "quality": {
+        "spring": 0.65,
+        "summer": 0.6,
+        "autumn": 0.85,
+        "winter": 0.55
+      }
+    },
+    "mangir": {
+      "latin": "Allium",
+      "quality": {
+        "spring": 0.6,
+        "summer": 0.75,
+        "autumn": 0.85,
+        "winter": 0.3
+      }
+    },
+    "khoshoongor": {
+      "latin": "Trifolium, Medicago",
+      "quality": {
+        "spring": 0.65,
+        "summer": 0.9,
+        "autumn": 0.8,
+        "winter": 0.35
+      }
+    },
+    "sharilj": {
+      "latin": "Artemisia spp.",
+      "quality": {
+        "spring": 0.35,
+        "summer": 0.4,
+        "autumn": 0.45,
+        "winter": 0.3
+      }
+    },
+    "luul": {
+      "latin": "Chenopodium",
+      "quality": {
+        "spring": 0.3,
+        "summer": 0.4,
+        "autumn": 0.25,
+        "winter": 0.1
+      }
+    },
+    "khamkhag": {
+      "latin": "Salsola",
+      "quality": {
+        "spring": 0.2,
+        "summer": 0.3,
+        "autumn": 0.2,
+        "winter": 0.1
+      }
+    }
   },
-  "degradedSuccession": ["sharilj", "luul", "khamkhag"],
+  "degradedSuccession": [
+    "sharilj",
+    "luul",
+    "khamkhag"
+  ],
   "types": {
-    "camp":        { "maxBiomass": 0.3, "heightCm": 3,  "wolfRisk": 0,   "mix": { "sharilj": 0.5, "luul": 0.3, "khamkhag": 0.2 } },
-    "steppe":      { "maxBiomass": 0.6, "heightCm": 8,  "wolfRisk": 0.1, "mix": { "khyalgana": 0.35, "ulalj": 0.25, "agi": 0.2, "khiag": 0.2 } },
-    "meadow":      { "maxBiomass": 1.0, "heightCm": 25, "wolfRisk": 0.1, "mix": { "khiag": 0.5, "khoshoongor": 0.3, "ulalj": 0.2 } },
-    "southSlope":  { "maxBiomass": 0.5, "heightCm": 7,  "wolfRisk": 0.3, "mix": { "agi": 0.4, "ulalj": 0.3, "khyalgana": 0.3 } },
-    "foothill":    { "maxBiomass": 0.8, "heightCm": 15, "wolfRisk": 0.3, "mix": { "erkhug": 0.3, "botuul": 0.3, "agi": 0.25, "mangir": 0.15 } },
-    "northSlope":  { "maxBiomass": 1.0, "heightCm": 30, "wolfRisk": 0.7, "mix": { "botuul": 0.45, "khoshoongor": 0.35, "erkhug": 0.2 } }
+    "camp": {
+      "maxBiomass": 0.3,
+      "heightCm": 3,
+      "wolfRisk": 0,
+      "mix": {
+        "sharilj": 0.5,
+        "luul": 0.3,
+        "khamkhag": 0.2
+      }
+    },
+    "steppe": {
+      "maxBiomass": 0.6,
+      "heightCm": 8,
+      "wolfRisk": 0.1,
+      "mix": {
+        "khyalgana": 0.35,
+        "ulalj": 0.25,
+        "agi": 0.2,
+        "khiag": 0.2
+      }
+    },
+    "meadow": {
+      "maxBiomass": 1.0,
+      "heightCm": 25,
+      "wolfRisk": 0.1,
+      "mix": {
+        "khiag": 0.5,
+        "khoshoongor": 0.3,
+        "ulalj": 0.2
+      }
+    },
+    "southSlope": {
+      "maxBiomass": 0.5,
+      "heightCm": 7,
+      "wolfRisk": 0.3,
+      "mix": {
+        "agi": 0.4,
+        "ulalj": 0.3,
+        "khyalgana": 0.3
+      }
+    },
+    "foothill": {
+      "maxBiomass": 0.8,
+      "heightCm": 15,
+      "wolfRisk": 0.3,
+      "mix": {
+        "erkhug": 0.3,
+        "botuul": 0.3,
+        "agi": 0.25,
+        "mangir": 0.15
+      }
+    },
+    "northSlope": {
+      "maxBiomass": 1.0,
+      "heightCm": 30,
+      "wolfRisk": 0.7,
+      "mix": {
+        "botuul": 0.45,
+        "khoshoongor": 0.35,
+        "erkhug": 0.2
+      }
+    }
+  },
+  "grazing": {
+    "_doc": "Бэлчээрлэлт. Хурд нь тоглоомын минут тутмын метр (1 цаг = 60 минут).",
+    "imaxPerMinute": 0.0031,
+    "biomassPerGut": 2.5,
+    "decisionEverySteps": 10,
+    "samples": 6,
+    "sampleRadius": {
+      "sheep": 4,
+      "goat": 4,
+      "cow": 6,
+      "horse": 8
+    },
+    "grazeSpeed": 0.25,
+    "travelSpeed": 1.0,
+    "cohesion": {
+      "sheep": 0.08,
+      "goat": 0.06,
+      "cow": 0.05,
+      "horse": 0.03
+    },
+    "maxFlockSpread": {
+      "sheep": 14,
+      "goat": 14,
+      "cow": 18,
+      "horse": 30
+    },
+    "qualityExponent": 1.5,
+    "drinkRadius": 2.5,
+    "roamFactor": 5,
+    "roamSpeed": 0.6,
+    "hungryPace": 0.6
   }
 }

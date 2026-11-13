@@ -14,6 +14,12 @@ describe('Амьдын жин ба үнэ (grazing-livestock.md §1–2)', () =>
     expect(p).toBeGreaterThan(460000);
     expect(p).toBeLessThan(510000);
   });
+  it('төл төрөх жингээсээ эхэлж өснө', () => {
+    expect(liveWeightKg({ species: 'sheep', sex: 'f', age: 0, condition: 0 }, cfg)).toBeCloseTo(3.5 * 0.75);
+    const half = liveWeightKg({ species: 'sheep', sex: 'f', age: 0.5, condition: 0.5 }, cfg);
+    const one = liveWeightKg({ species: 'sheep', sex: 'f', age: 1, condition: 0.5 }, cfg);
+    expect(half).toBeLessThan(one);
+  });
   it('хурга хонины үнээс хямд, хөгшин хонь хямд', () => {
     const adult = salePrice({ species: 'sheep', sex: 'f', age: 5, condition: 0.6 }, cfg);
     const lamb = salePrice({ species: 'sheep', sex: 'f', age: 0, condition: 0.6 }, cfg);

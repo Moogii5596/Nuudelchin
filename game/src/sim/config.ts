@@ -69,20 +69,48 @@ export interface PastureTypeConfig {
   mix: Record<string, number>;
 }
 
+export interface GrazingConfig {
+  imaxPerMinute: number;
+  biomassPerGut: number;
+  decisionEverySteps: number;
+  samples: number;
+  sampleRadius: Record<Species, number>;
+  grazeSpeed: number;
+  travelSpeed: number;
+  cohesion: Record<Species, number>;
+  maxFlockSpread: Record<Species, number>;
+  qualityExponent: number;
+  drinkRadius: number;
+  roamFactor: number;      // өлссөн мал хайх радиус × энэ
+  roamSpeed: number;       // хол зорилт руу алхах хурд (м/мин)
+  hungryPace: number;      // идэш нь өдрийн явцын энэ хувиас хоцорвол «өлссөн»
+}
+
 export interface PastureConfig {
   grid: { cellSize: number; cells: number };
+  grazing: GrazingConfig;
   regrowthR: number;
   intakeHalfBiomass: number;
-  degradation: Record<string, number>;
+  degradation: {
+    campCapacitySheepUnits: number;
+    gainPerDayAtCapacity: number;
+    recoverPerDayWhenAway: number;
+    growthPenalty: number;
+    qualityPenalty: number;
+    overgrazeThreshold: number;
+  };
   species: Record<string, { latin: string; quality: Record<'spring' | 'summer' | 'autumn' | 'winter', number> }>;
   degradedSuccession: string[];
   types: Record<string, PastureTypeConfig>;
 }
 
+export type WaterShape = { kind: 'lineZ'; z: number } | { kind: 'point'; x: number; z: number; r: number };
+
 export interface CampConfig {
   water: string;
   wolfLevel: string;
   rings: [number, string][];
+  waterShape: WaterShape;
 }
 
 export interface StartAnimal {
@@ -104,7 +132,7 @@ export interface GameConfig {
   economy: typeof economyJson;
   wolves: typeof wolvesJson;
   pasture: PastureConfig;
-  camps: { camps: Record<string, CampConfig>; move: Record<string, number> };
+  camps: { camps: Record<string, CampConfig>; move: Record<string, number>; home: { x: number; z: number; storageRadius: number } };
   start: { camp: string; home: string; vehicles: string[]; storageLevel: number; animals: StartAnimal[] };
 }
 
@@ -145,6 +173,9 @@ export function validateConfig(cfg: GameConfig): string[] {
     if (s.pricePerKg <= 0) e.push(`animals.${sp}: pricePerKg > 0`);
   }
   if (cfg.animals.growthCurve.length !== 5) e.push('animals.growthCurve: 5 утгатай (0–4 нас)');
+  const g = cfg.pasture.grazing;
+  if (!(g.imaxPerMinute > 0 && g.biomassPerGut > 0 && g.decisionEverySteps >= 1)) e.push('pasture.grazing: эерэг утга');
+  for (const sp of SPECIES) if (!(g.sampleRadius[sp] > 0)) e.push(`pasture.grazing.sampleRadius.${sp} алга`);
 
   const p = cfg.pasture;
   for (const [id, type] of Object.entries(p.types)) {
