@@ -7,6 +7,7 @@ import type { GameConfig } from '../config';
 import type { Rng } from '../rng';
 import type { GameState } from '../state';
 import { buildGrid } from './pasture';
+import { spawnWolves } from './wolves';
 
 export function moveHours(cfg: GameConfig, state: GameState, byTruck: boolean): number {
   const m = cfg.camps.move;
@@ -45,8 +46,8 @@ export function moveStep(cfg: GameConfig, state: GameState, rng: Rng): boolean {
   const home = cfg.camps.home;
   for (const a of state.animals) {
     const ang = rng.range(0, Math.PI * 2), r = a.riding ? 0 : rng.range(8, 20);
-    a.x = a.riding ? -7 : home.x + 25 + Math.cos(ang) * r;
-    a.z = a.riding ? 6 : home.z + Math.sin(ang) * r;
+    a.x = a.riding ? home.post.x : home.x + 25 + Math.cos(ang) * r;
+    a.z = a.riding ? home.post.z : home.z + Math.sin(ang) * r;
     a.tx = a.x;
     a.tz = a.z;
     a.mode = 'graze';
@@ -54,6 +55,9 @@ export function moveStep(cfg: GameConfig, state: GameState, rng: Rng): boolean {
   state.player.x = home.x + 2;
   state.player.z = home.z + 6;
   state.player.away = false;
+  state.player.mounted = false;
+  state.player.horseCalled = false;
+  state.wolves = spawnWolves(cfg, state.seed, mv.to);
   state.move = null;
   return true;
 }

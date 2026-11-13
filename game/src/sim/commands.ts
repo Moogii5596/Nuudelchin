@@ -13,9 +13,18 @@ import * as storage from './systems/storage';
 import * as processing from './systems/processing';
 import { startTrip, type TripPlan } from './systems/trip';
 import { startMove } from './systems/camps';
+import { shout, toggleMount } from './systems/herder';
+import { scareWolves } from './systems/wolves';
+import { newAnimal } from './state';
+import { SPECIES } from './config';
 
 export type Command =
-  | { type: 'movePlayer'; x: number; z: number }
+  | { type: 'movePlayer'; x: number; z: number; heading?: number }
+  | { type: 'shout' }                 // «Хөөе!» (Space)
+  | { type: 'toggleMount' }           // морь унах/буух (F)
+  | { type: 'callHorse' }             // морь дуудах (H)
+  | { type: 'scareWolves' }           // чоно үргээх (Q)
+  | { type: 'debugAddAnimals'; n: number; x?: number; z?: number }   // туршилтын цэс: мал нэмэх
   | { type: 'pickup'; ids: number[] | 'nearby' }
   | { type: 'deposit' }
   | { type: 'drive'; species: Species; x: number; z: number }
@@ -35,13 +44,56 @@ const fail = (msg: string): CommandResult => ({ ok: false, msg });
 export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandResult {
   const { cfg, state } = sim;
   const p = state.player;
-  if (p.away && cmd.type !== 'neighborBull') return fail('Малчин сумын төвд явсан');
+  if (p.away && cmd.type !== 'neighborBull' && cmd.type !== 'debugAddAnimals') return fail('Малчин сумын төвд явсан');
 
   switch (cmd.type) {
-    case 'movePlayer':
+    case 'movePlayer': {
       p.x = cmd.x;
       p.z = cmd.z;
+      if (cmd.heading !== undefined) p.heading = cmd.heading;
       return ok();
+    }
+
+    case 'shout': {
+      const n = shout(cfg, state, sim.random);
+      return n ? ok(`Хөөе! ${n} мал туугдлаа`) : fail('Ойрхон мал алга');
+    }
+
+    case 'toggleMount': {
+      const err = toggleMount(cfg, state);
+      if (err) return fail(err);
+      return ok(p.mounted ? 'Морь унлаа' : 'Мориноосоо буулаа');
+    }
+
+    case 'callHorse': {
+      if (p.mounted) return fail('Та мориндоо сууж байна');
+      p.horseCalled = true;
+      return ok('Чүү, нааш! Морь давхиж ирж байна');
+    }
+
+    case 'scareWolves': {
+      const n = scareWolves(cfg, state);
+      return n ? ok(`Хуу-хай! ${n} чоно үүр лүүгээ зугтлаа`) : fail('Ойрхон чоно алга');
+    }
+
+    case 'debugAddAnimals': {
+      // Насны холимог сүрэг (хонь 70%, ямаа 15%, үхэр 10%, адуу 5%), бууцны ойролцоо
+      const rng = sim.random;
+      const cx = cmd.x ?? 30, cz = cmd.z ?? 0;
+      for (let i = 0; i < cmd.n; i++) {
+        const u = rng.next();
+        const species = u < 0.7 ? SPECIES[0]! : u < 0.85 ? SPECIES[1]! : u < 0.95 ? SPECIES[2]! : SPECIES[3]!;
+        const ang = rng.range(0, Math.PI * 2), r = Math.sqrt(rng.next()) * 35;
+        state.animals.push(newAnimal(cfg, rng, state.nextId++, {
+          species,
+          sex: rng.chance(0.15) ? 'm' : 'f',
+          age: rng.range(0.2, 6),
+          x: cx + Math.cos(ang) * r,
+          z: cz + Math.sin(ang) * r,
+        }));
+      }
+      return ok(`${cmd.n} мал нэмлээ`);
+    }
 
     case 'pickup': {
       const r = cfg.products.pickupRadius;

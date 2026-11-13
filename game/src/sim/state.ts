@@ -6,8 +6,9 @@ import type { GameConfig, Sex, Species } from './config';
 import { newTime, type TimeState } from './clock';
 import { Rng } from './rng';
 import { buildGrid, type GrassGrid } from './systems/pasture';
+import { spawnWolves, type WolfState } from './systems/wolves';
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;   // 4: малчин унах/чиглэл, чоно (M2)
 
 export type ProductId = 'milk' | 'tarag' | 'aaruul' | 'urum' | 'wool' | 'felt' | 'cashmere';
 export const PRODUCTS: readonly ProductId[] = ['milk', 'tarag', 'aaruul', 'urum', 'wool', 'felt', 'cashmere'];
@@ -100,6 +101,9 @@ export interface DayStats {
 export interface PlayerState {
   x: number;
   z: number;
+  heading: number;       // харж буй чиглэл (рад, +z = 0)
+  mounted: boolean;      // морь унасан
+  horseCalled: boolean;  // морь дуудсан (давхиж ирж байна)
   carry: { product: ProductId; amount: number; age: number }[];
   away: boolean;         // сумын төв рүү явсан
 }
@@ -126,6 +130,7 @@ export interface GameState {
   move: { to: string; remaining: number } | null;   // бууц сэлгэж байгаа
   neighborBull: boolean;
   player: PlayerState;
+  wolves: WolfState;
   today: DayStats;
   goalReachedDay: number | null;
 }
@@ -176,8 +181,8 @@ export function createInitialState(cfg: GameConfig, seed: number): GameState {
       age: a.age,
       lactating: a.lactating,
       riding: a.riding,
-      x: a.riding ? -7 : Math.cos(ang) * r + 25,
-      z: a.riding ? 6 : Math.sin(ang) * r,
+      x: a.riding ? cfg.camps.home.post.x : Math.cos(ang) * r + 25,
+      z: a.riding ? cfg.camps.home.post.z : Math.sin(ang) * r,
     });
   });
   const camps: Record<string, CampState> = {};
@@ -204,7 +209,8 @@ export function createInitialState(cfg: GameConfig, seed: number): GameState {
     trip: null,
     move: null,
     neighborBull: false,
-    player: { x: 2, z: 6, carry: [], away: false },
+    player: { x: 2, z: 6, heading: 0, mounted: false, horseCalled: false, carry: [], away: false },
+    wolves: spawnWolves(cfg, seed, cfg.start.camp),
     today: emptyDayStats(),
     goalReachedDay: null,
   };

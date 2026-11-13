@@ -15,6 +15,8 @@ import { processingStep } from './systems/processing';
 import * as storage from './systems/storage';
 import { tripStep } from './systems/trip';
 import { moveStep } from './systems/camps';
+import { herderStep } from './systems/herder';
+import { wolvesStep } from './systems/wolves';
 
 export interface DayReport extends DayStats {
   day: number;
@@ -70,7 +72,9 @@ export class Sim {
     const { cfg, state, rng } = this;
     state.step += 1;
     if (state.step % 5 === 0) this.centers = flockCenters(state);
+    herderStep(cfg, state);
     grazingStep(cfg, state, rng, this.quality, this.centers);
+    wolvesStep(cfg, state);
     productionStep(cfg, state, rng);
     groundAgingStep(cfg, state);
     processingStep(cfg, state);

@@ -4,7 +4,7 @@
   "hud.money": "Money",
   "hud.animals": "Livestock",
   "hud.speed": "Speed",
-  "hud.milestone": "M1 · simulation core",
+  "hud.milestone": "M2 · 3D foundation",
   "species.sheep": "Sheep (khoni)",
   "species.goat": "Goat (yamaa)",
   "species.cow": "Cattle (ükher)",
@@ -15,5 +15,17 @@
   "product.urum": "Öröm (clotted cream)",
   "product.wool": "Wool (noos)",
   "product.felt": "Felt (esgii)",
-  "product.cashmere": "Cashmere (nooluur)"
+  "product.cashmere": "Cashmere (nooluur)",
+  "hud.camp": "Camp (buuts)",
+  "hud.grass": "Grass",
+  "hud.degrade": "Degradation",
+  "hud.mounted": "🐎 Riding",
+  "hud.onFoot": "🚶 On foot",
+  "hud.away": "Herder is busy (moving / at sum center)",
+  "camp.river": "Riverbank",
+  "camp.northSlope": "North slope (uulyn ar)",
+  "camp.valley": "Valley (khöndii)",
+  "help.title": "Controls",
+  "help.body": "WASD / arrows — walk (Shift — run) · click ground — go there\nDrag mouse — rotate camera · wheel — zoom\nSpace — \"Khööye!\": nearby animals bunch and move away from you\nAnimals shy away at 6 m (8.5 m mounted) — walk to steer the herd\nF — mount / dismount · H — call your horse\nQ — scare wolves (45 m, 60 m mounted)\n1 / 2 / 3 — speed 1× 2× 4× · G — pasture heatmap · F1 — this help · ` — +50 animals (debug)",
+  "help.hint": "F1 — controls"
 }

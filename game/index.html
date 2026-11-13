@@ -6,17 +6,29 @@
     <title>Нүүдэлчин — Зуслан</title>
     <link rel="icon" href="data:," />
     <style>
-      html, body { margin: 0; height: 100%; overflow: hidden; background: #9fcbee; font-family: system-ui, sans-serif; }
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #8cc4f0; font-family: system-ui, sans-serif; }
       #app { position: fixed; inset: 0; }
-      #hud { position: fixed; top: 12px; left: 12px; padding: 10px 14px; border-radius: 10px;
-             background: rgba(30, 24, 18, 0.72); color: #f4ead6; font-size: 14px; line-height: 1.5; pointer-events: none; }
+      #app canvas { outline: none; display: block; }
+      .panel { position: fixed; padding: 10px 14px; border-radius: 10px; background: rgba(30, 24, 18, 0.72);
+               color: #f4ead6; font-size: 14px; line-height: 1.5; pointer-events: none; }
+      #hud { top: 12px; left: 12px; }
       #hud b { color: #e8b64c; }
+      #perf { top: 12px; right: 12px; font: 12px ui-monospace, monospace; }
+      #help { left: 50%; top: 50%; transform: translate(-50%, -50%); white-space: pre-line; max-width: 620px; display: none; font-size: 15px; }
+      #help h3 { margin: 0 0 6px; color: #e8b64c; }
+      #toasts { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none; }
+      .toast { padding: 7px 14px; border-radius: 8px; background: rgba(30, 24, 18, 0.82); color: #f4ead6; font-size: 14px; }
+      .toast.good { border-left: 4px solid #7bbf5a; }
+      .toast.bad { border-left: 4px solid #d9534f; }
       #err { position: fixed; inset: 0; display: none; place-items: center; background: #2b1d14; color: #f4ead6; padding: 24px; white-space: pre-wrap; }
     </style>
   </head>
   <body>
     <div id="app"></div>
-    <div id="hud"></div>
+    <div id="hud" class="panel"></div>
+    <div id="perf" class="panel"></div>
+    <div id="help" class="panel"></div>
+    <div id="toasts"></div>
     <div id="err"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

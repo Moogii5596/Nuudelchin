@@ -14,6 +14,7 @@ import wolvesJson from '../../../data/wolves.json';
 import pastureJson from '../../../data/pasture.json';
 import campsJson from '../../../data/camps.json';
 import startJson from '../../../data/start.json';
+import playerJson from '../../../data/player.json';
 
 export type Species = 'sheep' | 'goat' | 'cow' | 'horse';
 export type Sex = 'm' | 'f';
@@ -104,13 +105,38 @@ export interface PastureConfig {
   types: Record<string, PastureTypeConfig>;
 }
 
-export type WaterShape = { kind: 'lineZ'; z: number } | { kind: 'point'; x: number; z: number; r: number };
+/** lineZ: голын төв шугам z (+ долгион [далайц, давтамж][]); point: булаг, горхины цэг */
+export type WaterShape =
+  | { kind: 'lineZ'; z: number; waves?: [number, number][]; width?: number }
+  | { kind: 'point'; x: number; z: number; r: number };
+
+/** Газрын хэлбэр (sim/terrain.ts → heightAt). Прототип v1.2-ын heightAt-аас гаргасан. */
+export interface TerrainConfig {
+  noiseAmp: number;                          // долгионт гадаргуугийн хүч
+  rim: [number, number, number];             // [эхлэх r, бүрэн r, налуу] — бууцыг тойрсон дов толгод
+  riverDepth?: number;                       // голын гольдролын гүн (lineZ)
+  riverBank?: number;                        // гольдролын хагас өргөн
+  tilt?: { dirX: number; dirZ: number; start: number; slope: number; start2?: number; slope2?: number };   // нэг зүг өгсөх (уулын ар)
+  open?: { dirX: number; dirZ: number; width: number };   // хөндийн задгай ам
+  pondDepth?: number;                        // булаг/горхины хонхор
+}
 
 export interface CampConfig {
   water: string;
   wolfLevel: string;
   rings: [number, string][];
   waterShape: WaterShape;
+  terrain: TerrainConfig;
+}
+
+export interface HomeConfig {
+  x: number;
+  z: number;
+  storageRadius: number;
+  pen: { x: number; z: number; r: number };   // хаалга нь майхны эсрэг талд
+  post: { x: number; z: number };
+  tentRadius: number;
+  gerRadius: number;
 }
 
 export interface StartAnimal {
@@ -132,7 +158,8 @@ export interface GameConfig {
   economy: typeof economyJson;
   wolves: typeof wolvesJson;
   pasture: PastureConfig;
-  camps: { camps: Record<string, CampConfig>; move: Record<string, number | string>; home: { x: number; z: number; storageRadius: number } };
+  camps: { camps: Record<string, CampConfig>; move: Record<string, number | string>; home: HomeConfig };
+  player: typeof playerJson;
   start: { camp: string; home: string; vehicles: string[]; storageLevel: number; animals: StartAnimal[] };
 }
 
@@ -150,6 +177,7 @@ export function loadConfig(): GameConfig {
     pasture: pastureJson as unknown as PastureConfig,
     camps: campsJson as unknown as GameConfig['camps'],
     start: startJson as unknown as GameConfig['start'],
+    player: playerJson,
   };
   const errors = validateConfig(cfg);
   if (errors.length) {
@@ -185,7 +213,12 @@ export function validateConfig(cfg: GameConfig): string[] {
   }
   for (const [id, camp] of Object.entries(cfg.camps.camps)) {
     for (const [, typeId] of camp.rings) if (!p.types[typeId]) e.push(`camps.${id}: "${typeId}" бэлчээрийн төрөл алга`);
+    if (!camp.terrain || !Array.isArray(camp.terrain.rim) || camp.terrain.rim.length !== 3) e.push(`camps.${id}.terrain: rim [эхлэх, бүрэн, налуу] хэрэгтэй`);
   }
+  const pl = cfg.player;
+  if (!(pl.walkSpeed > 0 && pl.runSpeed >= pl.walkSpeed && pl.mountedSpeed > 0 && pl.mountedRunSpeed >= pl.mountedSpeed)) e.push('player: хурд эерэг, гүйх ≥ алхах');
+  if (!(pl.shout.radius > 0 && pl.shout.push > 0)) e.push('player.shout: radius, push > 0');
+  if (!(cfg.wolves.speed.roam > 0 && cfg.wolves.speed.flee > 0)) e.push('wolves.speed: эерэг');
   if (!cfg.camps.camps[cfg.start.camp]) e.push(`start.camp: "${cfg.start.camp}" бууц алга`);
   if (!cfg.storage.levels[cfg.start.storageLevel]) e.push('start.storageLevel: агуулахын түвшин алга');
   for (const a of cfg.start.animals) if (!cfg.animals.species[a.species]) e.push(`start.animals: "${a.species}" алга`);

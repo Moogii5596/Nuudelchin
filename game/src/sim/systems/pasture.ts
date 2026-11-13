@@ -7,6 +7,7 @@
  */
 import type { CampConfig, GameConfig, WaterShape } from '../config';
 import type { Rng } from '../rng';
+import { riverZ } from '../terrain';
 
 export interface GrassGrid {
   n: number;           // нэг талын нүдний тоо
@@ -116,7 +117,7 @@ export function dailyCampDegrade(cfg: GameConfig, camps: Record<string, { degrad
 
 /** Хамгийн ойрын усны цэг */
 export function nearestWater(shape: WaterShape, x: number, z: number): { x: number; z: number } {
-  if (shape.kind === 'lineZ') return { x, z: shape.z };
+  if (shape.kind === 'lineZ') return { x, z: riverZ(shape, x) };
   const dx = x - shape.x, dz = z - shape.z;
   const d = Math.hypot(dx, dz) || 1;
   const r = Math.min(shape.r, d);

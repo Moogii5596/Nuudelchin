@@ -1,0 +1,25 @@
+{
+  "_doc": "Малчин (M2, прототип v1.2). Хөдлөх хурд бодит секунд тутмын метр (тоглоомын хурдаас үл хамаарна). Бусад зай метрээр, хурд тоглоомын минут тутмын метрээр.",
+  "walkSpeed": 3.6,
+  "runSpeed": 6.5,
+  "mountedSpeed": 10,
+  "mountedRunSpeed": 15,
+  "worldRadius": 158,
+  "riverBlockOnFoot": 3.2,
+  "mountRange": 3.2,
+  "callHorseSpeed": 2.5,
+  "animalFear": {
+    "onFoot": 6,
+    "mounted": 8.5,
+    "push": 4
+  },
+  "shout": {
+    "radius": 18,
+    "radiusMounted": 24,
+    "push": 16,
+    "pushMounted": 22,
+    "bunch": 0.35,
+    "cooldownSec": 1.4
+  },
+  "scareCooldownSec": 5
+}

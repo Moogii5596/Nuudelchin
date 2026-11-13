@@ -1,130 +1,116 @@
 /**
  * Three.js дүрслэл. GameState-ийг уншиж зурна, өөрчлөхгүй (architecture.md §3.1).
- * M0: газар (бууцны бэлчээрийн бүсүүд өнгөөр), мал (InstancedMesh), камер.
- * M2-д прототипын газар нутаг, малчин, морь, анимац шилжинэ.
+ * M2: прототип v1.2-ын газар нутаг, малчин, морь, чоно, камер; мал InstancedMesh; бэлчээрийн өнгө.
  */
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import type { GameConfig, Species } from '../sim/config';
-import { SPECIES } from '../sim/config';
+import type { GameConfig } from '../sim/config';
 import type { GameState } from '../sim/state';
-import { frameKg } from '../sim/systems/animals';
+import { TerrainView } from './terrain';
+import { AnimalsView } from './animals';
+import { CharactersView } from './characters';
+import { FollowCamera } from './camera';
 
-const TYPE_COLORS: Record<string, number> = {
-  camp: 0x977c54,
-  steppe: 0x8f9a5c,
-  meadow: 0x5a9440,
-  southSlope: 0x9a9a5a,
-  foothill: 0x6f9a48,
-  northSlope: 0x3f7a3a,
-};
-
-const SPECIES_STYLE: Record<Species, { color: number; size: [number, number, number] }> = {
-  sheep: { color: 0xf1ece0, size: [0.7, 0.7, 1.0] },
-  goat: { color: 0x8a847c, size: [0.5, 0.7, 0.9] },
-  cow: { color: 0x5a3a22, size: [0.9, 1.1, 1.8] },
-  horse: { color: 0x9a6b3a, size: [0.6, 1.4, 1.5] },
-};
+/** Бэлчээрийн өнгийг хэр олон удаа шинэчлэх (бодит секунд) */
+const GRASS_REFRESH_SEC = 0.4;
 
 export class GameView {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene = new THREE.Scene();
-  readonly camera: THREE.PerspectiveCamera;
-  private controls: OrbitControls;
-  private herds = new Map<Species, THREE.InstancedMesh>();
-  private tmp = new THREE.Object3D();
+  readonly cam: FollowCamera;
+  readonly terrain: TerrainView;
+  readonly animals: AnimalsView;
+  readonly characters: CharactersView;
+  heatmap = false;
+  private sun: THREE.DirectionalLight;
+  private grassT = 0;
+  private ray = new THREE.Raycaster();
+  private ndc = new THREE.Vector2();
 
-  constructor(container: HTMLElement, private cfg: GameConfig, state: GameState) {
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+  constructor(container: HTMLElement, cfg: GameConfig, state: GameState) {
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setSize(container.clientWidth, container.clientHeight);
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
+    this.renderer.domElement.tabIndex = 0;
     container.appendChild(this.renderer.domElement);
 
-    this.scene.background = new THREE.Color(0x9fcbee);
-    this.scene.fog = new THREE.Fog(0x9fcbee, 120, 320);
-    this.scene.add(new THREE.HemisphereLight(0xdfeeff, 0x6b5a3a, 0.9));
-    const sun = new THREE.DirectionalLight(0xfff1d6, 1.4);
-    sun.position.set(60, 90, 40);
-    this.scene.add(sun);
+    const sky = 0x8cc4f0;
+    this.scene.background = new THREE.Color(sky);
+    this.scene.fog = new THREE.Fog(sky, 90, 300);
+    this.scene.add(new THREE.HemisphereLight(0xdfeeff, 0x6b5a3a, 1.1));
+    this.sun = new THREE.DirectionalLight(0xfff1d6, 1.9);
+    this.sun.castShadow = true;
+    this.sun.shadow.mapSize.set(2048, 2048);
+    const sc = this.sun.shadow.camera;
+    sc.left = -45;
+    sc.right = 45;
+    sc.top = 45;
+    sc.bottom = -45;
+    sc.near = 1;
+    sc.far = 260;
+    this.sun.shadow.bias = -0.0008;
+    this.scene.add(this.sun, this.sun.target);
 
-    this.camera = new THREE.PerspectiveCamera(55, container.clientWidth / container.clientHeight, 0.3, 900);
-    this.camera.position.set(40, 45, 70);
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.target.set(10, 0, 0);
-    this.controls.maxPolarAngle = Math.PI * 0.47;
-    this.controls.update();
-
-    this.buildGround(state.campId);
-    this.buildTent();
-    this.buildHerds(state);
+    this.cam = new FollowCamera(this.renderer.domElement, container.clientWidth / container.clientHeight);
+    this.terrain = new TerrainView(cfg);
+    this.animals = new AnimalsView(cfg);
+    this.characters = new CharactersView();
+    this.scene.add(this.terrain.group, this.animals.group, this.characters.group);
+    this.terrain.sync(state);
+    this.terrain.updateGrass(state, this.heatmap);
 
     window.addEventListener('resize', () => {
-      this.camera.aspect = container.clientWidth / container.clientHeight;
-      this.camera.updateProjectionMatrix();
+      this.cam.resize(container.clientWidth / container.clientHeight);
       this.renderer.setSize(container.clientWidth, container.clientHeight);
     });
   }
 
-  /** Бууцны бэлчээрийн бүсүүдийг (camps.json → rings) төвөөс цагираг хэлбэрээр будна */
-  private buildGround(campId: string): void {
-    const camp = this.cfg.camps.camps[campId];
-    if (!camp) return;
-    let inner = 0;
-    for (const [outer, typeId] of camp.rings) {
-      const r = Math.min(outer, 190);
-      const geo = new THREE.RingGeometry(inner, r, 64, 1);
-      geo.rotateX(-Math.PI / 2);
-      const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: TYPE_COLORS[typeId] ?? 0x888888 }));
-      mesh.position.y = -0.01 * inner * 0.001;
-      this.scene.add(mesh);
-      inner = r;
-    }
+  heightAt = (x: number, z: number): number => this.terrain.heightAt(x, z);
+
+  /** Sim алхмын өмнө (interpolation) */
+  snapshot(state: GameState): void {
+    this.animals.snapshot(state);
   }
 
-  private buildTent(): void {
-    const tent = new THREE.Mesh(new THREE.ConeGeometry(2, 2.2, 4), new THREE.MeshLambertMaterial({ color: 0xcfc29a }));
-    tent.position.set(0, 1.1, 0);
-    tent.rotation.y = Math.PI / 4;
-    this.scene.add(tent);
+  /** Дэлгэцийн цэгээс газрын байрлал */
+  pickGround(ndcX: number, ndcY: number): { x: number; z: number } | null {
+    this.ndc.set(ndcX, ndcY);
+    this.ray.setFromCamera(this.ndc, this.cam.camera);
+    const hit = this.ray.intersectObject(this.terrain.ground, false)[0];
+    return hit ? { x: hit.point.x, z: hit.point.z } : null;
   }
 
-  private buildHerds(state: GameState): void {
-    for (const sp of SPECIES) {
-      const style = SPECIES_STYLE[sp];
-      const geo = new THREE.BoxGeometry(...style.size);
-      geo.translate(0, style.size[1] / 2, 0);
-      const mesh = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({ color: style.color }), 2000);
-      mesh.count = 0;
-      this.herds.set(sp, mesh);
-      this.scene.add(mesh);
-    }
-    this.syncAnimals(state);
+  toggleHeatmap(state: GameState): void {
+    this.heatmap = !this.heatmap;
+    this.terrain.updateGrass(state, this.heatmap);
   }
 
-  /** Малын байрлал, хэмжээг GameState-ээс шинэчилнэ */
-  syncAnimals(state: GameState): void {
-    const counts = new Map<Species, number>();
-    for (const a of state.animals) {
-      const mesh = this.herds.get(a.species);
-      if (!mesh) continue;
-      const i = counts.get(a.species) ?? 0;
-      const mature = this.cfg.animals.species[a.species].matureKg[a.sex];
-      const scale = Math.cbrt(frameKg(a, this.cfg.animals) / mature);
-      this.tmp.position.set(a.x, 0, a.z);
-      this.tmp.rotation.set(0, a.heading, 0);
-      this.tmp.scale.set(scale * (0.85 + 0.3 * a.condition), scale, scale);
-      this.tmp.updateMatrix();
-      mesh.setMatrixAt(i, this.tmp.matrix);
-      counts.set(a.species, i + 1);
+  /** Нэг кадр. alpha — sim алхам хоорондын хувь, stepSec — нэг алхмын бодит секунд (0 = зогссон) */
+  frame(state: GameState, alpha: number, dt: number, stepSec: number): void {
+    if (this.terrain.sync(state)) {
+      this.animals.reset();
+      this.grassT = 0;
     }
-    for (const [sp, mesh] of this.herds) {
-      mesh.count = counts.get(sp) ?? 0;
-      mesh.instanceMatrix.needsUpdate = true;
+    this.grassT -= dt;
+    if (this.grassT <= 0) {
+      this.grassT = GRASS_REFRESH_SEC;
+      this.terrain.updateGrass(state, this.heatmap);
     }
+    this.animals.update(state, this.heightAt, alpha, dt, stepSec);
+    this.characters.update(state, this.heightAt, dt);
+
+    const p = state.player;
+    const ty = this.heightAt(p.x, p.z) + (p.mounted ? 2.4 : 1.6);
+    this.cam.update(p.x, p.z, ty, this.heightAt);
+    // Сүүдрийн хайрцаг малчныг дагана
+    this.sun.position.set(p.x + 60, 95, p.z + 35);
+    this.sun.target.position.set(p.x, 0, p.z);
+    this.renderer.render(this.scene, this.cam.camera);
   }
 
-  render(): void {
-    this.controls.update();
-    this.renderer.render(this.scene, this.camera);
+  /** Гүйцэтгэлийн мэдээлэл (HUD) */
+  get drawCalls(): number {
+    return this.renderer.info.render.calls;
   }
 }

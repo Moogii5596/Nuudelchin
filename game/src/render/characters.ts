@@ -1,0 +1,241 @@
+/**
+ * Малчин, унаа морь, чоно (прототип v1.2-ын загварууд). Цөөн тул энгийн Mesh-ээр зурна.
+ * Байрлалыг GameState-ээс уншина; малчныг input бодит цагаар хөдөлгөдөг тул шууд,
+ * морь ба чоныг алхам хооронд зөөлрүүлнэ.
+ */
+import * as THREE from 'three';
+import type { GameState } from '../sim/state';
+import { ridingHorse } from '../sim/systems/herder';
+import type { Wolf } from '../sim/systems/wolves';
+import { angDiff, limb, meshBox, mat } from './util';
+
+interface Rig {
+  root: THREE.Group;
+  legs: THREE.Group[];
+  arms: THREE.Group[];
+}
+
+function makeHerder(): Rig {
+  const g = new THREE.Group();
+  const legs = [limb(0.2, 0.85, 0x2b1d14, -0.15, 0.85, 0, g), limb(0.2, 0.85, 0x2b1d14, 0.15, 0.85, 0, g)];
+  meshBox(0.62, 0.9, 0.4, 0x2f5d9b, 0, 1.3, 0, g);            // дээл
+  meshBox(0.64, 0.14, 0.42, 0xe0b030, 0, 1.05, 0, g);          // бүс
+  meshBox(0.69, 0.3, 0.44, 0x2a528a, 0, 1.0, 0, g);            // дээлийн хормой
+  const arms = [limb(0.16, 0.75, 0x2f5d9b, -0.4, 1.7, 0, g), limb(0.16, 0.75, 0x2f5d9b, 0.4, 1.7, 0, g)];
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.21, 10, 8), mat(0xc99a6e));
+  head.position.y = 1.98;
+  head.castShadow = true;
+  g.add(head);
+  const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.3, 0.1, 10), mat(0x6b3d1e));
+  brim.position.y = 2.13;
+  g.add(brim);
+  const top = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.32, 8), mat(0xa52a2a));
+  top.position.y = 2.32;
+  g.add(top);
+  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 5), mat(0xe0b030));
+  knob.position.y = 2.5;
+  g.add(knob);
+  return { root: g, legs, arms };
+}
+
+function makeHorse(color: number): Rig {
+  const g = new THREE.Group();
+  const dk = 0x2a1c12;
+  meshBox(0.6, 0.7, 1.5, color, 0, 1.3, 0, g);
+  meshBox(0.32, 0.8, 0.36, color, 0, 1.75, 0.72, g).rotation.x = 0.55;
+  meshBox(0.3, 0.32, 0.62, color, 0, 2.08, 1.12, g);
+  meshBox(0.08, 0.55, 0.4, dk, 0, 1.95, 0.62, g).rotation.x = 0.55;
+  meshBox(0.14, 0.8, 0.14, dk, 0, 1.15, -0.85, g).rotation.x = 0.35;
+  meshBox(0.66, 0.12, 0.6, 0x8b2e2e, 0, 1.7, 0, g);   // эмээлийн гөлөм
+  meshBox(0.18, 0.2, 0.6, 0x5a3a20, 0, 1.82, 0, g);   // эмээл
+  const legs = ([[-0.2, 0.58], [0.2, 0.58], [-0.2, -0.58], [0.2, -0.58]] as const).map(([x, z]) => limb(0.14, 0.95, color, x, 0.95, z, g));
+  return { root: g, legs, arms: [] };
+}
+
+function makeWolf(): Rig {
+  const g = new THREE.Group();
+  const c = 0x77716a, dk = 0x4a4540;
+  meshBox(0.42, 0.5, 1.15, c, 0, 0.78, 0, g);
+  meshBox(0.46, 0.42, 0.4, 0x8a847c, 0, 0.86, 0.42, g);
+  const head = new THREE.Group();
+  head.position.set(0, 1.0, 0.72);
+  g.add(head);
+  meshBox(0.34, 0.32, 0.4, c, 0, 0, 0.05, head);
+  meshBox(0.18, 0.16, 0.3, dk, 0, -0.06, 0.35, head);
+  const eye = new THREE.MeshBasicMaterial({ color: 0xffd34a });
+  for (const sx of [-1, 1]) {
+    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.18, 4), mat(dk));
+    ear.position.set(sx * 0.11, 0.22, -0.02);
+    head.add(ear);
+    const e = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.04, 0.02), eye);
+    e.position.set(sx * 0.09, 0.06, 0.26);
+    head.add(e);
+  }
+  meshBox(0.14, 0.14, 0.6, dk, 0, 0.72, -0.78, g).rotation.x = 0.6;
+  const legs = ([[-0.14, 0.4], [0.14, 0.4], [-0.14, -0.4], [0.14, -0.4]] as const).map(([x, z]) => limb(0.12, 0.56, dk, x, 0.56, z, g));
+  return { root: g, legs, arms: [] };
+}
+
+function swingLegs(r: Rig, sw: number): void {
+  const L = r.legs;
+  if (L.length === 4) {
+    L[0]!.rotation.x = sw;
+    L[1]!.rotation.x = -sw;
+    L[2]!.rotation.x = -sw;
+    L[3]!.rotation.x = sw;
+  }
+}
+
+/** Толгой дээрх «Хөөе!», «Хуу-хай!» бичиг */
+function makeBubble(text: string): THREE.Sprite {
+  const cv = document.createElement('canvas');
+  cv.width = 256;
+  cv.height = 96;
+  const ctx = cv.getContext('2d')!;
+  ctx.fillStyle = 'rgba(255,250,235,0.92)';
+  ctx.beginPath();
+  ctx.roundRect(8, 8, 240, 70, 18);
+  ctx.fill();
+  ctx.fillStyle = '#5a2a10';
+  ctx.font = 'bold 44px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, 128, 45);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), depthTest: false, transparent: true }));
+  sp.scale.set(2.4, 0.9, 1);
+  sp.visible = false;
+  sp.renderOrder = 10;
+  return sp;
+}
+
+export class CharactersView {
+  readonly group = new THREE.Group();
+  private herder = makeHerder();
+  private horse = makeHorse(0x7a4a26);
+  private wolves = new Map<number, { rig: Rig; x: number; z: number; h: number; phase: number }>();
+  private wolfCamp = '';
+  private hPhase = 0;
+  private horsePhase = 0;
+  private horsePos = { x: 0, z: 0, h: 0, init: false };
+  private lastPlayer = { x: 0, z: 0 };
+  private bubbles: Record<'shout' | 'scare' | 'call', { sprite: THREE.Sprite; t: number }>;
+  private actionT = 0;   // гараа өргөх хугацаа
+
+  constructor() {
+    this.group.add(this.herder.root, this.horse.root);
+    this.bubbles = {
+      shout: { sprite: makeBubble('Хөөе!'), t: 0 },
+      scare: { sprite: makeBubble('Хуу-хай!'), t: 0 },
+      call: { sprite: makeBubble('Чүү, нааш!'), t: 0 },
+    };
+    for (const b of Object.values(this.bubbles)) this.group.add(b.sprite);
+  }
+
+  /** Малчны үйлдлийн дүрслэл (бичиг, гар өргөх) */
+  say(kind: 'shout' | 'scare' | 'call'): void {
+    for (const [k, b] of Object.entries(this.bubbles)) b.t = k === kind ? 1.2 : 0;
+    this.actionT = 0.9;
+  }
+
+  get herderObject(): THREE.Object3D {
+    return this.herder.root;
+  }
+
+  update(state: GameState, heightAt: (x: number, z: number) => number, dt: number): void {
+    const p = state.player;
+    // ---- малчин ----
+    const moved = Math.hypot(p.x - this.lastPlayer.x, p.z - this.lastPlayer.z);
+    const speed = dt > 0 ? Math.min(moved / dt, 30) : 0;
+    this.lastPlayer = { x: p.x, z: p.z };
+    const y = heightAt(p.x, p.z);
+    this.herder.root.visible = !p.away;
+    this.horse.root.visible = !p.away && Boolean(ridingHorse(state));
+    this.actionT = Math.max(0, this.actionT - dt);
+    const H = this.herder;
+    if (p.mounted) {
+      this.horsePhase += dt * speed * 0.9;
+      this.horsePos = { x: p.x, z: p.z, h: p.heading, init: true };
+      H.root.position.set(p.x, y + 1.05 + (speed > 0.5 ? Math.abs(Math.sin(this.horsePhase)) * 0.12 : 0), p.z);
+      H.legs[0]!.rotation.set(-0.9, 0, -0.5);
+      H.legs[1]!.rotation.set(-0.9, 0, 0.5);
+      H.arms[0]!.rotation.x = -0.6;
+      H.arms[1]!.rotation.x = -0.6;
+    } else {
+      this.hPhase += dt * speed * 2.6;
+      const sw = speed > 0.3 ? Math.sin(this.hPhase) * 0.7 : 0;
+      H.root.position.set(p.x, y, p.z);
+      H.legs[0]!.rotation.set(sw, 0, 0);
+      H.legs[1]!.rotation.set(-sw, 0, 0);
+      H.arms[0]!.rotation.x = -sw * 0.8;
+      H.arms[1]!.rotation.x = sw * 0.8;
+    }
+    if (this.actionT > 0) {
+      H.arms[0]!.rotation.x = -2.6;
+      H.arms[1]!.rotation.x = -2.6;
+    }
+    H.root.rotation.y = p.heading;
+
+    // ---- унаа морь ----
+    const rh = ridingHorse(state);
+    if (rh) {
+      if (!p.mounted) {
+        if (!this.horsePos.init) this.horsePos = { x: rh.x, z: rh.z, h: rh.heading, init: true };
+        const k = Math.min(1, dt * 8);
+        const hx = this.horsePos.x + (rh.x - this.horsePos.x) * k;
+        const hz = this.horsePos.z + (rh.z - this.horsePos.z) * k;
+        const hs = dt > 0 ? Math.hypot(hx - this.horsePos.x, hz - this.horsePos.z) / dt : 0;
+        this.horsePhase += dt * hs * 0.9;
+        this.horsePos.h += angDiff(rh.heading, this.horsePos.h) * Math.min(1, dt * 6);
+        this.horsePos.x = hx;
+        this.horsePos.z = hz;
+        swingLegs(this.horse, hs > 0.5 ? Math.sin(this.horsePhase) * 0.7 : 0);
+      } else {
+        swingLegs(this.horse, speed > 0.5 ? Math.sin(this.horsePhase) * 0.7 : 0);
+      }
+      this.horse.root.position.set(this.horsePos.x, heightAt(this.horsePos.x, this.horsePos.z), this.horsePos.z);
+      this.horse.root.rotation.y = this.horsePos.h;
+    }
+
+    // ---- бичиг ----
+    for (const b of Object.values(this.bubbles)) {
+      b.t = Math.max(0, b.t - dt);
+      b.sprite.visible = b.t > 0 && !p.away;
+      b.sprite.position.set(p.x, y + (p.mounted ? 4.2 : 3.1) + (1.2 - b.t) * 0.3, p.z);
+    }
+
+    this.updateWolves(state, heightAt, dt);
+  }
+
+  private updateWolves(state: GameState, heightAt: (x: number, z: number) => number, dt: number): void {
+    const ws = state.wolves;
+    if (ws.campId !== this.wolfCamp) {
+      for (const w of this.wolves.values()) this.group.remove(w.rig.root);
+      this.wolves.clear();
+      this.wolfCamp = ws.campId;
+    }
+    const alive = new Set<number>();
+    for (const w of ws.list as Wolf[]) {
+      alive.add(w.id);
+      let v = this.wolves.get(w.id);
+      if (!v) {
+        v = { rig: makeWolf(), x: w.x, z: w.z, h: w.heading, phase: 0 };
+        this.group.add(v.rig.root);
+        this.wolves.set(w.id, v);
+      }
+      const k = Math.min(1, dt * (w.mode === 'flee' ? 10 : 5));
+      const nx = v.x + (w.x - v.x) * k, nz = v.z + (w.z - v.z) * k;
+      const sp = dt > 0 ? Math.hypot(nx - v.x, nz - v.z) / dt : 0;
+      if (sp > 0.2) v.h += angDiff(Math.atan2(nx - v.x, nz - v.z), v.h) * Math.min(1, dt * 7);
+      v.x = nx;
+      v.z = nz;
+      v.phase += dt * sp * 2.2;
+      swingLegs(v.rig, sp > 0.2 ? Math.sin(v.phase) * 0.7 : 0);
+      v.rig.root.position.set(v.x, heightAt(v.x, v.z), v.z);
+      v.rig.root.rotation.y = v.h;
+    }
+    for (const [id, v] of this.wolves) if (!alive.has(id)) {
+      this.group.remove(v.rig.root);
+      this.wolves.delete(id);
+    }
+  }
+}

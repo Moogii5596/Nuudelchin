@@ -27,3 +27,20 @@ describe('Бэлчээрлэлт', () => {
     expect(avgDist).toBeLessThan(25);
   });
 });
+
+describe('Доройтсон бууц (хэрэглэгчийн дүрэм D30)', () => {
+  it('доройтсон бэлчээрт мал турж, тарга дуусахад эрүүл мэнд буурч, эцэст нь үхнэ', () => {
+    const fresh = newSim(21, (s) => {
+      s.camps.river!.degrade = 1;
+      for (const a of s.animals) a.condition = 0.15;
+    });
+    const sheep0 = fresh.state.animals.filter((a) => a.species === 'sheep').length;
+    fresh.runDays(3);
+    const thin = fresh.state.animals.filter((a) => a.species === 'sheep');
+    expect(thin.every((a) => a.condition < 0.15)).toBe(true);      // турна
+    fresh.runDays(8);
+    expect(fresh.state.animals.filter((a) => a.species === 'sheep').every((a) => a.health < 100)).toBe(true); // амин үзүүлэлт буурна
+    fresh.runDays(15);
+    expect(fresh.state.animals.filter((a) => a.species === 'sheep').length).toBeLessThan(sheep0); // үхнэ
+  });
+});
