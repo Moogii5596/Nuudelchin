@@ -11,8 +11,10 @@
     "gainPerDayAtCapacity": 0.02,
     "recoverPerDayWhenAway": 0.03,
     "growthPenalty": 0.7,
+    "capacityPenalty": 0.5,
     "qualityPenalty": 0.6,
-    "overgrazeThreshold": 0.3
+    "overgrazeThreshold": 0.3,
+    "_doc": "M4: доройтол өвс ургах хурдыг (growthPenalty), чанарыг (qualityPenalty), өвсний дээд хэмжээг (capacityPenalty: K = 1 − 0.5 × доройтол) бууруулна — доройтсон бууцанд өвс намхан, сийрэг болж мэдрэгдэнэ (grazing-livestock.md §3.4)."
   },
   "species": {
     "ulalj": {
@@ -185,7 +187,7 @@
     }
   },
   "grazing": {
-    "_doc": "Бэлчээрлэлт. Хурд нь тоглоомын минут тутмын метр (1 цаг = 60 минут).",
+    "_doc": "Бэлчээрлэлт. Хурд нь тоглоомын минут тутмын метр (1 цаг = 60 минут). roamFactor M4-өөс хэрэглэгдэхгүй (хол хайх нь сүргийн шийдвэр, herd).",
     "imaxPerMinute": 0.0031,
     "biomassPerGut": 2.5,
     "decisionEverySteps": 10,
@@ -214,6 +216,31 @@
     "drinkRadius": 2.5,
     "roamFactor": 5,
     "roamSpeed": 0.6,
-    "hungryPace": 0.6
+    "hungryPace": 0.6,
+    "herd": {
+      "_doc": "Сүргийн шийдвэр (хэрэглэгчийн дүрэм, M4): ойрхон (linkRadius) байгаа нэг төрлийн мал нэг сүрэг. Ус руу явах, шинэ бэлчээр рүү нүүх шийдвэрийг сүргийн ДУНДАЖ цангалт/идэшээр гаргана — нэг хонь цангахад сүрэг хөдлөхгүй. Сүрэг уснаас nearWaterDistance м дотор бол мал нэг нэгээрээ очиж ууна, хол бол сүргээрээ явна. Шинэ бэлчээр рүү нүүх нь: сүргийн дундаж идэш хоцорсон, ойр орчмын оноо poorScore-оос бага, сүүлийн settleMinutes минутад туугдаагүй (малчин тууж авчирсан газраа үлдэнэ) үед.",
+      "linkRadius": 12,
+      "decideEverySteps": 10,
+      "nearWaterDistance": 35,
+      "waterBunch": 0.35,
+      "drinkBankOffset": 3.2,
+      "trekSpeed": 0.8,
+      "trekMinDistance": 14,
+      "trekMaxDistance": 70,
+      "trekSamples": 18,
+      "trekGain": 1.4,
+      "trekSpread": 0.4,
+      "localRadius": 6,
+      "rejoinDistance": 60,
+      "poorScore": 0.15,
+      "settleMinutes": 120,
+      "maxHomeDistance": {
+        "_doc": "Сүрэг өөрөө нүүхдээ хотоос энэ зайнаас холдохгүй: үхэр хотоосоо хол явдаггүй (grazing-livestock.md §3.3)",
+        "sheep": 140,
+        "goat": 140,
+        "cow": 85,
+        "horse": 150
+      }
+    }
   }
 }

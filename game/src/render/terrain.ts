@@ -228,7 +228,9 @@ export class TerrainView {
     const n = this.vFixed.length;
     const types = this.cfg.pasture.types;
     const maxB = grid.typeIds.map((id) => types[id]?.maxBiomass ?? 0);
-    const dryK = 0.55 * degrade;
+    // Доройтол: бууцны газар шаргалтаж (M4: илүү тод), бут намсна
+    const dryK = Math.min(0.9, 0.95 * degrade);
+    const tuftK = 1 - 0.55 * degrade;
     for (let i = 0; i < n; i++) {
       let s = 0, m = 0, abs = 0;
       for (let k = 0; k < 4; k++) {
@@ -274,7 +276,7 @@ export class TerrainView {
       const b = bio[this.tuftCell[k]!] ?? 0;
       const o = k * 5;
       const s = this.tuftPos[o + 3]!;
-      const hs = b < 0.12 ? 0 : s * (0.2 + 0.95 * b);
+      const hs = b < 0.12 ? 0 : s * (0.2 + 0.95 * b) * tuftK;
       const w = Math.min(s, 1.1);
       this.tmpP.set(this.tuftPos[o]!, this.tuftPos[o + 1]!, this.tuftPos[o + 2]!);
       this.tmpQ.setFromAxisAngle(this.yAxis, this.tuftPos[o + 4]!);

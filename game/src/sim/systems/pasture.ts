@@ -50,7 +50,7 @@ export function buildGrid(cfg: GameConfig, campId: string, degrade: number, rng:
       }
       const i = iz * n + ix;
       type[i] = typeIds.indexOf(tId);
-      biomass[i] = Math.min(1, Math.max(0.05, (0.85 + 0.15 * hashNoise(ix, iz, salt + 1)) * (1 - 0.5 * degrade)));
+      biomass[i] = Math.min(1, Math.max(0.05, (0.85 + 0.15 * hashNoise(ix, iz, salt + 1)) * grassCapacity(cfg, degrade)));
     }
   }
   return { n, cell, half, typeIds, type, biomass };
@@ -90,12 +90,21 @@ export function grassHeightCm(cfg: GameConfig, g: GrassGrid, i: number): number 
   return (g.biomass[i] ?? 0) * (t?.heightCm ?? 0);
 }
 
-/** Өдрийн ургалт: Δb = r × b × (1 − b), r нь доройтлоор буурна (mvp-spec.md §7.2–7.3) */
+/** Доройтсон бууцны өвсний дээд хэмжээ (даац), 0–1 */
+export function grassCapacity(cfg: GameConfig, degrade: number): number {
+  return 1 - cfg.pasture.degradation.capacityPenalty * degrade;
+}
+
+/**
+ * Өдрийн ургалт: Δb = r × b × (1 − b / K) (mvp-spec.md §7.2–7.3).
+ * Доройтол ургах хурд r-ийг ба дээд хэмжээ K-г бууруулна: доройтсон бууцанд өвс сийрэгжиж намсна (M4).
+ */
 export function dailyRegrowth(cfg: GameConfig, g: GrassGrid, degrade: number): void {
   const r = cfg.pasture.regrowthR * (1 - cfg.pasture.degradation.growthPenalty * degrade);
+  const K = grassCapacity(cfg, degrade);
   for (let i = 0; i < g.biomass.length; i++) {
     const b = Math.max(g.biomass[i] ?? 0, 0.02); // үндэс үлддэг тул бүрэн тэглэхгүй
-    g.biomass[i] = Math.min(1, b + r * b * (1 - b));
+    g.biomass[i] = Math.min(1, Math.max(0.02, b + r * b * (1 - b / K)));
   }
 }
 

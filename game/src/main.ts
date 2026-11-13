@@ -12,6 +12,8 @@ import { formatTime, realSecondsPerMinute } from './sim/clock';
 import { averageBiomass } from './sim/systems/pasture';
 import * as storage from './sim/systems/storage';
 import { ridingHorse } from './sim/systems/herder';
+import { huntingWolves } from './sim/systems/wolves';
+import { DOG_ORDER_NAME } from './sim/systems/dogs';
 import { GameView } from './render/scene';
 import { Panels } from './render/ui/panels';
 import { PRODUCT_EMOJI, fmtMinutes, fmtMoney, fmtNum } from './render/ui/names';
@@ -46,10 +48,20 @@ function start(): void {
   help.innerHTML = `<h3>${t('help.title')}</h3>${t('help.body')}`;
   document.title = t('app.title');
 
-  const panels = new Panels(cfg, state, { dispatch: (cmd) => sim.command(cmd), toast });
+  const panels = new Panels(cfg, state, { dispatch: (cmd) => sim.command(cmd), toast, toggleZones: () => view.zones.toggle() });
   const showReports = qs.get('report') !== '0';
+  let huntToastT = 0;
   sim.on((e) => {
     if (e.type === 'dayReport' && showReports) panels.showReport(e.report);
+    else if (e.type === 'wolfHunt') {
+      const now = performance.now();
+      if (now - huntToastT > 4000) {
+        huntToastT = now;
+        const d = Math.round(Math.hypot(e.x - state.player.x, e.z - state.player.z));
+        toast(`🐺 Чоно ${t('species.' + e.species).toLowerCase()} руу дайрлаа! ${d} м зайд — Q үргээх, морь унаж оч`, 'bad');
+      }
+    } else if (e.type === 'wolfKill') toast(`🐺 Чоно ${t('species.' + e.species).toLowerCase()} барьж авлаа`, 'bad');
+    else if (e.type === 'wolfGiveUp') toast('Чоно ангаа орхилоо', 'good');
   });
 
   let speedIdx = Math.max(0, Math.min(cfg.time.speeds.length - 1, (Number(qs.get('speed')) || 1) - 1));
@@ -69,11 +81,11 @@ function start(): void {
       if (what === 'heatmap') view.toggleHeatmap(state);
       else if (what === 'storage') panels.open('storage');
       else if (what === 'trip') panels.open('trip');
-      else if (what === 'cheatHerd') {
-        const p = state.player;
-        const r = sim.command({ type: 'debugAddAnimals', n: 50, x: p.x + Math.sin(p.heading) * 20, z: p.z + Math.cos(p.heading) * 20 });
-        if (r.msg) toast(r.msg, 'good');
-      } else help.style.display = help.style.display === 'block' ? 'none' : 'block';
+      else if (what === 'dogs') panels.open('dogs');
+      else if (what === 'camps') panels.open('camps');
+      else if (what === 'cheat') panels.open('cheat');
+      else if (what === 'zones') toast(view.zones.toggle() ? '🛡 Хамгаалалтын бүс харагдаж байна' : 'Хамгаалалтын бүс нуулаа', 'good');
+      else help.style.display = help.style.display === 'block' ? 'none' : 'block';
     },
   });
   view.cam.onClick = (nx, ny, dbl) => {
@@ -116,7 +128,7 @@ function start(): void {
       const horse = ridingHorse(state);
       if (carried >= cfg.products.carryUnits - 1e-9 && dHome > home.storageRadius) html = 'Гар дүүрсэн — майхны дэргэдэх агуулах руу авчир';
       else if (nearItems) html = `<kbd>E</kbd> түүх (${nearItems})`;
-      else if (dHome <= home.storageRadius * 2) html = `<kbd>B</kbd> агуулах, боловсруулах · <kbd>T</kbd> сумын төв рүү явах`;
+      else if (dHome <= home.storageRadius * 2) html = `<kbd>B</kbd> агуулах, боловсруулах · <kbd>T</kbd> сумын төв рүү явах · <kbd>M</kbd> нүүх`;
       else if (!p.mounted && horse && Math.hypot(horse.x - p.x, horse.z - p.z) <= cfg.player.mountRange) html = '<kbd>F</kbd> морь унах';
     }
     prompt.innerHTML = html;
@@ -178,7 +190,17 @@ function start(): void {
       if (state.trip) {
         const tr = state.trip;
         status = `${tr.vehicle === 'truck' ? '🚚' : '🐴'} ${tr.arrived ? 'Сумын төвөөс буцаж байна' : 'Сумын төв рүү явж байна'} · ${fmtMinutes(tr.total - tr.elapsed)}`;
-      } else if (state.move) status = `Нүүж байна · ${fmtMinutes(state.move.remaining)}`;
+      } else if (state.move) status = `🏕 ${t('camp.' + state.move.to)} руу нүүж байна · ${fmtMinutes(state.move.remaining)}`;
+      const hunts = huntingWolves(state);
+      let alert = '';
+      if (hunts.length) {
+        const a = state.animals.find((x) => x.id === hunts[0]!.targetId);
+        const d = a ? Math.round(Math.hypot(a.x - p.x, a.z - p.z)) : 0;
+        alert = `<b style="color:#ff6b5a">⚠ Чоно дайрч байна${a ? `: ${t('species.' + a.species).toLowerCase()}, ${d} м` : ''} (Q)</b><br>`;
+      }
+      const dogsTxt = state.dogs.length
+        ? `🐕 ${state.dogs.map((d) => `${d.name}: ${d.mode === 'chase' ? 'чоно хөөж байна' : DOG_ORDER_NAME[d.order].toLowerCase()}`).join(' · ')} <small>(K)</small><br>`
+        : '';
       hud.innerHTML =
         `<b>${t('hud.day', { day: state.time.day })}</b> · ${formatTime(state.time)}${paused ? ' · ⏸' : ''}<br>` +
         `${t('hud.money')}: <b>${fmtMoney(state.money)}</b><br>` +
@@ -186,7 +208,9 @@ function start(): void {
         `📦 ${fmtNum(storage.used(state))}/${storage.capacity(cfg, state)} · ✋ ${carryTxt} (${fmtNum(carried)}/${cfg.products.carryUnits})${onGround ? ` · газарт ${onGround}` : ''}<br>` +
         `${t('hud.camp')}: ${t('camp.' + state.campId)} · ${t('hud.grass')} ${Math.round(grassAvg * 100)}% · ${t('hud.degrade')} ${Math.round(degrade * 100)}%<br>` +
         `${status} · ${t('hud.speed')}: ${speed}× <small>(1/2/3)</small><br>` +
-        `<small>${t('hud.milestone')} · ${t('help.hint')}${view.heatmap ? ' · G: heatmap' : ''}</small>`;
+        dogsTxt +
+        alert +
+        `<small>${t('hud.milestone')} · ${t('help.hint')}${view.heatmap ? ' · G: heatmap' : ''}${view.zones.visible ? ' · Z: бүс' : ''}${state.wolves.peaceful ? ' · чоно унтраасан' : ''}</small>`;
       perf.textContent = `${fps.toFixed(0)} FPS · max ${worstShown.toFixed(0)} ms · ${view.drawCalls} draw · ${state.animals.length} мал`;
     }
     requestAnimationFrame(frame);

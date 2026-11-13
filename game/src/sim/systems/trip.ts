@@ -7,6 +7,7 @@ import type { Rng } from '../rng';
 import { newAnimal, type BuyOrder, type GameState, type ProductId, type TripState, type VehicleId } from '../state';
 import { buyPrice, salePrice } from './animals';
 import * as storage from './storage';
+import { newDog } from './dogs';
 
 export function vehicleCfg(cfg: GameConfig, v: VehicleId) {
   return cfg.vehicles[v];
@@ -28,6 +29,8 @@ export function orderPrice(cfg: GameConfig, state: GameState, o: BuyOrder): numb
       return cfg.economy.gerPrice;
     case 'vehicle':
       return cfg.vehicles[o.id].price;
+    case 'dog':
+      return cfg.dogs.price;
   }
 }
 
@@ -139,6 +142,9 @@ function deliver(cfg: GameConfig, state: GameState, rng: Rng, orders: BuyOrder[]
         break;
       case 'vehicle':
         if (!state.vehicles.includes(o.id)) state.vehicles.push(o.id);
+        break;
+      case 'dog':
+        if (state.dogs.length < cfg.dogs.maxDogs) state.dogs.push(newDog(cfg, state, home.x + 3 + rng.range(-1, 1), home.z - 3));
         break;
     }
   }

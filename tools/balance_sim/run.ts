@@ -4,7 +4,12 @@
  *   cd game && npx tsx ../tools/balance_sim/run.ts --seeds 30 --days 150
  *
  * Анхааруулга: стратегиуд бүтээгдэхүүн түүхэд алхах хугацааг тооцохгүй (proximity=false).
- * Тиймээс энэ нь гараар тоглолтын ДЭЭД хязгаар. Чоно, туслах (M4, M5) одоогоор ороогүй.
+ * Тиймээс энэ нь гараар тоглолтын ДЭЭД хязгаар. Туслах (M5) ороогүй.
+ *
+ * M4: чоно дайрна (`--wolves.attack.enabled 0` — унтраах). Стратегиуд малчныг сүргийнхээ дэргэд
+ * байлгах (escort) хувиар ялгаатай, нохой авна. «Үлддэг» = Дунд, гэхдээ бууцаа хэзээ ч сэлгэхгүй
+ * (M4-ийн гарах шалгуур: нэг бууцанд удахад өвс сулрах нь мэдрэгдэх эсэх).
+ *   --only Дунд,Үлддэг — зөвхөн эдгээр стратеги
  */
 import { loadConfig, type GameConfig, type Species } from '../../game/src/sim/config';
 import { createInitialState, type BuyOrder, type ProductId } from '../../game/src/sim/state';
@@ -13,6 +18,7 @@ import { herdSheepUnits } from '../../game/src/sim/systems/animals';
 import { absBiomass, typeIdOf, typeQualities } from '../../game/src/sim/systems/pasture';
 import * as storage from '../../game/src/sim/systems/storage';
 import { orderPrice } from '../../game/src/sim/systems/trip';
+import { findHerds } from '../../game/src/sim/systems/herds';
 
 const args = Object.fromEntries(
   process.argv.slice(2).reduce<[string, string][]>((acc, v, i, arr) => {
@@ -40,7 +46,21 @@ function applyOverrides(cfg: GameConfig): string[] {
 type Strategy = {
   name: string;
   onHour: (sim: Sim, hour: number) => void;
+  /** Малчин хонин сүргийн дэргэд байх цагууд (чоноос хамгаална) */
+  escortHours?: [number, number];
 };
+
+/** Малчныг хамгийн том хонин сүргийн төвд байлгана (10 минут тутам) */
+function escort(sim: Sim): void {
+  const herds = findHerds(sim.state, sim.cfg.pasture.grazing.herd.linkRadius).filter((h) => h.key === 'sheep');
+  const h = herds.sort((a, b) => b.members.length - a.members.length)[0];
+  if (h) sim.command({ type: 'movePlayer', x: h.x, z: h.z }, false);
+}
+
+/** Нохой хонин сүргийг хамгаална */
+function dogsGuard(sim: Sim): void {
+  if (sim.state.dogs.some((d) => d.order !== 'guardHerd')) sim.command({ type: 'dogOrder', dog: 'all', order: 'guardHerd', herd: 'sheep' }, false);
+}
 
 const SELL_ORDER: ProductId[] = ['cashmere', 'urum', 'aaruul', 'felt', 'wool', 'tarag', 'milk'];
 
@@ -56,7 +76,7 @@ function collectAll(sim: Sim): void {
 
 function processAll(sim: Sim): void {
   for (const p of sim.state.processors) {
-    if (p.remaining === 0) sim.command({ type: 'process', kind: p.kind });
+    if (p.remaining === 0) sim.command({ type: 'process', kind: p.kind }, false);
   }
 }
 
@@ -89,11 +109,12 @@ function tripIfUseful(sim: Sim, buy: BuyOrder[], minUnits: number, sellAnimalIds
     }
   }
   if (units < minUnits && buy.length === 0 && sellAnimalIds.length === 0) return;
-  sim.command({ type: 'trip', plan: { vehicle: v, sell, buy, sellAnimalIds } });
+  sim.command({ type: 'trip', plan: { vehicle: v, sell, buy, sellAnimalIds } }, false);
 }
 
-/** Бууцны төвөөс 150 м дотор хамгийн сайн бэлчээрийн цэг (чанар^1.5 × өвс) */
+/** Бууцны төвөөс 150 м дотор хамгийн сайн бэлчээрийн цэг (чанар^1.5 × өвс). Чонын нутгаас (улаан тойрог) зайдуу */
 function bestSpot(cfg: GameConfig, sim: Sim, minCm: number): { x: number; z: number } {
+  const dens = sim.state.wolves.dens;
   const g = sim.state.grass;
   const q = typeQualities(cfg, sim.state.camps[sim.state.campId]?.degrade ?? 0);
   let best = -1, bx = 30, bz = 0;
@@ -102,6 +123,7 @@ function bestSpot(cfg: GameConfig, sim: Sim, minCm: number): { x: number; z: num
       const x = -g.half + (ix + 0.5) * g.cell, z = -g.half + (iz + 0.5) * g.cell;
       const r = Math.hypot(x, z);
       if (r > 150 || r < 25) continue;
+      if (dens.some((d) => Math.hypot(x - d.x, z - d.z) < d.r + 15)) continue;
       const i = iz * g.n + ix;
       const t = cfg.pasture.types[typeIdOf(g, i)];
       if ((g.biomass[i] ?? 0) * (t?.heightCm ?? 0) < minCm) continue;
@@ -124,10 +146,10 @@ function rotateCamp(sim: Sim, threshold: number): boolean {
   const best = Object.entries(state.camps).filter(([id]) => id !== state.campId).sort((a, b) => a[1].degrade - b[1].degrade)[0];
   if (!best) return false;
   collectAll(sim);
-  return sim.command({ type: 'moveCamp', to: best[0] }).ok;
+  return sim.command({ type: 'moveCamp', to: best[0] }, false).ok;
 }
 
-function buyPlan(sim: Sim, reserve: number, maxSU: number): BuyOrder[] {
+function buyPlan(sim: Sim, reserve: number, maxSU: number, dogs = 0): BuyOrder[] {
   const { cfg, state } = sim;
   const orders: BuyOrder[] = [];
   let money = state.money;
@@ -144,6 +166,7 @@ function buyPlan(sim: Sim, reserve: number, maxSU: number): BuyOrder[] {
   if (state.home !== 'ger' && su >= cfg.economy.goalSheepUnits) tryBuy({ kind: 'ger' }, 0);
   if (!state.processors.some((p) => p.kind === 'pot')) tryBuy({ kind: 'processor', id: 'pot' }, reserve);
   if (state.storageLevel === 0 && storage.used(state) > 14) tryBuy({ kind: 'storage' }, reserve);
+  if (state.dogs.length < dogs && state.processors.length) tryBuy({ kind: 'dog' }, reserve);
   // Сүрэг өсгөх: хязаалан эм хонь (тэргэнд 3). Зорилгод хүрэх хонин толгой хүрсний дараа гэрт хуримтлуулна
   if (su < maxSU) for (let k = 0; k < 3; k++) if (!tryBuy({ kind: 'animal', species: 'sheep', sex: 'f', age: 3 }, reserve * 2)) break;
   return orders;
@@ -151,10 +174,12 @@ function buyPlan(sim: Sim, reserve: number, maxSU: number): BuyOrder[] {
 
 const active: Strategy = {
   name: 'Идэвхтэй',
+  escortHours: [7, 20],
   onHour(sim, hour) {
     const { cfg, state } = sim;
     if (hour === 7 && rotateCamp(sim, 0.25)) return;
     if (hour === 7) {
+      dogsGuard(sim);
       state.neighborBull = true;
       for (const sp of ['sheep', 'cow'] as Species[]) {
         const spot = bestSpot(cfg, sim, cfg.animals.species[sp].minGrassCm + 1);
@@ -164,25 +189,31 @@ const active: Strategy = {
     collectAll(sim);
     processAll(sim);
     if (hour === 9 || hour === 16)
-      tripIfUseful(sim, hour === 9 ? buyPlan(sim, 400_000, cfg.economy.goalSheepUnits + 5) : [], 12, hour === 9 ? surplusMales(sim) : []);
+      tripIfUseful(sim, hour === 9 ? buyPlan(sim, 400_000, cfg.economy.goalSheepUnits + 5, 1) : [], 12, hour === 9 ? surplusMales(sim) : []);
   },
 };
 
-const medium: Strategy = {
-  name: 'Дунд',
-  onHour(sim, hour) {
-    const { cfg, state } = sim;
-    state.neighborBull = true;
-    if (hour === 7 && rotateCamp(sim, 0.35)) return;
-    if (hour === 8 && state.time.day % 2 === 0) {
-      const spot = bestSpot(cfg, sim, 2);
-      sim.command({ type: 'drive', species: 'sheep', x: spot.x, z: spot.z });
-    }
-    if (hour === 9 || hour === 13 || hour === 18) collectAll(sim);
-    processAll(sim);
-    if (hour === 10 && state.time.day % 2 === 0) tripIfUseful(sim, buyPlan(sim, 300_000, cfg.economy.goalSheepUnits), 6, surplusMales(sim));
-  },
-};
+function mediumStrategy(name: string, rotate: boolean): Strategy {
+  return {
+    name,
+    escortHours: [7, 12],
+    onHour(sim, hour) {
+      const { cfg, state } = sim;
+      state.neighborBull = true;
+      if (rotate && hour === 7 && rotateCamp(sim, 0.35)) return;
+      if (hour === 7) dogsGuard(sim);
+      if (hour === 8 && state.time.day % 2 === 0) {
+        const spot = bestSpot(cfg, sim, 2);
+        sim.command({ type: 'drive', species: 'sheep', x: spot.x, z: spot.z });
+      }
+      if (hour === 9 || hour === 13 || hour === 18) collectAll(sim);
+      processAll(sim);
+      if (hour === 10 && state.time.day % 2 === 0) tripIfUseful(sim, buyPlan(sim, 300_000, cfg.economy.goalSheepUnits, 1), 6, surplusMales(sim));
+    },
+  };
+}
+const medium = mediumStrategy('Дунд', true);
+const stayer = mediumStrategy('Үлддэг', false);
 
 const lazy: Strategy = {
   name: 'Залхуу',
@@ -201,17 +232,38 @@ const lazy: Strategy = {
 interface RunResult {
   goalDay: number | null;
   reports: DayReport[];
+  wolfKills: number;
+  killsBySp: Record<string, number>;
 }
 
 function run(cfg: GameConfig, strat: Strategy, seed: number): RunResult {
   const sim = new Sim(cfg, createInitialState(cfg, seed));
   const reports: DayReport[] = [];
+  let wolfKills = 0;
+  const killsBySp: Record<string, number> = {};
   sim.on((e) => {
     if (e.type === 'hour') strat.onHour(sim, e.hour);
     if (e.type === 'dayReport') reports.push(e.report);
+    if (e.type === 'wolfKill') {
+      wolfKills++;
+      killsBySp[e.species] = (killsBySp[e.species] ?? 0) + 1;
+    }
   });
-  sim.runDays(DAYS);
-  return { goalDay: sim.state.goalReachedDay, reports };
+  const [h0, h1] = strat.escortHours ?? [99, 99];
+  while (sim.state.time.day <= DAYS) {
+    const hour = sim.state.time.minute / 60;
+    if (sim.state.step % 10 === 0 && hour >= h0 && hour < h1 && !sim.state.player.away) escort(sim);
+    sim.step();
+  }
+  return { goalDay: sim.state.goalReachedDay, reports, wolfKills, killsBySp };
+}
+
+/** Бүх seed-ийн нийт: төрлөөр */
+function killsTxt(results: RunResult[]): string {
+  const tot: Record<string, number> = {};
+  for (const r of results) for (const [k, n] of Object.entries(r.killsBySp)) tot[k] = (tot[k] ?? 0) + n;
+  const parts = Object.entries(tot).map(([k, n]) => `${k} ${n}`);
+  return parts.length ? ` (бүх seed: ${parts.join(', ')})` : '';
 }
 
 const median = (xs: number[]) => {
@@ -226,21 +278,22 @@ const overrides = applyOverrides(cfg);
 const dayHours = ((cfg.time.dayEndMinute - cfg.time.dayStartMinute) / 60) * cfg.time.realSecondsPerGameHour / 3600;
 console.log(`# Тэнцвэрийн тайлан — ${SEEDS} seed × ${DAYS} өдөр (1 өдөр = 1× хурдаар ${(dayHours * 60).toFixed(1)} мин)` + (overrides.length ? ` · ${overrides.join(', ')}` : '') + '\n');
 
-for (const strat of [active, medium, lazy]) {
+const only = args.only ? String(args.only).split(',') : null;
+for (const strat of [active, medium, stayer, lazy].filter((s) => !only || only.includes(s.name))) {
   const t0 = performance.now();
   const results = Array.from({ length: SEEDS }, (_, i) => run(cfg, strat, 1000 + i));
   const goalDays = results.map((r) => r.goalDay).filter((d): d is number => d !== null);
   console.log(`## ${strat.name}  (${((performance.now() - t0) / 1000).toFixed(1)} сек)`);
-  console.log(`Зорилгод хүрсэн: ${goalDays.length}/${SEEDS}` + (goalDays.length ? ` · медиан ${median(goalDays)}-р өдөр (1× хурдаар ~${(median(goalDays) * dayHours).toFixed(1)} цаг)` : ''));
-  console.log('| Өдөр | Мөнгө | Хонин толгой | Эм хонины жин | Идэш | Бууцны доройтол | Өдрийн орлого | Муудсан (нэгж/өдөр) |');
-  console.log('|---|---|---|---|---|---|---|---|');
-  for (const d of [10, 30, 60, 100, 150].filter((d) => d <= DAYS)) {
+  console.log(`Зорилгод хүрсэн: ${goalDays.length}/${SEEDS}` + (goalDays.length ? ` · медиан ${median(goalDays)}-р өдөр (1× хурдаар ~${(median(goalDays) * dayHours).toFixed(1)} цаг)` : '') + ` · чонод барьдсан (медиан) ${median(results.map((r) => r.wolfKills))} мал` + killsTxt(results));
+  console.log('| Өдөр | Мөнгө | Хонин толгой | Эм хонины жин | Тарга | Идэш | Өвс | Бууцны доройтол | Өдрийн орлого | Муудсан (нэгж/өдөр) |');
+  console.log('|---|---|---|---|---|---|---|---|---|---|');
+  for (const d of [10, 30, 60, 100, 150, 200].filter((d) => d <= DAYS)) {
     const rs = results.map((r) => r.reports[d - 1]!).filter(Boolean);
     const win = results.map((r) => r.reports.slice(Math.max(0, d - 10), d));
     const inc = win.map((w) => w.reduce((s, x) => s + Object.values(x.income).reduce((a, b) => a + (b ?? 0), 0), 0) / w.length);
     const spoil = win.map((w) => w.reduce((s, x) => s + Object.values(x.spoiled).reduce((a, b) => a + (b ?? 0), 0), 0) / w.length);
     console.log(
-      `| ${d} | ${fmt(median(rs.map((r) => r.moneyEnd)))}₮ | ${median(rs.map((r) => r.sheepUnits)).toFixed(0)} | ${median(rs.map((r) => r.avgEweKg)).toFixed(1)} кг | ${(median(rs.map((r) => r.avgGutFill)) * 100).toFixed(0)}% | ${median(rs.map((r) => r.campDegrade)).toFixed(2)} | ${fmt(median(inc))}₮ | ${median(spoil).toFixed(1)} |`,
+      `| ${d} | ${fmt(median(rs.map((r) => r.moneyEnd)))}₮ | ${median(rs.map((r) => r.sheepUnits)).toFixed(0)} | ${median(rs.map((r) => r.avgEweKg)).toFixed(1)} кг | ${(median(rs.map((r) => r.avgCondition)) * 100).toFixed(0)}% | ${(median(rs.map((r) => r.avgGutFill)) * 100).toFixed(0)}% | ${(median(rs.map((r) => r.grass)) * 100).toFixed(0)}% | ${median(rs.map((r) => r.campDegrade)).toFixed(2)} | ${fmt(median(inc))}₮ | ${median(spoil).toFixed(1)} |`,
     );
   }
   console.log('');

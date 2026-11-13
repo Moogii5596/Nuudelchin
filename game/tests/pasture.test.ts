@@ -53,3 +53,15 @@ describe('Бууц сэлгэх (mvp-spec.md §7.3)', () => {
     expect(sim.state.camps.river!.degrade).toBeLessThan(0.4);
   });
 });
+
+describe('Доройтол өвсний даацыг бууруулна (M4)', () => {
+  it('доройтсон бууцанд өвс бүрэн ургахгүй, бага хэмжээнд тогтоно', async () => {
+    const { grassCapacity } = await import('../src/sim/systems/pasture');
+    const g = buildGrid(cfg, 'river', 0, new Rng(3));
+    for (let i = 0; i < g.biomass.length; i++) g.biomass[i] = 0.9;
+    for (let d = 0; d < 40; d++) dailyRegrowth(cfg, g, 0.8);
+    const avg = g.biomass.reduce((s, b) => s + b, 0) / g.biomass.length;
+    expect(avg).toBeLessThan(grassCapacity(cfg, 0.8) + 0.02);
+    expect(avg).toBeGreaterThan(grassCapacity(cfg, 0.8) - 0.05);
+  });
+});

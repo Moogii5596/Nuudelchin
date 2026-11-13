@@ -55,6 +55,8 @@ const EXPENSE: Record<string, string> = {
   buy_storage: 'Агуулах томруулсан',
   buy_ger: 'Гэр авсан',
   buy_vehicle: 'Тээвэр авсан',
+  buy_dog: 'Нохой авсан',
+  dogFood: 'Нохойн хоол',
 };
 export function expenseName(k: string): string {
   return EXPENSE[k] ?? k;
@@ -79,3 +81,16 @@ export function fmtMinutes(min: number): string {
   const h = Math.floor(min / 60), m = Math.round(min % 60);
   return h ? `${h} цаг ${m ? m + ' мин' : ''}`.trim() : `${m} мин`;
 }
+
+/** Бэлчээрийн төрөл (data/pasture.json → types) */
+export const PASTURE_NAME: Record<string, string> = {
+  camp: 'бууцны орчим',
+  steppe: 'тал хээр',
+  meadow: 'голын нуга',
+  southSlope: 'уулын өвөр',
+  foothill: 'уулын бэл',
+  northSlope: 'уулын ар',
+};
+
+export const WATER_NAME: Record<string, string> = { river: 'Гол (ойрхон)', stream: 'Горхи', spring: 'Булаг' };
+export const WOLF_LEVEL_NAME: Record<string, string> = { low: 'бага', medium: 'дунд', high: 'өндөр' };

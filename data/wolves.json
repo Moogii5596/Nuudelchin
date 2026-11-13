@@ -1,5 +1,5 @@
 {
-  "_doc": "Чоно (зөвхөн өдөр). mvp-spec.md §8, prototype-rules.md §6. M2: нутагтаа тэнэх, «Чоно үргээх». Дайралт M4-т. Хурд нь тоглоомын минут тутмын метр.",
+  "_doc": "Чоно (зөвхөн өдөр). mvp-spec.md §8, prototype-rules.md §6. M4: нутагтаа орсон хамгаалалтгүй малд дайрна, нэгийг барьж үүр лүүгээ чирнэ. Хурд нь тоглоомын минут тутмын метр.",
   "densPerCamp": 3,
   "denDistance": [
     120,
@@ -14,11 +14,16 @@
     2
   ],
   "protectRadius": {
+    "_doc": "Хамгаалалтын бүс (м). Чоно бүс рүү орохгүй, бүс доторх малд дайрахгүй. pen = хашааны радиус + энэ",
     "herder": 15,
     "herderMounted": 20,
     "dog": 10,
     "stallion": 15,
-    "helper": 15
+    "helper": 15,
+    "pen": 3,
+    "tent": 6,
+    "ger": 8,
+    "ridingHorse": 8
   },
   "scareRadius": {
     "onFoot": 45,
@@ -27,7 +32,51 @@
   "scaredSeconds": 45,
   "speed": {
     "roam": 0.4,
-    "flee": 2.5
+    "flee": 2.5,
+    "hunt": 2.2,
+    "drag": 0.7
   },
-  "roamEverySteps": 12
+  "roamEverySteps": 12,
+  "attack": {
+    "_doc": "🙋 Түр утга. noticeChance = нутагт нь хамгаалалтгүй мал байхад шалгалт бүрт ан хийж эхлэх магадлал (бууцны чонын түвшнээр). fedMinutes = мал барьсны дараа дахин ан хийхгүй хугацаа.",
+    "enabled": 1,
+    "checkEverySteps": 3,
+    "noticeChance": {
+      "low": 0.04,
+      "medium": 0.07,
+      "high": 0.1
+    },
+    "territoryMargin": 4,
+    "chaseRange": 22,
+    "killRange": 1.3,
+    "fedMinutes": 360,
+    "giveUpCooldown": 40,
+    "vulnerability": {
+      "_doc": "Чоно аль малд дайрах магадлалын үржүүлэгч: том үхэр, адуу эсэргүүцдэг; хонь ямаа, төл (1 наснаас доош) хамгийн эмзэг",
+      "sheep": 1,
+      "goat": 1,
+      "cow": 0.3,
+      "horse": 0.2,
+      "young": 1
+    }
+  },
+  "fear": {
+    "_doc": "Мал чоноос айж үргэнэ (хэрэглэгчийн дүрэм 2026-11-13): чоно senseRadius-д ойртвол (ангуучлаагүй ч, айж зугтаж буй чоноос бусад) мал чонын эсрэг зүг рүү, spread радиан хүртэл санамсаргүй хазайж (сүрэг тарна) fleeDistance м гүйнэ. Зугтсан малын contagion м доторх сүргийн мал contagionChance магадлалтай дагаж цугтана. Хамгаалалтын бүс доторх мал (малчин, нохой, хашааны дэргэд) үргэхгүй. Нас гүйцсэн эр адуу (азарга) айхгүй.",
+    "everySteps": 2,
+    "senseRadius": {
+      "sheep": 18,
+      "goat": 18,
+      "cow": 12,
+      "horse": 22
+    },
+    "huntMult": 1.4,
+    "contagion": 7,
+    "contagionChance": 0.6,
+    "fleeDistance": [
+      14,
+      28
+    ],
+    "spread": 0.9,
+    "speed": 1.8
+  }
 }

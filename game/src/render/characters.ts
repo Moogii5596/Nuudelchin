@@ -1,5 +1,5 @@
 /**
- * Малчин, унаа морь, чоно (прототип v1.2-ын загварууд). Цөөн тул энгийн Mesh-ээр зурна.
+ * Малчин, унаа морь, чоно, нохой (прототип v1.2-ын загварууд). Цөөн тул энгийн Mesh-ээр зурна.
  * Байрлалыг GameState-ээс уншина; малчныг input бодит цагаар хөдөлгөдөг тул шууд,
  * морь ба чоныг алхам хооронд зөөлрүүлнэ.
  */
@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import type { GameState } from '../sim/state';
 import { ridingHorse } from '../sim/systems/herder';
 import type { Wolf } from '../sim/systems/wolves';
+import type { Dog } from '../sim/systems/dogs';
 import { angDiff, limb, meshBox, mat } from './util';
 
 interface Rig {
@@ -85,6 +86,33 @@ function makeWolf(): Rig {
   }
   meshBox(0.14, 0.14, 0.6, dk, 0, 0.72, -0.78, g).rotation.x = 0.6;
   const legs = ([[-0.14, 0.4], [0.14, 0.4], [-0.14, -0.4], [0.14, -0.4]] as const).map(([x, z]) => limb(0.12, 0.56, dk, x, 0.56, z, g));
+  // Барьсан мал (үүр лүүгээ чирэх үед)
+  const prey = meshBox(0.5, 0.35, 0.8, 0xe8e2d4, 0.25, 0.35, 1.1, g);
+  prey.name = 'prey';
+  prey.rotation.y = 0.9;
+  prey.visible = false;
+  return { root: g, legs, arms: [] };
+}
+
+/** Монгол банхар: хар, хүрэн хацартай */
+function makeDog(): Rig {
+  const g = new THREE.Group();
+  const c = 0x231d19, tan = 0x9a6634;
+  meshBox(0.34, 0.4, 0.85, c, 0, 0.62, 0, g);
+  meshBox(0.36, 0.34, 0.3, tan, 0, 0.58, 0.32, g);   // цээж
+  const head = new THREE.Group();
+  head.position.set(0, 0.86, 0.52);
+  g.add(head);
+  meshBox(0.3, 0.28, 0.32, c, 0, 0, 0, head);
+  meshBox(0.16, 0.13, 0.22, tan, 0, -0.05, 0.25, head);
+  for (const sx of [-1, 1]) {
+    meshBox(0.08, 0.14, 0.05, c, sx * 0.1, 0.18, -0.05, head);
+    const brow = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.04, 0.02), mat(tan));   // «дөрвөн нүдтэй» хүрэн толбо
+    brow.position.set(sx * 0.08, 0.08, 0.165);
+    head.add(brow);
+  }
+  meshBox(0.1, 0.1, 0.45, c, 0, 0.78, -0.55, g).rotation.x = -0.7;   // сүүл (дээш эргэсэн)
+  const legs = ([[-0.11, 0.3], [0.11, 0.3], [-0.11, -0.3], [0.11, -0.3]] as const).map(([x, z]) => limb(0.1, 0.45, c, x, 0.45, z, g));
   return { root: g, legs, arms: [] };
 }
 
@@ -125,6 +153,7 @@ export class CharactersView {
   private herder = makeHerder();
   private horse = makeHorse(0x7a4a26);
   private wolves = new Map<number, { rig: Rig; x: number; z: number; h: number; phase: number }>();
+  private dogs = new Map<number, { rig: Rig; x: number; z: number; h: number; phase: number; bark: THREE.Sprite }>();
   private wolfCamp = '';
   private hPhase = 0;
   private horsePhase = 0;
@@ -225,6 +254,43 @@ export class CharactersView {
     }
 
     this.updateWolves(state, heightAt, dt);
+    this.updateDogs(state, heightAt, dt);
+  }
+
+  private updateDogs(state: GameState, heightAt: (x: number, z: number) => number, dt: number): void {
+    const alive = new Set<number>();
+    for (const d of state.dogs as Dog[]) {
+      alive.add(d.id);
+      let v = this.dogs.get(d.id);
+      if (!v) {
+        v = { rig: makeDog(), x: d.x, z: d.z, h: d.heading, phase: 0, bark: makeBubble('Хав хав!') };
+        v.bark.scale.set(1.8, 0.7, 1);
+        this.group.add(v.rig.root, v.bark);
+        this.dogs.set(d.id, v);
+      }
+      // Нүүх үед шууд шинэ байрлал руу
+      if (Math.hypot(d.x - v.x, d.z - v.z) > 25) {
+        v.x = d.x;
+        v.z = d.z;
+      }
+      const k = Math.min(1, dt * (d.mode === 'chase' ? 10 : 6));
+      const nx = v.x + (d.x - v.x) * k, nz = v.z + (d.z - v.z) * k;
+      const sp = dt > 0 ? Math.hypot(nx - v.x, nz - v.z) / dt : 0;
+      if (sp > 0.15) v.h += angDiff(Math.atan2(nx - v.x, nz - v.z), v.h) * Math.min(1, dt * 8);
+      v.x = nx;
+      v.z = nz;
+      v.phase += dt * sp * 3;
+      swingLegs(v.rig, sp > 0.15 ? Math.sin(v.phase) * 0.8 : 0);
+      const y = heightAt(v.x, v.z);
+      v.rig.root.position.set(v.x, y, v.z);
+      v.rig.root.rotation.y = v.h;
+      v.bark.visible = d.barkT > 0;
+      v.bark.position.set(v.x, y + 1.9 + Math.sin(v.phase * 2) * 0.05, v.z);
+    }
+    for (const [id, v] of this.dogs) if (!alive.has(id)) {
+      this.group.remove(v.rig.root, v.bark);
+      this.dogs.delete(id);
+    }
   }
 
   private updateWolves(state: GameState, heightAt: (x: number, z: number) => number, dt: number): void {
@@ -243,7 +309,9 @@ export class CharactersView {
         this.group.add(v.rig.root);
         this.wolves.set(w.id, v);
       }
-      const k = Math.min(1, dt * (w.mode === 'flee' ? 10 : 5));
+      const k = Math.min(1, dt * (w.mode === 'flee' || w.mode === 'hunt' ? 10 : 5));
+      const prey = v.rig.root.getObjectByName('prey');
+      if (prey) prey.visible = w.mode === 'drag';
       const nx = v.x + (w.x - v.x) * k, nz = v.z + (w.z - v.z) * k;
       const sp = dt > 0 ? Math.hypot(nx - v.x, nz - v.z) / dt : 0;
       if (sp > 0.2) v.h += angDiff(Math.atan2(nx - v.x, nz - v.z), v.h) * Math.min(1, dt * 7);

@@ -4,7 +4,7 @@
   "hud.money": "Money",
   "hud.animals": "Livestock",
   "hud.speed": "Speed",
-  "hud.milestone": "M3 · product loop",
+  "hud.milestone": "M4 · camps & wolves",
   "species.sheep": "Sheep (khoni)",
   "species.goat": "Goat (yamaa)",
   "species.cow": "Cattle (ükher)",
@@ -28,6 +28,6 @@
   "camp.northSlope": "North slope (uulyn ar)",
   "camp.valley": "Valley (khöndii)",
   "help.title": "Controls",
-  "help.body": "WASD / arrows — walk (Shift — run) · click ground — go there\nDrag mouse — rotate camera · wheel — zoom\nSpace — \"Khööye!\": nearby animals bunch and move away from you\nU — take up / put down the uurga (herding pole). With it, animals shy away at 6 m (8.5 m mounted) — walk to steer the herd. Empty-handed, animals ignore you; only \"Khööye!\" moves them\nF — mount / dismount · H — call your horse\nQ — scare wolves (45 m, 60 m mounted)\n1 / 2 / 3 — speed 1× 2× 4× · G — pasture heatmap · F1 — this help · ` — +50 animals (debug)\nWalking near milk cans and wool picks them up (10 units in hand); near the tent they go into storage · E — pick up / store\nB — storage & processing · T — cart trip to the sum center (sell, buy)",
+  "help.body": "WASD / arrows — walk (Shift — run) · click ground — go there\nDrag mouse — rotate camera · wheel — zoom\nSpace — \"Khööe!\": nearby animals bunch and move away from you\nU — hold/put away the herding stick. With it animals shy away from you\nF — mount / dismount · H — call horse\nQ — scare wolves (45 m, 60 m mounted). Wolves attack unprotected animals inside their territory (red ring)\nZ — protection zones: pen, tent, herder (15 m, 20 m mounted), dog (10 m), stallion (15 m)\nK — dog orders (follow me, stay here, patrol here, patrol camp, guard herd) · N — all dogs follow me\nM — move camp: staying long degrades pasture and grass regrows slower\nHerds go to water and new pasture on their own: together when far from water, one by one when near\nWalk over milk/wool to collect (10 units), store it near the tent · E — pick up / store\nB — storage & processing · T — trip to the sum center (sell, buy animals/dogs)\n1 / 2 / 3 — speed 1× 2× 4× · G — pasture heatmap · F1 — help · ` — cheat menu",
   "help.hint": "F1 — controls"
 }

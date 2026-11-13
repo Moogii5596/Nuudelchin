@@ -1,5 +1,6 @@
 /**
  * Цонхнууд (M3): агуулах ба боловсруулалт (B), сумын төв (T), өдрийн тайлан (20:00).
+ * M4: нохойн команд (K), бууц сэлгэх (M), туршилтын цэс (`).
  * GameState-ийг зөвхөн уншиж, үйлдлийг Command-аар илгээнэ (architecture.md §3.1).
  * Цонх нээлттэй үед тоглоом түр зогсоно.
  */
@@ -14,11 +15,29 @@ import { recipe } from '../../sim/systems/processing';
 import { animalSlots, orderPrice, productPrice } from '../../sim/systems/trip';
 import { salePrice } from '../../sim/systems/animals';
 import { realSecondsPerMinute } from '../../sim/clock';
+import { DOG_ORDER_NAME, type DogOrderKind } from '../../sim/systems/dogs';
+import { flockKey } from '../../sim/systems/herds';
+import { moveHours } from '../../sim/systems/camps';
+import { herdSheepUnits } from '../../sim/systems/animals';
+import type { CheatAction } from '../../sim/systems/cheats';
 import {
-  PRODUCT_EMOJI, PROCESSOR_NAME, expenseName, fmtMinutes, fmtMoney, fmtNum, productName, speciesEmoji, stageName, unitOf,
+  PASTURE_NAME, PRODUCT_EMOJI, PROCESSOR_NAME, WATER_NAME, WOLF_LEVEL_NAME, expenseName, fmtMinutes, fmtMoney, fmtNum, productName, speciesEmoji, stageName, unitOf,
 } from './names';
+import { t } from '../../i18n/i18n';
 
-type Kind = 'storage' | 'trip' | 'report';
+type Kind = 'storage' | 'trip' | 'report' | 'dogs' | 'camps' | 'cheat';
+
+const HERD_NAME: Record<string, string> = { sheep: '🐑 Хонь ямаа', cow: '🐄 Үхэр', horse: '🐎 Адуу' };
+
+const CHEATS: { act: CheatAction; label: string }[][] = [
+  [{ act: 'money', label: '💰 +1 000 000₮' }, { act: 'fillStorage', label: '🥛 Гарт сүү, ноос' }],
+  [{ act: 'addSheep', label: '🐑 +10 хонь' }, { act: 'addGoats', label: '🐐 +10 ямаа' }, { act: 'addCows', label: '🐄 +5 үхэр' }, { act: 'addHorses', label: '🐎 +5 адуу' }, { act: 'addMixed', label: '+50 холимог' }],
+  [{ act: 'addDog', label: '🐕 +1 нохой' }, { act: 'removeDog', label: '−1 нохой' }],
+  [{ act: 'skipHour', label: '⏩ +1 цаг' }, { act: 'endDay', label: '🌅 Өдрийг дуусгах' }],
+  [{ act: 'thirsty', label: '💧 Бүх мал цангах' }, { act: 'quench', label: 'Бүх мал ус уух' }, { act: 'hungry', label: '🌾 Идэш 0' }, { act: 'fatten', label: 'Бүдүүн тарган' }],
+  [{ act: 'degradeUp', label: '🟫 Доройтол +10%' }, { act: 'degradeReset', label: 'Доройтол 0' }],
+  [{ act: 'wolfAttack', label: '🐺 Чоно дайруулах' }, { act: 'scareAll', label: 'Бүх чоно үргээх' }, { act: 'wolvesPeaceful', label: 'Дайралт асаах/унтраах' }],
+];
 
 interface BuyItem {
   key: string;
@@ -48,6 +67,8 @@ interface Draft {
 export interface UiHooks {
   dispatch: (cmd: Command) => CommandResult;
   toast: (msg: string, kind?: '' | 'good' | 'bad') => void;
+  /** Хамгаалалтын бүс харуулах (Z) — cheat цэснээс */
+  toggleZones?: () => boolean;
 }
 
 export class Panels {
@@ -71,7 +92,13 @@ export class Panels {
       if (e.code === 'Escape' || (this.kind === 'report' && (e.code === 'Enter' || e.code === 'Space'))) {
         e.preventDefault();
         this.close();
-      } else if ((e.code === 'KeyB' && this.kind === 'storage') || (e.code === 'KeyT' && this.kind === 'trip')) this.close();
+      } else if (
+        (e.code === 'KeyB' && this.kind === 'storage') ||
+        (e.code === 'KeyT' && this.kind === 'trip') ||
+        (e.code === 'KeyK' && this.kind === 'dogs') ||
+        (e.code === 'KeyM' && this.kind === 'camps') ||
+        (e.code === 'Backquote' && this.kind === 'cheat')
+      ) this.close();
     });
   }
 
@@ -129,7 +156,7 @@ export class Panels {
 
   /** Цонх нээлттэй үед төлөв өөрчлөгдвөл (боловсруулалтын хугацаа г.м.) */
   refresh(): void {
-    if (this.kind === 'storage') this.render();
+    if (this.kind === 'storage' || this.kind === 'dogs' || this.kind === 'camps') this.render();
   }
 
   private render(): void {
@@ -137,6 +164,9 @@ export class Panels {
     if (this.kind === 'storage') this.box.innerHTML = this.storageHtml();
     else if (this.kind === 'trip') this.box.innerHTML = this.tripHtml();
     else if (this.kind === 'report') this.box.innerHTML = this.reportHtml();
+    else if (this.kind === 'dogs') this.box.innerHTML = this.dogsHtml();
+    else if (this.kind === 'camps') this.box.innerHTML = this.campsHtml();
+    else if (this.kind === 'cheat') this.box.innerHTML = this.cheatHtml();
     this.box.scrollTop = scroll;
   }
 
@@ -213,6 +243,7 @@ export class Panels {
     const next = cfg.storage.levels[state.storageLevel + 1];
     if (next) out.push({ key: 'storage', label: state.storageLevel === 0 ? 'Модон амбаар' : 'Том агуулах', note: `Багтаамж ${next.capacity} нэгж`, order: { kind: 'storage' } });
     if (state.home !== 'ger') out.push({ key: 'ger', label: 'Гэр (4 ханатай)', note: 'Зорилго: гэр + 40 хонин толгой', order: { kind: 'ger' } });
+    if (state.dogs.length < cfg.dogs.maxDogs) out.push({ key: 'dog', label: 'Нохой (банхар)', note: `10 м хамгаалалтын бүс, ойртсон чоныг хөөнө · хоол өдөрт ${fmtMoney(cfg.dogs.foodPerDay)} · K — команд`, order: { kind: 'dog' } });
     if (!state.vehicles.includes('truck')) out.push({ key: 'truck', label: 'Ачааны машин', note: `${cfg.vehicles.truck.capacity} нэгж, нэг тийш ${Math.round(cfg.vehicles.truck.oneWayHours * 60)} мин, бензинтэй`, order: { kind: 'vehicle', id: 'truck' } });
     return out;
   }
@@ -350,11 +381,102 @@ export class Panels {
       <h3>Мал ба бэлчээр</h3>
       <p>Мал ${r.animals} · хонин толгой <b>${fmtNum(r.sheepUnits)}</b>${r.births ? ` · 🐣 төл ${r.births}` : ''}${r.deaths ? ` · <span class="bad">үхсэн ${r.deaths}</span>` : ''}<br>
       Дундаж тарга ${Math.round(r.avgCondition * 100)}% · өнөөдрийн идэш ${Math.round(r.avgGutFill * 100)}% · эм хонины жин ${fmtNum(Math.round(r.avgEweKg * 10) / 10)} кг<br>
-      Бэлчээрийн өвс ${Math.round(r.grass * 100)}% · бууцны доройтол <span class="${r.campDegrade > 0.3 ? 'bad' : ''}">${Math.round(r.campDegrade * 100)}%</span>${r.campDegrade > 0.3 ? ' — бууцаа сэлгэх цаг боллоо' : ''}</p>
+      ${this.wolfKillsHtml(r)}</p>
+      <h3>Бууц: ${t('camp.' + this.state.campId)} · ${r.campDays} дахь өдөр</h3>
+      <p>Бэлчээрийн өвс ${Math.round(r.grass * 100)}% · доройтол <span class="${r.campDegrade > 0.3 ? 'bad' : ''}">${Math.round(r.campDegrade * 100)}%</span> · өвс ургах хурд <span class="${r.regrowthMult < 0.8 ? 'bad' : ''}">${Math.round(r.regrowthMult * 100)}%</span>
+      ${r.campDegrade > 0.6 ? '<br><b class="bad">Бэлчээр доройтож өвс бараг ургахгүй байна — мал турна. M — нүүх</b>' : r.campDegrade > 0.3 ? '<br><span class="bad">Бууцаа сэлгэх цаг боллоо (M — нүүх)</span>' : ''}
+      <br><span class="muted">Бусад бууц (амарч сэргэж байна): ${Object.entries(r.camps).filter(([id]) => id !== this.state.campId).map(([id, c]) => `${t('camp.' + id)} ${Math.round(c.degrade * 100)}%`).join(' · ')}</span></p>
       <h3>Зорилго: гэр + ${goalSU} хонин толгой</h3>
       <div class="bar"><div style="width:${Math.min(100, (r.sheepUnits / goalSU) * 100)}%"></div></div>
       <p>${this.state.home === 'ger' ? '✅ Гэртэй' : `Гэр: ${fmtMoney(cfg.economy.gerPrice)}`} · хонин толгой ${fmtNum(r.sheepUnits)} / ${goalSU}${r.goalReached ? ' · <b class="good">🎉 Зорилгодоо хүрлээ!</b>' : ''}</p>
       <p><button class="btn gold big" data-act="close">Маргааш өглөө ▶</button> <span class="muted">Enter</span></p>`;
+  }
+
+  private wolfKillsHtml(r: DayReport): string {
+    const k = Object.entries(r.wolfKills).filter(([, n]) => (n ?? 0) > 0);
+    if (!k.length) return '';
+    return `<br><b class="bad">🐺 Чонод барьдсан: ${k.map(([sp, n]) => `${speciesEmoji(sp as Species)} ${t('species.' + sp).toLowerCase()} ${n}`).join(', ')}</b> <span class="muted">— сүргээ чонын нутгаас хол байлга, нохой ав, дэргэд нь бай</span>`;
+  }
+
+  // ======================= нохой (K) =======================
+  private dogsHtml(): string {
+    const { cfg, state } = this;
+    const p = state.player;
+    if (!state.dogs.length) {
+      return `<h2>🐕 Нохой <span class="close" data-act="close">✕</span></h2>
+        <p>Танд нохой алга. Сумын төвөөс (T) авна: <b>${fmtMoney(cfg.dogs.price)}</b>, хоол өдөрт ${fmtMoney(cfg.dogs.foodPerDay)}.</p>
+        <p class="muted">Нохой бүр ${cfg.wolves.protectRadius.dog} м хамгаалалтын бүстэй: чоно бүс рүү нь орохгүй, доторх малд дайрахгүй. Ойртсон чоныг хуцаж хөөнө.</p>`;
+    }
+    const keys = [...new Set(state.animals.filter((a) => !a.riding).map((a) => flockKey(a.species)))];
+    const buttons = (target: string) => {
+      const base = (['follow', 'stay', 'patrol', 'patrolCamp'] as DogOrderKind[])
+        .map((o) => `<button class="btn sm" data-act="dog:${target}|${o}">${DOG_ORDER_NAME[o]}</button>`).join(' ');
+      const herd = keys.map((k) => `<button class="btn sm" data-act="dog:${target}|guardHerd|${k}">${HERD_NAME[k]}</button>`).join(' ');
+      return `${base}<br><span class="muted">Сүргийг хамгаал:</span> ${herd || '<span class="muted">мал алга</span>'}`;
+    };
+    const rows = state.dogs.map((d) => {
+      const dist = Math.round(Math.hypot(d.x - p.x, d.z - p.z));
+      const cur = d.order === 'guardHerd' ? `${DOG_ORDER_NAME.guardHerd} (${HERD_NAME[d.herd]})` : DOG_ORDER_NAME[d.order];
+      const status = d.mode === 'chase' ? '<b class="bad">🐺 Чоно хөөж байна</b>' : cur;
+      return `<tr><td><b>🐕 ${d.name}</b><br><span class="muted">${dist} м зайд</span></td><td>${status}</td><td>${buttons(String(d.id))}</td></tr>`;
+    }).join('');
+    return `<h2>🐕 Нохойн команд <span class="close" data-act="close">✕</span></h2>
+      <p class="muted">«Энд» = таны одоо зогсож буй газар. Нохой бүр ${cfg.wolves.protectRadius.dog} м хамгаалалтын бүстэй, ${cfg.dogs.alertRadius} м-т ойртсон чоныг хөөнө (харуулын цэгээсээ ${cfg.dogs.leash} м-ээс холгүй). <kbd>N</kbd> — бүх нохой намайг дага.</p>
+      <table>${rows}
+      ${state.dogs.length > 1 ? `<tr class="total"><td><b>Бүх нохой</b></td><td></td><td>${buttons('all')}</td></tr>` : ''}</table>`;
+  }
+
+  // ======================= бууц сэлгэх (M) =======================
+  private campsHtml(): string {
+    const { cfg, state } = this;
+    const deg = cfg.pasture.degradation;
+    const byTruck = state.vehicles.includes('truck');
+    const hours = moveHours(cfg, state, byTruck);
+    const trips = state.home === 'ger' ? Number(cfg.camps.move.truckTripsGer) : Number(cfg.camps.move.truckTripsTent);
+    const fuel = byTruck ? ((cfg.vehicles.campDistanceKm * 2 * trips * cfg.vehicles.truck.fuelPer100km) / 100) * cfg.vehicles.fuelPricePerL : 0;
+    const su = herdSheepUnits(state, cfg.animals);
+    const gainPerDay = deg.gainPerDayAtCapacity * (su / deg.campCapacitySheepUnits);
+    const near = Math.hypot(state.player.x - cfg.camps.home.x, state.player.z - cfg.camps.home.z) <= cfg.camps.home.storageRadius * 2;
+    const busy = Boolean(state.trip || state.move || state.player.away);
+    const rows = Object.entries(cfg.camps.camps).map(([id, c]) => {
+      const cs = state.camps[id]!;
+      const here = id === state.campId;
+      const types = [...new Set(c.rings.map(([, ty]) => ty).filter((ty) => ty !== 'camp'))].map((ty) => PASTURE_NAME[ty] ?? ty).join(', ');
+      const growth = 1 - deg.growthPenalty * cs.degrade;
+      const dCls = cs.degrade > 0.3 ? 'bad' : cs.degrade < 0.1 ? 'good' : '';
+      const action = here
+        ? `<b>📍 Энд байна</b><br><span class="muted">${cs.daysSpent} өдөр · өдөрт +${fmtNum(Math.round(gainPerDay * 1000) / 10)}%</span>`
+        : `<button class="btn gold" data-act="move:${id}" ${!near || busy ? 'disabled' : ''}>Нүүх</button>`;
+      return `<tr><td><b>${t('camp.' + id)}</b><br><span class="muted">${types}</span></td>
+        <td>${WATER_NAME[c.water] ?? c.water}</td>
+        <td class="${c.wolfLevel === 'high' ? 'bad' : ''}">${WOLF_LEVEL_NAME[c.wolfLevel] ?? c.wolfLevel}</td>
+        <td><span class="${dCls}">${Math.round(cs.degrade * 100)}%</span><div class="bar"><div style="width:${Math.round(cs.degrade * 100)}%;background:#b8873a"></div></div></td>
+        <td class="num">${Math.round(growth * 100)}%</td>
+        <td>${action}</td></tr>`;
+    }).join('');
+    const lost = state.items.reduce((s, it) => s + it.amount, 0);
+    return `<h2>🏕 Бууц сэлгэх <span class="close" data-act="close">✕</span></h2>
+      <p class="muted">Нэг бууцанд удах тусам бэлчээр доройтож өвс удаан ургана, чанар нь муудна. Доройтол 60%-иас дээш бол мал турж эхэлнэ. Орхисон бууц өдөрт ${Math.round(deg.recoverPerDayWhenAway * 100)}% сэргэнэ.</p>
+      <table><tr class="muted"><td>Бууц, бэлчээр</td><td>Ус</td><td>Чоно</td><td>Доройтол</td><td class="num">Өвс ургалт</td><td></td></tr>${rows}</table>
+      <div class="sum">
+        <div>Нүүх хугацаа: <b>${fmtNum(hours)} цаг</b> ${byTruck ? '🚚 машинаар' : '🐴 тэргээр'} (${state.home === 'ger' ? 'гэртэй' : 'майхантай'})</div>
+        ${fuel ? `<div>Бензин: <b class="bad">${fmtMoney(-fuel)}</b></div>` : ''}
+        <div>Сүрэг: ${fmtNum(su)} хонин толгой</div>
+      </div>
+      <p class="muted">Нүүх хугацаанд малчин завгүй — тэр зуур чоно, муудал таныг хүлээхгүй. Мал, нохой, агуулах хамт нүүнэ.${lost > 0 ? ` <span class="bad">Газарт унасан ${fmtNum(lost)} нэгж бүтээгдэхүүн хаягдана — эхлээд түүж ав.</span>` : ''}</p>
+      ${busy ? '<p class="bad">Малчин завгүй байна (сумын төвд эсвэл нүүж байна).</p>' : !near ? '<p class="bad">Нүүхийн тулд майхандаа оч (ачаа бараагаа ачина).</p>' : ''}`;
+  }
+
+  // ======================= туршилтын цэс (`) =======================
+  private cheatHtml(): string {
+    const { cfg, state } = this;
+    const rows = CHEATS.map((row) => `<p>${row.map((c) => `<button class="btn sm" data-act="cheat:${c.act}">${c.label}</button>`).join(' ')}</p>`).join('');
+    const camps = Object.keys(cfg.camps.camps).map((id) => `<button class="btn sm ${id === state.campId ? 'gold' : ''}" data-act="cheat:camp:${id}">${t('camp.' + id)}</button>`).join(' ');
+    return `<h2>🛠 Туршилтын цэс <span class="close" data-act="close">✕</span></h2>
+      ${rows}
+      <p>Шууд нүүх: ${camps}</p>
+      <p><button class="btn sm" data-act="zones">🛡 Хамгаалалтын бүс харуулах (Z)</button> <span class="muted">Чонын дайралт: ${state.wolves.peaceful ? 'унтраасан' : 'асаалттай'} · нохой ${state.dogs.length} · мал ${state.animals.length}</span></p>
+      <p class="muted">Энэ цэс тоглоомын дүрмийг турших зорилготой. \` — хаах.</p>`;
   }
 
   // ======================= үйлдлүүд =======================
@@ -410,6 +532,36 @@ export class Panels {
           else d.buyItems.add(arg);
         }
         break;
+      case 'dog': {
+        const [target, order, herd] = arg.split('|') as [string, DogOrderKind, Species?];
+        const r = this.hooks.dispatch({ type: 'dogOrder', dog: target === 'all' ? 'all' : Number(target), order, herd });
+        this.hooks.toast(r.msg ?? '', r.ok ? 'good' : 'bad');
+        if (r.ok) {
+          this.close();
+          return;
+        }
+        break;
+      }
+      case 'move': {
+        const r = this.hooks.dispatch({ type: 'moveCamp', to: arg });
+        this.hooks.toast(r.ok ? `🏕 ${t('camp.' + arg)} руу нүүж байна` : r.msg ?? '', r.ok ? 'good' : 'bad');
+        if (r.ok) {
+          this.close();
+          return;
+        }
+        break;
+      }
+      case 'cheat': {
+        const r = this.hooks.dispatch({ type: 'cheat', action: arg as CheatAction });
+        if (r.msg) this.hooks.toast(r.msg, r.ok ? 'good' : 'bad');
+        if (this.kind !== 'cheat') return;   // өдрийн тайлан нээгдсэн
+        break;
+      }
+      case 'zones': {
+        const on = this.hooks.toggleZones?.();
+        this.hooks.toast(on ? 'Хамгаалалтын бүс харагдаж байна (Z)' : 'Хамгаалалтын бүс нуулаа', 'good');
+        break;
+      }
       case 'bull': {
         const on = !state.neighborBull;
         this.hooks.dispatch({ type: 'neighborBull', on });

@@ -5,19 +5,19 @@
  * - Мал 10 алхам тутам ойролцоох цэгүүдээс хамгийн өндөр оноотойг сонгоно:
  *     оноо = чанар^1.5 × идэж болох өвс − сүргээс холдсон торгууль
  * - Бэлчээрлэх горимд мал минут бүр байгаа нүднээсээ идэж, зорилт руу аажим алхана.
- * - Гэдэс дүүрвэл (өдрийн тааз) хэвтэж хивнэ. Цангавал ус руу явна.
+ * - Гэдэс дүүрвэл (өдрийн тааз) хэвтэж хивнэ.
+ * - M4: ус руу явах, шинэ бэлчээр рүү нүүх шийдвэрийг сүрэг гаргана (herds.ts).
+ *   Энд зөвхөн уснаас ойр байгаа мал ганцаараа очиж ууна.
  */
 import type { GameConfig, Species } from '../config';
 import type { Rng } from '../rng';
 import type { Animal, GameState } from '../state';
-import { absBiomass, cellIndex, grassHeightCm, nearestWater, typeIdOf } from './pasture';
+import { absBiomass, cellIndex, grassHeightCm, typeIdOf } from './pasture';
 import { sheepUnits } from './animals';
+import { drinkPoint, type FlockCenter } from './herds';
 
-export interface FlockCenter {
-  x: number;
-  z: number;
-  n: number;
-}
+export type { FlockCenter };
+import { waterDistance } from '../terrain';
 
 export function flockCenters(state: GameState): Partial<Record<Species, FlockCenter>> {
   const acc: Partial<Record<Species, FlockCenter>> = {};
@@ -44,15 +44,17 @@ function flockKey(sp: Species): Species {
 }
 
 /** Зорилтот цэг сонгох (10 алхам тутам, мал бүр өөр алхамд) */
-function decide(cfg: GameConfig, state: GameState, rng: Rng, a: Animal, quality: Record<string, number>, centers: Partial<Record<Species, FlockCenter>>): void {
+function decide(cfg: GameConfig, state: GameState, rng: Rng, a: Animal, quality: Record<string, number>, centers: Map<number, FlockCenter>): void {
   const g = cfg.pasture.grazing;
   const th = cfg.animals.thirst;
   const camp = cfg.camps.camps[state.campId];
 
-  if (a.mode === 'driven') return; // туугдаж буй мал зорилтдоо хүртлээ шийдэхгүй
+  // Туугдаж, нүүж, ус руу явж буй мал зорилтдоо хүртлээ шийдэхгүй
+  if (a.mode === 'driven' || a.mode === 'trek' || a.mode === 'drink' || a.mode === 'flee') return;
 
-  if (a.thirst >= (th.seekWaterAt ?? 50) && camp) {
-    const w = nearestWater(camp.waterShape, a.x, a.z);
+  // Уснаас ойрхон бол нэг нэгээрээ очиж ууна. Хол бол сүрэг хамтдаа шийднэ (herds.ts)
+  if (a.thirst >= (th.seekWaterAt ?? 50) && camp && waterDistance(camp.waterShape, a.x, a.z) <= g.herd.nearWaterDistance) {
+    const w = drinkPoint(cfg, camp.waterShape, a.x, a.z);
     a.mode = 'drink';
     a.tx = w.x;
     a.tz = w.z;
@@ -66,21 +68,16 @@ function decide(cfg: GameConfig, state: GameState, rng: Rng, a: Animal, quality:
   }
 
   a.mode = 'graze';
-  const center = centers[flockKey(a.species)];
+  const center = centers.get(a.id);
   const radius = g.sampleRadius[a.species];
   const spread = g.maxFlockSpread[a.species];
   const cohesion = g.cohesion[a.species];
   let best = scoreAt(cfg, state, a, a.x, a.z, quality, center, spread, cohesion);
   let bx = a.x, bz = a.z;
-  // Идэш нь өдрийн явцаас хоцорсон (өлссөн) мал илүү хол хайна
-  const dayLen = cfg.time.dayEndMinute - cfg.time.dayStartMinute;
-  const progress = (state.time.minute - cfg.time.dayStartMinute) / dayLen;
-  const hungry = a.gutFill < g.hungryPace * progress;
-  const total = hungry ? g.samples * 2 : g.samples;
-  for (let k = 0; k < total; k++) {
+  // Хол газар хайх нь сүргийн шийдвэр (herds.ts). Энд зөвхөн ойрын цэгүүд
+  for (let k = 0; k < g.samples; k++) {
     const ang = rng.range(0, Math.PI * 2);
-    const far = hungry && k >= g.samples;
-    const r = far ? rng.range(radius, radius * g.roamFactor) : rng.range(radius * 0.3, radius);
+    const r = rng.range(radius * 0.3, radius);
     const x = a.x + Math.cos(ang) * r;
     const z = a.z + Math.sin(ang) * r;
     const s = scoreAt(cfg, state, a, x, z, quality, center, spread, cohesion);
@@ -108,6 +105,9 @@ function scoreAt(
   const gr = state.grass;
   const i = cellIndex(gr, x, z);
   if (i < 0) return -1e9;
+  // Гол, булаг дотор бэлчихгүй
+  const w = cfg.camps.camps[state.campId]?.waterShape;
+  if (w && waterDistance(w, x, z) < (w.kind === 'lineZ' ? cfg.pasture.grazing.herd.drinkBankOffset - 0.7 : w.r)) return -1e9;
   const minH = cfg.animals.species[a.species].minGrassCm;
   const b = absBiomass(cfg, gr, i);
   const edible = grassHeightCm(cfg, gr, i) >= minH ? b : 0;
@@ -117,6 +117,10 @@ function scoreAt(
     const d = Math.hypot(x - center.x, z - center.z);
     if (d > spread / 2) s -= cohesion * (d - spread / 2);
   }
+  // Үхэр хотоосоо хол явдаггүй (herd.maxHomeDistance)
+  const maxD = cfg.pasture.grazing.herd.maxHomeDistance[a.species];
+  const hd = Math.hypot(x, z);
+  if (maxD && hd > maxD) s -= (hd - maxD) * 0.05;
   return s;
 }
 
@@ -140,7 +144,7 @@ export function grazingStep(
   state: GameState,
   rng: Rng,
   quality: Record<string, number>,
-  centers: Partial<Record<Species, FlockCenter>>,
+  centers: Map<number, FlockCenter>,
 ): void {
   const g = cfg.pasture.grazing;
   const th = cfg.animals.thirst;
@@ -159,7 +163,18 @@ export function grazingStep(
 
     switch (a.mode) {
       case 'driven': {
+        a.drivenAt = state.step;
         if (moveToward(a, g.travelSpeed)) a.mode = 'graze';
+        break;
+      }
+      case 'flee': {
+        // Чоноос айж гүйнэ (туугдсантай адил: зугтсан газраа хэсэг үлдэнэ)
+        a.drivenAt = state.step;
+        if (moveToward(a, cfg.wolves.fear.speed)) a.mode = 'graze';
+        break;
+      }
+      case 'trek': {
+        if (moveToward(a, g.herd.trekSpeed)) a.mode = 'graze';
         break;
       }
       case 'drink': {

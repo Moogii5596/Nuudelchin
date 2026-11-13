@@ -9,14 +9,14 @@ import type { GameState } from '../sim/state';
 import type { Command, CommandResult } from '../sim/commands';
 import { riverZ } from '../sim/terrain';
 
-export type ActionKind = 'shout' | 'scare' | 'call' | 'mount' | 'uurga' | 'pickup' | 'deposit';
+export type ActionKind = 'shout' | 'scare' | 'call' | 'mount' | 'uurga' | 'pickup' | 'deposit' | 'dog';
 
 export interface ControllerHooks {
   dispatch: (cmd: Command) => CommandResult;
   /** Командын үр дүн (мэдэгдэл, бичиг) */
   onAction: (kind: ActionKind, res: CommandResult) => void;
   onSpeed: (idx: number) => void;
-  onToggle: (what: 'heatmap' | 'help' | 'cheatHerd' | 'storage' | 'trip') => void;
+  onToggle: (what: 'heatmap' | 'help' | 'cheat' | 'storage' | 'trip' | 'dogs' | 'camps' | 'zones') => void;
   /** Цонх нээлттэй үед удирдлага ажиллахгүй */
   blocked: () => boolean;
   /** Одоогийн төлөв (E товчны үйлдлийг сонгоход) */
@@ -77,7 +77,20 @@ export class PlayerController {
           this.hooks.onToggle('heatmap');
           break;
         case 'Backquote':
-          this.hooks.onToggle('cheatHerd');   // туршилт: +50 мал
+          this.hooks.onToggle('cheat');   // туршилтын цэс
+          break;
+        case 'KeyK':
+          this.hooks.onToggle('dogs');
+          break;
+        case 'KeyM':
+          this.hooks.onToggle('camps');
+          break;
+        case 'KeyZ':
+          this.hooks.onToggle('zones');
+          break;
+        case 'KeyN':
+          // Шүгэлдэх: бүх нохой намайг дага
+          this.hooks.onAction('dog', this.hooks.dispatch({ type: 'dogOrder', dog: 'all', order: 'follow' }));
           break;
         case 'F1':
         case 'Slash':

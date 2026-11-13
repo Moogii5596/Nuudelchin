@@ -17,6 +17,8 @@ import { shout, toggleMount, toggleUurga } from './systems/herder';
 import { scareWolves } from './systems/wolves';
 import { newAnimal } from './state';
 import { SPECIES } from './config';
+import { orderDog, DOG_ORDER_NAME, type DogOrderKind } from './systems/dogs';
+import { applyCheat, type CheatAction } from './systems/cheats';
 
 export type Command =
   | { type: 'movePlayer'; x: number; z: number; heading?: number }
@@ -32,7 +34,9 @@ export type Command =
   | { type: 'process'; kind: ProcessorKind }
   | { type: 'trip'; plan: TripPlan }
   | { type: 'neighborBull'; on: boolean }
-  | { type: 'moveCamp'; to: string };
+  | { type: 'moveCamp'; to: string }
+  | { type: 'dogOrder'; dog: number | 'all'; order: DogOrderKind; herd?: Species }   // нохойн команд (K цонх, N)
+  | { type: 'cheat'; action: CheatAction };                                          // туршилтын цэс (`)
 
 export interface CommandResult {
   ok: boolean;
@@ -51,7 +55,7 @@ const fail = (msg: string): CommandResult => ({ ok: false, msg });
 export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandResult {
   const { cfg, state } = sim;
   const p = state.player;
-  if (p.away && cmd.type !== 'neighborBull' && cmd.type !== 'debugAddAnimals') return fail('Малчин сумын төвд явсан');
+  if (p.away && cmd.type !== 'neighborBull' && cmd.type !== 'debugAddAnimals' && cmd.type !== 'cheat') return fail('Малчин завгүй (сумын төвд эсвэл нүүж байна)');
 
   switch (cmd.type) {
     case 'movePlayer': {
@@ -158,7 +162,19 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
       state.neighborBull = cmd.on;
       return ok();
 
+    case 'dogOrder': {
+      const dogs = cmd.dog === 'all' ? state.dogs : state.dogs.filter((d) => d.id === cmd.dog);
+      if (!dogs.length) return fail(state.dogs.length ? 'Ийм нохой алга' : 'Нохой алга — сумын төвөөс авна (T)');
+      for (const d of dogs) orderDog(cfg, state, d, cmd.order, cmd.herd);
+      const who = cmd.dog === 'all' ? (dogs.length > 1 ? 'Бүх нохой' : dogs[0]!.name) : dogs[0]!.name;
+      return ok(`🐕 ${who}: ${DOG_ORDER_NAME[cmd.order]}`);
+    }
+
+    case 'cheat':
+      return ok(applyCheat(sim, cmd.action));
+
     case 'moveCamp': {
+      if (proximity && !nearHome(cfg, p)) return fail('Нүүхийн тулд майхандаа оч (ачаа бараагаа ачина)');
       const err = startMove(cfg, state, cmd.to);
       if (err) return fail(err);
       // Шинэ бууцны чанарыг Sim дахин тооцно

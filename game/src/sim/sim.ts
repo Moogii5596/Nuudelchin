@@ -1,13 +1,15 @@
 /**
  * Симуляцын үндсэн давталт. Нэг step = 1 тоглоомын минут (architecture.md §3.2).
  */
-import type { GameConfig, Species } from './config';
+import type { GameConfig } from './config';
 import { tick, type ClockEvent } from './clock';
 import { Rng } from './rng';
 import { emptyDayStats, type DayStats, type GameState } from './state';
 import { applyCommand, type Command, type CommandResult } from './commands';
 import { averageBiomass, dailyCampDegrade, dailyRegrowth, typeQualities } from './systems/pasture';
-import { flockCenters, grazingStep, type FlockCenter } from './systems/grazing';
+import { grazingStep } from './systems/grazing';
+import { cohesionCenters, findHerds, herdDecide, type FlockCenter, type Herd, type HerdDecision } from './systems/herds';
+import { dogsStep } from './systems/dogs';
 import { dailyAnimals, herdSheepUnits, liveWeightKg } from './systems/animals';
 import { dailyBreeding } from './systems/breeding';
 import { dailyFiber, groundAgingStep, productionStep } from './systems/production';
@@ -16,7 +18,7 @@ import * as storage from './systems/storage';
 import { tripStep } from './systems/trip';
 import { moveStep } from './systems/camps';
 import { herderStep } from './systems/herder';
-import { wolvesStep } from './systems/wolves';
+import { wolvesStep, type WolfEvent } from './systems/wolves';
 
 export interface DayReport extends DayStats {
   day: number;
@@ -29,11 +31,15 @@ export interface DayReport extends DayStats {
   avgGutFill: number;      // өнөөдрийн дундаж идэш (тааз = 1)
   grass: number;           // бууцны 120 м доторх дундаж өвс
   campDegrade: number;
+  campDays: number;        // энэ бууцанд өнгөрүүлсэн өдөр
+  regrowthMult: number;    // өвс ургах хурд (доройтлоор буурсан, 1 = бүрэн)
+  camps: Record<string, { degrade: number; daysSpent: number }>;
+  dogs: number;
   storageUsed: number;
   goalReached: boolean;
 }
 
-export type SimEvent = ClockEvent | { type: 'dayReport'; report: DayReport };
+export type SimEvent = ClockEvent | WolfEvent | { type: 'dayReport'; report: DayReport };
 
 export class Sim {
   readonly cfg: GameConfig;
@@ -42,7 +48,9 @@ export class Sim {
   private listeners: ((e: SimEvent) => void)[] = [];
   private moneyAtDayStart: number;
   private quality: Record<string, number>;
-  private centers: Partial<Record<Species, FlockCenter>> = {};
+  private centers = new Map<number, FlockCenter>();
+  /** Сүүлд гаргасан сүргийн шийдвэрүүд (тест, дүрслэл) */
+  herdDecisions: HerdDecision[] = [];
 
   constructor(cfg: GameConfig, state: GameState) {
     this.cfg = cfg;
@@ -71,17 +79,24 @@ export class Sim {
   step(): void {
     const { cfg, state, rng } = this;
     state.step += 1;
-    if (state.step % 5 === 0) this.centers = flockCenters(state);
+    const hc = cfg.pasture.grazing.herd;
+    let herds: Herd[] | undefined;
+    if (state.step % hc.decideEverySteps === 0) {
+      herds = findHerds(state, hc.linkRadius);
+      this.centers = cohesionCenters(herds, hc.rejoinDistance);
+      this.herdDecisions = herdDecide(cfg, state, rng, this.quality, herds);
+    }
     herderStep(cfg, state);
     grazingStep(cfg, state, rng, this.quality, this.centers);
-    wolvesStep(cfg, state);
+    dogsStep(cfg, state, herds);
+    for (const ev of wolvesStep(cfg, state)) this.emit(ev);
     productionStep(cfg, state, rng);
     groundAgingStep(cfg, state);
     processingStep(cfg, state);
     tripStep(cfg, state, rng);
     if (moveStep(cfg, state, rng)) {
-      this.quality = typeQualities(cfg, state.camps[state.campId]?.degrade ?? 0);
-      this.centers = flockCenters(state);
+      this.refreshQuality();
+      this.centers = new Map();
     }
 
     const events = tick(state.time, cfg.time);
@@ -90,6 +105,11 @@ export class Sim {
       this.emit(ev);
     }
     state.rngState = rng.state;
+  }
+
+  /** Бууцны доройтол өөрчлөгдвөл бэлчээрийн чанарыг дахин тооцно */
+  refreshQuality(): void {
+    this.quality = typeQualities(this.cfg, this.state.camps[this.state.campId]?.degrade ?? 0);
   }
 
   /** 3D-гүй горим: n өдрийг хамгийн хурдан гүйлгэнэ */
@@ -122,6 +142,7 @@ export class Sim {
     for (const [p, n] of Object.entries(spoiled)) t.spoiled[p as keyof typeof t.spoiled] = (t.spoiled[p as keyof typeof t.spoiled] ?? 0) + (n ?? 0);
 
     this.spend('living', cfg.economy.dailyLivingCost);
+    if (state.dogs.length) this.spend('dogFood', state.dogs.length * cfg.dogs.foodPerDay);
 
     const goal = state.home === 'ger' && su >= cfg.economy.goalSheepUnits;
     if (goal && state.goalReachedDay === null) state.goalReachedDay = day;
@@ -139,6 +160,10 @@ export class Sim {
       avgGutFill: avgGut,
       grass: averageBiomass(state.grass, 120),
       campDegrade: degrade,
+      campDays: state.camps[state.campId]?.daysSpent ?? 0,
+      regrowthMult: 1 - cfg.pasture.degradation.growthPenalty * degrade,
+      camps: Object.fromEntries(Object.entries(state.camps).map(([id, c]) => [id, { ...c }])),
+      dogs: state.dogs.length,
       storageUsed: storage.used(state),
       goalReached: goal,
     };

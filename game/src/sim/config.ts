@@ -15,6 +15,7 @@ import pastureJson from '../../../data/pasture.json';
 import campsJson from '../../../data/camps.json';
 import startJson from '../../../data/start.json';
 import playerJson from '../../../data/player.json';
+import dogsJson from '../../../data/dogs.json';
 
 export type Species = 'sheep' | 'goat' | 'cow' | 'horse';
 export type Sex = 'm' | 'f';
@@ -85,6 +86,27 @@ export interface GrazingConfig {
   roamFactor: number;      // өлссөн мал хайх радиус × энэ
   roamSpeed: number;       // хол зорилт руу алхах хурд (м/мин)
   hungryPace: number;      // идэш нь өдрийн явцын энэ хувиас хоцорвол «өлссөн»
+  herd: HerdConfig;
+}
+
+/** Сүргийн шийдвэр (systems/herds.ts) */
+export interface HerdConfig {
+  linkRadius: number;          // энэ зайнаас ойр нэг төрлийн мал нэг сүрэг
+  decideEverySteps: number;
+  nearWaterDistance: number;   // сүрэг уснаас ийм ойр бол нэг нэгээрээ ууна
+  waterBunch: number;          // сүргээрээ ус руу явахад бөөгнөрөх хувь
+  drinkBankOffset: number;     // голын төв шугамаас эрэг хүртэл (м)
+  trekSpeed: number;           // сүргээрээ шинэ бэлчээр рүү нүүх хурд (м/мин)
+  trekMinDistance: number;
+  trekMaxDistance: number;
+  trekSamples: number;
+  trekGain: number;            // шинэ газар одоогийнхоос ийм дахин сайн бол нүүнэ
+  trekSpread: number;
+  localRadius: number;
+  rejoinDistance: number;      // тасарсан цөөн мал энэ зайд байгаа том сүрэг рүүгээ нийлнэ
+  poorScore: number;           // ойр орчмын бэлчээрийн оноо үүнээс бага бол л шинэ газар хайна
+  settleMinutes: number;       // туугдсанаас хойш энэ хугацаанд өөрөө нүүхгүй
+  maxHomeDistance: Record<Species, number>;   // өөрөө нүүхдээ хотоос холдох дээд зай
 }
 
 export interface PastureConfig {
@@ -97,6 +119,7 @@ export interface PastureConfig {
     gainPerDayAtCapacity: number;
     recoverPerDayWhenAway: number;
     growthPenalty: number;
+    capacityPenalty: number;   // өвсний дээд хэмжээ K = 1 − capacityPenalty × доройтол
     qualityPenalty: number;
     overgrazeThreshold: number;
   };
@@ -160,6 +183,7 @@ export interface GameConfig {
   pasture: PastureConfig;
   camps: { camps: Record<string, CampConfig>; move: Record<string, number | string>; home: HomeConfig };
   player: typeof playerJson;
+  dogs: typeof dogsJson;
   start: { camp: string; home: string; vehicles: string[]; storageLevel: number; animals: StartAnimal[] };
 }
 
@@ -178,6 +202,7 @@ export function loadConfig(): GameConfig {
     camps: campsJson as unknown as GameConfig['camps'],
     start: startJson as unknown as GameConfig['start'],
     player: playerJson,
+    dogs: dogsJson,
   };
   const errors = validateConfig(cfg);
   if (errors.length) {
@@ -218,7 +243,14 @@ export function validateConfig(cfg: GameConfig): string[] {
   const pl = cfg.player;
   if (!(pl.walkSpeed > 0 && pl.runSpeed >= pl.walkSpeed && pl.mountedSpeed > 0 && pl.mountedRunSpeed >= pl.mountedSpeed)) e.push('player: хурд эерэг, гүйх ≥ алхах');
   if (!(pl.shout.radius > 0 && pl.shout.push > 0)) e.push('player.shout: radius, push > 0');
-  if (!(cfg.wolves.speed.roam > 0 && cfg.wolves.speed.flee > 0)) e.push('wolves.speed: эерэг');
+  if (!(cfg.wolves.speed.roam > 0 && cfg.wolves.speed.flee > 0 && cfg.wolves.speed.hunt > 0)) e.push('wolves.speed: эерэг');
+  for (const lvl of new Set(Object.values(cfg.camps.camps).map((c) => c.wolfLevel))) {
+    if (!(((cfg.wolves.attack.noticeChance as Record<string, number>)[lvl] ?? -1) >= 0)) e.push(`wolves.attack.noticeChance.${lvl} алга`);
+  }
+  const h = cfg.pasture.grazing.herd;
+  if (!h || !(h.linkRadius > 0 && h.decideEverySteps >= 1 && h.trekMaxDistance > h.trekMinDistance)) e.push('pasture.grazing.herd: linkRadius > 0, trekMaxDistance > trekMinDistance');
+  if (!(cfg.dogs.speed.run > cfg.wolves.speed.flee)) e.push('dogs.speed.run > wolves.speed.flee байх ёстой (нохой чоныг гүйцнэ)');
+  if (!(cfg.dogs.names.length >= cfg.dogs.maxDogs)) e.push('dogs.names: maxDogs-оос цөөнгүй нэр');
   if (!cfg.camps.camps[cfg.start.camp]) e.push(`start.camp: "${cfg.start.camp}" бууц алга`);
   if (!cfg.storage.levels[cfg.start.storageLevel]) e.push('start.storageLevel: агуулахын түвшин алга');
   for (const a of cfg.start.animals) if (!cfg.animals.species[a.species]) e.push(`start.animals: "${a.species}" алга`);

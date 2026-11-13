@@ -7,13 +7,15 @@ import { newTime, type TimeState } from './clock';
 import { Rng } from './rng';
 import { buildGrid, type GrassGrid } from './systems/pasture';
 import { spawnWolves, type WolfState } from './systems/wolves';
+import type { Dog } from './systems/dogs';
 
-export const SAVE_VERSION = 5;   // 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих
+export const SAVE_VERSION = 6;   // 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих · 6: нохой, чонын дайралт, сүргийн нүүдэл (M4)
 
 export type ProductId = 'milk' | 'tarag' | 'aaruul' | 'urum' | 'wool' | 'felt' | 'cashmere';
 export const PRODUCTS: readonly ProductId[] = ['milk', 'tarag', 'aaruul', 'urum', 'wool', 'felt', 'cashmere'];
 
-export type AnimalMode = 'graze' | 'drink' | 'rest' | 'driven';
+/** trek = сүргээрээ шинэ бэлчээр рүү нүүж байна (systems/herds.ts) · flee = чоноос айж зугтаж байна (systems/wolves.ts) */
+export type AnimalMode = 'graze' | 'drink' | 'rest' | 'driven' | 'trek' | 'flee';
 
 export interface Animal {
   id: number;
@@ -32,6 +34,7 @@ export interface Animal {
   milkTimer: number;     // сүү унах хүртэлх минут
   fiberDays: number;     // ноос/ноолуур унах хүртэлх өдөр
   mode: AnimalMode;
+  drivenAt: number;      // сүүлд туугдсан (айсан) алхам — herds.ts: туугдсан газраа тодорхой хугацаа үлдэнэ
   x: number;
   z: number;
   tx: number;            // зорилтот цэг
@@ -70,7 +73,8 @@ export type BuyOrder =
   | { kind: 'processor'; id: ProcessorKind }
   | { kind: 'storage' }
   | { kind: 'ger' }
-  | { kind: 'vehicle'; id: VehicleId };
+  | { kind: 'vehicle'; id: VehicleId }
+  | { kind: 'dog' };
 
 export interface TripState {
   vehicle: VehicleId;
@@ -96,6 +100,7 @@ export interface DayStats {
   spoiled: Partial<Record<ProductId, number>>;
   births: number;
   deaths: number;
+  wolfKills: Partial<Record<Species, number>>;   // чонод барьдсан (deaths-д ороогүй)
 }
 
 export interface PlayerState {
@@ -132,12 +137,13 @@ export interface GameState {
   neighborBull: boolean;
   player: PlayerState;
   wolves: WolfState;
+  dogs: Dog[];
   today: DayStats;
   goalReachedDay: number | null;
 }
 
 export function emptyDayStats(): DayStats {
-  return { income: {}, expenses: {}, dropped: {}, collected: {}, spoiled: {}, births: 0, deaths: 0 };
+  return { income: {}, expenses: {}, dropped: {}, collected: {}, spoiled: {}, births: 0, deaths: 0, wolfKills: {} };
 }
 
 export function newAnimal(
@@ -163,6 +169,7 @@ export function newAnimal(
     milkTimer: rng.range(0, 60),
     fiberDays: rng.range(0, 3),
     mode: 'graze',
+    drivenAt: -1e9,
     x: o.x,
     z: o.z,
     tx: o.x,
@@ -212,6 +219,7 @@ export function createInitialState(cfg: GameConfig, seed: number): GameState {
     neighborBull: false,
     player: { x: 2, z: 6, heading: 0, mounted: false, horseCalled: false, holdingUurga: false, carry: [], away: false },
     wolves: spawnWolves(cfg, seed, cfg.start.camp),
+    dogs: [],
     today: emptyDayStats(),
     goalReachedDay: null,
   };
