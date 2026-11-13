@@ -1,9 +1,13 @@
 {
-  "_doc": "Цаг. mvp-spec.md §2, §9. Тоглоомын минут бол симуляцын нэг алхам.",
+  "_doc": "Цаг. mvp-spec.md §2, §9. Тоглоомын минут бол симуляцын нэг алхам. animalYearDays = төллөлтийн мөчлөг ба малын 1 нас (M1.5: 50 өдөр — зорилгод 1× хурдаар 4–6 цагт хүрэхээр тааруулсан).",
   "dayStartMinute": 360,
   "dayEndMinute": 1200,
   "realSecondsPerGameHour": 10,
-  "speeds": [1, 2, 4],
+  "speeds": [
+    1,
+    2,
+    4
+  ],
   "monthDays": 5,
-  "animalYearDays": 20
+  "animalYearDays": 50
 }

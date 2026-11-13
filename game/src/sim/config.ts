@@ -132,7 +132,7 @@ export interface GameConfig {
   economy: typeof economyJson;
   wolves: typeof wolvesJson;
   pasture: PastureConfig;
-  camps: { camps: Record<string, CampConfig>; move: Record<string, number>; home: { x: number; z: number; storageRadius: number } };
+  camps: { camps: Record<string, CampConfig>; move: Record<string, number | string>; home: { x: number; z: number; storageRadius: number } };
   start: { camp: string; home: string; vehicles: string[]; storageLevel: number; animals: StartAnimal[] };
 }
 

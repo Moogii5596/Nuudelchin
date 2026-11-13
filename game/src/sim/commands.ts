@@ -12,6 +12,7 @@ import { driveFlock } from './systems/grazing';
 import * as storage from './systems/storage';
 import * as processing from './systems/processing';
 import { startTrip, type TripPlan } from './systems/trip';
+import { startMove } from './systems/camps';
 
 export type Command =
   | { type: 'movePlayer'; x: number; z: number }
@@ -20,7 +21,8 @@ export type Command =
   | { type: 'drive'; species: Species; x: number; z: number }
   | { type: 'process'; kind: ProcessorKind }
   | { type: 'trip'; plan: TripPlan }
-  | { type: 'neighborBull'; on: boolean };
+  | { type: 'neighborBull'; on: boolean }
+  | { type: 'moveCamp'; to: string };
 
 export interface CommandResult {
   ok: boolean;
@@ -92,6 +94,13 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
     case 'neighborBull':
       state.neighborBull = cmd.on;
       return ok();
+
+    case 'moveCamp': {
+      const err = startMove(cfg, state, cmd.to);
+      if (err) return fail(err);
+      // Шинэ бууцны чанарыг Sim дахин тооцно
+      return ok('Нүүж байна');
+    }
   }
 }
 

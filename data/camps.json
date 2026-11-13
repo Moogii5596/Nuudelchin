@@ -81,10 +81,13 @@
     }
   },
   "move": {
-    "tentCartTrips": 2,
-    "gerCartTrips": 4,
-    "tripHoursCart": 7,
-    "tripHoursTruck": 2
+    "_doc": "Бууц сэлгэх: нүүх хугацаа (тоглоомын цаг). Майхантай тэргээр бүтэн өдөр, гэртэй 2 өдөр (mvp-spec.md §7.3).",
+    "cartHoursTent": 8,
+    "cartHoursGer": 14,
+    "truckHoursTent": 3,
+    "truckHoursGer": 5,
+    "truckTripsTent": 1,
+    "truckTripsGer": 2
   },
   "home": {
     "_doc": "Гэр/майхан бууцны төвд (0,0). Агуулах майхны хажууд.",

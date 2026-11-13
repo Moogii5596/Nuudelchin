@@ -23,6 +23,20 @@ const args = Object.fromEntries(
 const SEEDS = Number(args.seeds ?? 30);
 const DAYS = Number(args.days ?? 150);
 
+/** `--time.animalYearDays 30` хэлбэрийн аргументаар тохиргоог түр өөрчилнө */
+function applyOverrides(cfg: GameConfig): string[] {
+  const applied: string[] = [];
+  for (const [k, v] of Object.entries(args)) {
+    if (!k.includes('.')) continue;
+    const path = k.split('.');
+    let o: Record<string, unknown> = cfg as unknown as Record<string, unknown>;
+    for (const p of path.slice(0, -1)) o = o[p] as Record<string, unknown>;
+    o[path[path.length - 1]!] = Number(v);
+    applied.push(`${k}=${v}`);
+  }
+  return applied;
+}
+
 type Strategy = {
   name: string;
   onHour: (sim: Sim, hour: number) => void;
@@ -102,6 +116,17 @@ function bestSpot(cfg: GameConfig, sim: Sim, minCm: number): { x: number; z: num
   return { x: bx, z: bz };
 }
 
+/** Одоогийн бууц threshold-оос их доройтсон бол хамгийн бага доройтолтой бууц руу нүүнэ */
+function rotateCamp(sim: Sim, threshold: number): boolean {
+  const { state } = sim;
+  if (state.trip || state.move || state.player.away) return false;
+  if ((state.camps[state.campId]?.degrade ?? 0) < threshold) return false;
+  const best = Object.entries(state.camps).filter(([id]) => id !== state.campId).sort((a, b) => a[1].degrade - b[1].degrade)[0];
+  if (!best) return false;
+  collectAll(sim);
+  return sim.command({ type: 'moveCamp', to: best[0] }).ok;
+}
+
 function buyPlan(sim: Sim, reserve: number, maxSU: number): BuyOrder[] {
   const { cfg, state } = sim;
   const orders: BuyOrder[] = [];
@@ -128,6 +153,7 @@ const active: Strategy = {
   name: 'Идэвхтэй',
   onHour(sim, hour) {
     const { cfg, state } = sim;
+    if (hour === 7 && rotateCamp(sim, 0.25)) return;
     if (hour === 7) {
       state.neighborBull = true;
       for (const sp of ['sheep', 'cow'] as Species[]) {
@@ -147,6 +173,7 @@ const medium: Strategy = {
   onHour(sim, hour) {
     const { cfg, state } = sim;
     state.neighborBull = true;
+    if (hour === 7 && rotateCamp(sim, 0.35)) return;
     if (hour === 8 && state.time.day % 2 === 0) {
       const spot = bestSpot(cfg, sim, 2);
       sim.command({ type: 'drive', species: 'sheep', x: spot.x, z: spot.z });
@@ -161,6 +188,7 @@ const lazy: Strategy = {
   name: 'Залхуу',
   onHour(sim, hour) {
     sim.state.neighborBull = true;
+    if (hour === 7 && rotateCamp(sim, 0.5)) return;
     if (hour === 10 || hour === 17) collectAll(sim);
     if (hour === 11 && sim.state.time.day % 3 === 0) {
       const orders: BuyOrder[] = [];
@@ -194,8 +222,9 @@ const median = (xs: number[]) => {
 const fmt = (n: number) => (Number.isFinite(n) ? Math.round(n).toLocaleString('en-US').replace(/,/g, ' ') : '—');
 
 const cfg = loadConfig();
+const overrides = applyOverrides(cfg);
 const dayHours = ((cfg.time.dayEndMinute - cfg.time.dayStartMinute) / 60) * cfg.time.realSecondsPerGameHour / 3600;
-console.log(`# Тэнцвэрийн тайлан — ${SEEDS} seed × ${DAYS} өдөр (1 өдөр = 1× хурдаар ${(dayHours * 60).toFixed(1)} мин)\n`);
+console.log(`# Тэнцвэрийн тайлан — ${SEEDS} seed × ${DAYS} өдөр (1 өдөр = 1× хурдаар ${(dayHours * 60).toFixed(1)} мин)` + (overrides.length ? ` · ${overrides.join(', ')}` : '') + '\n');
 
 for (const strat of [active, medium, lazy]) {
   const t0 = performance.now();

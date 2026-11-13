@@ -7,7 +7,7 @@ import { newTime, type TimeState } from './clock';
 import { Rng } from './rng';
 import { buildGrid, type GrassGrid } from './systems/pasture';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export type ProductId = 'milk' | 'tarag' | 'aaruul' | 'urum' | 'wool' | 'felt' | 'cashmere';
 export const PRODUCTS: readonly ProductId[] = ['milk', 'tarag', 'aaruul', 'urum', 'wool', 'felt', 'cashmere'];
@@ -123,6 +123,7 @@ export interface GameState {
   processors: ProcessorState[];
   vehicles: VehicleId[];
   trip: TripState | null;
+  move: { to: string; remaining: number } | null;   // бууц сэлгэж байгаа
   neighborBull: boolean;
   player: PlayerState;
   today: DayStats;
@@ -201,6 +202,7 @@ export function createInitialState(cfg: GameConfig, seed: number): GameState {
     processors: [],
     vehicles: cfg.start.vehicles as VehicleId[],
     trip: null,
+    move: null,
     neighborBull: false,
     player: { x: 2, z: 6, carry: [], away: false },
     today: emptyDayStats(),

@@ -14,6 +14,7 @@ import { dailyFiber, groundAgingStep, productionStep } from './systems/productio
 import { processingStep } from './systems/processing';
 import * as storage from './systems/storage';
 import { tripStep } from './systems/trip';
+import { moveStep } from './systems/camps';
 
 export interface DayReport extends DayStats {
   day: number;
@@ -74,6 +75,10 @@ export class Sim {
     groundAgingStep(cfg, state);
     processingStep(cfg, state);
     tripStep(cfg, state, rng);
+    if (moveStep(cfg, state, rng)) {
+      this.quality = typeQualities(cfg, state.camps[state.campId]?.degrade ?? 0);
+      this.centers = flockCenters(state);
+    }
 
     const events = tick(state.time, cfg.time);
     for (const ev of events) {

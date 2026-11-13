@@ -34,3 +34,22 @@ describe('Бэлчээрийн тор (mvp-spec.md §7)', () => {
     expect(q0.camp!).toBeLessThan(q0.steppe!);
   });
 });
+
+import { newSim, steps } from './helpers';
+
+describe('Бууц сэлгэх (mvp-spec.md §7.3)', () => {
+  it('майхантай тэргээр 8 цаг нүүж, шинэ бууцанд мал ирнэ; хуучин бууц сэргэнэ', () => {
+    const sim = newSim(11);
+    sim.state.camps.river!.degrade = 0.4;
+    const r = sim.command({ type: 'moveCamp', to: 'valley' });
+    expect(r.ok).toBe(true);
+    expect(sim.command({ type: 'deposit' }).ok).toBe(false); // нүүж байх үед завгүй
+    steps(sim, 8 * 60);
+    expect(sim.state.campId).toBe('valley');
+    expect(sim.state.player.away).toBe(false);
+    const sheep = sim.state.animals.filter((a) => a.species === 'sheep');
+    expect(sheep.every((a) => Math.hypot(a.x, a.z) < 60)).toBe(true);
+    sim.runDays(1);
+    expect(sim.state.camps.river!.degrade).toBeLessThan(0.4);
+  });
+});

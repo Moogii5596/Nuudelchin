@@ -16,12 +16,12 @@ describe('Цаг (шөнөгүй)', () => {
     expect(events.filter((e) => e.type === 'dayEnd')).toHaveLength(1);
     expect(events.filter((e) => e.type === 'hour')).toHaveLength(13); // 07:00 … 19:00
   });
-  it('сар (5 өдөр) ба малын жил (20 өдөр)', () => {
+  it('сар ба малын жил тохиргооны давтамжаар', () => {
     const t = newTime(cfg);
     const events: ClockEvent[] = [];
     const minutesPerDay = cfg.dayEndMinute - cfg.dayStartMinute;
-    for (let i = 0; i < minutesPerDay * 20; i++) events.push(...tick(t, cfg));
-    expect(events.filter((e) => e.type === 'monthEnd')).toHaveLength(4);
+    for (let i = 0; i < minutesPerDay * cfg.animalYearDays; i++) events.push(...tick(t, cfg));
+    expect(events.filter((e) => e.type === 'monthEnd')).toHaveLength(Math.floor(cfg.animalYearDays / cfg.monthDays));
     expect(events.filter((e) => e.type === 'animalYear')).toHaveLength(1);
   });
 });
