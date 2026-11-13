@@ -17,11 +17,23 @@ interface Rig {
 
 function makeHerder(): Rig {
   const g = new THREE.Group();
+  // Нуруун дээрх уут (гарт барьсан бүтээгдэхүүн)
+  const sack = meshBox(0.5, 0.6, 0.3, 0xb89a6a, 0, 1.35, -0.38, g);
+  sack.name = 'sack';
+  sack.visible = false;
   const legs = [limb(0.2, 0.85, 0x2b1d14, -0.15, 0.85, 0, g), limb(0.2, 0.85, 0x2b1d14, 0.15, 0.85, 0, g)];
   meshBox(0.62, 0.9, 0.4, 0x2f5d9b, 0, 1.3, 0, g);            // дээл
   meshBox(0.64, 0.14, 0.42, 0xe0b030, 0, 1.05, 0, g);          // бүс
   meshBox(0.69, 0.3, 0.44, 0x2a528a, 0, 1.0, 0, g);            // дээлийн хормой
   const arms = [limb(0.16, 0.75, 0x2f5d9b, -0.4, 1.7, 0, g), limb(0.16, 0.75, 0x2f5d9b, 0.4, 1.7, 0, g)];
+  // Шилбүүр/богино уурга — баруун гарт, урагшаа хазайж
+  const uurga = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.035, 2.2, 6), mat(0x8a6a3a));
+  uurga.name = 'uurga';
+  uurga.position.set(0, -0.4, 0.65);
+  uurga.rotation.x = 1.15;
+  uurga.castShadow = true;
+  uurga.visible = false;
+  arms[1]!.add(uurga);
   const head = new THREE.Mesh(new THREE.SphereGeometry(0.21, 10, 8), mat(0xc99a6e));
   head.position.y = 1.98;
   head.castShadow = true;
@@ -174,6 +186,15 @@ export class CharactersView {
       H.arms[1]!.rotation.x = -2.6;
     }
     H.root.rotation.y = p.heading;
+    const uurga = H.root.getObjectByName('uurga');
+    if (uurga) uurga.visible = p.holdingUurga;
+    const carried = p.carry.reduce((t, c) => t + c.amount, 0);
+    const sack = H.root.getObjectByName('sack');
+    if (sack) {
+      sack.visible = carried > 0;
+      const k = 0.5 + Math.min(1, carried / 10) * 0.7;
+      sack.scale.set(k, k, k);
+    }
 
     // ---- унаа морь ----
     const rh = ridingHorse(state);

@@ -4,7 +4,7 @@
   "hud.money": "Money",
   "hud.animals": "Livestock",
   "hud.speed": "Speed",
-  "hud.milestone": "M2 · 3D foundation",
+  "hud.milestone": "M3 · product loop",
   "species.sheep": "Sheep (khoni)",
   "species.goat": "Goat (yamaa)",
   "species.cow": "Cattle (ükher)",
@@ -21,11 +21,13 @@
   "hud.degrade": "Degradation",
   "hud.mounted": "🐎 Riding",
   "hud.onFoot": "🚶 On foot",
+  "hud.uurga": "🪵 Uurga in hand",
+  "hud.noUurga": "✋ Empty-handed (U)",
   "hud.away": "Herder is busy (moving / at sum center)",
   "camp.river": "Riverbank",
   "camp.northSlope": "North slope (uulyn ar)",
   "camp.valley": "Valley (khöndii)",
   "help.title": "Controls",
-  "help.body": "WASD / arrows — walk (Shift — run) · click ground — go there\nDrag mouse — rotate camera · wheel — zoom\nSpace — \"Khööye!\": nearby animals bunch and move away from you\nAnimals shy away at 6 m (8.5 m mounted) — walk to steer the herd\nF — mount / dismount · H — call your horse\nQ — scare wolves (45 m, 60 m mounted)\n1 / 2 / 3 — speed 1× 2× 4× · G — pasture heatmap · F1 — this help · ` — +50 animals (debug)",
+  "help.body": "WASD / arrows — walk (Shift — run) · click ground — go there\nDrag mouse — rotate camera · wheel — zoom\nSpace — \"Khööye!\": nearby animals bunch and move away from you\nU — take up / put down the uurga (herding pole). With it, animals shy away at 6 m (8.5 m mounted) — walk to steer the herd. Empty-handed, animals ignore you; only \"Khööye!\" moves them\nF — mount / dismount · H — call your horse\nQ — scare wolves (45 m, 60 m mounted)\n1 / 2 / 3 — speed 1× 2× 4× · G — pasture heatmap · F1 — this help · ` — +50 animals (debug)\nWalking near milk cans and wool picks them up (10 units in hand); near the tent they go into storage · E — pick up / store\nB — storage & processing · T — cart trip to the sum center (sell, buy)",
   "help.hint": "F1 — controls"
 }

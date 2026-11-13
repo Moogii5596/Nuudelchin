@@ -31,6 +31,12 @@ export function orderPrice(cfg: GameConfig, state: GameState, o: BuyOrder): numb
   }
 }
 
+/** Мал тэргэнд эзлэх байр (хонины тоогоор) */
+export function animalSlots(cfg: GameConfig, v: VehicleId, species: string): number {
+  const vc = cfg.vehicles[v];
+  return species === 'cow' || species === 'horse' ? vc.sheepSlots / vc.cowSlots : 1;
+}
+
 export interface TripPlan {
   vehicle: VehicleId;
   sell: Partial<Record<ProductId, number>>;
@@ -47,7 +53,9 @@ export function startTrip(cfg: GameConfig, state: GameState, plan: TripPlan): st
   if (units > v.capacity + 1e-9) return `Ачаа багтахгүй (${units}/${v.capacity})`;
   const sellAnimals = state.animals.filter((a) => plan.sellAnimalIds?.includes(a.id) && !a.riding);
   const slots = sellAnimals.reduce((s, a) => s + (a.species === 'cow' || a.species === 'horse' ? v.sheepSlots / v.cowSlots : 1), 0);
-  if (slots > v.sheepSlots + 1e-9) return 'Мал багтахгүй';
+  if (slots > v.sheepSlots + 1e-9) return `Зарах мал тэргэнд багтахгүй (${v.sheepSlots} хонь эсвэл ${v.cowSlots} үхэр)`;
+  const buySlots = plan.buy.reduce((s, o) => s + (o.kind !== 'animal' ? 0 : o.species === 'cow' || o.species === 'horse' ? v.sheepSlots / v.cowSlots : 1), 0);
+  if (buySlots > v.sheepSlots + 1e-9) return `Авах мал тэргэнд багтахгүй (${v.sheepSlots} хонь эсвэл ${v.cowSlots} үхэр)`;
   const cargo: Partial<Record<ProductId, number>> = {};
   for (const [p, n] of Object.entries(plan.sell)) {
     const got = storage.take(state, p as ProductId, n ?? 0);

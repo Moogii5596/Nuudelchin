@@ -9,6 +9,7 @@ import { TerrainView } from './terrain';
 import { AnimalsView } from './animals';
 import { CharactersView } from './characters';
 import { FollowCamera } from './camera';
+import { ItemsView } from './items';
 
 /** Бэлчээрийн өнгийг хэр олон удаа шинэчлэх (бодит секунд) */
 const GRASS_REFRESH_SEC = 0.4;
@@ -20,6 +21,7 @@ export class GameView {
   readonly terrain: TerrainView;
   readonly animals: AnimalsView;
   readonly characters: CharactersView;
+  readonly items: ItemsView;
   heatmap = false;
   private sun: THREE.DirectionalLight;
   private grassT = 0;
@@ -56,7 +58,8 @@ export class GameView {
     this.terrain = new TerrainView(cfg);
     this.animals = new AnimalsView(cfg);
     this.characters = new CharactersView();
-    this.scene.add(this.terrain.group, this.animals.group, this.characters.group);
+    this.items = new ItemsView(cfg);
+    this.scene.add(this.terrain.group, this.animals.group, this.characters.group, this.items.group);
     this.terrain.sync(state);
     this.terrain.updateGrass(state, this.heatmap);
 
@@ -99,6 +102,7 @@ export class GameView {
     }
     this.animals.update(state, this.heightAt, alpha, dt, stepSec);
     this.characters.update(state, this.heightAt, dt);
+    this.items.update(state, this.heightAt, dt);
 
     const p = state.player;
     const ty = this.heightAt(p.x, p.z) + (p.mounted ? 2.4 : 1.6);

@@ -53,12 +53,27 @@ describe('Малчин, «Хөөе», морь (M2)', () => {
     expect(sim.command({ type: 'shout' }).ok).toBe(false);
   });
 
-  it('мал малчнаас айж холдоно', () => {
+  it('уурга барьсан үед мал малчнаас айж холдоно', () => {
     const sim = newSim(8);
+    expect(sim.state.player.holdingUurga).toBe(false);
+    expect(sim.command({ type: 'toggleUurga' }).ok).toBe(true);
+    expect(sim.state.player.holdingUurga).toBe(true);
     const a = sim.state.animals.find((x) => x.species === 'sheep')!;
     sim.command({ type: 'movePlayer', x: a.x + 2, z: a.z });
     steps(sim, 10);
     expect(Math.hypot(a.x - sim.state.player.x, a.z - sim.state.player.z)).toBeGreaterThan(cfg.player.animalFear.onFoot);
+  });
+
+  it('уураггүй үед мал малчнаас айхгүй, «Хөөе» л туух боломжтой', () => {
+    const sim = newSim(8);
+    const a = sim.state.animals.find((x) => x.species === 'sheep')!;
+    sim.command({ type: 'movePlayer', x: a.x + 2, z: a.z });
+    steps(sim, 1);
+    expect(a.mode).not.toBe('driven');
+    steps(sim, 9);
+    expect(a.mode).not.toBe('driven');
+    expect(sim.command({ type: 'shout' }).ok).toBe(true);
+    expect(a.mode).toBe('driven');
   });
 
   it('морь хол бол унаж чадахгүй; дуудвал ирж, унасан морь малчныг дагана', () => {

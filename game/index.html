@@ -20,6 +20,34 @@
       .toast { padding: 7px 14px; border-radius: 8px; background: rgba(30, 24, 18, 0.82); color: #f4ead6; font-size: 14px; }
       .toast.good { border-left: 4px solid #7bbf5a; }
       .toast.bad { border-left: 4px solid #d9534f; }
+      #prompt { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); padding: 6px 14px; border-radius: 8px;
+                background: rgba(30, 24, 18, 0.78); color: #f4ead6; font-size: 15px; pointer-events: none; display: none; }
+      #prompt kbd { background: #e8b64c; color: #2b1d14; border-radius: 4px; padding: 0 6px; font-weight: 700; }
+      #modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(20, 14, 8, 0.45); }
+      #modalBox { width: min(760px, 94vw); max-height: 88vh; overflow: auto; padding: 18px 22px; border-radius: 12px;
+                  background: #f6efe1; color: #2b1d14; font-size: 14px; line-height: 1.45; box-shadow: 0 10px 40px rgba(0,0,0,0.35); }
+      #modalBox h2 { margin: 0 0 10px; font-size: 20px; display: flex; justify-content: space-between; align-items: center; }
+      #modalBox h3 { margin: 16px 0 6px; font-size: 15px; color: #6b3d1e; }
+      #modalBox table { width: 100%; border-collapse: collapse; }
+      #modalBox td { padding: 4px 6px; border-bottom: 1px solid #e4d8c0; vertical-align: middle; }
+      #modalBox tr.total td { border-top: 2px solid #6b3d1e; font-weight: 700; }
+      #modalBox .num { text-align: right; white-space: nowrap; }
+      #modalBox .ctl { text-align: right; white-space: nowrap; }
+      #modalBox .ctl b { display: inline-block; min-width: 34px; text-align: center; }
+      #modalBox .muted { color: #8a7a60; font-size: 13px; }
+      #modalBox .good { color: #3d7a2a; }
+      #modalBox .bad { color: #b03a2e; }
+      #modalBox .close { cursor: pointer; font-size: 18px; color: #8a7a60; }
+      #modalBox .bar { height: 8px; background: #e4d8c0; border-radius: 4px; overflow: hidden; margin: 4px 0 8px; }
+      #modalBox .bar div { height: 100%; background: #c98a2e; }
+      #modalBox .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+      #modalBox .sum { display: flex; gap: 22px; margin: 12px 0 4px; padding: 8px 10px; background: #efe3cb; border-radius: 8px; }
+      .btn { font: inherit; padding: 4px 12px; border-radius: 6px; border: 1px solid #b59a6a; background: #fffaf0; color: #2b1d14; cursor: pointer; }
+      .btn:hover:not([disabled]) { background: #f3e6c8; }
+      .btn[disabled] { opacity: 0.45; cursor: default; }
+      .btn.gold { background: #e8b64c; border-color: #b8862c; font-weight: 600; }
+      .btn.sm { padding: 0 8px; }
+      .btn.big { padding: 7px 22px; font-size: 15px; }
       #err { position: fixed; inset: 0; display: none; place-items: center; background: #2b1d14; color: #f4ead6; padding: 24px; white-space: pre-wrap; }
     </style>
   </head>
@@ -28,7 +56,9 @@
     <div id="hud" class="panel"></div>
     <div id="perf" class="panel"></div>
     <div id="help" class="panel"></div>
+    <div id="prompt"></div>
     <div id="toasts"></div>
+    <div id="modal"><div id="modalBox"></div></div>
     <div id="err"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

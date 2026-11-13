@@ -9,14 +9,18 @@ import type { GameState } from '../sim/state';
 import type { Command, CommandResult } from '../sim/commands';
 import { riverZ } from '../sim/terrain';
 
-export type ActionKind = 'shout' | 'scare' | 'call' | 'mount';
+export type ActionKind = 'shout' | 'scare' | 'call' | 'mount' | 'uurga' | 'pickup' | 'deposit';
 
 export interface ControllerHooks {
   dispatch: (cmd: Command) => CommandResult;
   /** Командын үр дүн (мэдэгдэл, бичиг) */
   onAction: (kind: ActionKind, res: CommandResult) => void;
   onSpeed: (idx: number) => void;
-  onToggle: (what: 'heatmap' | 'help' | 'cheatHerd') => void;
+  onToggle: (what: 'heatmap' | 'help' | 'cheatHerd' | 'storage' | 'trip') => void;
+  /** Цонх нээлттэй үед удирдлага ажиллахгүй */
+  blocked: () => boolean;
+  /** Одоогийн төлөв (E товчны үйлдлийг сонгоход) */
+  state: () => GameState;
 }
 
 const angDiff = (a: number, b: number): number => {
@@ -35,6 +39,7 @@ export class PlayerController {
   constructor(private cfg: GameConfig, private hooks: ControllerHooks) {
     window.addEventListener('keydown', (e) => {
       if (e.target instanceof HTMLInputElement) return;
+      if (this.hooks.blocked()) return;
       this.keys.add(e.code);
       if (e.repeat) return;
       switch (e.code) {
@@ -45,11 +50,23 @@ export class PlayerController {
         case 'KeyF':
           this.hooks.onAction('mount', this.hooks.dispatch({ type: 'toggleMount' }));
           break;
+        case 'KeyU':
+          this.hooks.onAction('uurga', this.hooks.dispatch({ type: 'toggleUurga' }));
+          break;
         case 'KeyH':
           this.hooks.onAction('call', this.hooks.dispatch({ type: 'callHorse' }));
           break;
         case 'KeyQ':
           this.scare();
+          break;
+        case 'KeyE':
+          this.useAction(true);
+          break;
+        case 'KeyB':
+          this.hooks.onToggle('storage');
+          break;
+        case 'KeyT':
+          this.hooks.onToggle('trip');
           break;
         case 'Digit1':
         case 'Digit2':
@@ -86,6 +103,36 @@ export class PlayerController {
     this.hooks.onAction('scare', this.hooks.dispatch({ type: 'scareWolves' }));
   }
 
+  private autoT = 0;
+
+  /**
+   * E (эсвэл автоматаар): агуулахын дэргэд гартаа юм байвал хийнэ, үгүй бол ойрын бүтээгдэхүүнийг түүнэ.
+   * manual=false үед зөвхөн амжилттай бол мэдэгдэнэ.
+   */
+  private useAction(manual: boolean): void {
+    const st = this.hooks.state();
+    const p = st.player;
+    if (p.away) return;
+    const home = this.cfg.camps.home;
+    const atStore = Math.hypot(p.x - home.x, p.z - home.z) <= home.storageRadius;
+    if (atStore && p.carry.length) {
+      const r = this.hooks.dispatch({ type: 'deposit' });
+      if (manual || r.ok || r.msg === 'Агуулах дүүрсэн') this.hooks.onAction('deposit', r);
+      if (!manual && !r.ok) this.autoT = 4; // дүүрсэн бол дахин дахин мэдэгдэхгүй
+      return;
+    }
+    const R = this.cfg.products.pickupRadius;
+    const near = st.items.some((it) => Math.hypot(it.x - p.x, it.z - p.z) <= R);
+    if (!near) {
+      if (manual) this.hooks.onAction('pickup', { ok: false, msg: atStore ? 'Гарт юм алга' : 'Ойролцоо бүтээгдэхүүн алга' });
+      return;
+    }
+    const carried = p.carry.reduce((t, c) => t + c.amount, 0);
+    if (!manual && carried >= this.cfg.products.carryUnits - 1e-9) return;
+    const r = this.hooks.dispatch({ type: 'pickup', ids: 'nearby' });
+    if (manual || r.ok) this.hooks.onAction('pickup', r);
+  }
+
   /** Газар дээр дарсан */
   moveTo(x: number, z: number, run: boolean): void {
     this.target = { x, z, run };
@@ -99,6 +146,12 @@ export class PlayerController {
     if (p.away) {
       this.target = null;
       return;
+    }
+    // Алхаж явахад ойрын бүтээгдэхүүнийг автоматаар түүж, агуулахын дэргэд хийнэ
+    this.autoT -= dt;
+    if (this.autoT <= 0) {
+      this.autoT = 0.2;
+      this.useAction(false);
     }
     const k = this.keys;
     let iz = 0, ix = 0;

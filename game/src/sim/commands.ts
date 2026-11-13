@@ -13,7 +13,7 @@ import * as storage from './systems/storage';
 import * as processing from './systems/processing';
 import { startTrip, type TripPlan } from './systems/trip';
 import { startMove } from './systems/camps';
-import { shout, toggleMount } from './systems/herder';
+import { shout, toggleMount, toggleUurga } from './systems/herder';
 import { scareWolves } from './systems/wolves';
 import { newAnimal } from './state';
 import { SPECIES } from './config';
@@ -22,6 +22,7 @@ export type Command =
   | { type: 'movePlayer'; x: number; z: number; heading?: number }
   | { type: 'shout' }                 // «Хөөе!» (Space)
   | { type: 'toggleMount' }           // морь унах/буух (F)
+  | { type: 'toggleUurga' }           // шилбүүр/уурга барих/тавих (U)
   | { type: 'callHorse' }             // морь дуудах (H)
   | { type: 'scareWolves' }           // чоно үргээх (Q)
   | { type: 'debugAddAnimals'; n: number; x?: number; z?: number }   // туршилтын цэс: мал нэмэх
@@ -36,6 +37,12 @@ export type Command =
 export interface CommandResult {
   ok: boolean;
   msg?: string;
+}
+
+/** Малчин майхан/агуулахын дэргэд байгаа эсэх (тэрэг, тогоо тэнд байна) */
+export function nearHome(cfg: { camps: { home: { x: number; z: number; storageRadius: number } } }, p: { x: number; z: number }): boolean {
+  const h = cfg.camps.home;
+  return Math.hypot(p.x - h.x, p.z - h.z) <= h.storageRadius * 2;
 }
 
 const ok = (msg?: string): CommandResult => ({ ok: true, msg });
@@ -65,6 +72,8 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
       return ok(p.mounted ? 'Морь унлаа' : 'Мориноосоо буулаа');
     }
 
+    case 'toggleUurga':
+      return ok(toggleUurga(state) ? 'Уургаа барилаа — мал танаас айж туугдана' : 'Уургаа тавилаа — мал зөвхөн «Хөөе!»-гээр туугдана');
     case 'callHorse': {
       if (p.mounted) return fail('Та мориндоо сууж байна');
       p.horseCalled = true;
@@ -132,6 +141,7 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
     }
 
     case 'process': {
+      if (proximity && !nearHome(cfg, p)) return fail('Майхандаа очиж боловсруулна');
       const pr = state.processors.find((x) => x.kind === cmd.kind && processing.canStart(cfg, state, x));
       if (!pr) return fail('Төхөөрөмж завгүй эсвэл түүхий эд дутуу');
       processing.start(cfg, state, pr);
@@ -139,6 +149,7 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
     }
 
     case 'trip': {
+      if (proximity && !nearHome(cfg, p)) return fail('Тэрэг майхны дэргэд байна — тийшээ оч');
       const err = startTrip(cfg, state, cmd.plan);
       return err ? fail(err) : ok();
     }

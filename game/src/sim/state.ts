@@ -8,7 +8,7 @@ import { Rng } from './rng';
 import { buildGrid, type GrassGrid } from './systems/pasture';
 import { spawnWolves, type WolfState } from './systems/wolves';
 
-export const SAVE_VERSION = 4;   // 4: малчин унах/чиглэл, чоно (M2)
+export const SAVE_VERSION = 5;   // 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих
 
 export type ProductId = 'milk' | 'tarag' | 'aaruul' | 'urum' | 'wool' | 'felt' | 'cashmere';
 export const PRODUCTS: readonly ProductId[] = ['milk', 'tarag', 'aaruul', 'urum', 'wool', 'felt', 'cashmere'];
@@ -104,6 +104,7 @@ export interface PlayerState {
   heading: number;       // харж буй чиглэл (рад, +z = 0)
   mounted: boolean;      // морь унасан
   horseCalled: boolean;  // морь дуудсан (давхиж ирж байна)
+  holdingUurga: boolean; // шилбүүр/богино уурга барьсан — зөвхөн энэ үед мал малчнаас айна (prototype-rules.md §4)
   carry: { product: ProductId; amount: number; age: number }[];
   away: boolean;         // сумын төв рүү явсан
 }
@@ -209,7 +210,7 @@ export function createInitialState(cfg: GameConfig, seed: number): GameState {
     trip: null,
     move: null,
     neighborBull: false,
-    player: { x: 2, z: 6, heading: 0, mounted: false, horseCalled: false, carry: [], away: false },
+    player: { x: 2, z: 6, heading: 0, mounted: false, horseCalled: false, holdingUurga: false, carry: [], away: false },
     wolves: spawnWolves(cfg, seed, cfg.start.camp),
     today: emptyDayStats(),
     goalReachedDay: null,

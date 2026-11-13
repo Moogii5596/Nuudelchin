@@ -1,6 +1,7 @@
 /**
  * Малчин ба унаа морь (M2, прототип v1.2 → prototype-rules.md §4–5).
- * - Мал малчнаас 6 м (мориор 8.5 м) зайд айж холдоно → малчин алхаж/давхиж сүргээ хөтөлнө.
+ * - Малчин шилбүүр/богино уурга барьсан үед л мал 6 м (мориор 8.5 м) зайд айж холдоно → малчин алхаж/давхиж сүргээ хөтөлнө.
+ *   Уураггүй бол мал малчнаас айхгүй; зөвхөн «Хөөе!»-гээр туугдана.
  * - «Хөөе!»: ойрын мал бөөгнөрч, малчнаас эсрэг зүг рүү хамт явна.
  * - Морь унах/буух, морь дуудах.
  * Малчны байрлалыг input бодит цагаар тооцож `movePlayer` командаар өгнө.
@@ -42,7 +43,8 @@ export function herderStep(cfg: GameConfig, state: GameState): void {
   }
   if (p.away) return;
 
-  // Мал малчнаас айж холдоно
+  // Мал малчнаас айж холдоно — зөвхөн шилбүүр/уурга барьсан үед
+  if (!p.holdingUurga) return;
   const f = cfg.player.animalFear;
   const R = p.mounted ? f.mounted : f.onFoot;
   for (const a of state.animals) {
@@ -94,6 +96,12 @@ export function shout(cfg: GameConfig, state: GameState, rng: Rng): number {
     a.tz = gz + (a.z - cz) * s.bunch + rng.range(-1, 1);
   }
   return near.length;
+}
+
+/** Шилбүүр/богино уурга барих ↔ тавих. Шинэ төлөвийг буцаана */
+export function toggleUurga(state: GameState): boolean {
+  state.player.holdingUurga = !state.player.holdingUurga;
+  return state.player.holdingUurga;
 }
 
 /** Морь унах / буух. Алдаа бол мессеж */
