@@ -82,7 +82,7 @@ describe('Нохой (M4, хэрэглэгчийн дүрэм: командуу�
     expect(Math.hypot(d.x - cx, d.z - cz)).toBeLessThan(cfg.dogs.guardRadius + 8);
   });
 
-  it('ойртсон чоныг хөөж, айлгаж үүр лүү нь буцаана', () => {
+  it('шархтай нохой ойртсон чоныг хуцаж үргээнэ (тулалдахгүй)', () => {
     const sim = withDog();
     sim.state.wolves.peaceful = false;
     sim.command({ type: 'movePlayer', x: 60, z: 60 });
@@ -90,15 +90,61 @@ describe('Нохой (M4, хэрэглэгчийн дүрэм: командуу�
     const d = sim.state.dogs[0]!;
     d.x = 60;
     d.z = 60;
+    d.health = 30;
     const w = sim.state.wolves.list[0]!;
     w.x = w.tx = 75;
     w.z = w.tz = 60;
+    w.hunger = 2;
     let fled = false;
     for (let i = 0; i < 40 && !fled; i++) {
       sim.step();
       fled = w.mode === 'flee';
     }
     expect(fled).toBe(true);
+    expect(sim.state.wolves.list).toContain(w);
+  });
+
+  describe('Нохой чонотой тулалдана (B8)', () => {
+    const setup = (n: number) => {
+      const sim = withDog();
+      sim.state.wolves.peaceful = false;
+      sim.command({ type: 'movePlayer', x: 60, z: 60 });
+      sim.command({ type: 'dogOrder', dog: 'all', order: 'stay' });
+      const d = sim.state.dogs[0]!;
+      d.x = 60;
+      d.z = 60;
+      const ws = sim.state.wolves.list.slice(0, n);
+      ws.forEach((w, k) => {
+        w.x = w.tx = 72 + k;
+        w.z = w.tz = 60 + k;
+        w.hunger = 2;
+        w.mode = 'roam';
+      });
+      for (const w of sim.state.wolves.list.slice(n)) w.hunger = 0;
+      const fights: string[] = [];
+      sim.on((e) => {
+        if (e.type === 'dogFight') fights.push(e.result);
+      });
+      for (let i = 0; i < 40 && !fights.length; i++) sim.step();
+      return { sim, d, ws, fights };
+    };
+
+    it('ганц чоно: чоно үхэж, нохой 80% шархдана, дараа нь сэргэнэ', () => {
+      const { sim, d, ws, fights } = setup(1);
+      expect(fights).toEqual(['wolfKilled']);
+      expect(sim.state.wolves.list).not.toContain(ws[0]);
+      expect(d.health).toBeCloseTo(100 - cfg.wolves.fight.woundOne);
+      expect(sim.state.dogs).toContain(d);
+      steps(sim, 24 * 60 + 5);
+      expect(d.health!).toBeGreaterThan(100 - cfg.wolves.fight.woundOne);
+    });
+
+    it('хоёр чоно нохойг алана', () => {
+      const { sim, d, fights } = setup(2);
+      expect(sim.state.wolves.list.length).toBeGreaterThanOrEqual(2);
+      expect(fights).toEqual(['dogKilled']);
+      expect(sim.state.dogs).not.toContain(d);
+    });
   });
 
   it('сумын төвөөс нохой авч, өдөр бүр хоолны зардал гарна', () => {

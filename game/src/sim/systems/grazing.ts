@@ -71,7 +71,8 @@ function decide(cfg: GameConfig, state: GameState, rng: Rng, a: Animal, quality:
   a.mode = 'graze';
   const center = centers.get(a.id);
   const radius = g.sampleRadius[a.species];
-  const spread = g.maxFlockSpread[a.species];
+  // Сүргийн өргөн малын тоогоор (B11): 300 хонь 14 м-т бөөгнөрч «хадуур шиг» зурвас гаргахгүй, мал бүрт areaPerAnimal м² зай
+  const spread = Math.max(g.maxFlockSpread[a.species], 2 * Math.sqrt(((center?.n ?? 1) * (g.areaPerAnimal?.[a.species] ?? 0)) / Math.PI));
   const cohesion = g.cohesion[a.species];
   let best = scoreAt(cfg, state, a, a.x, a.z, quality, center, spread, cohesion);
   let bx = a.x, bz = a.z;
@@ -81,7 +82,8 @@ function decide(cfg: GameConfig, state: GameState, rng: Rng, a: Animal, quality:
     const r = rng.range(radius * 0.3, radius);
     const x = a.x + Math.cos(ang) * r;
     const z = a.z + Math.sin(ang) * r;
-    const s = scoreAt(cfg, state, a, x, z, quality, center, spread, cohesion);
+    // Мал бүр өөр өөр сонголттой (B11): бүгд яг нэг «шинэ» зурвас руу урагшлахгүй, бэлчээрийг хэсэг хэсгээр иднэ
+    const s = scoreAt(cfg, state, a, x, z, quality, center, spread, cohesion) * (1 + (g.choiceNoise ?? 0) * rng.range(-1, 1));
     if (s > best) {
       best = s;
       bx = x;

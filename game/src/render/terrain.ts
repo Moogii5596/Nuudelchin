@@ -233,10 +233,46 @@ export class TerrainView {
    * Бэлчээрийн торноос газрын өнгө, бутны өндрийг шинэчилнэ.
    * heatmap = туршилтын горим: идэж болох өвсийг улаан (0) → ногоон (их) өнгөөр.
    */
+  private blurA: Float32Array | null = null;
+  private blurB: Float32Array | null = null;
+
+  /** Тусгаарлагдах хайрцган шүүлтүүр (радиус r нүд): бэлчээрийн өнгө, бутанд зөөлөн шилжилт */
+  private smoothBiomass(src: number[], n: number, r: number): Float32Array {
+    const N = n * n;
+    if (!this.blurA || this.blurA.length !== N) {
+      this.blurA = new Float32Array(N);
+      this.blurB = new Float32Array(N);
+    }
+    const a = this.blurA, b = this.blurB!;
+    for (let z = 0; z < n; z++) {
+      const row = z * n;
+      for (let x = 0; x < n; x++) {
+        let s = 0, c = 0;
+        for (let k = Math.max(0, x - r); k <= Math.min(n - 1, x + r); k++) {
+          s += src[row + k] ?? 0;
+          c++;
+        }
+        a[row + x] = s / c;
+      }
+    }
+    for (let x = 0; x < n; x++) {
+      for (let z = 0; z < n; z++) {
+        let s = 0, c = 0;
+        for (let k = Math.max(0, z - r); k <= Math.min(n - 1, z + r); k++) {
+          s += a[k * n + x]!;
+          c++;
+        }
+        b[z * n + x] = s / c;
+      }
+    }
+    return b;
+  }
+
   updateGrass(state: GameState, heatmap: boolean): void {
     if (!this.ground) return;
     const grid = state.grass;
-    const bio = grid.biomass;
+    // Зурвас (сүрэг хадуур шиг) харагдахгүй байхаар өвсний харагдацыг ойр орчмоор нь зөөлрүүлнэ (зөвхөн дүрслэл)
+    const bio = this.smoothBiomass(grid.biomass as number[], grid.n, 2);
     const degrade = state.camps[state.campId]?.degrade ?? 0;
     const col = (this.ground.geometry.attributes.color as THREE.BufferAttribute).array as Float32Array;
     const n = this.vFixed.length;

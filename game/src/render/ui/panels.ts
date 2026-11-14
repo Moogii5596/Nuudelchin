@@ -574,7 +574,7 @@ export class Panels {
       const dist = Math.round(Math.hypot(d.x - p.x, d.z - p.z));
       const cur = d.order === 'guardHerd' ? `${DOG_ORDER_NAME.guardHerd} (${HERD_NAME[d.herd]})` : DOG_ORDER_NAME[d.order];
       const status = d.mode === 'chase' ? '<b class="bad">🐺 Чоно хөөж байна</b>' : cur;
-      return `<tr><td><b>🐕 ${d.name}</b><br><span class="muted">${dist} м зайд</span></td><td>${status}</td><td>${buttons(String(d.id))}</td></tr>`;
+      return `<tr><td><b>🐕 ${d.name}</b><br><span class="muted">${dist} м зайд${(d.health ?? 100) < 100 ? ` · 🩹 ${Math.round(d.health ?? 100)}%` : ''}</span></td><td>${status}</td><td>${buttons(String(d.id))}</td></tr>`;
     }).join('');
     return `<h2>🐕 Нохойн команд <span class="close" data-act="close">✕</span></h2>
       <p class="muted">«Энд» = таны одоо зогсож буй газар. Нохой бүр ${cfg.wolves.protectRadius.dog} м хамгаалалтын бүстэй, ${cfg.dogs.alertRadius} м-т ойртсон чоныг хөөнө (харуулын цэгээсээ ${cfg.dogs.leash} м-ээс холгүй). <kbd>N</kbd> — бүх нохой намайг дага.</p>

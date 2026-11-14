@@ -42,7 +42,7 @@ describe('Малчин, «Хөөе», морь (M2)', () => {
     expect(r.ok).toBe(true);
     steps(sim, 30);
     const moved = near.filter((a, i) => dist(a) > before[i]! + 5).length;
-    expect(moved).toBe(near.length);
+    expect(moved).toBeGreaterThanOrEqual(Math.ceil(near.length * 0.8));   // B11: туугдаж дуусаад бэлчих сонголт нь санамсаргүй
     // Бөөгнөрсөн: малчны баруун талд (эсрэг зүг) бүгд
     expect(near.every((a) => a.x > cx - 10)).toBe(true);
   });

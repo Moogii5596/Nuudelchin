@@ -194,12 +194,12 @@
     "decisionEverySteps": 10,
     "samples": 6,
     "sampleRadius": {
-      "sheep": 4,
-      "goat": 4,
+      "sheep": 6,
+      "goat": 6,
       "cow": 6,
       "horse": 8
     },
-    "grazeSpeed": 0.25,
+    "grazeSpeed": 0.5,
     "travelSpeed": 1.0,
     "cohesion": {
       "sheep": 0.08,
@@ -214,6 +214,14 @@
       "horse": 30
     },
     "qualityExponent": 1.5,
+    "areaPerAnimal": {
+      "_doc": "B11 (хэрэглэгчийн ажиглалт 2026-11-14: 300 хонь өвсний машин шиг зурвас гаргаж иднэ). Сүрэг бэлчихдээ мал бүрт ийм м² талбай эзэлж тарна: сүргийн өргөн = max(maxFlockSpread, 2·√(n·area/π)). 300 хонь ≈ 87 м. Мөн мал бэлчихдээ алхаж (grazeSpeed 0.5 м/мин, sampleRadius хонь 6 м) идэлтээ тараана — 8 цагт 300 хонь гүн идсэн нүд 265 → 113",
+      "sheep": 20,
+      "goat": 20,
+      "cow": 40,
+      "horse": 60
+    },
+    "choiceNoise": 0.35,
     "drinkRadius": 2.5,
     "roamFactor": 5,
     "roamSpeed": 0.6,

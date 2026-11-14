@@ -65,6 +65,9 @@ function start(): void {
       }
     } else if (e.type === 'wolfKill') toast(`🐺 Чоно ${t('species.' + e.species).toLowerCase()} барьж авлаа`, 'bad');
     else if (e.type === 'wolfGiveUp') toast('Чоно ангаа орхилоо', 'good');
+    else if (e.type === 'dogFight') toast(e.result === 'wolfKilled' ? `🐕 ${e.dog} чонотой барилдаж аллаа! Нохой шархадсан — хэд хоног амраана` : e.result === 'bothDied' ? `🐕 ${e.dog} чонотой барилдаж хоёулаа үхлээ` : `🐺 Хоёр чоно ${e.dog}-ыг барилаа`, e.result === 'wolfKilled' ? 'good' : 'bad');
+    else if (e.type === 'wolfPups') toast(`🐺 Чонын үүрэнд ${e.n} гөлөг гарлаа — чоно өлсөж, илүү ан хийнэ`, 'bad');
+    else if (e.type === 'wolfArrive') toast(`🐺 Өөр газраас ${e.n} чоно ирж үүрэнд суулаа`, 'bad');
     else if (e.type === 'leftToMap') toast('🗺 Газрын зураг — очих газраа хулганаар дарна (явж байхдаа сольж болно)', 'good');
     else if (e.type === 'arrived') toast(e.place === 'sum' ? '🏘 Сумын төвд ирлээ — Худалдаачны дэлгүүрт оч (шар тойрог, E)' : '🏠 Гэртээ ирлээ', 'good');
     else if (e.type === 'arriveCamp') panels.showArrive(e.campId);

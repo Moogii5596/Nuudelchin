@@ -11,7 +11,7 @@ import { applyAccess, coldNight, dailyAwayGrass, dailyGrass, dailySnow, feedHay,
 import type { Season } from './config';
 import { grazingStep } from './systems/grazing';
 import { cohesionCenters, findHerds, herdDecide, type FlockCenter, type Herd, type HerdDecision } from './systems/herds';
-import { dogsStep } from './systems/dogs';
+import { dogsDaily, dogsStep } from './systems/dogs';
 import { dailyAnimals, grazingSheepUnits, herdSheepUnits, liveWeightKg } from './systems/animals';
 import { dailyBreeding } from './systems/breeding';
 import { groundAgingStep } from './systems/production';
@@ -22,7 +22,7 @@ import { mapStep, syncAway, type TravelEvent } from './systems/travel';
 import { dailyOtor, helpersStep, payWages, refreshCandidates, type HelperEvent } from './systems/helpers';
 import { moveStep } from './systems/camps';
 import { herderStep } from './systems/herder';
-import { wolvesStep, nightRaid, endRaid, type WolfEvent } from './systems/wolves';
+import { wolvesDaily, wolvesStep, nightRaid, endRaid, type WolfEvent } from './systems/wolves';
 
 export interface DayReport extends DayStats {
   day: number;
@@ -105,7 +105,7 @@ export class Sim {
     eveningStep(cfg, state, rng);
     for (const ev of helpersStep(cfg, state, rng, this.quality)) this.emit(ev);
     grazingStep(cfg, state, rng, this.quality, this.centers);
-    dogsStep(cfg, state, herds);
+    for (const ev of dogsStep(cfg, state, herds)) this.emit(ev);
     for (const ev of wolvesStep(cfg, state)) this.emit(ev);
     groundAgingStep(cfg, state);
     processingStep(cfg, state);
@@ -136,6 +136,7 @@ export class Sim {
         }
         morning(cfg, state, rng);
         endRaid(state);
+        for (const e2 of wolvesDaily(cfg, state)) this.emit(e2);
         refreshCandidates(cfg, state);
       }
       this.emit(ev);
@@ -183,6 +184,7 @@ export class Sim {
 
     this.spend('living', cfg.economy.dailyLivingCost);
     if (state.dogs.length) this.spend('dogFood', state.dogs.length * cfg.dogs.foodPerDay);
+    dogsDaily(cfg, state);
 
     const goal = state.home === 'ger' && su >= cfg.economy.goalSheepUnits;
     if (goal && state.goalReachedDay === null) state.goalReachedDay = day;

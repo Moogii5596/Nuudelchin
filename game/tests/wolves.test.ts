@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { cfg, newSim, steps } from './helpers';
-import { hungerStage, isProtected, protectionZones } from '../src/sim/systems/wolves';
+import { hungerStage, isPup, isProtected, protectionZones, wolvesDaily } from '../src/sim/systems/wolves';
 import type { GameState } from '../src/sim/state';
+import { seasonOf } from '../src/sim/systems/seasons';
 
 /** Нэг хонийг 1-р үүрний нутагт, бусдыг хотод тавина */
 function baitAtDen(s: GameState): number {
@@ -288,6 +289,49 @@ describe('Мал чоноос үргэж тарна (хэрэглэгчийн д
       expect(eatenPerWolf).toBeGreaterThan(4);
       // Үлдсэн нөөц олон хоногт хүрнэ (өдөрт dailyKg × чонын тоо)
       expect(den.food! / (cfg.wolves.hunger.dailyKg * pack.length)).toBeGreaterThan(5);
+    });
+  });
+
+  describe('Үржил, нас, шинэ чоно (B7, B9)', () => {
+    const springDay = (): number => {
+      for (let d = 1; d < 200; d++) if (seasonOf(cfg, d) === 'spring') return d;
+      return 1;
+    };
+
+    it('хавар эр, эм чонотой үүрэнд гөлөг гарч, гөлөг үүрэндээ байна', () => {
+      const sim = newSim(36);
+      const ws = sim.state.wolves;
+      ws.list = [];
+      const d = ws.dens[0]!;
+      for (const sex of ['m', 'f'] as const) ws.list.push({ id: ws.list.length + 1, den: 0, x: d.x, z: d.z, tx: d.x, tz: d.z, heading: 0, mode: 'roam', scared: 0, targetId: 0, fed: 0, hunger: 0, sex, age: 4, life: 10 });
+      sim.state.time.day = springDay();
+      let pups = 0;
+      for (let k = 0; k < 10 && !pups; k++) {
+        ws.bredYear = undefined;
+        for (const e of wolvesDaily(cfg, sim.state)) if (e.type === 'wolfPups') pups += e.n;
+      }
+      expect(pups).toBeGreaterThanOrEqual(cfg.wolves.breeding.litter[0]!);
+      expect(ws.list.length).toBeLessThanOrEqual(cfg.wolves.breeding.maxPerDen);
+      const pup = ws.list.find((o) => isPup(cfg, o))!;
+      pup.hunger = 2;   // өлссөн ч гөлөг ан хийхгүй
+      sim.state.time.day = springDay();
+      steps(sim, 60);
+      expect(pup.mode).toBe('den');
+      expect(Math.hypot(pup.x - d.x, pup.z - d.z)).toBeLessThan(2);
+    });
+
+    it('чоно хөгширч үхнэ; бүх чоно үхвэл хос чоно ирнэ', () => {
+      const sim = newSim(37);
+      const ws = sim.state.wolves;
+      for (const o of ws.list) {
+        o.age = 9.99;
+        o.life = 10;
+      }
+      const ev = wolvesDaily(cfg, sim.state);
+      expect(ev.some((e) => e.type === 'wolfDied')).toBe(true);
+      expect(ev.some((e) => e.type === 'wolfArrive')).toBe(true);
+      expect(ws.list).toHaveLength(cfg.wolves.breeding.immigrants);
+      expect(new Set(ws.list.map((o) => o.sex))).toEqual(new Set(['m', 'f']));
     });
   });
 });

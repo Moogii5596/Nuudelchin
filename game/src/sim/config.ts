@@ -102,6 +102,10 @@ export interface PastureTypeConfig {
 export interface GrazingConfig {
   imaxPerMinute: number;
   biomassPerGut: number;
+  /** Сүргийн мал бүрт ногдох бэлчээрийн талбай м² (B11): сүргийн өргөн малын тоогоор */
+  areaPerAnimal?: Record<string, number>;
+  /** Бэлчээрийн цэг сонголтын санамсаргүй хэлбэлзэл (B11) */
+  choiceNoise?: number;
   decisionEverySteps: number;
   samples: number;
   sampleRadius: Record<Species, number>;

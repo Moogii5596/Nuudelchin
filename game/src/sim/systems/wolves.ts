@@ -17,6 +17,9 @@
  *   Барьсан малын мах үүрний нөөцөд (den.food, кг) орж, тэр үүрний чоно тэнцүү хувааж иднэ —
  *   том мал барьвал олон хоног өл даана. Шөнийн дайралтад зөвхөн өлссөн чоно гарна.
  *
+ * B7: чоно үрждэг — хавар эр, эм чонотой үүрэнд гөлөг гарна, гөлөг үүрэндээ өснө, чоно хөгширч үхнэ.
+ * B8 (dogs.ts): нохой чонотой тулалдана. B9: бүх чоно үхвэл 2 чоно өөр газраас ирнэ (wolvesDaily).
+ *
  * Чонын хөдөлгөөн өөрийн seed-тэй генератортой (state.wolves.rngState) тул
  * бэлчээрлэлт, төллөлтийн санамсаргүй дарааллыг өөрчлөхгүй.
  */
@@ -54,7 +57,15 @@ export interface Wolf {
   forced?: boolean;      // туршилтын цэсээр дайруулсан: нутгийн хязгаарыг үл тооно
   raid?: boolean;        // шөнө хот руу дөхөж буй чоно (M4.5): нутгийн хязгааргүй
   hunger?: number;       // өлссөн хоног (B6)
+  sex?: 'm' | 'f';       // B7
+  age?: number;          // нас (жил; 1 жил = time.animalYearDays өдөр)
+  life?: number;         // насалж үхэх нас
   travel?: number;       // маш өлссөн: очиж буй үүрний индекс (B6)
+}
+
+/** Гөлөг (B7): үүрэндээ байж нөөцөөс иднэ, ан хийхгүй */
+export function isPup(cfg: GameConfig, o: Wolf): boolean {
+  return (o.age ?? 9) * cfg.time.animalYearDays < cfg.wolves.breeding.pupDays;
 }
 
 /** Чонын өлсгөлөнгийн шат (B6) */
@@ -70,6 +81,8 @@ export interface WolfState {
   dens: Den[];
   list: Wolf[];
   peaceful: boolean;     // туршилтын цэс: дайралт унтраасан
+  bredYear?: number;     // B7: сүүлд гөлөг гарсан жил
+  maxId?: number;        // B7: чонын дараагийн id
 }
 
 /** Хамгаалалтын бүс: чоно орохгүй, доторх малд дайрахгүй */
@@ -81,6 +94,10 @@ export interface Zone {
 }
 
 export type WolfEvent =
+  | { type: 'wolfPups'; den: number; n: number }        // B7: гөлөг гарлаа
+  | { type: 'wolfDied'; cause: 'old' | 'starve'; n: number }
+  | { type: 'wolfArrive'; n: number }                    // B9: шинэ чоно ирлээ
+  | { type: 'dogFight'; dog: string; result: 'wolfKilled' | 'dogKilled' | 'bothDied'; x: number; z: number }   // B8
   | { type: 'wolfHunt'; species: Species; animalId: number; x: number; z: number }
   | { type: 'wolfKill'; species: Species; animalId: number; x: number; z: number }
   | { type: 'wolfGiveUp'; species: Species; animalId: number; x: number; z: number }
@@ -111,7 +128,8 @@ export function spawnWolves(cfg: GameConfig, seed: number, campId: string): Wolf
     const n = rng.int(w.wolvesPerDen[0]!, w.wolvesPerDen[1]!);
     for (let k = 0; k < n; k++) {
       const x = d.x + rng.range(-3, 3), z = d.z + rng.range(-3, 3);
-      list.push({ id: list.length + 1, den: i, x, z, tx: x, tz: z, heading: rng.range(0, Math.PI * 2), mode: 'roam', scared: 0, targetId: 0, fed: 0, hunger: rng.range(w.hunger.startDays[0]!, w.hunger.startDays[1]!) });
+      const B = w.breeding;
+      list.push({ id: list.length + 1, den: i, x, z, tx: x, tz: z, heading: rng.range(0, Math.PI * 2), mode: 'roam', scared: 0, targetId: 0, fed: 0, hunger: rng.range(w.hunger.startDays[0]!, w.hunger.startDays[1]!), sex: k % 2 ? 'm' : 'f', age: rng.range(B.startAge[0]!, B.startAge[1]!), life: rng.range(B.lifespan[0]!, B.lifespan[1]!) });
     }
   });
   return { campId, rngState: rng.state, dens, list, peaceful: false };
@@ -337,7 +355,7 @@ export function wolvesStep(cfg: GameConfig, state: GameState): WolfEvent[] {
     } else {
       const stage = hungerStage(cfg, o);
       // Цадсан (B6): үүрэндээ орж гарч ирэхгүй, нутагтаа орсон малд ч дайрахгүй
-      if (stage === 'fed' && !o.raid && !o.forced) {
+      if ((stage === 'fed' || isPup(cfg, o)) && !o.raid && !o.forced) {
         o.travel = undefined;
         o.tx = den.x;
         o.tz = den.z;
@@ -520,7 +538,7 @@ export function nightRaid(cfg: GameConfig, state: GameState): number {
   let count = 0;
   for (let k = 0; k < max; k++) if (rng.chance(k === 0 ? p : p * 0.5)) count++;
   // Зөвхөн өлссөн чоно шөнө хот руу дөхнө (B6); цадсан чоно үүрэндээ
-  const free = ws.list.filter((o) => (o.mode === 'roam' || o.mode === 'den') && o.fed <= 0 && hungerStage(cfg, o) !== 'fed');
+  const free = ws.list.filter((o) => (o.mode === 'roam' || o.mode === 'den') && o.fed <= 0 && hungerStage(cfg, o) !== 'fed' && !isPup(cfg, o));
   let picked = 0;
   for (let k = 0; k < count && free.length; k++) {
     const i = Math.floor(rng.next() * free.length);
@@ -531,6 +549,68 @@ export function nightRaid(cfg: GameConfig, state: GameState): number {
   }
   ws.rngState = rng.state;
   return picked;
+}
+
+/**
+ * Өглөө бүр (B7, B9): нас ахих, хөгширч/гөлөг өлсөж үхэх, хаврын эхэнд гөлөг гаргах,
+ * бүх чоно үхсэн бол өөр газраас хос чоно ирэх.
+ */
+export function wolvesDaily(cfg: GameConfig, state: GameState): WolfEvent[] {
+  const ws = state.wolves;
+  const B = cfg.wolves.breeding;
+  const ev: WolfEvent[] = [];
+  if (!ws.dens.length) return ev;
+  const rng = Rng.fromState(ws.rngState);
+  const yearDays = cfg.time.animalYearDays;
+  const nextId = (): number => ws.list.reduce((m, o) => Math.max(m, o.id), ws.maxId ?? 0) + 1;
+  const make = (den: number, sex: 'm' | 'f', age: number, hunger: number): Wolf => {
+    const d = ws.dens[den]!;
+    const id = nextId();
+    ws.maxId = id;
+    return { id, den, x: d.x + rng.range(-2, 2), z: d.z + rng.range(-2, 2), tx: d.x, tz: d.z, heading: rng.range(0, Math.PI * 2), mode: 'den', scared: 0, targetId: 0, fed: 0, hunger, sex, age, life: rng.range(B.lifespan[0]!, B.lifespan[1]!) };
+  };
+  // Нас ахих, үхэх
+  let old = 0, starved = 0;
+  ws.list = ws.list.filter((o) => {
+    o.age = (o.age ?? 3) + 1 / yearDays;
+    if (o.age >= (o.life ?? 10)) {
+      old++;
+      return false;
+    }
+    if (isPup(cfg, o) && (o.hunger ?? 0) >= B.pupStarveDays) {
+      starved++;
+      return false;
+    }
+    return true;
+  });
+  if (old) ev.push({ type: 'wolfDied', cause: 'old', n: old });
+  if (starved) ev.push({ type: 'wolfDied', cause: 'starve', n: starved });
+  // Хаврын эхэнд гөлөг (жилд нэг удаа)
+  const year = Math.floor((state.time.day - 1) / yearDays);
+  if (seasonOf(cfg, state.time.day) === 'spring' && ws.bredYear !== year) {
+    ws.bredYear = year;
+    ws.dens.forEach((_d, i) => {
+      const pack = ws.list.filter((o) => o.den === i);
+      const adult = (sx: 'm' | 'f') => pack.some((o) => o.sex === sx && (o.age ?? 0) >= B.adultAge);
+      if (!adult('m') || !adult('f') || !rng.chance(B.chance)) return;
+      const n = Math.min(rng.int(B.litter[0]!, B.litter[1]!), B.maxPerDen - pack.length);
+      for (let k = 0; k < n; k++) ws.list.push(make(i, rng.chance(0.5) ? 'm' : 'f', 0, 0));
+      if (n > 0) ev.push({ type: 'wolfPups', den: i, n });
+    });
+  }
+  // Бүх чоно үхсэн бол өөр газраас хос ирнэ (B9)
+  if (!ws.list.length && B.immigrants > 0) {
+    const den = Math.floor(rng.next() * ws.dens.length);
+    for (let k = 0; k < B.immigrants; k++) ws.list.push(make(den, k % 2 ? 'm' : 'f', rng.range(B.adultAge, B.adultAge + 2), cfg.wolves.hunger.hungryAtDays + rng.range(0, 1)));
+    ev.push({ type: 'wolfArrive', n: B.immigrants });
+  }
+  ws.rngState = rng.state;
+  return ev;
+}
+
+/** Нохой чонотой тулалдсанд чоныг устгана (B8) */
+export function killWolf(state: GameState, id: number): void {
+  state.wolves.list = state.wolves.list.filter((o) => o.id !== id);
 }
 
 /** 06:00: шөнийн дайралт дуусна — чоно үүр лүүгээ буцна */
