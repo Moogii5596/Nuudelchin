@@ -6,6 +6,7 @@ import type { Species } from '../config';
 import type { Sim } from '../sim';
 import { newAnimal } from '../state';
 import { newDog } from './dogs';
+import { applyAccess, seasonOf } from './seasons';
 import { isProtected, protectionZones, scareWolf } from './wolves';
 
 export type CheatAction =
@@ -17,6 +18,7 @@ export type CheatAction =
   | 'degradeUp' | 'degradeReset'
   | 'wolfAttack' | 'wolvesPeaceful' | 'scareAll'
   | 'fillStorage'
+  | 'nextSeason' | 'addHay' | 'snowUp' | 'snowClear'
   | `camp:${string}`;
 
 export function applyCheat(sim: Sim, action: CheatAction): string {
@@ -63,6 +65,30 @@ export function applyCheat(sim: Sim, action: CheatAction): string {
     case 'removeDog': {
       const d = state.dogs.pop();
       return d ? `${d.name} явлаа` : 'Нохой алга';
+    }
+    case 'nextSeason': {
+      // Улирал солигдох хүртэл бүх өдрийг гүйлгэнэ (цас, өвс, төллөлт жинхэнээр тооцогдоно)
+      const s0 = seasonOf(cfg, state.time.day);
+      let k = 0;
+      while (seasonOf(cfg, state.time.day) === s0 && k++ < 40 * 1440) sim.step();
+      return `${seasonOf(cfg, state.time.day)} боллоо (${state.time.day}-р өдөр)`;
+    }
+    case 'addHay': {
+      const c = state.camps[state.campId]!;
+      c.hay = (c.hay ?? 0) + 20;
+      return '+20 боодол өвс';
+    }
+    case 'snowUp': {
+      const c = state.camps[state.campId]!;
+      c.snow = (c.snow ?? 0) + 10;
+      applyAccess(cfg, state.grass, c.snow);
+      return `Цас ${Math.round(c.snow)} см`;
+    }
+    case 'snowClear': {
+      const c = state.camps[state.campId]!;
+      c.snow = 0;
+      applyAccess(cfg, state.grass, 0);
+      return 'Цас арилгалаа';
     }
     case 'skipHour':
       for (let i = 0; i < 60; i++) sim.step();

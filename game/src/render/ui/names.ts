@@ -92,5 +92,16 @@ export const PASTURE_NAME: Record<string, string> = {
   northSlope: 'уулын ар',
 };
 
+/** Улирал (M5.5) */
+export const SEASON_NAME: Record<string, string> = { summer: 'Зун', autumn: 'Намар', winter: 'Өвөл', spring: 'Хавар' };
+export const SEASON_EMOJI: Record<string, string> = { summer: '☀️', autumn: '🍂', winter: '❄️', spring: '🌱' };
+/** Бууц аль улиралд тохирох (хэрэглэгчийн дүрэм, seasons-camps.md) */
+export const CAMP_HINT: Record<string, string> = {
+  river: 'Гол ойрхон, нуга — зун',
+  northSlope: 'Ой ихтэй, саравчтай. Цас удаан тогтож доор нь өвс хадгалагдана — хавар',
+  southSlope: 'Нартай, саравчтай. Цас хурдан хайлж өвөл бэлчинэ — өвөл',
+  valley: 'Зуны сайхан бэлчээр — зун, намар. Өвөл цасанд дарагдана',
+};
+
 export const WATER_NAME: Record<string, string> = { river: 'Гол (ойрхон)', stream: 'Горхи', spring: 'Булаг' };
 export const WOLF_LEVEL_NAME: Record<string, string> = { low: 'бага', medium: 'дунд', high: 'өндөр' };

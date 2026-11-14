@@ -13,6 +13,7 @@
  * Чонын хөдөлгөөн өөрийн seed-тэй генератортой (state.wolves.rngState) тул
  * бэлчээрлэлт, төллөлтийн санамсаргүй дарааллыг өөрчлөхгүй.
  */
+import { seasonOf } from './seasons';
 import type { GameConfig, Species } from '../config';
 import { Rng } from '../rng';
 import type { Animal, GameState } from '../state';
@@ -393,7 +394,7 @@ export function nightRaid(cfg: GameConfig, state: GameState): number {
   const ws = state.wolves;
   const n = cfg.wolves.night;
   if (!ws.list.length || ws.peaceful || !cfg.wolves.attack.enabled) return 0;
-  const season = cfg.time.season;
+  const season = seasonOf(cfg, state.time.day);
   const level = cfg.camps.camps[state.campId]?.wolfLevel ?? 'medium';
   const p = Math.min(1, ((n.raidChance as Record<string, number>)[season] ?? 0) * ((n.levelMult as Record<string, number>)[level] ?? 1));
   const max = (n.maxRaiders as Record<string, number>)[season] ?? 1;

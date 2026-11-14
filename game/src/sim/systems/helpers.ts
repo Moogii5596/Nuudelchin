@@ -19,8 +19,9 @@ import { parkingSpot, productPrice, vehicleCfg } from './trip';
 import { mapSpeedKmPerMin, sumId } from './travel';
 import { scareWolf } from './wolves';
 import { flockKey } from './herds';
-import { homeSpot } from './night';
-import { absBiomass, cellIndex, typeIdOf } from './pasture';
+import { dailyMilkLiters, homeSpot, intakeFactor } from './night';
+import { seasonOf, snowAccess } from './seasons';
+import { absBiomass, cellIndex, typeIdOf, typeQualities } from './pasture';
 
 export type HelperKind = 'adult' | 'child';
 export type HelperTask = 'herd' | 'drive' | 'otor' | 'collect';
@@ -74,6 +75,10 @@ export interface OtorGroup {
   campId: string;
   animals: Animal[];
   days: number;
+  /** Отор дээр гарсан сүү, ноос (M5.5): тоглогч өөрөө очиж авч зарна */
+  items?: { product: ProductId; amount: number; age: number }[];
+  /** Отор дээрх хүүхэд цуглуулагч (байхгүй бол сүү тэр өдөртөө муудаж, ноос 2 хоногт хийснэ) */
+  collectorId?: number;
 }
 
 /** Туслахын байр (майхан/гэр) ба айлын гэр — хотын ойролцоо */
@@ -636,7 +641,63 @@ export function recallOtor(cfg: GameConfig, state: GameState, helperId: number, 
   const p = homeOf(state, h);
   h.x = h.tx = p.x;
   h.z = h.tz = p.z;
+  // Цуглуулагч хүүхэд хамт буцна; отор дээр үлдсэн бүтээгдэхүүн хаягдана
+  if (g.collectorId !== undefined) setOtorCollector(state, g.collectorId, null);
   return null;
+}
+
+/** Хүүхдийг отор руу цуглуулагчаар явуулах (campId) эсвэл гэрт буцаах (null) */
+export function setOtorCollector(state: GameState, childId: number, campId: string | null): string | null {
+  const c = state.helpers.list.find((x) => x.id === childId);
+  if (!c || c.kind !== 'child') return 'Хүүхэд алга';
+  for (const g of state.helpers.otor) if (g.collectorId === childId) g.collectorId = undefined;
+  if (campId === null) {
+    c.task = 'collect';
+    c.mode = 'work';
+    const p = homeOf(state, c);
+    c.x = c.tx = p.x;
+    c.z = c.tz = p.z;
+    return null;
+  }
+  const g = state.helpers.otor.find((x) => x.campId === campId);
+  if (!g) return 'Тэр бууцанд отор алга';
+  if (g.collectorId !== undefined) return 'Тэр отор цуглуулагчтай';
+  g.collectorId = childId;
+  c.task = 'otor';
+  c.mode = 'away';
+  c.carry = [];
+  return null;
+}
+
+/** Отор дээрх бүтээгдэхүүнийг авах (тоглогч газрын зураг дээр тэр бууцанд ирсэн байх): тээвэрт эсвэл гартаа */
+export function takeFromOtor(cfg: GameConfig, state: GameState, campId: string): { took: number; err: string | null } {
+  const p = state.player;
+  const g = state.helpers.otor.find((x) => x.campId === campId);
+  if (!g) return { took: 0, err: 'Тэр бууцанд отор алга' };
+  const loc = cfg.worldmap.locations[campId];
+  if (p.place !== 'map' || !loc || Math.hypot(state.map.x - loc.x, state.map.z - loc.z) > cfg.worldmap.arriveRadiusKm + 1e-6) return { took: 0, err: 'Отор дээр очих хэрэгтэй (газрын зураг дээр тэр бууцанд)' };
+  const f = p.driving ? state.fleet.find((x) => x.id === p.driving) : undefined;
+  let room = f
+    ? cfg.vehicles[f.id].capacity - Object.values(f.cargo).reduce((s, n) => s + (n ?? 0), 0) - f.orders.reduce((s, o) => s + (o.kind === 'hay' ? o.n : 0), 0)
+    : cfg.products.carryUnits - p.carry.reduce((s, c) => s + c.amount, 0);
+  let took = 0;
+  for (const it of g.items ?? []) {
+    if (room <= 1e-9) break;
+    const n = Math.min(it.amount, room);
+    if (n <= 1e-9) continue;
+    if (f) f.cargo[it.product] = (f.cargo[it.product] ?? 0) + n;
+    else {
+      const c = p.carry.find((x) => x.product === it.product);
+      if (c) c.amount += n;
+      else p.carry.push({ product: it.product, amount: n, age: 0 });
+    }
+    it.amount -= n;
+    room -= n;
+    took += n;
+  }
+  g.items = (g.items ?? []).filter((it) => it.amount > 1e-9);
+  if (!took) return { took, err: (g.items.length ? 'Ачих байр алга' : 'Авах бүтээгдэхүүн алга') };
+  return { took, err: null };
 }
 
 /** Өдрийн эцэс: отор дээрх мал тэр бууцны бэлчээрээр таргалж/турна, бууц доройтоно, бага зэрэг чонын эрсдэл */
@@ -647,11 +708,55 @@ export function dailyOtor(cfg: GameConfig, state: GameState, rng: Rng): HelperEv
     g.days += 1;
     const camp = state.camps[g.campId]!;
     const d = camp.degrade;
-    const gut = Math.max(0.2, 1 - 0.75 * d);
-    const dq = 0.72 * (1 - deg.qualityPenalty * d);
+    // M5.5: улирал, цас, тэр бууцны өвс
+    const season = seasonOf(cfg, state.time.day);
+    const cc = cfg.camps.camps[g.campId]!;
+    const mainType = cc.rings[1]?.[1] ?? 'steppe';
+    const access = snowAccess(cfg, camp.snow ?? 0, mainType);
+    const grassF = Math.min(1, (camp.grass ?? 0.85) / 0.5);
+    let gut = Math.max(0.15, (1 - 0.75 * d) * access * grassF);
+    const dq0 = typeQualities(cfg, d, season)[mainType] ?? 0.6;
+    // Тэр бууцны боодол өвс (өвөл, хавар)
+    const hc = cfg.seasons.hay;
+    const su0 = g.animals.reduce((s, a) => s + sheepUnits(a, cfg.animals), 0);
+    let dq = dq0;
+    if (hc.feedSeasons.includes(season) && (camp.hay ?? 0) > 0 && gut < hc.fillTo && su0 > 0) {
+      const need = ((hc.fillTo - gut) * su0) / hc.sheepDaysPerBale;
+      const give = Math.min(need, camp.hay);
+      const fill = (give / need) * (hc.fillTo - gut);
+      dq = (gut * dq0 + fill * hc.quality) / (gut + fill);
+      gut += fill;
+      camp.hay -= give;
+    }
+    const cold = cfg.seasons.cold.conditionLossPerNight[season] * (cc.shed ? 0.3 : 1);
+    const collector = g.collectorId !== undefined && state.helpers.list.some((x) => x.id === g.collectorId);
+    g.items = g.items ?? [];
+    // Хуучин бүтээгдэхүүн: сүү → тараг → муудна; цуглуулагчгүй бол ноос 2 хоногт хийснэ
+    for (const it of g.items) {
+      it.age += 1;
+      if (it.product === 'milk' && it.age >= 1) it.product = 'tarag';
+    }
+    g.items = g.items.filter((it) => !(it.product === 'tarag' && it.age >= 2) && (collector || it.age < 2));
+    const add = (product: ProductId, amount: number): void => {
+      if (!collector && (product === 'milk' || product === 'tarag')) return;   // хүн алга — сүү тэр өдөртөө муудна
+      const it = g.items!.find((x) => x.product === product && x.age === 0);
+      if (it) it.amount += amount;
+      else g.items!.push({ product, amount, age: 0 });
+    };
+    const drops = cfg.products.drops;
     for (const a of g.animals) {
-      const dc = dailyConditionDelta(gut, dq, false, cfg.animals);
+      const dc = dailyConditionDelta(gut, dq, false, cfg.animals) - (a.species === 'cow' || a.species === 'horse' ? cold * 0.5 : cold);
       a.condition = Math.min(1, Math.max(0, a.condition + dc));
+      // Сүү, ноос (night.ts → morning-тэй адил дүрэм)
+      if (a.species === 'cow' && a.sex === 'f' && a.lactating) add('milk', dailyMilkLiters(cfg, { condition: a.condition, lastGut: gut }));
+      const rule = a.species === 'sheep' ? drops.wool : a.species === 'goat' ? drops.cashmere : null;
+      if (rule && a.age >= 1 && a.condition >= rule.minCondition) {
+        a.fiberDays += intakeFactor(cfg, gut);
+        if (a.fiberDays >= rule.everyDays) {
+          a.fiberDays -= rule.everyDays;
+          add(a.species === 'sheep' ? 'wool' : 'cashmere', rule.amount);
+        }
+      }
       if (a.condition <= 0) a.health -= cfg.animals.condition.zeroConditionHealthLossPerDay;
       else a.health = Math.min(100, a.health + 2);
       a.age += 1 / cfg.time.animalYearDays;
@@ -661,9 +766,10 @@ export function dailyOtor(cfg: GameConfig, state: GameState, rng: Rng): HelperEv
     // Тэр бууцны доройтол (dailyCampDegrade нь эзгүй бууцыг сэргээсний дараа)
     const su = g.animals.reduce((s, a) => s + sheepUnits(a, cfg.animals), 0);
     camp.degrade = Math.min(1, camp.degrade + deg.recoverPerDayWhenAway + deg.gainPerDayAtCapacity * (su / deg.campCapacitySheepUnits));
+    camp.grass = Math.max(0.05, (camp.grass ?? 0.85) - 0.03 * (su / deg.campCapacitySheepUnits) * access);
     // Чоно
     const lvl = cfg.camps.camps[g.campId]?.wolfLevel ?? 'medium';
-    const p = (cfg.helpers.otor.wolfLossPerDay as Record<string, number>)[lvl] ?? 0.02;
+    const p = ((cfg.helpers.otor.wolfLossPerDay as Record<string, number>)[lvl] ?? 0.02) * (cfg.seasons.otorWolfMult[season] ?? 1);
     const prey = g.animals.filter((a) => a.species === 'sheep' || a.species === 'goat');
     if (prey.length && rng.chance(p)) {
       const v = prey[Math.floor(rng.next() * prey.length)]!;

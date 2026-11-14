@@ -56,6 +56,8 @@ export function orderPrice(cfg: GameConfig, state: GameState, o: BuyOrder): numb
       return cfg.helpers.housing.helperGer.price;
     case 'otorTent':
       return cfg.helpers.otor.tentPrice;
+    case 'hay':
+      return o.n * cfg.seasons.hay.price;
   }
 }
 
@@ -94,6 +96,11 @@ export function deliver(cfg: GameConfig, state: GameState, rng: Rng, orders: Buy
       case 'otorTent':
         state.helpers.otorTents = (state.helpers.otorTents ?? 0) + 1;
         break;
+      case 'hay': {
+        const c = state.camps[state.campId];
+        if (c) c.hay = (c.hay ?? 0) + o.n;
+        break;
+      }
       case 'dog':
         if (state.dogs.length < cfg.dogs.maxDogs) state.dogs.push(newDog(cfg, state, home.x + 3 + rng.range(-1, 1), home.z - 3));
         break;

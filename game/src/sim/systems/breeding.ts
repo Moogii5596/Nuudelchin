@@ -1,10 +1,12 @@
 /**
- * Хийсвэр төллөлт: эм мал бүр өөрийн 20 өдрийн мөчлөгтэй (mvp-spec.md §9).
- * Үржлийн эр мал хэрэгтэй. Бухгүй бол хөршийн бух тавиулж болно (төлбөртэй).
+ * Хийсвэр төллөлт: эм мал бүр жилд нэг удаа (mvp-spec.md §9).
+ * M5.5: төллөх өдөр нь улирлаар — өвөл төллөхгүй, дийлэн нь хавар (seasons.ts → birthYearDay).
+ * Үржлийн эр мал хэрэгтэй. Бухгүй бол хөршийн бух тавиулж болно (төлбөртэй). Отор дээрх мал ч төллөнө.
  */
 import { SPECIES, type GameConfig, type Species } from '../config';
 import type { Rng } from '../rng';
-import { newAnimal, type GameState } from '../state';
+import { newAnimal, type Animal, type GameState } from '../state';
+import { birthYearDay, yearDay } from './seasons';
 
 export interface BreedingResult {
   births: number;
@@ -12,11 +14,17 @@ export interface BreedingResult {
 }
 
 export function dailyBreeding(cfg: GameConfig, state: GameState, rng: Rng): BreedingResult {
-  const year = cfg.time.animalYearDays;
   const res: BreedingResult = { births: 0, bullFees: 0 };
+  breedGroup(cfg, state, rng, state.animals, res, true);
+  for (const g of state.helpers.otor) breedGroup(cfg, state, rng, g.animals, res, false);
+  return res;
+}
+
+function breedGroup(cfg: GameConfig, state: GameState, rng: Rng, animals: Animal[], res: BreedingResult, home: boolean): void {
+  const yd = yearDay(cfg, state.time.day);
   const males: Record<Species, number> = { sheep: 0, goat: 0, cow: 0, horse: 0 };
   const females: Record<Species, number> = { sheep: 0, goat: 0, cow: 0, horse: 0 };
-  for (const a of state.animals) {
+  for (const a of animals) {
     const s = cfg.animals.species[a.species];
     if (a.riding || a.age < s.breedAge) continue;
     if (a.sex === 'm') males[a.species]++;
@@ -29,14 +37,14 @@ export function dailyBreeding(cfg: GameConfig, state: GameState, rng: Rng): Bree
   }
   // Хонь, ямаа хамт бэлчдэг ч эрэг хонь ямааг хээлтүүлэхгүй
   const born = [];
-  for (const a of state.animals) {
+  for (const a of animals) {
     if (a.sex !== 'f' || a.riding) continue;
     const s = cfg.animals.species[a.species];
     if (a.age < s.breedAge) continue;
-    if ((state.time.day + a.cycleOffset) % year !== 0) continue;
+    if (birthYearDay(cfg, a.cycleOffset) !== yd) continue;
 
     let r = ratio[a.species];
-    if (a.species === 'cow' && r === 0 && state.neighborBull) {
+    if (a.species === 'cow' && r === 0 && state.neighborBull && home) {
       r = 1;
       res.bullFees += cfg.economy.neighborBullFee;
     }
@@ -63,6 +71,5 @@ export function dailyBreeding(cfg: GameConfig, state: GameState, rng: Rng): Bree
       res.births++;
     }
   }
-  state.animals.push(...born);
-  return res;
+  animals.push(...born);
 }

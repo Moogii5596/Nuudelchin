@@ -1,5 +1,5 @@
 {
-  "_doc": "Бэлчээр. grazing-livestock.md §3–5, mvp-spec.md §7. MVP-д зөвхөн summer чанар хэрэглэгдэнэ.",
+  "_doc": "Бэлчээр. grazing-livestock.md §3–5, mvp-spec.md §7. M5.5: улирлын чанар хэрэглэгдэнэ (өвлийн хатсан өвс хамгийн тэжээл муу).",
   "grid": {
     "cellSize": 2,
     "cells": 190
@@ -23,7 +23,7 @@
         "spring": 0.75,
         "summer": 0.65,
         "autumn": 0.55,
-        "winter": 0.4
+        "winter": 0.48
       }
     },
     "khyalgana": {
@@ -32,7 +32,7 @@
         "spring": 0.6,
         "summer": 0.65,
         "autumn": 0.6,
-        "winter": 0.4
+        "winter": 0.48
       }
     },
     "erkhug": {
@@ -41,7 +41,7 @@
         "spring": 0.65,
         "summer": 0.8,
         "autumn": 0.8,
-        "winter": 0.45
+        "winter": 0.53
       }
     },
     "khiag": {
@@ -50,7 +50,7 @@
         "spring": 0.6,
         "summer": 0.75,
         "autumn": 0.65,
-        "winter": 0.4
+        "winter": 0.48
       }
     },
     "botuul": {
@@ -59,7 +59,7 @@
         "spring": 0.6,
         "summer": 0.8,
         "autumn": 0.75,
-        "winter": 0.45
+        "winter": 0.53
       }
     },
     "agi": {
@@ -68,7 +68,7 @@
         "spring": 0.65,
         "summer": 0.6,
         "autumn": 0.85,
-        "winter": 0.55
+        "winter": 0.63
       }
     },
     "mangir": {
@@ -77,7 +77,7 @@
         "spring": 0.6,
         "summer": 0.75,
         "autumn": 0.85,
-        "winter": 0.3
+        "winter": 0.38
       }
     },
     "khoshoongor": {
@@ -86,7 +86,7 @@
         "spring": 0.65,
         "summer": 0.9,
         "autumn": 0.8,
-        "winter": 0.35
+        "winter": 0.43
       }
     },
     "sharilj": {

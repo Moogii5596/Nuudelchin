@@ -1,0 +1,109 @@
+{
+  "_doc": "Улирал ба бууцнууд (M5.5, seasons-camps.md; хэрэглэгчийн шийдвэр 2026-11-14). 1 жил = time.animalYearDays (50) өдөр: зун → намар → өвөл → хавар. Тоглоом зунаас эхэлнэ. growth = өвс ургах хурдны үржүүлэгч, exposedDecayPerDay = цасгүй задгай өвс өвөл хатаж, салхинд хийсэх (цасан доорх өвс хадгалагдана). snow: бууц бүрт цас өдөр бүр орж (fall × camps.<id>.fall), хайлна (melt × camps.<id>.melt[улирал]). blockCm — энэ зузаан цастай бол өвс идэх боломжгүй; forestTypeMult — ойтой бэлчээрт (уулын арын ой) модны доор цас нимгэн. cold — саравчгүй гадуур хоносон малын шөнийн тарга алдалт (саравчтай бууцны хашаанд хоносон бол 0, энгийн хашаанд penMult). hay — боодол өвс (Худалдаачнаас): өвөл, хавар орой идэш дутсан малд автоматаар өгнө (1 боодол = 10 хонин толгой·өдөр). breeding — төллөлт өвлөөс бусад улиралд, springShare нь хавар.",
+  "order": [
+    "summer",
+    "autumn",
+    "winter",
+    "spring"
+  ],
+  "days": {
+    "summer": 13,
+    "autumn": 12,
+    "winter": 13,
+    "spring": 12
+  },
+  "growth": {
+    "summer": 1,
+    "autumn": 0.35,
+    "winter": 0,
+    "spring": 0.7
+  },
+  "exposedDecayPerDay": {
+    "summer": 0,
+    "autumn": 0.004,
+    "winter": 0.015,
+    "spring": 0.004
+  },
+  "snow": {
+    "fallCmPerDay": {
+      "summer": 0,
+      "autumn": 0.25,
+      "winter": 2.0,
+      "spring": 0.4
+    },
+    "meltCmPerDay": {
+      "summer": 30,
+      "autumn": 1.2,
+      "winter": 0.3,
+      "spring": 3.0
+    },
+    "blockCm": 20,
+    "growthSnowCm": 3,
+    "forestTypeMult": {
+      "northSlope": 0.45
+    },
+    "camps": {
+      "river": {
+        "fall": 1.0,
+        "melt": {
+          "winter": 1.0,
+          "spring": 1.4
+        }
+      },
+      "northSlope": {
+        "fall": 1.2,
+        "melt": {
+          "winter": 0.3,
+          "spring": 1.5
+        }
+      },
+      "southSlope": {
+        "fall": 0.8,
+        "melt": {
+          "winter": 4.0,
+          "spring": 4.0
+        }
+      },
+      "valley": {
+        "fall": 1.5,
+        "melt": {
+          "winter": 0.1,
+          "spring": 1.2
+        }
+      }
+    }
+  },
+  "cold": {
+    "conditionLossPerNight": {
+      "summer": 0,
+      "autumn": 0.002,
+      "winter": 0.014,
+      "spring": 0.007
+    },
+    "shedMult": 0,
+    "penMult": 0.6
+  },
+  "hay": {
+    "price": 14000,
+    "sheepDaysPerBale": 10,
+    "quality": 0.62,
+    "feedSeasons": [
+      "winter",
+      "spring"
+    ],
+    "fillTo": 0.85,
+    "horseBales": 2
+  },
+  "breeding": {
+    "springShare": 0.75,
+    "noBirth": [
+      "winter"
+    ]
+  },
+  "otorWolfMult": {
+    "summer": 1,
+    "autumn": 1.4,
+    "winter": 2.5,
+    "spring": 2.2
+  }
+}

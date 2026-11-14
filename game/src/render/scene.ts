@@ -16,6 +16,21 @@ import { angDiff } from './util';
 import { SumCenterView } from './sumcenter';
 import { WorldMapView } from './worldmap';
 import { StaffView } from './staff';
+import { seasonLook } from '../sim/systems/seasons';
+
+/** Цасны ширхгийн дугуй бүдэг бараг (canvas) */
+function flakeTexture(): THREE.Texture {
+  const c = document.createElement('canvas');
+  c.width = c.height = 32;
+  const g = c.getContext('2d')!;
+  const gr = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+  gr.addColorStop(0, 'rgba(255,255,255,1)');
+  gr.addColorStop(0.5, 'rgba(255,255,255,0.8)');
+  gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr;
+  g.fillRect(0, 0, 32, 32);
+  return new THREE.CanvasTexture(c);
+}
 
 /** Бэлчээрийн өнгийг хэр олон удаа шинэчлэх (бодит секунд) */
 const GRASS_REFRESH_SEC = 0.4;
@@ -43,8 +58,13 @@ export class GameView {
   private grassT = 0;
   private ray = new THREE.Raycaster();
   private ndc = new THREE.Vector2();
+  private cfg: GameConfig;
+  private flakes: THREE.Points;
+  private flakeVel: Float32Array;
+  private winterK = 0;
 
   constructor(container: HTMLElement, cfg: GameConfig, state: GameState) {
+    this.cfg = cfg;
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setSize(container.clientWidth, container.clientHeight);
@@ -88,6 +108,22 @@ export class GameView {
     this.scene.add(this.terrain.group, this.animals.group, this.characters.group, this.items.group, this.zones.group, this.vehicles.group, this.sum.group, this.staff.group);
     this.terrain.sync(state);
     this.terrain.updateGrass(state, this.heatmap);
+    // Цас орох (M5.5): камерын эргэн тойронд унах ширхэгүүд
+    const NF = 2200;
+    const fp = new Float32Array(NF * 3);
+    this.flakeVel = new Float32Array(NF);
+    for (let i = 0; i < NF; i++) {
+      fp[i * 3] = (Math.random() - 0.5) * 90;
+      fp[i * 3 + 1] = Math.random() * 40;
+      fp[i * 3 + 2] = (Math.random() - 0.5) * 90;
+      this.flakeVel[i] = 1.6 + Math.random() * 1.4;
+    }
+    const fg = new THREE.BufferGeometry();
+    fg.setAttribute('position', new THREE.BufferAttribute(fp, 3));
+    this.flakes = new THREE.Points(fg, new THREE.PointsMaterial({ color: 0xffffff, size: 0.13, map: flakeTexture(), alphaTest: 0.02, transparent: true, opacity: 0.9, depthWrite: false }));
+    this.flakes.frustumCulled = false;
+    this.flakes.visible = false;
+    this.scene.add(this.flakes);
 
     window.addEventListener('resize', () => {
       this.cam.resize(container.clientWidth / container.clientHeight);
@@ -123,6 +159,8 @@ export class GameView {
   frame(state: GameState, alpha: number, dt: number, stepSec: number): void {
     const p = state.player;
     this.place = p.place;
+    const look = seasonLook(this.cfg, state);
+    this.winterK = look.winter;
     this.applyDaylight(state.time.minute);
     // Газрын зураг: өөрийн scene, камертай (M4.6)
     if (p.place === 'map') {
@@ -167,6 +205,7 @@ export class GameView {
     // Сүүдрийн хайрцаг малчныг дагана
     this.sun.position.set(cx + 60, 95, cz + 35);
     this.sun.target.position.set(cx, 0, cz);
+    this.updateFlakes(look.snowing && p.place === 'camp', cx, ty, cz, dt);
     this.renderer.render(this.scene, this.cam.camera);
   }
 
@@ -181,17 +220,35 @@ export class GameView {
     this.daylight = day;
     const dusk = Math.max(0, 1 - Math.abs(day - 0.5) * 2) * (m > 900 || m < 500 ? 1 : 0);  // үүр, бүрэнхий
     const DAY = 0x8cc4f0, NIGHT = 0x0b1430, DUSK = 0xe89a6a;
-    this.skyCol.set(NIGHT).lerp(new THREE.Color(DAY), day).lerp(new THREE.Color(DUSK), dusk * 0.55);
+    // Өвөл тэнгэр саарал цэнхэр (M5.5)
+    const dayCol = new THREE.Color(DAY).lerp(new THREE.Color(0xbac7d3), this.winterK * 0.8);
+    this.skyCol.set(NIGHT).lerp(dayCol, day).lerp(new THREE.Color(DUSK), dusk * 0.55);
     (this.scene.background as THREE.Color).copy(this.skyCol);
     const fog = this.scene.fog as THREE.Fog;
     fog.color.copy(this.skyCol);
-    fog.far = 140 + 160 * day;
+    fog.far = (140 + 160 * day) * (1 - 0.3 * this.winterK);
     this.hemi.intensity = 0.28 + 0.82 * day;
     this.hemi.color.set(0x8090c0).lerp(new THREE.Color(0xdfeeff), day);
     this.sun.intensity = 0.35 + 1.55 * day;
     this.sun.color.set(0x9fb4ff).lerp(new THREE.Color(0xfff1d6), day).lerp(new THREE.Color(0xffb07a), dusk * 0.5);
     this.homeLight.intensity = (1 - day) * 9;
     this.homeLight.position.set(this.homePos.x + 1.5, 2.2, this.homePos.z + 2.5);
+  }
+
+  /** Цас орох ширхэгүүд камерын эргэн тойронд (бодит цагаар) */
+  private updateFlakes(on: boolean, cx: number, cy: number, cz: number, dt: number): void {
+    this.flakes.visible = on;
+    if (!on) return;
+    const pos = this.flakes.geometry.attributes.position as THREE.BufferAttribute;
+    const a = pos.array as Float32Array;
+    const t = performance.now() / 1000;
+    for (let i = 0; i < this.flakeVel.length; i++) {
+      a[i * 3 + 1] = a[i * 3 + 1]! - this.flakeVel[i]! * dt;
+      a[i * 3] = a[i * 3]! + Math.sin(t * 0.7 + i) * 0.3 * dt;
+      if (a[i * 3 + 1]! < -8) a[i * 3 + 1] = 32;
+    }
+    pos.needsUpdate = true;
+    this.flakes.position.set(cx, cy - 6, cz);
   }
 
   /** Гүйцэтгэлийн мэдээлэл (HUD) */

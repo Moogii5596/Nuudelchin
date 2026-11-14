@@ -9,6 +9,7 @@ import type { GameState } from '../sim/state';
 import { mat, VisualRng } from './util';
 import { makeHerder, makeHorse } from './characters';
 import { makeVehicleModel } from './vehicles';
+import { seasonLook } from '../sim/systems/seasons';
 import { t } from '../i18n/i18n';
 
 const U = 6;   // 1 км = 6 нэгж
@@ -94,7 +95,9 @@ export class WorldMapView {
       pos.setY(i, h * U * 0.35);
       c.copy(steppe).lerp(hill, Math.min(1, hillT * 1.4)).lerp(meadow, Math.max(0, 1 - rd / 2.5) * 0.8);
       col.push(c.r, c.g, c.b);
+      this.hillK.push(hillT);
     }
+    this.baseCol = Float32Array.from(col);
     geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
     geo.computeVertexNormals();
     this.ground = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }));
@@ -239,7 +242,35 @@ export class WorldMapView {
     this.prev = { x: state.map.x, z: state.map.z };
   }
 
+  private hillK: number[] = [];
+  private baseCol!: Float32Array;
+  private tintKey = '';
+
+  /** Улирлын өнгө (M5.5): намар шаргал, өвөл цас — уулсаас эхэлж бүрхэнэ */
+  private applySeason(state: GameState): void {
+    const look = seasonLook(this.cfg, state);
+    const snows = Object.values(state.camps).map((c) => c.snow ?? 0);
+    const snow = Math.min(1, snows.reduce((a, b) => a + b, 0) / Math.max(1, snows.length) / 12);
+    const key = `${look.straw.toFixed(2)}|${snow.toFixed(2)}`;
+    if (key === this.tintKey) return;
+    this.tintKey = key;
+    const attr = this.ground.geometry.attributes.color as THREE.BufferAttribute;
+    const a = attr.array as Float32Array;
+    const straw = [0.78, 0.68, 0.42], white = [0.93, 0.95, 0.97];
+    for (let i = 0; i < this.hillK.length; i++) {
+      const sk = Math.min(1, snow * (0.75 + this.hillK[i]! * 0.8));
+      for (let ch = 0; ch < 3; ch++) {
+        let v = this.baseCol[i * 3 + ch]!;
+        v += (straw[ch]! - v) * look.straw * 0.75;
+        v += (white[ch]! - v) * sk;
+        a[i * 3 + ch] = v;
+      }
+    }
+    attr.needsUpdate = true;
+  }
+
   update(state: GameState, dt: number, daylight: number, alpha = 1): void {
+    this.applySeason(state);
     const m0 = state.map;
     // Алхам хооронд зөөлрүүлсэн байрлал
     let px = m0.x, pz = m0.z;

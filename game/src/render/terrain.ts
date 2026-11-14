@@ -9,6 +9,7 @@ import type { CampConfig, GameConfig } from '../sim/config';
 import type { GameState } from '../sim/state';
 import { heightAt, riverZ, waterDistance, waterLevel, smoothstep } from '../sim/terrain';
 import { cellIndex, type GrassGrid } from '../sim/systems/pasture';
+import { seasonLook } from '../sim/systems/seasons';
 import type { Den } from '../sim/systems/wolves';
 import { VisualRng, angDiff, batchStatic, clamp, mat, meshBox, strSeed } from './util';
 
@@ -27,6 +28,10 @@ const ROCK = new THREE.Color(0x8d8778);
 const SNOW = new THREE.Color(0xe4eaef);
 const DIRT = new THREE.Color(0x8a6f4a);
 const BANK = new THREE.Color(0x4c8a3a);
+const STRAW = new THREE.Color(0xc2a866);   // намрын шаргал, өвлийн хатсан өвс (M5.5)
+const SNOW_GROUND = new THREE.Color(0xeef2f6);
+/** Ойтой бэлчээрт модны доор цас нимгэн (seasons.json → forestTypeMult-тай адил санаа) */
+const SNOW_TYPE_MULT: Record<string, number> = { northSlope: 0.55 };
 
 export class TerrainView {
   readonly group = new THREE.Group();
@@ -35,6 +40,9 @@ export class TerrainView {
   campId = '';
   private homeKind = '';
   private homeGroup: THREE.Group | null = null;
+  private hayGroup: THREE.Group | null = null;
+  private hayShown = -1;
+  private vSnowK!: Float32Array;        // орой бүрийн цасан бүрхүүлийн хүч (ой — бага)
   // Оройн өнгө тооцох өгөгдөл
   private vCells!: Int32Array;          // орой бүрт 4 нүд (-1 = гадна)
   private vLush!: Float32Array;         // RGB: бүрэн өвстэй өнгө (өндөр, голын эрэг, шуугиан орсон)
@@ -65,6 +73,7 @@ export class TerrainView {
       return true;
     }
     if (state.home !== this.homeKind) this.buildHome(state.home);
+    this.syncHay(state);
     return false;
   }
 
@@ -84,6 +93,8 @@ export class TerrainView {
     this.group.add(batchStatic(decor));
     this.homeKind = '';
     this.buildHome(state.home);
+    this.hayShown = -1;
+    this.syncHay(state);
   }
 
   dispose(): void {
@@ -92,6 +103,7 @@ export class TerrainView {
     });
     this.group.clear();
     this.homeGroup = null;
+    this.hayGroup = null;
     this.tufts = null;
   }
 
@@ -106,6 +118,7 @@ export class TerrainView {
     this.vLush = new Float32Array(n * 3);
     this.vBare = new Float32Array(n * 3);
     this.vFixed = new Uint8Array(n);
+    this.vSnowK = new Float32Array(n);
     const hc = grid.cell / 2;
     const c = new THREE.Color(), b = new THREE.Color();
     const pen = this.cfg.camps.home.pen;
@@ -119,6 +132,7 @@ export class TerrainView {
       this.vCells[i * 4 + 3] = cellIndex(grid, x + hc, z + hc);
       const ci = Math.max(this.vCells[i * 4]!, this.vCells[i * 4 + 3]!);
       const typeId = ci >= 0 ? grid.typeIds[grid.type[ci] ?? 0] ?? 'steppe' : 'steppe';
+      this.vSnowK[i] = SNOW_TYPE_MULT[typeId] ?? 1;
       c.setHex(TYPE_LUSH[typeId] ?? 0x7f9a4a);
       b.copy(BARE);
       // Голын эрэг ногоон, өндөрт хад, оргилд цас
@@ -230,7 +244,11 @@ export class TerrainView {
     const maxB = grid.typeIds.map((id) => types[id]?.maxBiomass ?? 0);
     // Доройтол: бууцны газар шаргалтаж (M4: илүү тод), бут намсна
     const dryK = Math.min(0.9, 0.95 * degrade);
-    const tuftK = 1 - 0.55 * degrade;
+    // M5.5: намар шаргалтаж, өвөл хатсан өвс, цас бүрхэнэ
+    const look = seasonLook(this.cfg, state);
+    const strawK = look.straw * 0.85;
+    const snowK = look.snow;
+    const tuftK = (1 - 0.55 * degrade) * (1 - 0.9 * snowK);
     for (let i = 0; i < n; i++) {
       let s = 0, m = 0, abs = 0;
       for (let k = 0; k < 4; k++) {
@@ -263,7 +281,15 @@ export class TerrainView {
         const dryCh = ch === 0 ? DRY.r : ch === 1 ? DRY.g : DRY.b;
         const lushC = L + (dryCh - L) * dryK;
         const bare = this.vBare[o + ch]!;
-        col[o + ch] = bare + (lushC - bare) * lush;
+        let v = bare + (lushC - bare) * lush;
+        const st = ch === 0 ? STRAW.r : ch === 1 ? STRAW.g : STRAW.b;
+        v += (st - v) * strawK * (0.4 + 0.6 * lush);
+        const sk = snowK * this.vSnowK[i]!;
+        if (sk > 0) {
+          const sn = ch === 0 ? SNOW_GROUND.r : ch === 1 ? SNOW_GROUND.g : SNOW_GROUND.b;
+          v += (sn - v) * Math.min(1, sk * (0.85 + 0.15 * Math.sin(i * 1.7)));
+        }
+        col[o + ch] = v;
       }
     }
     this.ground.geometry.attributes.color!.needsUpdate = true;
@@ -286,6 +312,8 @@ export class TerrainView {
       const lush = smoothstep(0.1, 0.9, b);
       c.setRGB(this.tuftLush[k * 3]!, this.tuftLush[k * 3 + 1]!, this.tuftLush[k * 3 + 2]!);
       c.lerp(DRY, clamp(dryK + (1 - lush) * 0.6, 0, 1));
+      c.lerp(STRAW, strawK);
+      if (snowK > 0) c.lerp(SNOW_GROUND, snowK * 0.6);
       if (heatmap) c.setRGB(1 - b, 0.3 + 0.6 * b, 0.15);
       t.setColorAt(k, c);
     }
@@ -344,7 +372,7 @@ export class TerrainView {
         addLeafy(w.x + Math.cos(a) * r, w.z + Math.sin(a) * r, rng.range(0.8, 1.2));
       }
     }
-    if (t.tilt) {
+    if (t.tilt && t.forest) {
       // Уулын арын ой (налуу өгсөх зүгт)
       for (let i = 0; i < 140; i++) {
         const x = rng.range(-170, 170), along = rng.range(t.tilt.start + 12, 175);
@@ -398,6 +426,14 @@ export class TerrainView {
     const { pen, post } = this.cfg.camps.home;
     const gateA = Math.atan2(pen.z, pen.x);
     const gapHalf = 0.27;
+    if (this.camp.shed) this.buildShed(out, gateA, gapHalf);
+    else this.buildPostFence(out, gateA, gapHalf);
+    this.buildPostAndFire(out, post);
+  }
+
+  /** Энгийн хашаа: шон, хоёр хөндлөвч */
+  private buildPostFence(out: THREE.Group, gateA: number, gapHalf: number): void {
+    const { pen } = this.cfg.camps.home;
     const postGeo = new THREE.CylinderGeometry(0.08, 0.11, 1.4, 5);
     for (let a = 0; a < Math.PI * 2; a += Math.PI / 24) {
       if (Math.abs(angDiff(a, gateA)) < gapHalf) continue;
@@ -418,6 +454,83 @@ export class TerrainView {
       const tube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 96, 0.045, 3), mat(0x7a5634));
       out.add(tube);
     }
+  }
+
+  /**
+   * Саравчтай монгол дулаан бууц (M5.5, хэрэглэгчийн зургаас): банзан бүтэн хашаа,
+   * хойд талдаа хаалттай, өмнө зүг рүүгээ нээлттэй дээвэртэй саравч, хашаан доторх бууц (аргал).
+   */
+  private buildShed(out: THREE.Group, gateA: number, gapHalf: number): void {
+    const { pen } = this.cfg.camps.home;
+    const plank = new THREE.BoxGeometry(1, 1, 1);
+    const wood = [0x7a5634, 0x6b4a2e, 0x856040];
+    const N = 120;
+    for (let k = 0; k < N; k++) {
+      const a = (k / N) * Math.PI * 2;
+      if (Math.abs(angDiff(a, gateA)) < gapHalf) continue;
+      const x = pen.x + Math.cos(a) * pen.r, z = pen.z + Math.sin(a) * pen.r;
+      const h = 1.55 + ((k * 7) % 5) * 0.04;
+      const b = new THREE.Mesh(plank, mat(wood[k % 3]!));
+      b.scale.set(0.12, h, (Math.PI * 2 * pen.r) / N - 0.05);
+      b.position.set(x, this.heightAt(x, z) + h / 2 - 0.05, z);
+      b.rotation.y = -a;
+      b.castShadow = true;
+      out.add(b);
+    }
+    // Хаалганы хоёр шон
+    for (const s of [-1, 1]) {
+      const a = gateA + s * gapHalf;
+      const x = pen.x + Math.cos(a) * pen.r, z = pen.z + Math.sin(a) * pen.r;
+      const g = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 2.1, 6), mat(0x5b3b22));
+      g.position.set(x, this.heightAt(x, z) + 1.05, z);
+      out.add(g);
+    }
+    // Саравч: хашааны хойд (−z) хэсэгт, хана хойш, нээлттэй тал урагш
+    const W = 12, Dp = 5, back = 2.6, front = 2.0;
+    const cx = pen.x, cz = pen.z - pen.r + 1.2 + Dp / 2;
+    const y0 = this.heightAt(cx, cz);
+    const wall = new THREE.Mesh(plank, mat(0x6b4a2e));
+    wall.scale.set(W, back, 0.2);
+    wall.position.set(cx, y0 + back / 2, cz - Dp / 2);
+    wall.castShadow = true;
+    out.add(wall);
+    for (const sx of [-1, 1]) {
+      const side = new THREE.Mesh(plank, mat(0x7a5634));
+      side.scale.set(0.2, back, Dp);
+      side.position.set(cx + (sx * W) / 2, y0 + back / 2, cz);
+      out.add(side);
+    }
+    for (let i = 0; i <= 4; i++) {
+      const px = cx - W / 2 + (i / 4) * W;
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, front, 5), mat(0x5b3b22));
+      post.position.set(px, y0 + front / 2, cz + Dp / 2);
+      out.add(post);
+    }
+    const roof = new THREE.Mesh(plank, mat(0x8a7354));
+    const slope = Math.atan2(back - front, Dp);
+    roof.scale.set(W + 0.8, 0.18, Math.hypot(Dp, back - front) + 0.6);
+    roof.position.set(cx, y0 + (back + front) / 2 + 0.1, cz);
+    roof.rotation.x = slope;
+    roof.castShadow = true;
+    out.add(roof);
+    // Дээвэр дээрх өвс, шороо (зурган дээрх шиг бараан)
+    const top = new THREE.Mesh(plank, mat(0x6e5d3e));
+    top.scale.set(W, 0.12, Dp * 0.9);
+    top.position.set(cx, y0 + (back + front) / 2 + 0.25, cz);
+    top.rotation.x = slope;
+    out.add(top);
+    // Хашаан доторх бууц (хатсан аргал)
+    const dung = new THREE.Mesh(new THREE.CylinderGeometry(pen.r * 0.55, pen.r * 0.6, 0.08, 20), mat(0x7d6648));
+    dung.position.set(pen.x, this.heightAt(pen.x, pen.z) + 0.02, pen.z);
+    out.add(dung);
+    const pile = new THREE.Mesh(new THREE.DodecahedronGeometry(1.4, 0), mat(0x5a4530));
+    pile.scale.set(1.4, 0.45, 1.1);
+    pile.position.set(pen.x + pen.r + 3, this.heightAt(pen.x + pen.r + 3, pen.z + 8) + 0.3, pen.z + 8);
+    out.add(pile);
+  }
+
+  /** Морины уяа, галын чулуу */
+  private buildPostAndFire(out: THREE.Group, post: { x: number; z: number }): void {
     // Уяа
     const py = this.heightAt(post.x, post.z);
     for (const dx of [-1.3, 1.3]) {
@@ -438,6 +551,32 @@ export class TerrainView {
       m.position.set(-5 + Math.cos(a) * r, this.heightAt(-5, -3) + 0.2, -3 + Math.sin(a) * r);
       out.add(m);
     }
+  }
+
+  /** Бууцны өвсний овоо (боодол өвс, M5.5): тоо өөрчлөгдөхөд дахин барина */
+  private syncHay(state: GameState): void {
+    const hay = Math.ceil(state.camps[state.campId]?.hay ?? 0);
+    const shown = Math.min(hay, 48);
+    if (shown === this.hayShown) return;
+    this.hayShown = shown;
+    if (this.hayGroup) this.group.remove(this.hayGroup);
+    this.hayGroup = null;
+    if (!shown) return;
+    const pen = this.cfg.camps.home.pen;
+    const g = new THREE.Group();
+    const geo = new THREE.BoxGeometry(1.1, 0.55, 0.6);
+    const cols = [0xc9b06a, 0xbfa35c, 0xd2bb78];
+    for (let i = 0; i < shown; i++) {
+      const layer = Math.floor(i / 12), j = i % 12;
+      const m = new THREE.Mesh(geo, mat(cols[i % 3]!));
+      m.position.set((j % 4) * 1.15 - 1.7 + (layer % 2) * 0.3, 0.28 + layer * 0.55, Math.floor(j / 4) * 0.65 - 0.65);
+      m.castShadow = true;
+      g.add(m);
+    }
+    const x = pen.x + pen.r + 4, z = pen.z - 4;
+    g.position.set(x, this.heightAt(x, z), z);
+    this.hayGroup = g;
+    this.group.add(g);
   }
 
   /** Чонын үүр (чулуу, нүх, яс) ба нутгийн улаан хил */

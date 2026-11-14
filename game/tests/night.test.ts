@@ -1,3 +1,5 @@
+import type { Season } from '../src/sim/config';
+import { seasonStart } from '../src/sim/systems/seasons';
 import { describe, expect, it } from 'vitest';
 import { ACTIVE_DAY, cfg, DAY, newSim, steps } from './helpers';
 import { atHome, dailyMilkLiters, intakeFactor } from '../src/sim/systems/night';
@@ -82,14 +84,12 @@ describe('Шөнийн чоно (M4.5)', () => {
     for (const a of home) expect(isProtected(zones, a.x, a.z)).toBe(true);
   });
   it('зун цөөн, өвөл олон шөнө чоно ирнэ; нэг дор бүгд биш', () => {
-    const count = (season: typeof T.season): number => {
+    const count = (season: Season): number => {
       let raids = 0, maxN = 0;
       for (let seed = 1; seed <= 200; seed++) {
         const sim = newSim(seed);
-        const prev = cfg.time.season;
-        cfg.time.season = season;
+        sim.state.time.day = seasonStart(cfg, season) + 1;
         const n = nightRaid(cfg, sim.state);
-        cfg.time.season = prev;
         if (n) raids++;
         maxN = Math.max(maxN, n);
         expect(n).toBeLessThan(sim.state.wolves.list.length + 1);

@@ -51,7 +51,20 @@ export function syncAway(state: GameState): void {
 
 /** Ачааны хэмжээ (нэгж) ба малын байр (хонины тоогоор) */
 export function cargoUnits(f: FleetVehicle): number {
-  return Object.values(f.cargo).reduce((s, n) => s + (n ?? 0), 0);
+  return Object.values(f.cargo).reduce((s, n) => s + (n ?? 0), 0) + hayInOrders(f.orders);
+}
+
+/** Захиалсан боодол өвс (1 боодол = 1 ачааны нэгж, M5.5) */
+export function hayInOrders(orders: BuyOrder[]): number {
+  return orders.reduce((s, o) => s + (o.kind === 'hay' ? o.n : 0), 0);
+}
+
+/** Энэ удаад авч болох боодол өвс: тээвэрт үлдсэн багтаамж, морьтой бол horseBales */
+export function hayRoom(cfg: GameConfig, state: GameState): number {
+  const p = state.player;
+  const f = p.driving ? fleetOf(state, p.driving) : undefined;
+  if (f) return Math.max(0, Math.floor(vehicleCfg(cfg, f.id).capacity - cargoUnits(f) + 1e-9));
+  return Math.max(0, cfg.seasons.hay.horseBales - hayInOrders(p.orders));
 }
 export function cargoSlots(cfg: GameConfig, f: FleetVehicle): number {
   return f.animals.reduce((s, a) => s + animalSlots(cfg, f.id, a.species), 0);
@@ -475,7 +488,16 @@ export function trade(cfg: GameConfig, state: GameState, rng: Rng, plan: TradePl
   p.drove = p.drove.filter((a) => !sellA.includes(a));
   // Авах (мөнгө, байр хүрвэл)
   const failed: string[] = [];
-  for (const o of plan.buy) {
+  for (const o0 of plan.buy) {
+    let o = o0;
+    if (o.kind === 'hay') {
+      const n = Math.min(o.n, hayRoom(cfg, state));
+      if (n <= 0) {
+        failed.push('ачааны байр');
+        continue;
+      }
+      o = { kind: 'hay', n };
+    }
     const price = orderPrice(cfg, state, o);
     if (state.money < price) {
       failed.push('мөнгө');

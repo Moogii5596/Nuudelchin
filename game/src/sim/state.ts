@@ -11,7 +11,7 @@ import type { Dog } from './systems/dogs';
 import { initFleetVehicle } from './systems/travel';
 import { newHelpersState, type HelpersState } from './systems/helpers';
 
-export const SAVE_VERSION = 9;   // 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих · 6: нохой, чонын дайралт, сүргийн нүүдэл (M4) · 7: шөнө, хотлох, өглөөний бүтээгдэхүүн, Портер/Амжиргаа, шөнийн чоно (M4.5) · 8: газрын зураг, тээвэр жолоодох, ачаа, Худалдаачин (M4.6) · 9: туслах малчид, цайны газар, отор, туслахын мал (M5)
+export const SAVE_VERSION = 10;   // 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих · 6: нохой, чонын дайралт, сүргийн нүүдэл (M4) · 7: шөнө, хотлох, өглөөний бүтээгдэхүүн, Портер/Амжиргаа, шөнийн чоно (M4.5) · 8: газрын зураг, тээвэр жолоодох, ачаа, Худалдаачин (M4.6) · 9: туслах малчид, цайны газар, отор, туслахын мал (M5) · 10: улирал, цас, боодол өвс, 4 бууц, отрын бүтээгдэхүүн (M5.5)
 
 export type ProductId = 'milk' | 'tarag' | 'aaruul' | 'urum' | 'wool' | 'felt' | 'cashmere';
 export const PRODUCTS: readonly ProductId[] = ['milk', 'tarag', 'aaruul', 'urum', 'wool', 'felt', 'cashmere'];
@@ -83,6 +83,7 @@ export type BuyOrder =
   | { kind: 'dog' }
   | { kind: 'helperTent' }   // ганц бие туслахын байр (M5)
   | { kind: 'otorTent' }     // отрын илүү майхан (M5)
+  | { kind: 'hay'; n: number }   // боодол өвс (M5.5) — гэрийн бууцны овоонд
   | { kind: 'helperGer' };
 
 /** Тоглогч хаана байна: camp = гэрийн бууцны 3D, sum = сумын төвийн 3D, map = газрын зураг (M4.6) */
@@ -112,6 +113,9 @@ export interface MapState {
 export interface CampState {
   degrade: number;       // 0–1
   daysSpent: number;
+  snow: number;          // цасны зузаан, см (M5.5)
+  grass: number;         // эзгүй үеийн дундаж өвс 0–1 (одоогийн бууцных торонд)
+  hay: number;           // бууцанд овоолсон боодол өвс
 }
 
 export interface DayStats {
@@ -123,6 +127,8 @@ export interface DayStats {
   births: number;
   deaths: number;
   wolfKills: Partial<Record<Species, number>>;   // чонод барьдсан (deaths-д ороогүй)
+  hayFed: number;    // өгсөн боодол өвс (M5.5)
+  coldHit: number;   // гадуур хүйтэнд хоносон мал (M5.5)
 }
 
 export interface PlayerState {
@@ -171,7 +177,7 @@ export interface GameState {
 }
 
 export function emptyDayStats(): DayStats {
-  return { income: {}, expenses: {}, dropped: {}, collected: {}, spoiled: {}, births: 0, deaths: 0, wolfKills: {} };
+  return { income: {}, expenses: {}, dropped: {}, collected: {}, spoiled: {}, births: 0, deaths: 0, wolfKills: {}, hayFed: 0, coldHit: 0 };
 }
 
 export function newAnimal(
@@ -223,7 +229,7 @@ export function createInitialState(cfg: GameConfig, seed: number): GameState {
     });
   });
   const camps: Record<string, CampState> = {};
-  for (const id of Object.keys(cfg.camps.camps)) camps[id] = { degrade: 0, daysSpent: 0 };
+  for (const id of Object.keys(cfg.camps.camps)) camps[id] = { degrade: 0, daysSpent: 0, snow: 0, grass: 0.85, hay: 0 };
   const grass = buildGrid(cfg, cfg.start.camp, 0, rng);
   const st: GameState = {
     version: SAVE_VERSION,

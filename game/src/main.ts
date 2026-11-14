@@ -16,9 +16,10 @@ import { huntingWolves } from './sim/systems/wolves';
 import { DOG_ORDER_NAME } from './sim/systems/dogs';
 import { nearestVehicle, partySpeedKmPerMin } from './sim/systems/travel';
 import { nearTeahouse } from './sim/systems/helpers';
+import { campAccess, seasonProgress, yearOf } from './sim/systems/seasons';
 import { GameView } from './render/scene';
 import { Panels } from './render/ui/panels';
-import { PRODUCT_EMOJI, fmtMinutes, fmtMoney, fmtNum } from './render/ui/names';
+import { PRODUCT_EMOJI, SEASON_EMOJI, SEASON_NAME, fmtMinutes, fmtMoney, fmtNum } from './render/ui/names';
 import { PlayerController } from './input/controller';
 import { t } from './i18n/i18n';
 
@@ -67,7 +68,15 @@ function start(): void {
     else if (e.type === 'leftToMap') toast('🗺 Газрын зураг — очих газраа хулганаар дарна (явж байхдаа сольж болно)', 'good');
     else if (e.type === 'arrived') toast(e.place === 'sum' ? '🏘 Сумын төвд ирлээ — Худалдаачны дэлгүүрт оч (шар тойрог, E)' : '🏠 Гэртээ ирлээ', 'good');
     else if (e.type === 'arriveCamp') panels.showArrive(e.campId);
-    else if (e.type === 'helperQuit') toast(e.reason === 'wage' ? `💸 Цалин хүрэлцээгүй — ${e.names.join(', ')} малаа аваад явлаа` : `${e.names.join(', ')} ажлаас гарлаа`, 'bad');
+    else if (e.type === 'season') {
+      const msg: Record<string, string> = {
+        summer: '☀️ Зун боллоо — голын бэл, энгэрийн сайхан бэлчээрт мал таргална',
+        autumn: '🍂 Намар боллоо — өвс шарлаж байна. Өвлийн бууц (саравчтай уулын өвөр), боодол өвс бэлтгэ',
+        winter: '❄️ Өвөл боллоо — цас орж эхэллээ. Саравчтай уулын өвөрт өвөлжиж, өвс тэжээлээ бэлд',
+        spring: '🌱 Хавар боллоо — төлийн улирал. Уулын арын цас хайлж, доороос нь хадгалагдсан өвс гарч ирнэ',
+      };
+      toast(msg[e.season] ?? '', 'good');
+    } else if (e.type === 'helperQuit') toast(e.reason === 'wage' ? `💸 Цалин хүрэлцээгүй — ${e.names.join(', ')} малаа аваад явлаа` : `${e.names.join(', ')} ажлаас гарлаа`, 'bad');
     else if (e.type === 'helperTrip') toast(`🚚 ${e.name} сумын төвөөс ирлээ: ${fmtMoney(e.income)} орлого`, 'good');
     else if (e.type === 'otorLoss') toast(`🐺 Отор дээр (${t('camp.' + e.campId)}) чоно ${t('species.' + e.species).toLowerCase()} барьлаа`, 'bad');
     else if (e.type === 'wolfRaid') toast(`🌙 Шөнө ${e.n > 1 ? e.n + ' чоно' : 'чоно'} хот руу дөхөж байна — хотоос гадуур хоносон мал аюултай`, 'bad');
@@ -229,8 +238,13 @@ function start(): void {
       const helpersTxt = hs.list.length
         ? `👥 Туслах ${hs.list.length}${hs.otor.length ? ` · 🏕 отор ${hs.otor.length}` : ''}${hs.list.some((h) => h.trip) ? ' · 🚚 замд' : ''} <small>(J)</small><br>`
         : '';
+      const sp = seasonProgress(cfg, state.time.day);
+      const cs = state.camps[state.campId];
+      const snowTxt = cs && cs.snow >= 0.5 ? ` · ❄ ${Math.round(cs.snow)} см (идэх ${Math.round(campAccess(cfg, cs.snow) * 100)}%)` : '';
+      const hayTxt = cs && (cs.hay > 0 || sp.season === 'winter' || sp.season === 'autumn') ? ` · 🌾 ${fmtNum(Math.round((cs.hay ?? 0) * 10) / 10)}` : '';
       hud.innerHTML =
         `<b>${t('hud.day', { day: state.time.day })}</b> · ${isNight(state.time, cfg.time) ? '🌙' : '☀️'} ${formatTime(state.time)}${paused ? ' · ⏸' : ''}<br>` +
+        `${SEASON_EMOJI[sp.season]} ${SEASON_NAME[sp.season]} ${sp.dayOf}/${sp.days} · ${yearOf(cfg, state.time.day)}-р жил${snowTxt}${hayTxt}<br>` +
         `${t('hud.money')}: <b>${fmtMoney(state.money)}</b><br>` +
         `${t('hud.animals')}: ${counts.join(' · ')}<br>` +
         `📦 ${fmtNum(storage.used(state))}/${storage.capacity(cfg, state)} · ✋ ${carryTxt} (${fmtNum(carried)}/${cfg.products.carryUnits})${onGround ? ` · газарт ${onGround}` : ''}<br>` +

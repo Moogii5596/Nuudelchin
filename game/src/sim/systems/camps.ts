@@ -6,7 +6,8 @@
 import type { GameConfig } from '../config';
 import type { Rng } from '../rng';
 import type { GameState } from '../state';
-import { buildGrid } from './pasture';
+import { averageBiomass, buildGrid } from './pasture';
+import { applyAccess } from './seasons';
 import { spawnWolves } from './wolves';
 import { relocateDogs } from './dogs';
 import { bestTruck, parkingSpot } from './trip';
@@ -51,8 +52,13 @@ export function moveStep(cfg: GameConfig, state: GameState, rng: Rng): boolean {
   // Нүүж ирлээ
   for (const it of state.items) state.today.spoiled[it.product] = (state.today.spoiled[it.product] ?? 0) + it.amount;
   state.items = [];
+  // Хуучин бууцны өвсийг дундаж тоогоор хадгална (эзгүй үед улирлаар ургаж/хатна)
+  const old = state.camps[state.campId];
+  if (old) old.grass = averageBiomass(state.grass, 150);
   state.campId = mv.to;
-  state.grass = buildGrid(cfg, mv.to, state.camps[mv.to]?.degrade ?? 0, rng);
+  const nc = state.camps[mv.to];
+  state.grass = buildGrid(cfg, mv.to, nc?.degrade ?? 0, rng, nc?.grass ?? 0.85);
+  applyAccess(cfg, state.grass, nc?.snow ?? 0);
   const home = cfg.camps.home;
   for (const a of state.animals) {
     const ang = rng.range(0, Math.PI * 2), r = a.riding ? 0 : rng.range(8, 20);

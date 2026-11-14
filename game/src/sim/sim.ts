@@ -4,16 +4,18 @@
 import type { GameConfig } from './config';
 import { tick, type ClockEvent } from './clock';
 import { Rng } from './rng';
-import { emptyDayStats, type DayStats, type GameState } from './state';
+import { emptyDayStats, type CampState, type DayStats, type GameState } from './state';
 import { applyCommand, type Command, type CommandResult } from './commands';
-import { averageBiomass, dailyCampDegrade, dailyRegrowth, typeQualities } from './systems/pasture';
+import { averageBiomass, dailyCampDegrade, typeQualities } from './systems/pasture';
+import { applyAccess, coldNight, dailyAwayGrass, dailyGrass, dailySnow, feedHay, seasonOf } from './systems/seasons';
+import type { Season } from './config';
 import { grazingStep } from './systems/grazing';
 import { cohesionCenters, findHerds, herdDecide, type FlockCenter, type Herd, type HerdDecision } from './systems/herds';
 import { dogsStep } from './systems/dogs';
 import { dailyAnimals, grazingSheepUnits, herdSheepUnits, liveWeightKg } from './systems/animals';
 import { dailyBreeding } from './systems/breeding';
 import { groundAgingStep } from './systems/production';
-import { eveningStep, morning, sleepAll } from './systems/night';
+import { atHome, eveningStep, morning, sleepAll } from './systems/night';
 import { processingStep } from './systems/processing';
 import * as storage from './systems/storage';
 import { mapStep, syncAway, type TravelEvent } from './systems/travel';
@@ -35,13 +37,16 @@ export interface DayReport extends DayStats {
   campDegrade: number;
   campDays: number;        // энэ бууцанд өнгөрүүлсэн өдөр
   regrowthMult: number;    // өвс ургах хурд (доройтлоор буурсан, 1 = бүрэн)
-  camps: Record<string, { degrade: number; daysSpent: number }>;
+  camps: Record<string, CampState>;
+  season: Season;
+  snow: number;            // одоогийн бууцны цас (см)
+  hay: number;             // одоогийн бууцны боодол өвс
   dogs: number;
   storageUsed: number;
   goalReached: boolean;
 }
 
-export type SimEvent = ClockEvent | WolfEvent | TravelEvent | HelperEvent | { type: 'dayReport'; report: DayReport };
+export type SimEvent = ClockEvent | WolfEvent | TravelEvent | HelperEvent | { type: 'dayReport'; report: DayReport } | { type: 'season'; season: Season; day: number };
 
 export class Sim {
   readonly cfg: GameConfig;
@@ -59,7 +64,8 @@ export class Sim {
     this.state = state;
     this.rng = Rng.fromState(state.rngState);
     this.moneyAtDayStart = state.money;
-    this.quality = typeQualities(cfg, state.camps[state.campId]?.degrade ?? 0);
+    this.quality = typeQualities(cfg, state.camps[state.campId]?.degrade ?? 0, seasonOf(cfg, state.time.day));
+    applyAccess(cfg, state.grass, state.camps[state.campId]?.snow ?? 0);
   }
 
   on(fn: (e: SimEvent) => void): () => void {
@@ -117,9 +123,17 @@ export class Sim {
       else if (ev.type === 'monthEnd') for (const e2 of payWages(cfg, state)) this.emit(e2);
       else if (ev.type === 'nightStart') {
         sleepAll(state);
+        state.today.coldHit += coldNight(cfg, state, (a) => atHome(cfg, a));
         const n = nightRaid(cfg, state);
         if (n) this.emit({ type: 'wolfRaid', n });
       } else if (ev.type === 'dayStart') {
+        const prevSeason = seasonOf(cfg, ev.day - 1);
+        dailySnow(cfg, state);
+        const season = seasonOf(cfg, ev.day);
+        if (season !== prevSeason) {
+          this.refreshQuality();
+          this.emit({ type: 'season', season, day: ev.day });
+        }
         morning(cfg, state, rng);
         endRaid(state);
         refreshCandidates(cfg, state);
@@ -131,7 +145,7 @@ export class Sim {
 
   /** Бууцны доройтол өөрчлөгдвөл бэлчээрийн чанарыг дахин тооцно */
   refreshQuality(): void {
-    this.quality = typeQualities(this.cfg, this.state.camps[this.state.campId]?.degrade ?? 0);
+    this.quality = typeQualities(this.cfg, this.state.camps[this.state.campId]?.degrade ?? 0, seasonOf(this.cfg, this.state.time.day));
   }
 
   /** 3D-гүй горим: n өдрийг хамгийн хурдан гүйлгэнэ */
@@ -147,6 +161,7 @@ export class Sim {
     const grazers = state.animals.filter((a) => !a.riding);
     const avgGut = grazers.length ? grazers.reduce((s, a) => s + a.gutFill, 0) / grazers.length : 0;
 
+    t.hayFed += feedHay(cfg, state);   // өвөл, хавар идэш дутсан малд боодол өвс (M5.5)
     for (const a of state.animals) a.lastGut = a.gutFill;   // өглөөний сүү, ноос (night.ts)
     const dead = dailyAnimals(cfg, state);
     t.deaths += dead.length;
@@ -158,8 +173,10 @@ export class Sim {
     dailyCampDegrade(cfg, state.camps, state.campId, grazingSheepUnits(state, cfg.animals));
     for (const e2 of dailyOtor(cfg, state, rng)) this.emit(e2);
     const degrade = state.camps[state.campId]?.degrade ?? 0;
-    dailyRegrowth(cfg, state.grass, degrade);
-    this.quality = typeQualities(cfg, degrade);
+    dailyGrass(cfg, state);
+    dailyAwayGrass(cfg, state);
+    state.camps[state.campId]!.grass = averageBiomass(state.grass, 150);
+    this.quality = typeQualities(cfg, degrade, seasonOf(cfg, day));
 
     const spoiled = storage.dailyStorageAging(cfg, state);
     for (const [p, n] of Object.entries(spoiled)) t.spoiled[p as keyof typeof t.spoiled] = (t.spoiled[p as keyof typeof t.spoiled] ?? 0) + (n ?? 0);
@@ -186,6 +203,9 @@ export class Sim {
       campDays: state.camps[state.campId]?.daysSpent ?? 0,
       regrowthMult: 1 - cfg.pasture.degradation.growthPenalty * degrade,
       camps: Object.fromEntries(Object.entries(state.camps).map(([id, c]) => [id, { ...c }])),
+      season: seasonOf(cfg, day),
+      snow: state.camps[state.campId]?.snow ?? 0,
+      hay: state.camps[state.campId]?.hay ?? 0,
       dogs: state.dogs.length,
       storageUsed: storage.used(state),
       goalReached: goal,

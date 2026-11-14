@@ -17,9 +17,31 @@ import startJson from '../../../data/start.json';
 import playerJson from '../../../data/player.json';
 import dogsJson from '../../../data/dogs.json';
 import worldmapJson from '../../../data/worldmap.json';
+import seasonsJson from '../../../data/seasons.json';
 
 export type Species = 'sheep' | 'goat' | 'cow' | 'horse';
 export type Sex = 'm' | 'f';
+export type Season = 'summer' | 'autumn' | 'winter' | 'spring';
+
+/** Улирал, цас, өвс тэжээл (data/seasons.json, M5.5) */
+export interface SeasonsConfig {
+  order: Season[];
+  days: Record<Season, number>;
+  growth: Record<Season, number>;
+  exposedDecayPerDay: Record<Season, number>;
+  snow: {
+    fallCmPerDay: Record<Season, number>;
+    meltCmPerDay: Record<Season, number>;
+    blockCm: number;
+    growthSnowCm: number;
+    forestTypeMult: Record<string, number>;
+    camps: Record<string, { fall: number; melt: Partial<Record<Season, number>> }>;
+  };
+  cold: { conditionLossPerNight: Record<Season, number>; shedMult: number; penMult: number };
+  hay: { price: number; sheepDaysPerBale: number; quality: number; feedSeasons: Season[]; fillTo: number; horseBales: number };
+  breeding: { springShare: number; noBirth: Season[] };
+  otorWolfMult: Record<Season, number>;
+}
 export const SPECIES: readonly Species[] = ['sheep', 'goat', 'cow', 'horse'];
 
 export interface TimeConfig {
@@ -33,7 +55,6 @@ export interface TimeConfig {
   mapFastForward: number;        // газрын зураг дээр Shift — цаг хурдасгах
   speeds: number[];
   monthDays: number;
-  season: 'spring' | 'summer' | 'autumn' | 'winter';
   animalYearDays: number;
 }
 
@@ -149,6 +170,7 @@ export interface TerrainConfig {
   tilt?: { dirX: number; dirZ: number; start: number; slope: number; start2?: number; slope2?: number };   // нэг зүг өгсөх (уулын ар)
   open?: { dirX: number; dirZ: number; width: number };   // хөндийн задгай ам
   pondDepth?: number;                        // булаг/горхины хонхор
+  forest?: boolean;                          // налуу өгсөх зүгт ой (уулын ар)
 }
 
 export interface CampConfig {
@@ -157,6 +179,7 @@ export interface CampConfig {
   rings: [number, string][];
   waterShape: WaterShape;
   road: [number, number][];   // сумын төв рүү гарах зам (M4.6)
+  shed?: boolean;             // саравчтай дулаан бууц (M5.5)
   terrain: TerrainConfig;
 }
 
@@ -211,6 +234,7 @@ export interface GameConfig {
   player: typeof playerJson;
   dogs: typeof dogsJson;
   worldmap: WorldMapConfig;
+  seasons: SeasonsConfig;
   start: { camp: string; home: string; vehicles: string[]; storageLevel: number; animals: StartAnimal[] };
 }
 
@@ -231,6 +255,7 @@ export function loadConfig(): GameConfig {
     player: playerJson,
     dogs: dogsJson,
     worldmap: worldmapJson as unknown as WorldMapConfig,
+    seasons: seasonsJson as unknown as SeasonsConfig,
   };
   const errors = validateConfig(cfg);
   if (errors.length) {
@@ -248,6 +273,9 @@ export function validateConfig(cfg: GameConfig): string[] {
   if (t.nightEndMinute - t.dayStartMinute !== 1440) e.push('time: nightEndMinute − dayStartMinute = 1440 (24 цаг)');
   for (const [sp, m] of Object.entries(t.homeMinute ?? {})) if (!(m > t.dayStartMinute && m < t.sleepMinute)) e.push(`time.homeMinute.${sp}: өглөө ба sleepMinute хооронд`);
   if (t.monthDays < 1 || t.animalYearDays < 1) e.push('time: monthDays, animalYearDays ≥ 1');
+  const se = cfg.seasons;
+  if (se.order.reduce((a, k) => a + (se.days[k] ?? 0), 0) !== t.animalYearDays) e.push('seasons.days: нийлбэр = time.animalYearDays');
+  for (const id of Object.keys(cfg.camps.camps)) if (!se.snow.camps[id]) e.push(`seasons.snow.camps.${id}: бууцны цасны тохиргоо алга`);
 
   for (const sp of SPECIES) {
     const s = cfg.animals.species[sp];

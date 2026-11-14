@@ -19,7 +19,7 @@ import { newAnimal } from './state';
 import { SPECIES } from './config';
 import { orderDog, DOG_ORDER_NAME, type DogOrderKind } from './systems/dogs';
 import { applyCheat, type CheatAction } from './systems/cheats';
-import { fire, hire, payWithAnimal, recallOtor, refreshCandidates, sendOtor, setTask, type HelperTask, type HerdGroup } from './systems/helpers';
+import { fire, hire, payWithAnimal, recallOtor, refreshCandidates, sendOtor, setOtorCollector, setTask, takeFromOtor, type HelperTask, type HerdGroup } from './systems/helpers';
 
 export type Command =
   | { type: 'movePlayer'; x: number; z: number; heading?: number }
@@ -55,6 +55,8 @@ export type Command =
   | { type: 'payWithAnimal'; helper: number; animal: number }
   | { type: 'sendOtor'; helper: number; animalIds: number[]; camp: string }
   | { type: 'recallOtor'; helper: number }
+  | { type: 'otorCollector'; helper: number; camp: string | null }   // хүүхдийг отор руу цуглуулагчаар (M5.5)
+  | { type: 'takeOtor'; camp: string }                              // отор дээрх сүү, ноосыг авах (газрын зураг дээр тэр бууцанд)
   | { type: 'cheat'; action: CheatAction };                                          // туршилтын цэс (`)
 
 export interface CommandResult {
@@ -292,6 +294,14 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
     case 'sendOtor': {
       const err = sendOtor(cfg, state, cmd.helper, cmd.animalIds, cmd.camp);
       return err ? fail(err) : ok('Отор явлаа');
+    }
+    case 'otorCollector': {
+      const err = setOtorCollector(state, cmd.helper, cmd.camp);
+      return err ? fail(err) : ok(cmd.camp ? 'Цуглуулагч отор руу явлаа' : 'Цуглуулагч гэртээ ирлээ');
+    }
+    case 'takeOtor': {
+      const r = takeFromOtor(cfg, state, cmd.camp);
+      return r.err ? fail(r.err) : ok(`Отроос ${Math.round(r.took * 10) / 10} нэгж бүтээгдэхүүн авлаа`);
     }
     case 'recallOtor': {
       const err = recallOtor(cfg, state, cmd.helper, sim.random);

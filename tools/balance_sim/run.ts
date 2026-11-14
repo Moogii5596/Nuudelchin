@@ -23,6 +23,10 @@ import { AutoTrip } from '../../game/src/sim/autotrip';
 import { realSecondsPerDay } from '../../game/src/sim/clock';
 import { findHerds } from '../../game/src/sim/systems/herds';
 import { bedsTotal, bedsUsed } from '../../game/src/sim/systems/helpers';
+import { campAccess, seasonOf, seasonProgress } from '../../game/src/sim/systems/seasons';
+import type { Season } from '../../game/src/sim/config';
+/** Хонин толгой бүрт бэлтгэх боодол өвс (--hay 0 — өвс авахгүй) */
+const hayPerSU = Number(process.argv.includes('--hay') ? process.argv[process.argv.indexOf('--hay') + 1] : 0.5);
 
 const args = Object.fromEntries(
   process.argv.slice(2).reduce<[string, string][]>((acc, v, i, arr) => {
@@ -125,7 +129,7 @@ function tripIfUseful(sim: Sim, buy: BuyOrder[], minUnits: number, sellAnimalIds
 function bestSpot(cfg: GameConfig, sim: Sim, minCm: number): { x: number; z: number } {
   const dens = sim.state.wolves.dens;
   const g = sim.state.grass;
-  const q = typeQualities(cfg, sim.state.camps[sim.state.campId]?.degrade ?? 0);
+  const q = typeQualities(cfg, sim.state.camps[sim.state.campId]?.degrade ?? 0, seasonOf(cfg, sim.state.time.day));
   let best = -1, bx = 30, bz = 0;
   for (let iz = 0; iz < g.n; iz += 4) {
     for (let ix = 0; ix < g.n; ix += 4) {
@@ -147,12 +151,29 @@ function bestSpot(cfg: GameConfig, sim: Sim, minCm: number): { x: number; z: num
   return { x: bx, z: bz };
 }
 
-/** Одоогийн бууц threshold-оос их доройтсон бол хамгийн бага доройтолтой бууц руу нүүнэ */
-function rotateCamp(sim: Sim, threshold: number): boolean {
-  const { state } = sim;
+/** M5.5: улирал бүрт тохирох бууцнууд (хэрэглэгчийн дүрэм: өвөл өвөр, хавар ар, зун голын бэл/энгэр, намар энгэр) */
+const SEASON_CAMPS: Record<Season, string[]> = {
+  summer: ['river', 'valley'],
+  autumn: ['valley', 'river'],
+  winter: ['southSlope'],
+  spring: ['northSlope', 'southSlope'],
+};
+
+/**
+ * Улиралд тохирохгүй бууцанд байвал тохирох бууц руу; тохирох бууцанд байгаа ч threshold-оос их доройтсон бол
+ * тохирох бусад бууцнаас хамгийн бага доройтолтой руу нүүнэ (seasonal = false бол хуучин дүрэм).
+ */
+function rotateCamp(sim: Sim, threshold: number, seasonal = true): boolean {
+  const { cfg, state } = sim;
   if (pendingTrip || state.move || state.player.away) return false;
-  if ((state.camps[state.campId]?.degrade ?? 0) < threshold) return false;
-  const best = Object.entries(state.camps).filter(([id]) => id !== state.campId).sort((a, b) => a[1].degrade - b[1].degrade)[0];
+  const deg = state.camps[state.campId]?.degrade ?? 0;
+  const ok = seasonal ? SEASON_CAMPS[seasonOf(cfg, state.time.day)] : Object.keys(state.camps);
+  const fits = ok.includes(state.campId);
+  if (fits && deg < threshold) return false;
+  let cands = (fits ? ok.filter((id) => id !== state.campId) : ok).filter((id) => state.camps[id]);
+  if (!cands.length && deg >= threshold) cands = Object.keys(state.camps).filter((id) => id !== state.campId && id !== 'valley');
+  const best = cands.map((id) => [id, state.camps[id]!] as const).sort((a, b) => a[1].degrade - b[1].degrade)[0];
+  if (!best || (fits && best[1].degrade >= deg)) return false;
   if (!best) return false;
   collectAll(sim);
   return sim.command({ type: 'moveCamp', to: best[0] }, false).ok;
@@ -179,6 +200,14 @@ function buyPlan(sim: Sim, reserve: number, maxSU: number, dogs = 0): BuyOrder[]
   if (state.storageLevel === 0 && storage.used(state) > 14) tryBuy({ kind: 'storage' }, reserve);
   if (state.dogs.length < dogs && state.processors.length) tryBuy({ kind: 'dog' }, reserve);
   // Сүрэг өсгөх: хязаалан эм хонь (тэргэнд 3). Зорилгод хүрэх хонин толгой хүрсний дараа гэрт хуримтлуулна
+  // M5.5: өвөл, хавар (намрын сүүлээр) бууцандаа боодол өвс бэлтгэнэ
+  const sp = seasonProgress(cfg, state.time.day);
+  const acc = campAccess(cfg, state.camps[state.campId]?.snow ?? 0);
+  // Цас их эсвэл саравчгүй бууцанд л, тэргэтэй үед (морьтой 2 боодол авах нь ашиггүй)
+  if (state.vehicles.length && (sp.season === 'winter' || sp.season === 'spring') && (acc < 0.7 || !cfg.camps.camps[state.campId]?.shed)) {
+    const want = Math.ceil(su * hayPerSU) - Math.floor(state.camps[state.campId]?.hay ?? 0);
+    if (want > 0) tryBuy({ kind: 'hay', n: Math.min(want, 30) }, reserve / 3);
+  }
   if (su < maxSU) for (let k = 0; k < 3; k++) if (!tryBuy({ kind: 'animal', species: 'sheep', sex: 'f', age: 3 }, reserve * 2)) break;
   return orders;
 }
@@ -285,6 +314,7 @@ interface RunResult {
   killsBySp: Record<string, number>;
   helpers: number;
   wages: number;
+  bySeason: Record<string, { inc: number; days: number; cond: number; hay: number; births: number }>;
   driverIncome: number;
 }
 
@@ -298,6 +328,9 @@ function run(cfg: GameConfig, strat: Strategy, seed: number): RunResult {
     if (e.type === 'helperTrip') driverIncome += e.income;
     if (e.type === 'hour') strat.onHour(sim, e.hour);
     if (e.type === 'dayReport') reports.push(e.report);
+    if (process.env.DEBUG_RUN && seed === 1000 && e.type === 'dayReport' && e.report.day >= 14 && e.report.day <= 50) console.log('D', e.report.day, e.report.season, sim.state.campId, 'inc', JSON.stringify(e.report.income), 'exp', JSON.stringify(e.report.expenses), 'col', JSON.stringify(e.report.collected), 'sp', JSON.stringify(e.report.spoiled));
+    if (process.env.DEBUG_RUN && e.type === 'dayReport' && e.report.day % 10 === 0) console.log('S', seed, e.report.day, 'proc', sim.state.processors.map((p) => p.kind).join(','), 'money', Math.round(sim.state.money), 'veh', sim.state.vehicles.join(','), 'store', JSON.stringify(sim.state.storage ?? {}));
+    if (process.env.DEBUG_RUN && seed === 1000 && e.type === 'dayReport' && e.report.day % 6 === 0) console.log(e.report.day, sim.state.campId, 'cows', sim.state.animals.filter((x) => x.species === 'cow').map((c) => `${c.sex}${c.age.toFixed(1)}${c.lactating ? 'L' : ''}`).join(','), 'otor', sim.state.helpers.otor.length);
     if (e.type === 'wolfKill') {
       wolfKills++;
       killsBySp[e.species] = (killsBySp[e.species] ?? 0) + 1;
@@ -309,10 +342,23 @@ function run(cfg: GameConfig, strat: Strategy, seed: number): RunResult {
     const hour = sim.state.time.minute / 60;
     if (sim.state.step % 10 === 0 && hour >= h0 && hour < h1 && !sim.state.player.away) escort(sim);
     sim.step();
-    if (pendingTrip && pendingTrip.tick(sim)) pendingTrip = null;
+    if (pendingTrip && pendingTrip.tick(sim)) {
+      if (process.env.DEBUG_RUN && pendingTrip.error) console.log('TRIP', seed, sim.state.time.day, pendingTrip.phase, pendingTrip.error);
+      pendingTrip = null;
+    }
   }
   const wages = reports.reduce((a, r) => a + (r.expenses.wages ?? 0), 0);
-  return { goalDay: sim.state.goalReachedDay, reports, wolfKills, killsBySp, helpers: sim.state.helpers.list.length, wages, driverIncome };
+  const bySeason: RunResult['bySeason'] = {};
+  for (const r of reports) {
+    const b = (bySeason[r.season] ??= { inc: 0, days: 0, cond: 0, hay: 0, births: 0 });
+    b.inc += Object.values(r.income).reduce((a2, n) => a2 + (n ?? 0), 0);
+    b.days++;
+    b.cond += r.avgCondition;
+    b.hay += r.expenses.buy_hay ?? 0;
+    b.births += r.births;
+  }
+  if (process.env.DEBUG_RUN && seed === 1000) for (const r of reports) if (r.day % 3 === 0) console.log(`${r.day} ${r.season} ${sim.state.campId.slice(0, 5)} milk ${(r.dropped.milk ?? 0).toFixed(0)} cond ${(r.avgCondition * 100).toFixed(0)} gut ${(r.avgGutFill * 100).toFixed(0)} su ${r.sheepUnits.toFixed(0)} snow ${r.snow.toFixed(0)} hay ${r.hay.toFixed(0)} fed ${r.hayFed.toFixed(1)} cold ${r.coldHit} inc ${Object.values(r.income).reduce((a2, n) => a2 + (n ?? 0), 0)}`);
+  return { goalDay: sim.state.goalReachedDay, reports, wolfKills, killsBySp, helpers: sim.state.helpers.list.length, wages, driverIncome, bySeason };
 }
 
 /** Бүх seed-ийн нийт: төрлөөр */
@@ -344,6 +390,31 @@ for (const strat of [active, medium, stayer, lazy, manager].filter((s) => !only 
   console.log(`Зорилгод хүрсэн: ${goalDays.length}/${SEEDS}` + (goalDays.length ? ` · медиан ${median(goalDays)}-р өдөр (1× хурдаар ~${(median(goalDays) * dayHours).toFixed(1)} цаг)` : '') + ` · чонод барьдсан (медиан) ${median(results.map((r) => r.wolfKills))} мал` + killsTxt(results));
   if (strat === manager)
     console.log(`Туслах (эцэст, медиан) ${median(results.map((r) => r.helpers))} · нийт цалин ${fmt(median(results.map((r) => r.wages)))}₮ · жолоочийн орлого ${fmt(median(results.map((r) => r.driverIncome)))}₮`);
+  {
+    const agg: Record<string, { inc: number; days: number; cond: number; hay: number; births: number }> = {};
+    for (const r of results) for (const [k, v] of Object.entries(r.bySeason)) {
+      const a = (agg[k] ??= { inc: 0, days: 0, cond: 0, hay: 0, births: 0 });
+      a.inc += v.inc; a.days += v.days; a.cond += v.cond; a.hay += v.hay; a.births += v.births;
+    }
+    console.log('Улирлаар (бүх seed-ийн дундаж/өдөр): ' + Object.entries(agg).map(([k, a]) => `${k}: орлого ${fmt(a.inc / a.days)}₮, тарга ${Math.round((a.cond / a.days) * 100)}%, өвс тэжээл ${fmt(a.hay / a.days)}₮, төл ${(a.births / results.length).toFixed(1)}`).join(' · '));
+  }
+  if (process.env.INCOME_BREAKDOWN) {
+    const agg: Record<string, number> = {};
+    const exp: Record<string, number> = {};
+    for (const r of results) for (const rep of r.reports.slice(0, 120)) {
+      for (const [k, n] of Object.entries(rep.income)) agg[k] = (agg[k] ?? 0) + (n ?? 0) / results.length;
+      for (const [k, n] of Object.entries(rep.expenses)) exp[k] = (exp[k] ?? 0) + (n ?? 0) / results.length;
+    }
+    const dr: Record<string, number> = {}, col: Record<string, number> = {}, sp: Record<string, number> = {};
+    for (const r of results) for (const rep of r.reports.slice(0, 120)) {
+      for (const [k, n] of Object.entries(rep.dropped)) dr[k] = (dr[k] ?? 0) + (n ?? 0) / results.length;
+      for (const [k, n] of Object.entries(rep.collected)) col[k] = (col[k] ?? 0) + (n ?? 0) / results.length;
+      for (const [k, n] of Object.entries(rep.spoiled)) sp[k] = (sp[k] ?? 0) + (n ?? 0) / results.length;
+    }
+    console.log('Унасан: ' + JSON.stringify(Object.fromEntries(Object.entries(dr).map(([k, n]) => [k, Math.round(n)]))) + ' түүсэн: ' + JSON.stringify(Object.fromEntries(Object.entries(col).map(([k, n]) => [k, Math.round(n)]))) + ' муудсан: ' + JSON.stringify(Object.fromEntries(Object.entries(sp).map(([k, n]) => [k, Math.round(n)]))));
+    console.log('Орлого 1–120 өдөр: ' + Object.entries(agg).map(([k, n]) => `${k} ${fmt(n)}`).join(' · '));
+    console.log('Зардал 1–120 өдөр: ' + Object.entries(exp).map(([k, n]) => `${k} ${fmt(n)}`).join(' · '));
+  }
   console.log('| Өдөр | Мөнгө | Хонин толгой | Эм хонины жин | Тарга | Идэш | Өвс | Бууцны доройтол | Өдрийн орлого | Муудсан (нэгж/өдөр) |');
   console.log('|---|---|---|---|---|---|---|---|---|---|');
   for (const d of [10, 30, 60, 100, 150, 200].filter((d) => d <= DAYS)) {

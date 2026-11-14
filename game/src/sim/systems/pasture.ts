@@ -5,7 +5,7 @@
  * Нүд бүр: бэлчээрийн төрөл + biomass (0–1, тухайн төрлийн дээд хэмжээтэй харьцуулсан).
  * Бууцны доройтол (0–1) нь бууц бүрт нэг тоо бөгөөд ургалт, чанарыг бууруулна.
  */
-import type { CampConfig, GameConfig, WaterShape } from '../config';
+import type { CampConfig, GameConfig, Season, WaterShape } from '../config';
 import type { Rng } from '../rng';
 import { riverZ } from '../terrain';
 
@@ -16,6 +16,7 @@ export interface GrassGrid {
   typeIds: string[];   // төрлийн нэрс (type[] эндээс индексээр заана)
   type: number[];      // нүд бүрийн төрлийн индекс
   biomass: number[];   // нүд бүрийн өвс 0–1
+  access?: number[];   // төрөл бүрийн цасан доорх өвсийг идэх боломж 0–1 (M5.5; байхгүй бол 1)
 }
 
 /** Байрлалаас үл хамаарах тогтмол «санамсаргүй» шуугиан (-1..1). rng зарцуулахгүй. */
@@ -26,7 +27,7 @@ function hashNoise(ix: number, iz: number, salt: number): number {
   return ((h >>> 0) / 4294967296) * 2 - 1;
 }
 
-export function buildGrid(cfg: GameConfig, campId: string, degrade: number, rng: Rng): GrassGrid {
+export function buildGrid(cfg: GameConfig, campId: string, degrade: number, rng: Rng, level = 0.85): GrassGrid {
   const camp = cfg.camps.camps[campId] as CampConfig;
   const n = cfg.pasture.grid.cells;
   const cell = cfg.pasture.grid.cellSize;
@@ -50,7 +51,7 @@ export function buildGrid(cfg: GameConfig, campId: string, degrade: number, rng:
       }
       const i = iz * n + ix;
       type[i] = typeIds.indexOf(tId);
-      biomass[i] = Math.min(1, Math.max(0.05, (0.85 + 0.15 * hashNoise(ix, iz, salt + 1)) * grassCapacity(cfg, degrade)));
+      biomass[i] = Math.min(1, Math.max(0.05, (level + 0.15 * (level / 0.85) * hashNoise(ix, iz, salt + 1)) * grassCapacity(cfg, degrade)));
     }
   }
   return { n, cell, half, typeIds, type, biomass };
@@ -67,22 +68,23 @@ export function typeIdOf(g: GrassGrid, i: number): string {
   return g.typeIds[g.type[i] ?? 0] ?? 'steppe';
 }
 
-/** Төрөл бүрийн зуны чанар (ургамлын хольцын жигнэсэн дундаж) × (1 − доройтлын торгууль) */
-export function typeQualities(cfg: GameConfig, degrade: number): Record<string, number> {
+/** Төрөл бүрийн тухайн улирлын чанар (ургамлын хольцын жигнэсэн дундаж) × (1 − доройтлын торгууль) */
+export function typeQualities(cfg: GameConfig, degrade: number, season: Season = 'summer'): Record<string, number> {
   const out: Record<string, number> = {};
   const pen = 1 - cfg.pasture.degradation.qualityPenalty * degrade;
   for (const [id, t] of Object.entries(cfg.pasture.types)) {
     let q = 0;
-    for (const [sp, share] of Object.entries(t.mix)) q += share * (cfg.pasture.species[sp]?.quality.summer ?? 0);
+    for (const [sp, share] of Object.entries(t.mix)) q += share * (cfg.pasture.species[sp]?.quality[season] ?? 0);
     out[id] = q * pen;
   }
   return out;
 }
 
-/** Нүдний бодит идэж болох өвс (дээд хэмжээгээр үржүүлсэн) */
+/** Нүдний бодит идэж болох өвс (дээд хэмжээгээр, цасан доорх бол access-ээр үржүүлсэн) */
 export function absBiomass(cfg: GameConfig, g: GrassGrid, i: number): number {
-  const t = cfg.pasture.types[typeIdOf(g, i)];
-  return (g.biomass[i] ?? 0) * (t?.maxBiomass ?? 0);
+  const ti = g.type[i] ?? 0;
+  const t = cfg.pasture.types[g.typeIds[ti] ?? 'steppe'];
+  return (g.biomass[i] ?? 0) * (t?.maxBiomass ?? 0) * (g.access ? g.access[ti] ?? 1 : 1);
 }
 
 export function grassHeightCm(cfg: GameConfig, g: GrassGrid, i: number): number {
