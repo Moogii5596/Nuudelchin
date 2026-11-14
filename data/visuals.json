@@ -20,7 +20,17 @@
     "firelight": "#FFB35C",
     "mapPaper": "#D7CAA9",
     "mapInk": "#5D4A35",
-    "mapWater": "#5C8790"
+    "mapWater": "#5C8790",
+    "woodDark": "#5B3B22",
+    "wood": "#6B4A2E",
+    "woodLight": "#7A5634",
+    "woodWarm": "#856040",
+    "woodAccent": "#8A6A44",
+    "woodRoof": "#8A7354",
+    "woodRoofCover": "#6E5D3E",
+    "manure": "#5A4530",
+    "dung": "#7D6648",
+    "stoneWarm": "#6E5A3E"
   },
   "timeOfDay": [
     { "minute": 0, "skyTop": "#101a38", "skyHorizon": "#36405a", "ground": "#302d3b", "sun": "#91a4dd", "sunIntensity": 0.08, "hemiIntensity": 0.28, "fogDistance": 125, "exposure": 0.72 },
@@ -38,9 +48,52 @@
     "winter": { "skyTint": "#c9d8ed", "fogScale": 0.7, "exposureScale": 0.9, "sunScale": 0.76 },
     "spring": { "skyTint": "#d9e8df", "fogScale": 0.8, "exposureScale": 0.96, "sunScale": 0.9 }
   },
+  "grass": {
+    "bladesPerTuft": { "low": 5, "mid": 7, "high": 10 },
+    "bladeHeight": 0.47,
+    "maxHeight": 0.5,
+    "fadeStart": 0.75,
+    "updateSeconds": 1,
+    "colorJitter": 0.06,
+    "wind": { "swayX": 0.08, "swayZ": 0.035, "freqX": 2.4, "freqZ": 1.7 },
+    "pastureColors": {
+      "camp": "#8A7A4E",
+      "steppe": "#8F9A52",
+      "meadow": "#7FA650",
+      "southSlope": "#93954F",
+      "foothill": "#5F9440",
+      "northSlope": "#4E6B3A"
+    }
+  },
+  "water": {
+    "color": "#4F8FBF",
+    "opacity": 0.86,
+    "reflectionStrength": 0.72,
+    "fresnelPower": 3,
+    "iceColor": "#DCE8F2",
+    "iceOpacity": 0.9,
+    "wave": { "xFrequency": 0.11, "zFrequency": 0.07, "timeFrequency": 1.4, "amplitude": 0.035 }
+  },
+  "smoke": {
+    "cookingMinutes": [[300, 510], [1020, 1200]]
+  },
+  "cloudShadow": { "scale": 0.028, "speedX": 0.004, "speedZ": 0.002, "opacity": 0.18, "skyScale": 14, "skyOpacity": 0.34 },
+  "flowers": {
+    "height": 0.18,
+    "radius": 0.075,
+    "biomassThreshold": 0.55,
+    "colors": ["#F2C14E", "#F5F1E8", "#D98BA0"]
+  },
+  "mountains": {
+    "layers": [
+      { "count": 46, "radiusMin": 190, "radiusMax": 225, "heightMin": 25, "heightMax": 60, "heightScale": 1, "color": "#9DB3C8" },
+      { "count": 34, "radiusMin": 225, "radiusMax": 265, "heightMin": 18, "heightMax": 44, "heightScale": 0.72, "color": "#B7C7D6" },
+      { "count": 24, "radiusMin": 265, "radiusMax": 300, "heightMin": 12, "heightMax": 32, "heightScale": 0.48, "color": "#D0D9E1" }
+    ]
+  },
   "quality": {
-    "low": { "grassTufts": 3000, "grassRadius": 80, "animalAnimationDistance": 40 },
-    "mid": { "grassTufts": 10000, "grassRadius": 105, "animalAnimationDistance": 70 },
-    "high": { "grassTufts": 25000, "grassRadius": 130, "animalAnimationDistance": 120 }
+    "low": { "grassTufts": 8000, "grassRadius": 35, "gerSegments": 12, "flowers": 0, "mountainLayers": 2, "animalAnimationDistance": 40 },
+    "mid": { "grassTufts": 20000, "grassRadius": 55, "gerSegments": 18, "flowers": 1400, "mountainLayers": 3, "animalAnimationDistance": 70 },
+    "high": { "grassTufts": 45000, "grassRadius": 80, "gerSegments": 24, "flowers": 2200, "mountainLayers": 3, "animalAnimationDistance": 120 }
   }
 }

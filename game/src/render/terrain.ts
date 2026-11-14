@@ -15,15 +15,6 @@ import { VisualRng, angDiff, batchStatic, clamp, mat, meshBox, strSeed } from '.
 import { quality as activeQuality, type Quality } from '../device';
 import { paletteHex, visualStyle } from './style';
 
-/** Бэлчээрийн төрлийн «бүрэн өвстэй» өнгө */
-const TYPE_LUSH: Record<string, number> = {
-  camp: 0x8a7a4e,
-  steppe: 0x8f9a52,
-  meadow: paletteHex('summerGrass'),
-  southSlope: 0x93954f,
-  foothill: 0x5f9440,
-  northSlope: paletteHex('larchSummer'),
-};
 const BARE = new THREE.Color(visualStyle.palette.dryGrass);
 const DRY = new THREE.Color(visualStyle.palette.autumnGrass);
 const ROCK = new THREE.Color(visualStyle.palette.rock);
@@ -34,6 +25,119 @@ const STRAW = new THREE.Color(visualStyle.palette.autumnGrass);
 const SNOW_GROUND = new THREE.Color(visualStyle.palette.snow);
 /** Ойтой бэлчээрт модны доор цас нимгэн (seasons.json → forestTypeMult-тай адил санаа) */
 const SNOW_TYPE_MULT: Record<string, number> = { northSlope: 0.55 };
+const typeLookup = (ids: string[], uniformName: string): string =>
+  ids.map((_, i) => `if (typeIndex < ${i + 0.5}) return ${uniformName}[${i}];`).join('\n');
+
+interface GrassUniforms {
+  uGrassGrid: { value: THREE.DataTexture };
+  uGrassHeight: { value: THREE.DataTexture };
+  uCenter: { value: THREE.Vector2 };
+  uRadius: { value: number };
+  uTile: { value: number };
+  uGridHalf: { value: number };
+  uFadeStart: { value: number };
+  uMaxHeight: { value: number };
+  uBladeHeight: { value: number };
+  uTuftK: { value: number };
+  uDryK: { value: number };
+  uStrawK: { value: number };
+  uSnowK: { value: number };
+  uHeatmap: { value: number };
+  uWindTime: { value: number };
+  uSwayX: { value: number };
+  uSwayZ: { value: number };
+  uFreqX: { value: number };
+  uFreqZ: { value: number };
+  uColorJitter: { value: number };
+  uTypeLush: { value: THREE.Vector3[] };
+  uTypeTall: { value: number[] };
+  uDryColor: { value: THREE.Color };
+  uStrawColor: { value: THREE.Color };
+  uSnowColor: { value: THREE.Color };
+}
+
+function grassClumpGeometry(bladeCount: number, bladeHeight: number): THREE.BufferGeometry {
+  const positions: number[] = [];
+  const colors: number[] = [];
+  const indices: number[] = [];
+  const colorAt = (factor: number): void => {
+    colors.push(factor * 0.9, factor, factor * 0.74);
+  };
+  for (let i = 0; i < bladeCount; i++) {
+    const angle = (i / bladeCount) * Math.PI * 2 + (i % 2) * 0.18;
+    const dx = Math.cos(angle), dz = Math.sin(angle);
+    const sx = -dz, sz = dx;
+    const height = bladeHeight * (0.68 + (i % 4) * 0.1);
+    const lean = 0.3 + (i % 3) * 0.07;
+    const width = 0.095 + (i % 3) * 0.02;
+    const baseX = dx * 0.018, baseZ = dz * 0.018;
+    const tipX = dx * lean, tipZ = dz * lean;
+    const start = positions.length / 3;
+    positions.push(
+      baseX - sx * width * 0.5, 0, baseZ - sz * width * 0.5,
+      baseX + sx * width * 0.5, 0, baseZ + sz * width * 0.5,
+      tipX, height, tipZ,
+    );
+    colorAt(0.68 + (i % 3) * 0.035);
+    colorAt(0.68 + (i % 3) * 0.035);
+    colorAt(1.12);
+    indices.push(start, start + 2, start + 1);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function flowerGeometry(height: number, radius: number): THREE.BufferGeometry {
+  const positions: number[] = [];
+  const colors: number[] = [];
+  const indices: number[] = [];
+  const addTriangle = (a: THREE.Vector3, b: THREE.Vector3, c: THREE.Vector3, color: THREE.Color): void => {
+    const start = positions.length / 3;
+    for (const point of [a, b, c]) {
+      positions.push(point.x, point.y, point.z);
+      colors.push(color.r, color.g, color.b);
+    }
+    indices.push(start, start + 1, start + 2);
+  };
+  const stem = new THREE.Color(visualStyle.palette.larchSummer);
+  const petal = new THREE.Color(0xffffff);
+  const center = new THREE.Color(visualStyle.flowers.colors[0]!);
+  const halfStem = 0.012;
+  addTriangle(
+    new THREE.Vector3(-halfStem, 0, 0),
+    new THREE.Vector3(halfStem, 0, 0),
+    new THREE.Vector3(0, height, 0),
+    stem,
+  );
+  const headY = height * 0.92;
+  for (let i = 0; i < 5; i++) {
+    const angle = (i / 5) * Math.PI * 2;
+    const dx = Math.cos(angle), dz = Math.sin(angle);
+    const sx = -dz * radius * 0.24, sz = dx * radius * 0.24;
+    const inner = new THREE.Vector3(dx * radius * 0.12, headY, dz * radius * 0.12);
+    const left = new THREE.Vector3(dx * radius * 0.42 + sx, headY, dz * radius * 0.42 + sz);
+    const tip = new THREE.Vector3(dx * radius, headY * 0.98, dz * radius);
+    const right = new THREE.Vector3(dx * radius * 0.42 - sx, headY, dz * radius * 0.42 - sz);
+    addTriangle(inner, left, tip, petal);
+    addTriangle(inner, tip, right, petal);
+    addTriangle(
+      new THREE.Vector3(dx * radius * 0.08, headY + 0.004, dz * radius * 0.08),
+      new THREE.Vector3(dx * radius * 0.22, headY + 0.004, dz * radius * 0.22),
+      new THREE.Vector3(dx * radius * 0.1 - dz * radius * 0.1, headY + 0.004, dz * radius * 0.1 + dx * radius * 0.1),
+      center,
+    );
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
 
 export class TerrainView {
   readonly group = new THREE.Group();
@@ -53,7 +157,24 @@ export class TerrainView {
   // Өвсний бут
   private tufts: THREE.InstancedMesh | null = null;
   private tuftMaterial: THREE.MeshLambertMaterial | null = null;
-  private windUniform: { value: number } | null = null;
+  private grassGridTexture: THREE.DataTexture | null = null;
+  private grassHeightTexture: THREE.DataTexture | null = null;
+  private grassGridPixels: Uint8Array | null = null;
+  private grassUniforms: GrassUniforms | null = null;
+  private grassRadius = 0;
+  private cloudUniform: { value: number } | null = null;
+  private cloudTime = 0;
+  private flowers: THREE.InstancedMesh | null = null;
+  private flowerMaterial: THREE.MeshLambertMaterial | null = null;
+  private mountains: THREE.Group | null = null;
+  private mountainGeometries: THREE.BufferGeometry[] = [];
+  private mountainMaterials: THREE.Material[] = [];
+  private waterUniforms: {
+    time: { value: number };
+    sky: { value: THREE.Color };
+    ice: { value: number };
+  } | null = null;
+  private buildMaterials: THREE.Material[] = [];
   private windTime = 0;
   private quality: Quality = activeQuality;
   private tuftSeed = 0;
@@ -65,17 +186,12 @@ export class TerrainView {
     new THREE.MeshLambertMaterial({ color: paletteHex('larchSummer'), flatShading: true }),
     new THREE.MeshLambertMaterial({ color: paletteHex('larchSummer'), flatShading: true }),
   ];
-  private waterUniform: { value: number } | null = null;
   private waterTime = 0;
   private waterMaterial: THREE.MeshLambertMaterial | null = null;
-  private tuftCell!: Int32Array;
-  private tuftPos!: Float32Array;       // x, y, z, scale, rotY
-  private tuftLush!: Float32Array;      // RGB
   private tmpM = new THREE.Matrix4();
   private tmpQ = new THREE.Quaternion();
   private tmpS = new THREE.Vector3();
   private tmpP = new THREE.Vector3();
-  private tmpC = new THREE.Color();
   private yAxis = new THREE.Vector3(0, 1, 0);
 
   constructor(private cfg: GameConfig) {}
@@ -98,6 +214,7 @@ export class TerrainView {
 
   private updateSeason(state: GameState): void {
     const season = seasonOf(this.cfg, state.time.day);
+    if (this.flowers) this.flowers.visible = season === 'spring' || season === 'summer';
     if (season === this.currentSeason) return;
     this.currentSeason = season;
     const color = paletteHex(season === 'autumn' ? 'larchAutumn' : season === 'winter' ? 'larchWinter' : season === 'spring' ? 'larchSpring' : 'larchSummer');
@@ -114,12 +231,14 @@ export class TerrainView {
     this.buildGround(state.grass, rng);
     this.buildWater();
     this.buildTufts(state.grass, new VisualRng(this.tuftSeed));
+    this.buildFlowers(state.grass, new VisualRng(this.tuftSeed ^ 0x464c4f57));
     // Хөдөлгөөнгүй чимэглэлийг материалаар нь нэгтгэж draw call-ийг цөөлнө
     const decor = new THREE.Group();
     this.buildDecor(rng, decor);
     this.buildCampStructures(decor);
     this.buildDens(state.wolves.dens, rng, decor);
     this.group.add(batchStatic(decor));
+    this.buildMountains(new VisualRng(this.tuftSeed ^ 0x4d4f554e));
     this.homeKind = '';
     this.buildHome(state.home);
     this.hayShown = -1;
@@ -132,31 +251,65 @@ export class TerrainView {
       this.tufts.geometry.dispose();
       this.tuftMaterial?.dispose();
     }
+    this.clearFlowers();
+    this.clearMountains();
     this.clearSmoke();
     this.waterMaterial?.dispose();
-    this.group.traverse((o) => {
-      if (o instanceof THREE.Mesh || o instanceof THREE.InstancedMesh || o instanceof THREE.Line) o.geometry.dispose();
-    });
+    this.disposeGeometries(this.group);
+    for (const material of this.buildMaterials) material.dispose();
+    this.buildMaterials.length = 0;
     this.group.clear();
+    this.grassGridTexture?.dispose();
+    this.grassHeightTexture?.dispose();
     this.homeGroup = null;
     this.hayGroup = null;
     this.tufts = null;
     this.tuftMaterial = null;
-    this.windUniform = null;
+    this.grassGridTexture = null;
+    this.grassHeightTexture = null;
+    this.grassGridPixels = null;
+    this.grassUniforms = null;
+    this.grassRadius = 0;
+    this.cloudUniform = null;
     this.smoke = null;
     this.smokePositions = null;
-    this.waterUniform = null;
+    this.waterUniforms = null;
     this.waterMaterial = null;
   }
 
   private clearSmoke(): void {
     if (!this.smoke) return;
+    this.smoke.removeFromParent();
     this.smoke.geometry.dispose();
     const material = this.smoke.material;
     if (Array.isArray(material)) material.forEach((m) => m.dispose());
     else material.dispose();
     this.smoke = null;
     this.smokePositions = null;
+  }
+
+  private clearFlowers(): void {
+    if (!this.flowers) return;
+    this.flowers.removeFromParent();
+    this.flowers.geometry.dispose();
+    this.flowerMaterial?.dispose();
+    this.flowers = null;
+    this.flowerMaterial = null;
+  }
+
+  private clearMountains(): void {
+    if (this.mountains) this.group.remove(this.mountains);
+    for (const geometry of this.mountainGeometries) geometry.dispose();
+    for (const material of this.mountainMaterials) material.dispose();
+    this.mountainGeometries.length = 0;
+    this.mountainMaterials.length = 0;
+    this.mountains = null;
+  }
+
+  private disposeGeometries(root: THREE.Object3D): void {
+    root.traverse((o) => {
+      if (o instanceof THREE.Mesh || o instanceof THREE.Line) o.geometry.dispose();
+    });
   }
 
   setQuality(quality: Quality, state: GameState, heatmap: boolean): void {
@@ -167,18 +320,29 @@ export class TerrainView {
       this.tufts.geometry.dispose();
       this.tuftMaterial?.dispose();
     }
+    this.clearFlowers();
     this.buildTufts(state.grass, new VisualRng(this.tuftSeed));
+    this.buildFlowers(state.grass, new VisualRng(this.tuftSeed ^ 0x464c4f57));
+    this.clearMountains();
+    this.buildMountains(new VisualRng(this.tuftSeed ^ 0x4d4f554e));
     this.updateGrass(state, heatmap);
+    if (state.home === 'ger') this.buildHome(state.home);
   }
 
-  updateVisualTime(dt: number, minute: number): void {
+  updateVisualTime(dt: number, minute: number, skyColor: THREE.Color, waterIce: number): void {
     this.windTime += Math.max(0, dt);
-    if (this.windUniform) this.windUniform.value = this.windTime;
+    if (this.grassUniforms) this.grassUniforms.uWindTime.value = this.windTime;
+    this.cloudTime += Math.max(0, dt);
+    if (this.cloudUniform) this.cloudUniform.value = this.cloudTime;
     this.waterTime += Math.max(0, dt);
-    if (this.waterUniform) this.waterUniform.value = this.waterTime;
+    if (this.waterUniforms) {
+      this.waterUniforms.time.value = this.waterTime;
+      this.waterUniforms.sky.value.copy(skyColor);
+      this.waterUniforms.ice.value = clamp(waterIce, 0, 1);
+    }
     if (!this.smoke || !this.smokePositions) return;
     this.smokeTime += Math.max(0, dt);
-    const cooking = (minute >= 300 && minute <= 510) || (minute >= 1020 && minute <= 1200);
+    const cooking = visualStyle.smoke.cookingMinutes.some(([start, end]) => minute >= start && minute <= end);
     this.smoke.visible = cooking;
     if (!cooking) return;
     const positions = this.smoke.geometry.attributes.position as THREE.BufferAttribute;
@@ -218,7 +382,7 @@ export class TerrainView {
       const ci = Math.max(this.vCells[i * 4]!, this.vCells[i * 4 + 3]!);
       const typeId = ci >= 0 ? grid.typeIds[grid.type[ci] ?? 0] ?? 'steppe' : 'steppe';
       this.vSnowK[i] = SNOW_TYPE_MULT[typeId] ?? 1;
-      c.setHex(TYPE_LUSH[typeId] ?? 0x7f9a4a);
+      c.set(visualStyle.grass.pastureColors[typeId] ?? visualStyle.palette.summerGrass);
       b.copy(BARE);
       // Голын эрэг ногоон, өндөрт хад, оргилд цас
       const wd = waterDistance(this.camp.waterShape, x, z);
@@ -247,7 +411,44 @@ export class TerrainView {
     }
     g.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(n * 3), 3));
     g.computeVertexNormals();
-    this.ground = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true }));
+    const material = new THREE.MeshLambertMaterial({ vertexColors: true });
+    const cloud = visualStyle.cloudShadow;
+    material.onBeforeCompile = (shader) => {
+      const timeUniform = { value: this.cloudTime };
+      this.cloudUniform = timeUniform;
+      shader.uniforms.uCloudTime = timeUniform;
+      shader.uniforms.uCloudScale = { value: cloud.scale };
+      shader.uniforms.uCloudSpeed = { value: new THREE.Vector2(cloud.speedX, cloud.speedZ) };
+      shader.uniforms.uCloudOpacity = { value: cloud.opacity };
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying vec2 vCloudWorldXZ;')
+        .replace(
+          '#include <begin_vertex>',
+          '#include <begin_vertex>\nvCloudWorldXZ = position.xz;',
+        );
+      shader.fragmentShader = shader.fragmentShader
+        .replace(
+          '#include <common>',
+          `#include <common>
+          uniform float uCloudTime;
+          uniform float uCloudScale;
+          uniform vec2 uCloudSpeed;
+          uniform float uCloudOpacity;
+          varying vec2 vCloudWorldXZ;`,
+        )
+        .replace(
+          '#include <color_fragment>',
+          `#include <color_fragment>
+          vec2 cloudPoint = vCloudWorldXZ * uCloudScale + uCloudTime * uCloudSpeed;
+          float cloudField = sin(cloudPoint.x + sin(cloudPoint.y * 0.73)) * cos(cloudPoint.y * 0.82 - sin(cloudPoint.x * 0.61));
+          cloudField += 0.18 * sin((cloudPoint.x + cloudPoint.y) * 1.7);
+          float cloudMask = smoothstep(-0.2, 0.55, cloudField);
+          diffuseColor.rgb *= 1.0 - cloudMask * uCloudOpacity;`,
+        );
+    };
+    material.customProgramCacheKey = () => `nuudel-ground-cloud-v1-${cloud.scale}-${cloud.speedX}-${cloud.speedZ}-${cloud.opacity}`;
+    this.buildMaterials.push(material);
+    this.ground = new THREE.Mesh(g, material);
     this.ground.receiveShadow = true;
     this.ground.name = 'ground';
     this.group.add(this.ground);
@@ -256,20 +457,65 @@ export class TerrainView {
   private buildWater(): void {
     const w = this.camp.waterShape;
     const level = waterLevel(this.camp);
-    const m = new THREE.MeshLambertMaterial({ color: 0x4f8fbf, transparent: true, opacity: 0.86 });
+    const water = visualStyle.water;
+    const wave = water.wave;
+    const m = new THREE.MeshLambertMaterial({
+      color: new THREE.Color(water.color),
+      transparent: true,
+      opacity: water.opacity,
+    });
     this.waterMaterial = m;
+    const uniforms = {
+      time: { value: this.waterTime },
+      sky: { value: new THREE.Color(visualStyle.palette.mapWater) },
+      ice: { value: 0 },
+    };
+    this.waterUniforms = uniforms;
     m.onBeforeCompile = (shader) => {
-      this.waterUniform = { value: this.waterTime };
-      shader.uniforms.uWaterTime = this.waterUniform;
+      shader.uniforms.uWaterTime = uniforms.time;
+      shader.uniforms.uWaterSkyColor = uniforms.sky;
+      shader.uniforms.uWaterIce = uniforms.ice;
+      shader.uniforms.uWaterIceColor = { value: new THREE.Color(water.iceColor) };
+      shader.uniforms.uWaterReflectionStrength = { value: water.reflectionStrength };
+      shader.uniforms.uWaterFresnelPower = { value: water.fresnelPower };
+      shader.uniforms.uWaterIceOpacity = { value: water.iceOpacity };
       shader.vertexShader = shader.vertexShader
-        .replace('#include <common>', '#include <common>\nuniform float uWaterTime;')
+        .replace(
+          '#include <common>',
+          `#include <common>
+          uniform float uWaterTime;
+          uniform float uWaterIce;
+          varying float vWaterViewCos;`,
+        )
         .replace(
           '#include <begin_vertex>',
           `#include <begin_vertex>
-          transformed.y += sin(position.x * 0.11 + position.z * 0.07 + uWaterTime * 1.4) * 0.035;`,
+          transformed.y += sin(position.x * ${wave.xFrequency} + position.z * ${wave.zFrequency} + uWaterTime * ${wave.timeFrequency}) * ${wave.amplitude} * (1.0 - uWaterIce * 0.92);
+          vec4 waterViewPosition = modelViewMatrix * vec4(transformed, 1.0);
+          vWaterViewCos = clamp(normalize(-waterViewPosition.xyz).y, 0.0, 1.0);`,
+        );
+      shader.fragmentShader = shader.fragmentShader
+        .replace(
+          '#include <common>',
+          `#include <common>
+          uniform vec3 uWaterSkyColor;
+          uniform vec3 uWaterIceColor;
+          uniform float uWaterIce;
+          uniform float uWaterReflectionStrength;
+          uniform float uWaterFresnelPower;
+          uniform float uWaterIceOpacity;
+          varying float vWaterViewCos;`,
+        )
+        .replace(
+          '#include <color_fragment>',
+          `#include <color_fragment>
+          float waterFresnel = pow(1.0 - vWaterViewCos, uWaterFresnelPower);
+          vec3 waterReflection = mix(diffuseColor.rgb, uWaterSkyColor, clamp(waterFresnel * uWaterReflectionStrength, 0.0, 0.85));
+          diffuseColor.rgb = mix(waterReflection, uWaterIceColor, uWaterIce * uWaterIceOpacity);
+          diffuseColor.a = mix(diffuseColor.a, 1.0, uWaterIce * uWaterIceOpacity);`,
         );
     };
-    m.customProgramCacheKey = () => 'nuudel-water-wave-v1';
+    m.customProgramCacheKey = () => `nuudel-water-v2-${wave.xFrequency}-${wave.zFrequency}-${wave.timeFrequency}-${wave.amplitude}-${water.reflectionStrength}-${water.fresnelPower}`;
     if (w.kind === 'lineZ') {
       const width = w.width ?? 13;
       const g = new THREE.PlaneGeometry(400, width, 160, 1);
@@ -290,59 +536,246 @@ export class TerrainView {
   }
 
   // ---------- өвсний бут ----------
+  private buildGrassTextures(grid: GrassGrid): void {
+    const count = grid.n * grid.n;
+    const pixels = new Uint8Array(count * 4);
+    const heights = new Uint16Array(count * 4);
+    const pen = this.cfg.camps.home.pen;
+    for (let iz = 0; iz < grid.n; iz++) {
+      for (let ix = 0; ix < grid.n; ix++) {
+        const i = iz * grid.n + ix;
+        const offset = i * 4;
+        const x = -grid.half + (ix + 0.5) * grid.cell;
+        const z = -grid.half + (iz + 0.5) * grid.cell;
+        const typeIndex = grid.type[i] ?? 0;
+        const typeId = grid.typeIds[typeIndex] ?? 'steppe';
+        const type = this.cfg.pasture.types[typeId];
+        const height = this.heightAt(x, z);
+        const allowed = Math.hypot(x, z) >= 9 &&
+          waterDistance(this.camp.waterShape, x, z) >= 6.5 &&
+          Math.hypot(x - pen.x, z - pen.z) >= pen.r + 1 &&
+          height <= 24 &&
+          clamp((type?.heightCm ?? 0) / 20, 0, 1.4) >= 0.1;
+        pixels[offset] = Math.round(clamp(grid.biomass[i] ?? 0, 0, 1) * 255);
+        pixels[offset + 1] = typeIndex;
+        pixels[offset + 2] = Math.round(clamp((type?.maxBiomass ?? 0) * (grid.biomass[i] ?? 0), 0, 1) * 255);
+        pixels[offset + 3] = allowed ? 255 : 0;
+        const halfHeight = THREE.DataUtils.toHalfFloat(height);
+        heights[offset] = halfHeight;
+        heights[offset + 1] = halfHeight;
+        heights[offset + 2] = halfHeight;
+        heights[offset + 3] = halfHeight;
+      }
+    }
+
+    const gridTexture = new THREE.DataTexture(pixels, grid.n, grid.n, THREE.RGBAFormat, THREE.UnsignedByteType);
+    gridTexture.magFilter = THREE.LinearFilter;
+    gridTexture.minFilter = THREE.LinearFilter;
+    gridTexture.generateMipmaps = false;
+    gridTexture.needsUpdate = true;
+    const heightTexture = new THREE.DataTexture(heights, grid.n, grid.n, THREE.RGBAFormat, THREE.HalfFloatType);
+    heightTexture.magFilter = THREE.LinearFilter;
+    heightTexture.minFilter = THREE.LinearFilter;
+    heightTexture.generateMipmaps = false;
+    heightTexture.needsUpdate = true;
+    this.grassGridPixels = pixels;
+    this.grassGridTexture = gridTexture;
+    this.grassHeightTexture = heightTexture;
+  }
+
   private buildTufts(grid: GrassGrid, rng: VisualRng): void {
-    const { grassTufts: N, grassRadius } = visualStyle.quality[this.quality];
-    const geo = new THREE.ConeGeometry(0.14, 0.55, 3);
-    geo.translate(0, 0.25, 0);
-    const material = new THREE.MeshLambertMaterial({ color: 0xffffff });
+    const { grassTufts: count, grassRadius } = visualStyle.quality[this.quality];
+    const grass = visualStyle.grass;
+    if (!this.grassGridTexture || !this.grassHeightTexture) this.buildGrassTextures(grid);
+    const geo = grassClumpGeometry(grass.bladesPerTuft[this.quality], grass.bladeHeight);
+    const offsets = new Float32Array(count * 2);
+    const tile = Math.min(grassRadius, grid.half) * 2;
+    const columns = Math.ceil(Math.sqrt(count));
+    const rows = Math.ceil(count / columns);
+    for (let i = 0; i < count; i++) {
+      const x = i % columns;
+      const z = Math.floor(i / columns);
+      offsets[i * 2] = ((x + rng.next()) / columns) * tile;
+      offsets[i * 2 + 1] = ((z + rng.next()) / rows) * tile;
+    }
+    geo.setAttribute('aOffset', new THREE.InstancedBufferAttribute(offsets, 2));
+    const lushColors = grid.typeIds.map((id) => {
+      const color = new THREE.Color(visualStyle.grass.pastureColors[id] ?? visualStyle.palette.summerGrass);
+      return new THREE.Vector3(color.r, color.g, color.b);
+    });
+    const typeHeights = grid.typeIds.map((id) => clamp((this.cfg.pasture.types[id]?.heightCm ?? 10) / 20, 0, 1.4));
+    const uniforms: GrassUniforms = {
+      uGrassGrid: { value: this.grassGridTexture! },
+      uGrassHeight: { value: this.grassHeightTexture! },
+      uCenter: { value: new THREE.Vector2() },
+      uRadius: { value: Math.min(grassRadius, grid.half) },
+      uTile: { value: tile },
+      uGridHalf: { value: grid.half },
+      uFadeStart: { value: grass.fadeStart },
+      uMaxHeight: { value: grass.maxHeight },
+      uBladeHeight: { value: grass.bladeHeight },
+      uTuftK: { value: 1 },
+      uDryK: { value: 0 },
+      uStrawK: { value: 0 },
+      uSnowK: { value: 0 },
+      uHeatmap: { value: 0 },
+      uWindTime: { value: this.windTime },
+      uSwayX: { value: grass.wind.swayX },
+      uSwayZ: { value: grass.wind.swayZ },
+      uFreqX: { value: grass.wind.freqX },
+      uFreqZ: { value: grass.wind.freqZ },
+      uColorJitter: { value: grass.colorJitter },
+      uTypeLush: { value: lushColors },
+      uTypeTall: { value: typeHeights },
+      uDryColor: { value: new THREE.Color(visualStyle.palette.autumnGrass) },
+      uStrawColor: { value: new THREE.Color(visualStyle.palette.autumnGrass) },
+      uSnowColor: { value: new THREE.Color(visualStyle.palette.snow) },
+    };
+    this.grassUniforms = uniforms;
+    this.grassRadius = Math.min(grassRadius, grid.half);
+    const material = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, flatShading: true, side: THREE.DoubleSide });
     material.onBeforeCompile = (shader) => {
-      this.windUniform = { value: this.windTime };
-      shader.uniforms.uWindTime = this.windUniform;
+      Object.assign(shader.uniforms, uniforms);
       shader.vertexShader = shader.vertexShader
-        .replace('#include <common>', '#include <common>\nuniform float uWindTime;')
+        .replace('#include <common>', `#include <common>
+          uniform sampler2D uGrassGrid;
+          uniform sampler2D uGrassHeight;
+          uniform vec2 uCenter;
+          uniform float uRadius;
+          uniform float uTile;
+          uniform float uGridHalf;
+          uniform float uFadeStart;
+          uniform float uMaxHeight;
+          uniform float uBladeHeight;
+          uniform float uTuftK;
+          uniform float uDryK;
+          uniform float uStrawK;
+          uniform float uSnowK;
+          uniform float uHeatmap;
+          uniform float uWindTime;
+          uniform float uSwayX;
+          uniform float uSwayZ;
+          uniform float uFreqX;
+          uniform float uFreqZ;
+          uniform float uColorJitter;
+          uniform vec3 uTypeLush[${grid.typeIds.length}];
+          uniform float uTypeTall[${grid.typeIds.length}];
+          uniform vec3 uDryColor;
+          uniform vec3 uStrawColor;
+          uniform vec3 uSnowColor;
+          attribute vec2 aOffset;
+          float grassTypeIndex(float typeIndex) {
+            ${typeLookup(grid.typeIds, 'uTypeTall')}
+            return uTypeTall[${grid.typeIds.length - 1}];
+          }
+          vec3 grassTypeColor(float typeIndex) {
+            ${typeLookup(grid.typeIds, 'uTypeLush')}
+            return uTypeLush[${grid.typeIds.length - 1}];
+          }`)
+        .replace(
+          '#include <color_vertex>',
+          `#include <color_vertex>
+          vec2 grassAnchor = aOffset + uTile * floor((uCenter - aOffset) / uTile + 0.5);
+          vec2 grassUv = (grassAnchor + vec2(uGridHalf)) / (2.0 * uGridHalf);
+          float grassInside = step(0.0, grassUv.x) * step(grassUv.x, 1.0) * step(0.0, grassUv.y) * step(grassUv.y, 1.0);
+          vec4 grassData = texture2D(uGrassGrid, grassUv);
+          float grassDist = length(grassAnchor - uCenter);
+          float grassFade = 1.0 - smoothstep(uRadius * uFadeStart, uRadius, grassDist);
+          float grassType = floor(grassData.g * 255.0 + 0.5);
+          float grassScale = (0.2 + 0.95 * grassData.r) * uTuftK * max(grassTypeIndex(grassType), 0.3);
+          grassScale *= step(0.12, grassData.r) * smoothstep(0.25, 0.75, grassData.a) * grassInside * grassFade;
+          float instanceScaleY = length(instanceMatrix[1].xyz);
+          grassScale = min(grassScale, uMaxHeight / (uBladeHeight * max(instanceScaleY, 0.001)));
+          float grassLushness = smoothstep(0.1, 0.9, grassData.r);
+          vec3 grassColor = grassTypeColor(grassType);
+          grassColor = mix(grassColor, uDryColor, clamp(uDryK + (1.0 - grassLushness) * 0.6, 0.0, 1.0));
+          grassColor = mix(grassColor, uStrawColor, uStrawK);
+          grassColor = mix(grassColor, uSnowColor, uSnowK * 0.6);
+          grassColor = mix(grassColor, vec3(1.0 - grassData.b, 0.3 + 0.6 * grassData.b, 0.15), uHeatmap);
+          float grassJitter = (fract(sin(dot(grassAnchor, vec2(12.9898, 78.233))) * 43758.5453) * 2.0 - 1.0) * uColorJitter;
+          vColor.rgb *= grassColor * (1.0 + grassJitter);`,
+        )
+        .replace(
+          '#include <beginnormal_vertex>',
+          `#include <beginnormal_vertex>
+          objectNormal.y /= max(grassScale, 0.001);`,
+        )
         .replace(
           '#include <begin_vertex>',
           `#include <begin_vertex>
-          float windPhase = uWindTime + position.x * 2.4 + position.z * 1.7;
-          #ifdef USE_INSTANCING
-            windPhase += instanceMatrix[3].x * 0.05 + instanceMatrix[3].z * 0.04;
-          #endif
-          transformed.x += sin(windPhase) * 0.08 * position.y;
-          transformed.z += cos(windPhase * 0.8) * 0.035 * position.y;`,
+          float instanceScaleX = length(instanceMatrix[0].xyz);
+          float yawCos = instanceMatrix[0].x / max(instanceScaleX, 0.001);
+          float yawSin = instanceMatrix[2].x / max(instanceScaleX, 0.001);
+          vec2 localAnchor = vec2(yawCos * grassAnchor.x - yawSin * grassAnchor.y, yawSin * grassAnchor.x + yawCos * grassAnchor.y) / max(instanceScaleX, 0.001);
+          float grassGroundY = texture2D(uGrassHeight, grassUv).r;
+          float windPhase = uWindTime + grassAnchor.x * uFreqX + grassAnchor.y * uFreqZ;
+          transformed.x += sin(windPhase) * uSwayX * position.y;
+          transformed.z += cos(windPhase * 0.8) * uSwayZ * position.y;
+          transformed.x += localAnchor.x;
+          transformed.z += localAnchor.y;
+          transformed.y = (grassGroundY + transformed.y * grassScale) / max(instanceScaleY, 0.001);`,
         );
     };
-    material.customProgramCacheKey = () => 'nuudel-grass-wind-v1';
-    const mesh = new THREE.InstancedMesh(geo, material, N);
+    material.customProgramCacheKey = () => `nuudel-grass-gpu-v1-${grid.typeIds.join('-')}-${this.quality}`;
+    const mesh = new THREE.InstancedMesh(geo, material, count);
     this.tuftMaterial = material;
-    this.tuftCell = new Int32Array(N);
-    this.tuftPos = new Float32Array(N * 5);
-    this.tuftLush = new Float32Array(N * 3);
-    const pen = this.cfg.camps.home.pen;
-    const c = new THREE.Color();
-    let k = 0;
-    for (let tries = 0; k < N && tries < N * 4; tries++) {
-      const r = Math.sqrt(rng.next()) * grassRadius, a = rng.range(0, Math.PI * 2);
-      const x = Math.cos(a) * r, z = Math.sin(a) * r;
-      if (r < 9 || waterDistance(this.camp.waterShape, x, z) < 6.5 || Math.hypot(x - pen.x, z - pen.z) < pen.r + 1) continue;
-      const y = this.heightAt(x, z);
-      if (y > 24) continue;
-      const ci = cellIndex(grid, x, z);
-      if (ci < 0) continue;
-      const typeId = grid.typeIds[grid.type[ci] ?? 0] ?? 'steppe';
-      // Бутны өндөр бэлчээрийн төрлийн өвсний өндрөөс (нуга өндөр, тал намхан, бууц бараг үгүй)
-      const tall = clamp((this.cfg.pasture.types[typeId]?.heightCm ?? 10) / 20, 0, 1.4);
-      if (tall < 0.3) continue;
-      this.tuftCell[k] = ci;
-      this.tuftPos.set([x, y, z, rng.range(0.6, 1.5) * tall, rng.range(0, 6.28)], k * 5);
-      c.setHex(TYPE_LUSH[typeId] ?? 0x5f9a3e).offsetHSL(0, 0.05, 0.04 + rng.range(-0.03, 0.03));
-      this.tuftLush.set([c.r, c.g, c.b], k * 3);
-      mesh.setColorAt(k, c);
-      k++;
+    for (let i = 0; i < count; i++) {
+      this.tmpP.set(0, 0, 0);
+      this.tmpQ.setFromAxisAngle(this.yAxis, rng.range(0, Math.PI * 2));
+      const width = rng.range(0.8, 1.1);
+      this.tmpS.set(width, rng.range(0.75, 1.25), width);
+      this.tmpM.compose(this.tmpP, this.tmpQ, this.tmpS);
+      mesh.setMatrixAt(i, this.tmpM);
     }
-    mesh.count = k;
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.count = count;
     mesh.castShadow = false;
-    mesh.receiveShadow = true;
+    mesh.receiveShadow = false;
+    mesh.frustumCulled = false;
     this.tufts = mesh;
+    this.group.add(mesh);
+  }
+
+  private buildFlowers(grid: GrassGrid, rng: VisualRng): void {
+    const count = visualStyle.quality[this.quality].flowers;
+    const settings = visualStyle.flowers;
+    const pixels = this.grassGridPixels;
+    if (count === 0 || !pixels) return;
+    const candidates: number[] = [];
+    for (let i = 0; i < grid.n * grid.n; i++) {
+      const typeId = grid.typeIds[grid.type[i] ?? 0] ?? 'steppe';
+      if (typeId !== 'meadow' || (grid.biomass[i] ?? 0) < settings.biomassThreshold || pixels[i * 4 + 3] === 0) continue;
+      candidates.push(i);
+    }
+    if (candidates.length === 0) return;
+    const actualCount = Math.min(count, candidates.length);
+    const geometry = flowerGeometry(settings.height, settings.radius);
+    const material = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
+    const mesh = new THREE.InstancedMesh(geometry, material, actualCount);
+    const colors = settings.colors.map((color) => new THREE.Color(color));
+    for (let i = 0; i < actualCount; i++) {
+      const selected = i + Math.floor(rng.next() * (candidates.length - i));
+      [candidates[i], candidates[selected]] = [candidates[selected]!, candidates[i]!];
+      const cell = candidates[i]!;
+      const ix = cell % grid.n, iz = Math.floor(cell / grid.n);
+      const x = -grid.half + (ix + 0.5 + rng.range(-0.3, 0.3)) * grid.cell;
+      const z = -grid.half + (iz + 0.5 + rng.range(-0.3, 0.3)) * grid.cell;
+      this.tmpP.set(x, this.heightAt(x, z), z);
+      this.tmpQ.setFromAxisAngle(this.yAxis, rng.range(0, Math.PI * 2));
+      const size = rng.range(0.75, 1.25);
+      this.tmpS.set(size, size, size);
+      this.tmpM.compose(this.tmpP, this.tmpQ, this.tmpS);
+      mesh.setMatrixAt(i, this.tmpM);
+      mesh.setColorAt(i, colors[Math.floor(rng.next() * colors.length)]!);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    mesh.castShadow = false;
+    mesh.receiveShadow = false;
+    mesh.visible = this.currentSeason === null || this.currentSeason === 'spring' || this.currentSeason === 'summer';
+    mesh.name = 'meadow-flowers';
+    this.flowers = mesh;
+    this.flowerMaterial = material;
     this.group.add(mesh);
   }
 
@@ -447,31 +880,39 @@ export class TerrainView {
     }
     this.ground.geometry.attributes.color!.needsUpdate = true;
 
-    // Бут: өвс ихтэй газар өндөр, идэгдсэн газар намхан/алга
-    const t = this.tufts;
-    if (!t) return;
-    const c = this.tmpC;
-    for (let k = 0; k < t.count; k++) {
-      const b = bio[this.tuftCell[k]!] ?? 0;
-      const o = k * 5;
-      const s = this.tuftPos[o + 3]!;
-      const hs = b < 0.12 ? 0 : s * (0.2 + 0.95 * b) * tuftK;
-      const w = Math.min(s, 1.1);
-      this.tmpP.set(this.tuftPos[o]!, this.tuftPos[o + 1]!, this.tuftPos[o + 2]!);
-      this.tmpQ.setFromAxisAngle(this.yAxis, this.tuftPos[o + 4]!);
-      this.tmpS.set(hs ? w : 0, hs, hs ? w : 0);
-      this.tmpM.compose(this.tmpP, this.tmpQ, this.tmpS);
-      t.setMatrixAt(k, this.tmpM);
-      const lush = smoothstep(0.1, 0.9, b);
-      c.setRGB(this.tuftLush[k * 3]!, this.tuftLush[k * 3 + 1]!, this.tuftLush[k * 3 + 2]!);
-      c.lerp(DRY, clamp(dryK + (1 - lush) * 0.6, 0, 1));
-      c.lerp(STRAW, strawK);
-      if (snowK > 0) c.lerp(SNOW_GROUND, snowK * 0.6);
-      if (heatmap) c.setRGB(1 - b, 0.3 + 0.6 * b, 0.15);
-      t.setColorAt(k, c);
+    const grassPixels = this.grassGridPixels;
+    const grassTexture = this.grassGridTexture;
+    const uniforms = this.grassUniforms;
+    if (grassPixels && grassTexture && uniforms) {
+      for (let i = 0; i < grid.n * grid.n; i++) {
+        const typeIndex = grid.type[i] ?? 0;
+        const typeId = grid.typeIds[typeIndex] ?? 'steppe';
+        const offset = i * 4;
+        const biomass = bio[i] ?? 0;
+        grassPixels[offset] = Math.round(clamp(biomass, 0, 1) * 255);
+        grassPixels[offset + 2] = Math.round(clamp(
+          biomass * (types[typeId]?.maxBiomass ?? 0),
+          0,
+          1,
+        ) * 255);
+      }
+      grassTexture.needsUpdate = true;
+      uniforms.uTuftK.value = tuftK;
+      uniforms.uDryK.value = dryK;
+      uniforms.uStrawK.value = strawK;
+      uniforms.uSnowK.value = snowK;
+      uniforms.uHeatmap.value = heatmap ? 1 : 0;
+      uniforms.uDryColor.value.copy(DRY);
+      uniforms.uStrawColor.value.copy(STRAW);
+      uniforms.uSnowColor.value.copy(SNOW_GROUND);
     }
-    t.instanceMatrix.needsUpdate = true;
-    if (t.instanceColor) t.instanceColor.needsUpdate = true;
+  }
+
+  updateGrassCenter(x: number, z: number, fogFar: number): void {
+    const uniforms = this.grassUniforms;
+    if (!uniforms) return;
+    uniforms.uCenter.value.set(x, z);
+    uniforms.uRadius.value = Math.max(1, Math.min(this.grassRadius, fogFar - 5));
   }
 
   // ---------- чимэглэл ----------
@@ -482,7 +923,7 @@ export class TerrainView {
     const crown = new THREE.IcosahedronGeometry(1.5, 0);
     const addPine = (x: number, z: number, s: number): void => {
       const t = new THREE.Group();
-      const tr = new THREE.Mesh(trunk, mat(0x5b3b22));
+      const tr = new THREE.Mesh(trunk, mat(paletteHex('woodDark')));
       tr.position.y = 0.7;
       t.add(tr);
       const c1 = new THREE.Mesh(cone1, this.larchMaterials[0]);
@@ -499,10 +940,10 @@ export class TerrainView {
     };
     const addLeafy = (x: number, z: number, s: number): void => {
       const t = new THREE.Group();
-      const tr = new THREE.Mesh(trunk, mat(0x6b4a2e));
+      const tr = new THREE.Mesh(trunk, mat(paletteHex('wood')));
       tr.position.y = 0.7;
       t.add(tr);
-      const cr = new THREE.Mesh(crown, mat(0x5c8a3a));
+      const cr = new THREE.Mesh(crown, mat(paletteHex('larchSummer')));
       cr.position.y = 2.3;
       cr.scale.y = 1.2;
       cr.castShadow = true;
@@ -548,30 +989,108 @@ export class TerrainView {
     for (let i = 0; i < 30; i++) {
       const r = rng.range(30, 150), a = rng.range(0, Math.PI * 2), x = Math.cos(a) * r, z = Math.sin(a) * r;
       if (waterDistance(w, x, z) < 8) continue;
-      const m = new THREE.Mesh(new THREE.DodecahedronGeometry(rng.range(0.5, 1.8), 0), mat(0x8a857a));
+      const m = new THREE.Mesh(new THREE.DodecahedronGeometry(rng.range(0.5, 1.8), 0), mat(paletteHex('rock')));
       m.position.set(x, this.heightAt(x, z) + 0.2, z);
       m.rotation.set(rng.range(0, 3), rng.range(0, 3), 0);
       m.scale.y = rng.range(0.5, 0.9);
       m.castShadow = true;
       out.add(m);
     }
-    // Алсын уулс
-    const peakMat = new THREE.MeshLambertMaterial({ color: paletteHex('distantMountain'), flatShading: true });
-    for (let i = 0; i < 46; i++) {
-      const a = (i / 46) * Math.PI * 2 + rng.range(-0.05, 0.05), r = rng.range(195, 250);
-      let h = rng.range(25, 60);
-      if (t.tilt && Math.cos(a) * t.tilt.dirX + Math.sin(a) * t.tilt.dirZ > 0.3) h *= 1.7;
-      const radius = rng.range(35, 60);
-      const p = new THREE.Mesh(new THREE.ConeGeometry(radius, h, 5), peakMat);
-      p.position.set(Math.cos(a) * r, h / 2 - 6 + Math.max(0, this.heightAt(Math.cos(a) * 170, Math.sin(a) * 170) * 0.6), Math.sin(a) * r);
-      p.rotation.y = rng.range(0, 3);
-      out.add(p);
-      if (h > 45) {
-        const cap = new THREE.Mesh(new THREE.ConeGeometry(radius * 0.28, h * 0.28, 5), mat(paletteHex('snow')));
-        cap.position.y = h / 2 - h * 0.14 + 0.3;
-        p.add(cap);
+    this.buildOvoo(out);
+  }
+
+  private buildMountains(rng: VisualRng): void {
+    const layers = visualStyle.mountains.layers.slice(0, visualStyle.quality[this.quality].mountainLayers);
+    if (layers.length === 0) return;
+    const group = new THREE.Group();
+    group.name = 'distant-mountain-layers';
+    const cone = new THREE.ConeGeometry(1, 1, 5);
+    const snowMaterial = new THREE.MeshLambertMaterial({ color: paletteHex('snow'), flatShading: true });
+    this.mountainGeometries.push(cone);
+    this.mountainMaterials.push(snowMaterial);
+    const tilt = this.camp.terrain.tilt;
+    for (const layer of layers) {
+      const material = new THREE.MeshLambertMaterial({ color: layer.color, flatShading: true });
+      this.mountainMaterials.push(material);
+      const peaks = new THREE.InstancedMesh(cone, material, layer.count);
+      const caps = new THREE.InstancedMesh(cone, snowMaterial, layer.count);
+      let capCount = 0;
+      for (let i = 0; i < layer.count; i++) {
+        const angle = (i / layer.count) * Math.PI * 2 + rng.range(-0.06, 0.06);
+        const distance = rng.range(layer.radiusMin, layer.radiusMax);
+        let height = rng.range(layer.heightMin, layer.heightMax) * layer.heightScale;
+        if (tilt && Math.cos(angle) * tilt.dirX + Math.sin(angle) * tilt.dirZ > 0.3) height *= 1.35;
+        const radius = height * rng.range(0.62, 0.9);
+        const x = Math.cos(angle) * distance;
+        const z = Math.sin(angle) * distance;
+        const baseY = -6 + Math.max(0, this.heightAt(Math.cos(angle) * 170, Math.sin(angle) * 170) * 0.6);
+        this.tmpP.set(x, baseY + height * 0.5, z);
+        this.tmpQ.setFromAxisAngle(this.yAxis, rng.range(0, Math.PI * 2));
+        this.tmpS.set(radius, height, radius * rng.range(0.75, 1.25));
+        peaks.setMatrixAt(i, this.tmpM.compose(this.tmpP, this.tmpQ, this.tmpS));
+        if (height > 45) {
+          const capHeight = height * 0.28;
+          this.tmpP.y = baseY + height - capHeight * 0.5 + 0.3;
+          this.tmpS.set(radius * 0.3, capHeight, radius * 0.3);
+          caps.setMatrixAt(capCount++, this.tmpM.compose(this.tmpP, this.tmpQ, this.tmpS));
+        }
+      }
+      peaks.instanceMatrix.needsUpdate = true;
+      peaks.frustumCulled = false;
+      group.add(peaks);
+      if (capCount > 0) {
+        caps.count = capCount;
+        caps.instanceMatrix.needsUpdate = true;
+        caps.frustumCulled = false;
+        group.add(caps);
       }
     }
+    this.mountains = group;
+    this.group.add(group);
+  }
+
+  private buildOvoo(out: THREE.Group): void {
+    let bestX = 0, bestZ = 0, bestScore = -Infinity;
+    for (let z = -140; z <= 140; z += 10) {
+      for (let x = -140; x <= 140; x += 10) {
+        const distance = Math.hypot(x, z);
+        if (distance < 45 || distance > 140 || waterDistance(this.camp.waterShape, x, z) < 20) continue;
+        const score = this.heightAt(x, z) - Math.abs(distance - 90) * 0.01;
+        if (score > bestScore) {
+          bestScore = score;
+          bestX = x;
+          bestZ = z;
+        }
+      }
+    }
+    if (!Number.isFinite(bestScore)) return;
+    const baseY = this.heightAt(bestX, bestZ);
+    const ovoo = new THREE.Group();
+    const stoneGeometry = new THREE.DodecahedronGeometry(0.75, 0);
+    for (let i = 0; i < 9; i++) {
+      const angle = (i / 9) * Math.PI * 2;
+      const size = 0.7 + (i % 3) * 0.16;
+      const stone = new THREE.Mesh(stoneGeometry, mat(i % 2 ? paletteHex('rock') : paletteHex('stoneWarm')));
+      stone.position.set(Math.cos(angle) * 0.75, 0.25 + (i % 2) * 0.12, Math.sin(angle) * 0.75);
+      stone.scale.set(size, size * 0.8, size);
+      ovoo.add(stone);
+    }
+    const cairn = new THREE.Mesh(new THREE.DodecahedronGeometry(0.82, 0), mat(paletteHex('stoneWarm')));
+    cairn.position.y = 0.9;
+    cairn.scale.set(0.9, 1.25, 0.9);
+    ovoo.add(cairn);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.05, 2.2, 5), mat(paletteHex('woodDark')));
+    pole.position.set(0, 2.1, 0);
+    ovoo.add(pole);
+    const flagColors = [paletteHex('bluePattern'), paletteHex('snow'), paletteHex('gerOrange')];
+    for (let i = 0; i < flagColors.length; i++) {
+      const flag = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.09, 0.035), mat(flagColors[i]!));
+      flag.position.set(0.2, 2.85 - i * 0.16, 0);
+      flag.rotation.z = -0.08;
+      ovoo.add(flag);
+    }
+    ovoo.position.set(bestX, baseY, bestZ);
+    out.add(ovoo);
   }
 
   /** Хашаа (хаалга нь майхны эсрэг талд), морины уяа, галын чулуу */
@@ -591,7 +1110,7 @@ export class TerrainView {
     for (let a = 0; a < Math.PI * 2; a += Math.PI / 24) {
       if (Math.abs(angDiff(a, gateA)) < gapHalf) continue;
       const x = pen.x + Math.cos(a) * pen.r, z = pen.z + Math.sin(a) * pen.r;
-      const p = new THREE.Mesh(postGeo, mat(0x6b4a2e));
+      const p = new THREE.Mesh(postGeo, mat(paletteHex('wood')));
       p.position.set(x, this.heightAt(x, z) + 0.6, z);
       p.castShadow = true;
       out.add(p);
@@ -604,7 +1123,7 @@ export class TerrainView {
         const x = pen.x + Math.cos(a) * pen.r, z = pen.z + Math.sin(a) * pen.r;
         pts.push(new THREE.Vector3(x, this.heightAt(x, z) + yOff, z));
       }
-      const tube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 96, 0.045, 3), mat(0x7a5634));
+      const tube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 96, 0.045, 3), mat(paletteHex('woodLight')));
       out.add(tube);
     }
   }
@@ -616,7 +1135,7 @@ export class TerrainView {
   private buildShed(out: THREE.Group, gateA: number, gapHalf: number): void {
     const { pen } = this.cfg.camps.home;
     const plank = new THREE.BoxGeometry(1, 1, 1);
-    const wood = [0x7a5634, 0x6b4a2e, 0x856040];
+    const wood = [paletteHex('woodLight'), paletteHex('wood'), paletteHex('woodWarm')];
     const N = 120;
     for (let k = 0; k < N; k++) {
       const a = (k / N) * Math.PI * 2;
@@ -634,7 +1153,7 @@ export class TerrainView {
     for (const s of [-1, 1]) {
       const a = gateA + s * gapHalf;
       const x = pen.x + Math.cos(a) * pen.r, z = pen.z + Math.sin(a) * pen.r;
-      const g = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 2.1, 6), mat(0x5b3b22));
+      const g = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 2.1, 6), mat(paletteHex('woodDark')));
       g.position.set(x, this.heightAt(x, z) + 1.05, z);
       out.add(g);
     }
@@ -642,24 +1161,24 @@ export class TerrainView {
     const W = 12, Dp = 5, back = 2.6, front = 2.0;
     const cx = pen.x, cz = pen.z - pen.r + 1.2 + Dp / 2;
     const y0 = this.heightAt(cx, cz);
-    const wall = new THREE.Mesh(plank, mat(0x6b4a2e));
+    const wall = new THREE.Mesh(plank, mat(paletteHex('wood')));
     wall.scale.set(W, back, 0.2);
     wall.position.set(cx, y0 + back / 2, cz - Dp / 2);
     wall.castShadow = true;
     out.add(wall);
     for (const sx of [-1, 1]) {
-      const side = new THREE.Mesh(plank, mat(0x7a5634));
+      const side = new THREE.Mesh(plank, mat(paletteHex('woodLight')));
       side.scale.set(0.2, back, Dp);
       side.position.set(cx + (sx * W) / 2, y0 + back / 2, cz);
       out.add(side);
     }
     for (let i = 0; i <= 4; i++) {
       const px = cx - W / 2 + (i / 4) * W;
-      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, front, 5), mat(0x5b3b22));
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, front, 5), mat(paletteHex('woodDark')));
       post.position.set(px, y0 + front / 2, cz + Dp / 2);
       out.add(post);
     }
-    const roof = new THREE.Mesh(plank, mat(0x8a7354));
+    const roof = new THREE.Mesh(plank, mat(paletteHex('woodRoof')));
     const slope = Math.atan2(back - front, Dp);
     roof.scale.set(W + 0.8, 0.18, Math.hypot(Dp, back - front) + 0.6);
     roof.position.set(cx, y0 + (back + front) / 2 + 0.1, cz);
@@ -667,16 +1186,16 @@ export class TerrainView {
     roof.castShadow = true;
     out.add(roof);
     // Дээвэр дээрх өвс, шороо (зурган дээрх шиг бараан)
-    const top = new THREE.Mesh(plank, mat(0x6e5d3e));
+    const top = new THREE.Mesh(plank, mat(paletteHex('woodRoofCover')));
     top.scale.set(W, 0.12, Dp * 0.9);
     top.position.set(cx, y0 + (back + front) / 2 + 0.25, cz);
     top.rotation.x = slope;
     out.add(top);
     // Хашаан доторх бууц (хатсан аргал)
-    const dung = new THREE.Mesh(new THREE.CylinderGeometry(pen.r * 0.55, pen.r * 0.6, 0.08, 20), mat(0x7d6648));
+    const dung = new THREE.Mesh(new THREE.CylinderGeometry(pen.r * 0.55, pen.r * 0.6, 0.08, 20), mat(paletteHex('dung')));
     dung.position.set(pen.x, this.heightAt(pen.x, pen.z) + 0.02, pen.z);
     out.add(dung);
-    const pile = new THREE.Mesh(new THREE.DodecahedronGeometry(1.4, 0), mat(0x5a4530));
+    const pile = new THREE.Mesh(new THREE.DodecahedronGeometry(1.4, 0), mat(paletteHex('manure')));
     pile.scale.set(1.4, 0.45, 1.1);
     pile.position.set(pen.x + pen.r + 3, this.heightAt(pen.x + pen.r + 3, pen.z + 8) + 0.3, pen.z + 8);
     out.add(pile);
@@ -687,12 +1206,12 @@ export class TerrainView {
     // Уяа
     const py = this.heightAt(post.x, post.z);
     for (const dx of [-1.3, 1.3]) {
-      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 1.7, 5), mat(0x6b4a2e));
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 1.7, 5), mat(paletteHex('wood')));
       p.position.set(post.x + dx, py + 0.85, post.z);
       p.castShadow = true;
       out.add(p);
     }
-    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.8, 5), mat(0x8a6a44));
+    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.8, 5), mat(paletteHex('woodAccent')));
     bar.rotation.z = Math.PI / 2;
     bar.position.set(post.x, py + 1.55, post.z);
     out.add(bar);
@@ -700,7 +1219,7 @@ export class TerrainView {
     const rng = new VisualRng(7);
     for (let i = 0; i < 7; i++) {
       const a = rng.range(0, 6.28), r = rng.range(0.2, 1.1);
-      const m = new THREE.Mesh(new THREE.DodecahedronGeometry(rng.range(0.25, 0.4), 0), mat(0x6e5a3e));
+      const m = new THREE.Mesh(new THREE.DodecahedronGeometry(rng.range(0.25, 0.4), 0), mat(paletteHex('stoneWarm')));
       m.position.set(-5 + Math.cos(a) * r, this.heightAt(-5, -3) + 0.2, -3 + Math.sin(a) * r);
       out.add(m);
     }
@@ -735,6 +1254,7 @@ export class TerrainView {
   /** Чонын үүр (чулуу, нүх, яс) ба нутгийн улаан хил */
   private buildDens(dens: Den[], rng: VisualRng, out: THREE.Group): void {
     const lineMat = new THREE.LineDashedMaterial({ color: 0xc0392b, dashSize: 1.6, gapSize: 1.2, transparent: true, opacity: 0.7 });
+    this.buildMaterials.push(lineMat);
     for (const d of dens) {
       const y = this.heightAt(d.x, d.z);
       for (let i = 0; i < 6; i++) {
@@ -770,25 +1290,29 @@ export class TerrainView {
 
   /** Майхан эсвэл гэр (бууцны төвд) */
   private buildHome(kind: string): void {
-    if (this.homeGroup) this.group.remove(this.homeGroup);
     this.clearSmoke();
+    if (this.homeGroup) {
+      this.group.remove(this.homeGroup);
+      this.disposeGeometries(this.homeGroup);
+    }
     this.homeKind = kind;
     const g = new THREE.Group();
     if (kind === 'ger') {
-      const wall = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 3.55, 2.1, 18), mat(paletteHex('felt')));
+      const segments = visualStyle.quality[this.quality].gerSegments;
+      const wall = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 3.55, 2.1, segments), mat(paletteHex('felt')));
       wall.position.y = 1.05;
       wall.castShadow = wall.receiveShadow = true;
       g.add(wall);
       for (const [y, r] of [[1.85, 3.53], [1.05, 3.56], [0.25, 3.57]] as const) {
-        const band = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.12, 18), mat(paletteHex('bluePattern')));
+        const band = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.12, segments), mat(paletteHex('bluePattern')));
         band.position.y = y;
         g.add(band);
       }
-      const roof = new THREE.Mesh(new THREE.ConeGeometry(3.8, 1.45, 18), mat(paletteHex('felt')));
+      const roof = new THREE.Mesh(new THREE.ConeGeometry(3.8, 1.45, segments), mat(paletteHex('felt')));
       roof.position.y = 2.82;
       roof.castShadow = true;
       g.add(roof);
-      const toono = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.6, 0.28, 12), mat(0xb5651d));
+      const toono = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.6, 0.28, segments), mat(0xb5651d));
       toono.position.y = 3.5;
       g.add(toono);
       const chimney = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 0.9, 8), mat(0x4b4036));
@@ -831,8 +1355,8 @@ export class TerrainView {
       door.position.z = 1.72;
       g.add(door);
       // Агуулах (сав суулга) майхны хажууд
-      meshBox(0.7, 0.6, 0.5, 0x8a6a44, 2.4, 0.3, -0.8, g);
-      meshBox(0.5, 0.5, 0.5, 0x6b4a2e, 2.5, 0.25, 0.1, g);
+      meshBox(0.7, 0.6, 0.5, paletteHex('woodAccent'), 2.4, 0.3, -0.8, g);
+      meshBox(0.5, 0.5, 0.5, paletteHex('wood'), 2.5, 0.25, 0.1, g);
     }
     g.position.set(0, this.heightAt(0, 0), 0);
     this.homeGroup = g;

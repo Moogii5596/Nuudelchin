@@ -34,9 +34,6 @@ function flakeTexture(): THREE.Texture {
   return new THREE.CanvasTexture(c);
 }
 
-/** Бэлчээрийн өнгийг хэр олон удаа шинэчлэх (бодит секунд) */
-const GRASS_REFRESH_SEC = 0.4;
-
 export class GameView {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene = new THREE.Scene();
@@ -57,7 +54,17 @@ export class GameView {
   private homeLight: THREE.PointLight;
   private skyCol = new THREE.Color();
   private skyDome: THREE.Mesh;
-  private skyUniforms: { top: { value: THREE.Color }; horizon: { value: THREE.Color }; ground: { value: THREE.Color }; sunDir: { value: THREE.Vector3 }; sunGlow: { value: number } };
+  private skyUniforms: {
+    top: { value: THREE.Color };
+    horizon: { value: THREE.Color };
+    ground: { value: THREE.Color };
+    sunDir: { value: THREE.Vector3 };
+    sunGlow: { value: number };
+    cloudTime: { value: number };
+    cloudScale: { value: number };
+    cloudSpeed: { value: THREE.Vector2 };
+    cloudOpacity: { value: number };
+  };
   private stars: THREE.Points;
   private sunDisc: THREE.Mesh;
   private moonDisc: THREE.Mesh;
@@ -94,6 +101,10 @@ export class GameView {
       ground: { value: new THREE.Color(0x74805c) },
       sunDir: { value: new THREE.Vector3(0, 1, 0) },
       sunGlow: { value: 0 },
+      cloudTime: { value: 0 },
+      cloudScale: { value: visualStyle.cloudShadow.skyScale },
+      cloudSpeed: { value: new THREE.Vector2(visualStyle.cloudShadow.speedX, visualStyle.cloudShadow.speedZ) },
+      cloudOpacity: { value: visualStyle.cloudShadow.skyOpacity },
     };
     this.skyDome = new THREE.Mesh(
       new THREE.SphereGeometry(800, 32, 20),
@@ -113,6 +124,10 @@ export class GameView {
           uniform vec3 ground;
           uniform vec3 sunDir;
           uniform float sunGlow;
+          uniform float cloudTime;
+          uniform float cloudScale;
+          uniform vec2 cloudSpeed;
+          uniform float cloudOpacity;
           varying vec3 vDirection;
           void main() {
             vec3 dir = normalize(vDirection);
@@ -121,6 +136,11 @@ export class GameView {
             color = mix(color, top, smoothstep(0.12, 0.92, h));
             float sun = pow(max(dot(dir, normalize(sunDir)), 0.0), 24.0);
             color += vec3(1.0, 0.66, 0.38) * sun * sunGlow;
+            vec2 cloudPoint = dir.xz * cloudScale + cloudTime * cloudSpeed;
+            float cloudField = sin(cloudPoint.x + sin(cloudPoint.y * 0.63)) * cos(cloudPoint.y * 0.8 - sin(cloudPoint.x * 0.7));
+            cloudField += 0.22 * sin((cloudPoint.x + cloudPoint.y) * 1.6);
+            float cloudMask = smoothstep(0.15, 0.55, cloudField) * smoothstep(-0.1, 0.15, h) * (1.0 - smoothstep(0.75, 0.95, h));
+            color = mix(color, mix(horizon, top, 0.35), cloudMask * cloudOpacity);
             gl_FragColor = vec4(color, 1.0);
             #include <tonemapping_fragment>
             #include <colorspace_fragment>
@@ -262,6 +282,7 @@ export class GameView {
   frame(state: GameState, alpha: number, dt: number, stepSec: number): void {
     const p = state.player;
     this.place = p.place;
+    this.skyUniforms.cloudTime.value += Math.max(0, dt);
     const look = seasonLook(this.cfg, state);
     const season = seasonOf(this.cfg, state.time.day);
     this.applyDaylight(state.time.minute, season, p.x, p.z);
@@ -287,7 +308,7 @@ export class GameView {
       }
       this.grassT -= dt;
       if (this.grassT <= 0) {
-        this.grassT = GRASS_REFRESH_SEC;
+        this.grassT = visualStyle.grass.updateSeconds;
         this.terrain.updateGrass(state, this.heatmap);
       }
       this.animals.update(state, this.heightAt, alpha, dt, stepSec);
@@ -297,7 +318,7 @@ export class GameView {
     }
     this.characters.update(state, this.heightAt, dt);
     this.vehicles.update(state, this.heightAt, dt);
-    this.terrain.updateVisualTime(dt, state.time.minute);
+    this.terrain.updateVisualTime(dt, state.time.minute, this.skyCol, Math.max(look.winter, look.snow * 0.8));
     if (p.driving) this.characters.seatHerder(this.vehicles.seatOf(state));
 
     // Жолоодож байхад камер аажмаар тээврийн ард эргэнэ
@@ -306,6 +327,7 @@ export class GameView {
     const cx = p.x, cz = p.z;
     const ty = this.heightAt(cx, cz) + (p.mounted || p.driving ? 2.4 : 1.6);
     this.cam.update(cx, cz, ty, this.heightAt);
+    this.terrain.updateGrassCenter(cx, cz, (this.scene.fog as THREE.Fog).far);
     this.skyDome.position.copy(this.cam.camera.position);
     this.stars.position.copy(this.cam.camera.position);
     this.updateFlakes(look.snowing && p.place === 'camp', cx, ty, cz, dt);
@@ -361,7 +383,7 @@ export class GameView {
     const daylightStart = 320, daylightEnd = 1310;
     const progress = Math.min(1, Math.max(0, (m - daylightStart) / (daylightEnd - daylightStart)));
     const angle = Math.PI * progress;
-    this.sunDirection.set(-Math.cos(angle), Math.max(0.04, Math.sin(angle)), -0.22).normalize();
+    this.sunDirection.set(-Math.cos(angle), Math.max(0.04, Math.sin(angle)), 0.22).normalize();
     this.skyUniforms.sunDir.value.copy(this.sunDirection);
     this.skyUniforms.sunGlow.value = Math.max(0.08, this.sun.intensity);
     this.sun.position.set(cx + this.sunDirection.x * 140, this.sunDirection.y * 140, cz + this.sunDirection.z * 140);
