@@ -111,6 +111,15 @@ export function dailyRegrowth(cfg: GameConfig, g: GrassGrid, degrade: number): v
 }
 
 /**
+ * Нэг өдрийн доройтлын өсөлт (B1): gain × (хонин толгой / даац)^loadExponent.
+ * Даацаас (~3000 хонин толгой ≈ 2000 мал) хол бага сүрэгт бараг доройтохгүй, даацад ойртоход огцом нэмэгдэнэ.
+ */
+export function degradeGain(cfg: GameConfig, sheepUnits: number): number {
+  const d = cfg.pasture.degradation;
+  return d.gainPerDayAtCapacity * Math.pow(Math.max(0, sheepUnits) / d.campCapacitySheepUnits, d.loadExponent ?? 1);
+}
+
+/**
  * Бууцны доройтол: одоогийн бууцанд ачааллаар нэмэгдэж, бусад бууцанд сэргэнэ.
  * load = сүргийн хонин толгой / бууцны даац.
  */
@@ -118,7 +127,7 @@ export function dailyCampDegrade(cfg: GameConfig, camps: Record<string, { degrad
   const d = cfg.pasture.degradation;
   for (const [id, c] of Object.entries(camps)) {
     if (id === currentId) {
-      c.degrade = Math.min(1, c.degrade + d.gainPerDayAtCapacity * (sheepUnits / d.campCapacitySheepUnits));
+      c.degrade = Math.min(1, c.degrade + degradeGain(cfg, sheepUnits));
       c.daysSpent += 1;
     } else {
       c.degrade = Math.max(0, c.degrade - d.recoverPerDayWhenAway);

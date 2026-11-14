@@ -4,9 +4,12 @@
  * Командууд:
  *   follow     — «Намайг дага»: малчны араас дагана (малчин сумын төв явсан бол хотоо манана)
  *   stay       — «Энд зогс»: малчны одоо байгаа газар хэвтэж манана
- *   patrol     — «Энд эргүүл хий»: малчны одоо байгаа газрыг тойрон эргүүл хийнэ
- *   patrolCamp — «Хотыг эргүүл»: майхан, хашааг бүхэлд нь тойрон эргүүл хийнэ (шинэ нохойн анхдагч)
- *   guardHerd  — «Сүргийг хамгаал»: сонгосон сүргийнхээ (хонь ямаа / үхэр / адуу) дэргэд тойрон явна
+ *   patrol     — «Энд сэлгүүц»: малчны одоо байгаа газрын орчимд чөлөөтэй сэлгүүцнэ
+ *   patrolCamp — «Хот орчимд сэлгүүц»: майхан, хашааны орчимд чөлөөтэй сэлгүүцнэ (шинэ нохойн анхдагч)
+ *   guardHerd  — «Сүргийг хамгаал»: сонгосон сүргийнхээ (хонь ямаа / үхэр / адуу) дэргэд сэлгүүцнэ
+ *
+ * Хэрэглэгчийн дүрэм (2026-11-14, B4): нохой хотыг тойрог дагуу эргэлддэггүй. Сэлгүүцэх үед
+ * радиус дотроос санамсаргүй цэг сонгож очоод, хэсэг хэвтэж/үнэрлэж байгаад дараагийн цэг рүү явна.
  *
  * Нохой бүр 10 м хамгаалалтын бүстэй (wolves.ts → protectionZones).
  * Чоно alertRadius-д ойртвол хуцаж хөөнө; barkRange-д хүрвэл чоно айж үүр лүүгээ зугтана.
@@ -36,6 +39,9 @@ export interface Dog {
   mode: 'go' | 'chase';
   wolfId: number;
   barkT: number;         // хуцаж буй үлдсэн минут (дүрслэлд)
+  wx?: number;           // сэлгүүцэх дараагийн цэг (B4)
+  wz?: number;
+  rest?: number;         // цэг дээрээ хэвтэх/үнэрлэх үлдсэн минут
 }
 
 export function newDog(cfg: GameConfig, state: GameState, x: number, z: number): Dog {
@@ -50,8 +56,8 @@ export function newDog(cfg: GameConfig, state: GameState, x: number, z: number):
 export const DOG_ORDER_NAME: Record<DogOrderKind, string> = {
   follow: 'Намайг дага',
   stay: 'Энд зогс',
-  patrol: 'Энд эргүүл хий',
-  patrolCamp: 'Хотыг эргүүл',
+  patrol: 'Энд сэлгүүц',
+  patrolCamp: 'Хот орчимд сэлгүүц',
   guardHerd: 'Сүргийг хамгаал',
 };
 
@@ -60,6 +66,8 @@ export function orderDog(cfg: GameConfig, state: GameState, d: Dog, kind: DogOrd
   const p = state.player;
   d.order = kind;
   d.mode = 'go';
+  d.wx = d.wz = undefined;
+  d.rest = 0;
   d.wolfId = 0;
   if (kind === 'stay' || kind === 'patrol') {
     d.ax = p.x;
@@ -117,7 +125,11 @@ export function dogGoal(cfg: GameConfig, state: GameState, d: Dog, index: number
   const c = cfg.dogs;
   const p = state.player;
   const order: DogOrderKind = d.order === 'follow' && p.away ? 'patrolCamp' : d.order;
-  const circle = (cx: number, cz: number, r: number) => ({ x: cx + Math.cos(d.ang) * r, z: cz + Math.sin(d.ang) * r, ax: cx, az: cz });
+  // Сэлгүүцэх: (cx, cz)-аас r радиус дотор санамсаргүй цэг (B4). Төв хөдөлсөн бол (сүрэг) шинэ цэг сонгоно
+  const circle = (cx: number, cz: number, r: number) => {
+    if (d.wx === undefined || d.wz === undefined || Math.hypot(d.wx - cx, d.wz - cz) > r * 1.05) pickWander(d, cx, cz, r, state.step);
+    return { x: d.wx!, z: d.wz!, ax: cx, az: cz };
+  };
   switch (order) {
     case 'follow': {
       // Малчны араас, нохой бүр өөр талд
@@ -195,14 +207,45 @@ export function dogsStep(cfg: GameConfig, state: GameState, herds?: Herd[]): voi
       }
     }
 
-    // Эргүүл: тойрог дагуу урагшилна (зорилтдоо ойр байвал л)
+    // Сэлгүүц: цэгтээ хүрвэл хэсэг хэвтэж/үнэрлээд дараагийн санамсаргүй цэг рүү (тойрог биш, B4)
     const dist = Math.hypot(goal.x - d.x, goal.z - d.z);
-    if ((d.order === 'patrol' || d.order === 'patrolCamp' || d.order === 'guardHerd' || (d.order === 'follow' && state.player.away)) && dist < 3) {
+    const roaming = d.order === 'patrol' || d.order === 'patrolCamp' || d.order === 'guardHerd' || (d.order === 'follow' && state.player.away);
+    if (roaming && dist < 1) {
+      if ((d.rest ?? 0) > 0) {
+        d.rest = (d.rest ?? 0) - 1;
+        return;
+      }
       const r = d.order === 'patrol' ? c.patrolRadius : d.order === 'guardHerd' ? c.guardRadius : c.campPatrol.r;
-      d.ang = (d.ang + c.speed.walk / r) % (Math.PI * 2);
+      pickWander(d, goal.ax, goal.az, r, state.step);
+      const w = c.wander ?? { restMin: 5, restMax: 40 };
+      d.rest = Math.round(w.restMin + hash01(d.id * 7919 + state.step * 31) * (w.restMax - w.restMin));
+      return;
     }
-    if (dist > 0.3) move(d, goal.x, goal.z, dist > 6 ? c.speed.run : Math.min(c.speed.walk, dist));
+    // Сэлгүүцэхдээ алхана (хол бол гүйнэ)
+    if (dist > 0.3) move(d, goal.x, goal.z, dist > (roaming ? 25 : 6) ? c.speed.run : Math.min(c.speed.walk, dist));
   });
+}
+
+/** Тогтмол «санамсаргүй» 0..1 (rng зарцуулахгүй — тэнцвэрийн дүнд нөлөөлөхгүй) */
+function hash01(n: number): number {
+  let h = Math.imul(n | 0, 2654435761);
+  h = Math.imul(h ^ (h >>> 15), 2246822507);
+  h ^= h >>> 13;
+  return (h >>> 0) / 4294967296;
+}
+
+/** Сэлгүүцэх дараагийн цэг: төвөөс r радиус дотор, одоогийн байрлалаас хэт ойр биш */
+function pickWander(d: Dog, cx: number, cz: number, r: number, step: number): void {
+  for (let k = 0; k < 4; k++) {
+    const ang = hash01(d.id * 131 + step * 17 + k * 7) * Math.PI * 2;
+    const rr = Math.sqrt(hash01(d.id * 977 + step * 13 + k * 3)) * r;
+    const x = cx + Math.cos(ang) * rr, z = cz + Math.sin(ang) * rr;
+    if (k === 3 || Math.hypot(x - d.x, z - d.z) > r * 0.35) {
+      d.wx = x;
+      d.wz = z;
+      return;
+    }
+  }
 }
 
 function move(d: Dog, x: number, z: number, speed: number): void {
@@ -223,6 +266,8 @@ export function relocateDogs(cfg: GameConfig, state: GameState): void {
     d.z = home.z - 3;
     d.mode = 'go';
     d.wolfId = 0;
+    d.wx = d.wz = undefined;
+    d.rest = 0;
     if (d.order === 'stay' || d.order === 'patrol') d.order = 'patrolCamp';
     d.hx = home.x + 25;
     d.hz = home.z;

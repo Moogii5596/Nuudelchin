@@ -4,17 +4,18 @@
     "cellSize": 2,
     "cells": 190
   },
-  "regrowthR": 0.35,
+  "regrowthR": 0.5,
   "intakeHalfBiomass": 0.25,
   "degradation": {
-    "campCapacitySheepUnits": 120,
+    "campCapacitySheepUnits": 3000,
+    "loadExponent": 1.5,
     "gainPerDayAtCapacity": 0.02,
     "recoverPerDayWhenAway": 0.03,
     "growthPenalty": 0.7,
     "capacityPenalty": 0.5,
     "qualityPenalty": 0.6,
     "overgrazeThreshold": 0.3,
-    "_doc": "M4: доройтол өвс ургах хурдыг (growthPenalty), чанарыг (qualityPenalty), өвсний дээд хэмжээг (capacityPenalty: K = 1 − 0.5 × доройтол) бууруулна — доройтсон бууцанд өвс намхан, сийрэг болж мэдрэгдэнэ (grazing-livestock.md §3.4)."
+    "_doc": "B1 (хэрэглэгчийн дүрэм 2026-11-14): бэлчээрийн даац бодит байдалд ойр — 200–300 малтай бууц доройтохгүй, ~2000 мал (≈3000 хонин толгой) хүрэхэд доройтол, өвсний хомсдол эхэлнэ. Өдрийн доройтол = gainPerDayAtCapacity × (хонин толгой / campCapacitySheepUnits)^loadExponent. M4: доройтол өвс ургах хурдыг (growthPenalty), чанарыг (qualityPenalty), өвсний дээд хэмжээг (capacityPenalty: K = 1 − 0.5 × доройтол) бууруулна — доройтсон бууцанд өвс намхан, сийрэг болж мэдрэгдэнэ (grazing-livestock.md §3.4)."
   },
   "species": {
     "ulalj": {
@@ -189,7 +190,7 @@
   "grazing": {
     "_doc": "Бэлчээрлэлт. Хурд нь тоглоомын минут тутмын метр (1 цаг = 60 минут). roamFactor M4-өөс хэрэглэгдэхгүй (хол хайх нь сүргийн шийдвэр, herd).",
     "imaxPerMinute": 0.0031,
-    "biomassPerGut": 2.5,
+    "biomassPerGut": 0.4,
     "decisionEverySteps": 10,
     "samples": 6,
     "sampleRadius": {

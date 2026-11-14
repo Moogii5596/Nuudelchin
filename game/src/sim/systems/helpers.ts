@@ -21,7 +21,7 @@ import { scareWolf } from './wolves';
 import { flockKey } from './herds';
 import { dailyMilkLiters, homeSpot, intakeFactor } from './night';
 import { seasonOf, snowAccess } from './seasons';
-import { absBiomass, cellIndex, typeIdOf, typeQualities } from './pasture';
+import { absBiomass, cellIndex, degradeGain, typeIdOf, typeQualities } from './pasture';
 
 export type HelperKind = 'adult' | 'child';
 export type HelperTask = 'herd' | 'drive' | 'otor' | 'collect';
@@ -765,8 +765,8 @@ export function dailyOtor(cfg: GameConfig, state: GameState, rng: Rng): HelperEv
     g.animals = g.animals.filter((a) => a.health > 0);
     // Тэр бууцны доройтол (dailyCampDegrade нь эзгүй бууцыг сэргээсний дараа)
     const su = g.animals.reduce((s, a) => s + sheepUnits(a, cfg.animals), 0);
-    camp.degrade = Math.min(1, camp.degrade + deg.recoverPerDayWhenAway + deg.gainPerDayAtCapacity * (su / deg.campCapacitySheepUnits));
-    camp.grass = Math.max(0.05, (camp.grass ?? 0.85) - 0.03 * (su / deg.campCapacitySheepUnits) * access);
+    camp.degrade = Math.min(1, camp.degrade + deg.recoverPerDayWhenAway + degradeGain(cfg, su));
+    camp.grass = Math.max(0.05, (camp.grass ?? 0.85) - 0.12 * (su / deg.campCapacitySheepUnits) * access);   // B1: торны идэлттэй ойролцоо
     // Чоно
     const lvl = cfg.camps.camps[g.campId]?.wolfLevel ?? 'medium';
     const p = ((cfg.helpers.otor.wolfLossPerDay as Record<string, number>)[lvl] ?? 0.02) * (cfg.seasons.otorWolfMult[season] ?? 1);

@@ -36,13 +36,14 @@ describe('Шөнө ба хотлолт (M4.5, хэрэглэгчийн дүрэ�
     });
   });
   it('хол байгаа мал хүрсэн газраа хоноглож, ноосоо тэнд үлдээнэ', () => {
-    const sim = newSim(4, (s) => {
-      for (const a of s.animals) if (a.species === 'sheep') {
-        a.x = -150; a.z = 120; a.tx = a.x; a.tz = a.z;
-        a.fiberDays = cfg.products.drops.wool.everyDays - 0.01;
-        a.condition = 0.7;
-      }
-    });
+    const sim = newSim(4);
+    // Орой харих цагаас өмнөхөн хол байрлуулна (өдөржин тэнд байвал сүрэг өөрөө хот руу ойртож болно)
+    toMinute(sim, 18 * 60 + 50);
+    for (const a of sim.state.animals) if (a.species === 'sheep') {
+      a.x = -150; a.z = 120; a.tx = a.x; a.tz = a.z; a.mode = 'graze';
+      a.fiberDays = cfg.products.drops.wool.everyDays - 0.01;
+      a.condition = 0.7;
+    }
     toMinute(sim, T.sleepMinute + 1);
     const sheep = sim.state.animals.filter((a) => a.species === 'sheep');
     expect(sheep.every((a) => !atHome(cfg, a))).toBe(true);   // 21:00 гэхэд хүрээгүй

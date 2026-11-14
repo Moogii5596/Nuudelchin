@@ -15,13 +15,22 @@ function withDog(seed = 41) {
 }
 
 describe('Нохой (M4, хэрэглэгчийн дүрэм: командууд)', () => {
-  it('шинэ нохой анхдагчаар хотыг эргүүлнэ', () => {
+  it('шинэ нохой анхдагчаар хот орчимд чөлөөтэй сэлгүүцнэ (тойрог биш, B4)', () => {
     const sim = withDog();
     const d = sim.state.dogs[0]!;
     expect(d.order).toBe('patrolCamp');
-    steps(sim, 120);
     const c = cfg.dogs.campPatrol;
-    expect(Math.abs(Math.hypot(d.x - c.x, d.z - c.z) - c.r)).toBeLessThan(4);
+    const dists: number[] = [];
+    const spots = new Set<string>();
+    for (let i = 0; i < 600; i++) {
+      sim.step();
+      if (i > 60) dists.push(Math.hypot(d.x - c.x, d.z - c.z));
+      spots.add(`${Math.round(d.x / 8)},${Math.round(d.z / 8)}`);
+    }
+    expect(Math.max(...dists)).toBeLessThan(c.r + 3);
+    // Тогтмол радиус дээр биш: төвөөс зай нь өөр өөр
+    expect(Math.max(...dists) - Math.min(...dists)).toBeGreaterThan(c.r * 0.4);
+    expect(spots.size).toBeGreaterThan(4);
   });
 
   it('«Намайг дага» — малчны араас дагана', () => {
@@ -46,19 +55,19 @@ describe('Нохой (M4, хэрэглэгчийн дүрэм: командуу�
     expect(Math.hypot(d.x - 40, d.z - 30)).toBeLessThan(0.5);
   });
 
-  it('«Энд эргүүл хий» — тушаасан газрыг тойрон эргүүлнэ', () => {
+  it('«Энд сэлгүүц» — тушаасан газрын орчимд сэлгүүцнэ', () => {
     const sim = withDog();
     sim.command({ type: 'movePlayer', x: 50, z: 40 });
     sim.command({ type: 'dogOrder', dog: 'all', order: 'patrol' });
     steps(sim, 60);
     const d = sim.state.dogs[0]!;
-    const angles: number[] = [];
-    for (let i = 0; i < 30; i++) {
+    const spots = new Set<string>();
+    for (let i = 0; i < 400; i++) {
       sim.step();
-      expect(Math.abs(Math.hypot(d.x - 50, d.z - 40) - cfg.dogs.patrolRadius)).toBeLessThan(3);
-      angles.push(Math.atan2(d.z - 40, d.x - 50));
+      expect(Math.hypot(d.x - 50, d.z - 40)).toBeLessThan(cfg.dogs.patrolRadius + 3);
+      spots.add(`${Math.round(d.x / 5)},${Math.round(d.z / 5)}`);
     }
-    expect(new Set(angles.map((a) => a.toFixed(1))).size).toBeGreaterThan(5);
+    expect(spots.size).toBeGreaterThan(3);
   });
 
   it('«Сүргийг хамгаал» — хонин сүргийн дэргэд явна', () => {

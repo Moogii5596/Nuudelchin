@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { cfg } from './helpers';
 import { Rng } from '../src/sim/rng';
-import { buildGrid, cellIndex, dailyCampDegrade, dailyRegrowth, typeIdOf, typeQualities } from '../src/sim/systems/pasture';
+import { buildGrid, cellIndex, dailyCampDegrade, degradeGain, dailyRegrowth, typeIdOf, typeQualities } from '../src/sim/systems/pasture';
 
 describe('Бэлчээрийн тор (mvp-spec.md §7)', () => {
   const g = buildGrid(cfg, 'river', 0, new Rng(3));
@@ -23,9 +23,14 @@ describe('Бэлчээрийн тор (mvp-spec.md §7)', () => {
   });
   it('одоогийн бууц доройтож, бусад бууц сэргэнэ', () => {
     const camps = { river: { degrade: 0.1, daysSpent: 0 }, valley: { degrade: 0.2, daysSpent: 0 } };
-    dailyCampDegrade(cfg, camps, 'river', 120);
+    dailyCampDegrade(cfg, camps, 'river', cfg.pasture.degradation.campCapacitySheepUnits);
     expect(camps.river.degrade).toBeCloseTo(0.12);
     expect(camps.valley.degrade).toBeCloseTo(0.17);
+  });
+  it('бэлчээрийн даац (B1): 200–300 мал бараг доройтуулахгүй, ~2000 мал (3000 хонин толгой) доройтуулна', () => {
+    expect(degradeGain(cfg, 450)).toBeLessThan(0.002);
+    expect(degradeGain(cfg, 3000)).toBeCloseTo(cfg.pasture.degradation.gainPerDayAtCapacity);
+    expect(degradeGain(cfg, 6000)).toBeGreaterThan(2.5 * degradeGain(cfg, 3000));
   });
   it('доройтол өвсний чанарыг бууруулна; уулын ар хамгийн сайн', () => {
     const q0 = typeQualities(cfg, 0), q1 = typeQualities(cfg, 1);

@@ -60,7 +60,7 @@ export function applyCheat(sim: Sim, action: CheatAction): string {
       if (state.dogs.length >= cfg.dogs.maxDogs) return `Нохой ${cfg.dogs.maxDogs}-аас олон байж болохгүй`;
       const d = newDog(cfg, state, p.x + 1.5, p.z + 1.5);
       state.dogs.push(d);
-      return `🐕 ${d.name} ирлээ (хотыг эргүүлнэ)`;
+      return `🐕 ${d.name} ирлээ (хот орчимд сэлгүүцнэ)`;
     }
     case 'removeDog': {
       const d = state.dogs.pop();

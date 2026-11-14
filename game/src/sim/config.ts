@@ -144,6 +144,8 @@ export interface PastureConfig {
   intakeHalfBiomass: number;
   degradation: {
     campCapacitySheepUnits: number;
+    /** Ачааллын зэрэг: доройтол ∝ (ачаалал/даац)^loadExponent (B1). Байхгүй бол 1 */
+    loadExponent?: number;
     gainPerDayAtCapacity: number;
     recoverPerDayWhenAway: number;
     growthPenalty: number;
