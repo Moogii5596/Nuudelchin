@@ -10,6 +10,7 @@ import type { GameConfig } from '../sim/config';
 import type { GameState } from '../sim/state';
 import type { PlayerController } from './controller';
 import { nearestVehicle } from '../sim/systems/travel';
+import { pwa, isIOS, inAppBrowser, canLockLandscape, landscapeFullscreen } from '../pwa';
 
 export interface TouchHooks {
   speedIdx: () => number;
@@ -38,6 +39,7 @@ export class TouchUI {
   private startEl: HTMLElement;
   private rotateEl: HTMLElement;
   private started = false;
+  private sheetEl: HTMLElement;
 
   constructor(private cfg: GameConfig, private ctl: PlayerController, private hooks: TouchHooks) {
     document.body.classList.add('touch');
@@ -129,8 +131,23 @@ export class TouchUI {
     if (document.fullscreenEnabled) addMenu('⛶', 'Бүтэн дэлгэц', () => void this.fullscreen(!document.fullscreenElement));
     document.body.appendChild(menuBox);
 
-    // --- Утсаа хэвтээ эргүүл ---
-    this.rotateEl = el('div', 'rotate', '<div><div style="font-size:54px">📱↻</div>Утсаа хэвтээ эргүүлнэ үү</div>');
+    // --- Босоо байрлал: хэвтээ болгох / суулгах ---
+    // Android: «Хэвтээ дэлгэцээр тоглох» товч нь бүтэн дэлгэц болгоод хэвтээ түгжинэ — утсаа эргүүлэх шаардлагагүй.
+    // Суулгасан апп (нүүр дэлгэцээс) Android-д manifest-ийн дагуу өөрөө хэвтээ нээгдэнэ.
+    this.rotateEl = el(
+      'div',
+      'rotate',
+      `<div class="rot-box">
+        <div class="rot-ico">📱↻</div>
+        <div class="rot-msg">Нүүдэлчин хэвтээ дэлгэцэд тоглогдоно</div>
+        <div class="rot-btns">
+          ${canLockLandscape ? '<button class="btn gold big" data-t="land">⛶ Хэвтээ дэлгэцээр тоглох</button>' : ''}
+          <button class="btn big install" data-t="install">📲 Утсандаа суулгах</button>
+        </div>
+        <div class="rot-hint">${canLockLandscape ? 'эсвэл утсаа хэвтээ эргүүлнэ үү' : 'Утсаа хэвтээ эргүүлнэ үү'}</div>
+        ${inAppBrowser ? '<div class="rot-note">Messenger/Facebook дотроос нээсэн бол ⋮ эсвэл ⋯ цэснээс «Хөтчөөр нээх» (Chrome/Safari) — тэгвэл утсандаа суулгаж болно</div>' : ''}
+      </div>`,
+    );
     document.body.appendChild(this.rotateEl);
 
     // --- Эхлэлийн дэлгэц (бүтэн дэлгэц, хэвтээ байрлалыг хэрэглэгчийн товшилтоор асаана) ---
@@ -147,15 +164,77 @@ export class TouchUI {
           <li>📣 Хөөе — мал бөөгнөрч танаас холдоно · 🐺 чоно үргээх</li>
           <li>❓ — бүх тайлбар</li>
         </ul>
-        <button class="btn gold big">▶ Тоглох</button>
+        <div class="rot-btns">
+          <button class="btn gold big" data-t="play">▶ Тоглох</button>
+          <button class="btn big install" data-t="install">📲 Утсандаа суулгах</button>
+        </div>
+        <p class="muted install-note">Суулгавал нүүр дэлгэцэд Нүүдэлчин дүрс гарч, апп шиг бүтэн дэлгэцээр нээгдэнэ.</p>
       </div>`,
     );
-    this.startEl.querySelector('button')!.addEventListener('click', () => {
-      this.started = true;
-      this.startEl.style.display = 'none';
-      if (document.fullscreenEnabled) void this.fullscreen(true);
-    });
     document.body.appendChild(this.startEl);
+
+    // --- iPhone: суулгах заавар ---
+    this.sheetEl = el(
+      'div',
+      'tsheet',
+      `<div class="tstart-box">
+        <h1>📲 iPhone-д суулгах</h1>
+        <ol>
+          <li>Safari-ийн доод (iPad-д дээд) талын <b>Хуваалцах</b> <span class="ios-share">⬆︎</span> товчийг дар</li>
+          <li>Доош гүйлгээд <b>«Нүүр дэлгэцэд нэмэх»</b> (Add to Home Screen) сонго</li>
+          <li>Баруун дээд талын <b>«Нэмэх»</b> (Add) товчийг дар</li>
+        </ol>
+        <p class="muted">Дараа нь нүүр дэлгэцэн дээрх <b>Нүүдэлчин</b> дүрсээр орж тоглоно — хаягийн мөргүй, бүтэн дэлгэцээр.</p>
+        <div class="rot-btns"><button class="btn gold big" data-t="sheetClose">Ойлголоо</button></div>
+      </div>`,
+    );
+    document.body.appendChild(this.sheetEl);
+
+    const onTap = (e: Event): void => {
+      const b = (e.target as HTMLElement).closest('[data-t]') as HTMLElement | null;
+      if (!b) return;
+      e.preventDefault();
+      switch (b.dataset.t) {
+        case 'play':
+          this.start();
+          if (canLockLandscape) void landscapeFullscreen();
+          break;
+        case 'land':
+          this.start();
+          void landscapeFullscreen();
+          break;
+        case 'install':
+          void this.install();
+          break;
+        case 'sheetClose':
+          this.sheetEl.style.display = 'none';
+          break;
+      }
+    };
+    for (const box of [this.rotateEl, this.startEl, this.sheetEl]) box.addEventListener('click', onTap);
+    pwa.onChange(() => this.refreshInstall());
+    this.refreshInstall();
+  }
+
+  private start(): void {
+    this.started = true;
+    this.startEl.style.display = 'none';
+  }
+
+  /** Суулгах товчийг боломжтой үед л харуулна */
+  private refreshInstall(): void {
+    const show = pwa.available;
+    document.querySelectorAll<HTMLElement>('.install').forEach((b) => (b.style.display = show ? '' : 'none'));
+    const note = this.startEl.querySelector<HTMLElement>('.install-note');
+    if (note) note.style.display = show ? '' : 'none';
+  }
+
+  private async install(): Promise<void> {
+    if (pwa.native) {
+      await pwa.prompt();
+      return;
+    }
+    if (isIOS) this.sheetEl.style.display = 'flex';
   }
 
   /** Товч дарахад (pointerdown — хурдан хариу үйлдэл) */
@@ -200,7 +279,7 @@ export class TouchUI {
 
   /** HUD-тай хамт 0.25 сек тутам: тухайн нөхцөлд хэрэгтэй товчнуудыг л харуулна */
   update(state: GameState, panelOpen: boolean): void {
-    this.rotateEl.style.display = this.portrait ? 'flex' : 'none';
+    this.rotateEl.style.display = this.portrait && this.sheetEl.style.display !== 'flex' ? 'flex' : 'none';
     const p = state.player;
     const hideAll = panelOpen;
     this.joy.style.display = hideAll || p.place === 'map' || state.move ? 'none' : '';

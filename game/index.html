@@ -6,6 +6,7 @@
     <title>Нүүдэлчин — Зуслан</title>
     <meta name="description" content="Монгол нүүдэлчин малчны амьдралыг харуулсан 3D тоглоом" />
     <meta name="theme-color" content="#2b1d14" />
+    <meta name="format-detection" content="telephone=no" />
     <!-- Утсанд «Нүүр дэлгэцэд нэмэх»-ээр апп шиг бүтэн дэлгэцээр нээгдэнэ -->
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -97,7 +98,19 @@
       .tbtn.sm { min-width: 40px; height: 40px; font-size: 19px; padding: 0 6px; border-radius: 10px; }
       .tbtn.on { background: rgba(232, 182, 76, 0.85); color: #2b1d14; }
       .rotate { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; text-align: center; background: #2b1d14; color: #f4ead6;
-                font-size: 18px; z-index: 50; }
+                font-size: 17px; z-index: 50; padding: 20px; }
+      .rot-box { max-width: 420px; }
+      .rot-ico { font-size: 54px; margin-bottom: 6px; }
+      .rot-msg { margin-bottom: 18px; }
+      .rot-btns { display: flex; flex-direction: column; gap: 10px; align-items: stretch; margin: 12px 0 10px; }
+      .tstart .rot-btns { flex-direction: row; flex-wrap: wrap; align-items: center; }
+      .rot-hint { font-size: 14px; opacity: 0.75; }
+      .rot-note { margin-top: 16px; font-size: 13px; opacity: 0.85; line-height: 1.45; }
+      .rotate .btn.big { padding: 12px 20px; font-size: 16px; }
+      .tsheet { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(20, 14, 8, 0.75); z-index: 60; }
+      .tsheet ol { margin: 10px 0; padding-left: 20px; line-height: 1.7; }
+      .ios-share { display: inline-block; padding: 0 6px; border: 1.5px solid #2b7be4; border-radius: 6px; color: #2b7be4; font-weight: 700; }
+      .muted { color: #8a7a60; font-size: 13px; }
       .tstart { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(20, 14, 8, 0.6); z-index: 40; }
       .tstart-box { width: min(560px, 90vw); max-height: 90vh; max-height: 90dvh; overflow: auto; padding: 14px 20px; border-radius: 14px; background: #f6efe1; color: #2b1d14; font-size: 13.5px; }
       .tstart-box h1 { margin: 0 0 4px; font-size: 24px; color: #6b3d1e; }

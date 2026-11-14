@@ -1,16 +1,31 @@
 {
+  "id": "/",
   "name": "Нүүдэлчин — Зуслан",
   "short_name": "Нүүдэлчин",
   "description": "Монгол нүүдэлчин малчны амьдралыг харуулсан 3D тоглоом",
   "lang": "mn",
   "start_url": "/",
+  "scope": "/",
   "display": "fullscreen",
   "orientation": "landscape",
   "background_color": "#2b1d14",
   "theme_color": "#2b1d14",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }
