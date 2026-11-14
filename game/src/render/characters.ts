@@ -342,6 +342,7 @@ export class CharactersView {
       swingLegs(v.rig, sp > 0.2 ? Math.sin(v.phase) * 0.7 : 0);
       v.rig.root.position.set(v.x, heightAt(v.x, v.z), v.z);
       v.rig.root.rotation.y = v.h;
+      v.rig.root.visible = w.mode !== 'den';   // цадсан чоно үүрэндээ (B6) — харагдахгүй
     }
     for (const [id, v] of this.wolves) if (!alive.has(id)) {
       this.group.remove(v.rig.root);

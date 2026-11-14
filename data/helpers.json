@@ -10,9 +10,19 @@
   },
   "teahouse": { "_doc": "Цайны газрын нэр дэвшигчид refreshDays өдөр тутам шинэчлэгдэнэ", "min": 2, "max": 4, "refreshDays": 5, "familyShare": 0.45 },
   "herder": {
-    "_doc": "Малчны AI (м, тоглоомын минут). speed — морьтой явах хурд; protectRadius — хамгаалалтын бүс; strayDistance — сүргээс ийм хол тасарсан малыг эргүүлнэ; wolfWatch — чонын нутгийн (улаан тойрог) захаас ийм зайд орсон малыг эргүүлнэ; pastureEveryMinutes — сайн бэлчээр хайх давтамж; homeHour — орой сүргээ хот руу тууж эхлэх цаг",
+    "_doc": "Малчны AI (м, тоглоомын минут). wolfAvoid — чонын нутгийн (улаан тойрог) захаас ийм зайд ойртсон малыг өөр тийш тууна (B2; wolfWatch-ийг орлоно). speed — морьтой явах хурд; protectRadius — хамгаалалтын бүс; strayDistance — сүргээс ийм хол тасарсан малыг эргүүлнэ; wolfWatch — чонын нутгийн (улаан тойрог) захаас ийм зайд орсон малыг эргүүлнэ; pastureEveryMinutes — сайн бэлчээр хайх давтамж; homeHour — орой сүргээ хот руу тууж эхлэх цаг",
     "speed": 3.2, "protectRadius": 15, "strayDistance": 34, "wolfWatch": 6, "decideEverySteps": 6,
-    "pastureEveryMinutes": 120, "pastureSearchRadius": 120, "homeHour": 18, "scareRadius": 35
+    "pastureEveryMinutes": 120, "pastureSearchRadius": 120, "homeHour": 18, "scareRadius": 35,
+    "wolfAvoid": 15, "noticeRadius": 80, "atFlockDistance": 22,
+    "schedule": {
+      "_doc": "B2 (хэрэглэгчийн дүрэм 2026-11-14): малчин өдөржин мал дээрээ байхгүй. Өглөө (06:00-аас outMinutes дотор) сүрэг рүүгээ очиж сайн бэлчээрт тууж гаргаад гэртээ буцна; visitHours цагуудад visitMinutes минут сүрэг дээрээ очиж тасарсан, чонын нутагт ойртсон (wolfAvoid м) малыг эргүүлж, бэлчээр муу бол шилжүүлнэ; homeHour-оос сүргээ тууж ирнэ. Сүрэг рүү дайрч буй чоныг noticeRadius м дотор л анзаарна",
+      "outMinutes": 150, "visitHours": [11, 15], "visitMinutes": 60
+    },
+    "horseCamp": {
+      "_doc": "B3: адуучин майхнаа аваад хотоос minR–maxR м зайд уулын (mountainTypes, mountainBonus) сайн бэлчээрт, чонын үүрээс denMargin м-ээс хол бууна. Өдөр адуугаа майхнаасаа pastureRadius дотор бэлчээж, орой майхны nightRadius дотор дөхүүлж, шөнө nightGuardRadius бүсээр манаж хононо",
+      "minR": 70, "maxR": 125, "denMargin": 40, "mountainTypes": ["foothill", "northSlope", "southSlope"], "mountainBonus": 1.5,
+      "pastureRadius": 70, "nightRadius": 16, "nightGuardRadius": 24
+    }
   },
   "child": { "_doc": "Хүүхэд цуглуулагч: хотын ойролцоох бүтээгдэхүүнийг түүж агуулахад хийнэ", "speed": 2.2, "carry": 5, "searchRadius": 160 },
   "driver": { "_doc": "Жолооч: өдөр бүр departHour-д агуулахад minUnits-ээс их зарах бүтээгдэхүүн байвал тэрэг/машинаар сумын төв явж зарна (тогоо/сепаратортой бол сүүг үлдээнэ)", "departHour": 9, "minUnits": 10 },

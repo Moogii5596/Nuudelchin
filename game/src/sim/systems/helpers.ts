@@ -5,6 +5,11 @@
  *   өөрийн гэртэй, малгүй ирнэ).
  * - Насанд хүрсэн туслах = МАЛЧИН. Үүрэг: сүрэг хариулах (сайн бэлчээрт бэлчээх, чонын бүсээс эргүүлэх,
  *   тасарсан малыг хотлуулах), ЖОЛООЧ (тэрэг/машинаар сумын төв явж зарах), ОТОР (тасалсан малтай өөр бууцанд).
+ * - B2 (хэрэглэгчийн дүрэм 2026-11-14): малчин өдөржин мал дээрээ байхгүй — өглөө сүргээ бэлчээрт тууж гаргаад
+ *   гэртээ ирнэ, өдөр 1–2 удаа (visitHours) сүрэг рүүгээ очиж шалгана, орой бэлчээрээс тууж ирнэ.
+ *   Мал чонын нутагт ойртвол (wolfAvoid) өөр тийш тууна. Сүрэг рүү дайрч буй чоныг noticeRadius-д л анзаарна.
+ * - B3: АДУУЧИН майхнаа аваад уулын ойролцоо (адууны сайн бэлчээр, чонын үүрээс зайдуу) бууна, орой адуугаа
+ *   майхан руугаа дөхүүлж манаж хононо (шөнийн бүс nightGuardRadius).
  * - Хүүхэд = ЦУГЛУУЛАГЧ: сүү, ноосыг түүж агуулахад хийнэ.
  * - Цалин сар бүр. Малаар урьдчилж төлж болно — тэр мал туслахынх болж (ownerId) өөр өнгөтэй, тоглогчийн
  *   зорилгын тоонд орохгүй, сүү ноос нь туслахынх. Мөнгө хүрэхгүй бол айлаараа, малтайгаа явна.
@@ -17,6 +22,7 @@ import { salePrice, dailyConditionDelta, sheepUnits } from './animals';
 import * as storage from './storage';
 import { parkingSpot, productPrice, vehicleCfg } from './trip';
 import { mapSpeedKmPerMin, sumId } from './travel';
+import { waterDistance } from '../terrain';
 import { scareWolf } from './wolves';
 import { flockKey } from './herds';
 import { dailyMilkLiters, homeSpot, intakeFactor } from './night';
@@ -55,6 +61,7 @@ export interface Helper {
   trip: HelperTrip | null;
   lastPasture: number;   // сүүлд бэлчээр сольсон алхам
   homeDriven: number;    // орой сүргээ хот руу тууж эхэлсэн өдөр
+  outDay?: number;       // өглөө сүргээ бэлчээрт тууж гаргасан өдөр (B2)
 }
 
 export interface CandidateMember {
@@ -83,10 +90,12 @@ export interface OtorGroup {
 
 /** Туслахын байр (майхан/гэр) ба айлын гэр — хотын ойролцоо */
 export interface Dwelling {
-  kind: 'familyGer' | 'helperTent' | 'helperGer';
+  kind: 'familyGer' | 'helperTent' | 'helperGer' | 'horseCamp';
   x: number;
   z: number;
   familyId?: number;
+  helperId?: number;     // horseCamp: адуучин (B3)
+  campId?: string;       // horseCamp: аль бууцанд
 }
 
 export interface HelpersState {
@@ -140,9 +149,11 @@ export function spareTents(state: GameState): number {
   return total - state.helpers.otor.length;
 }
 
-/** Туслахын гэр/байр (унтах газар) */
+/** Туслахын гэр/байр (унтах газар). Адуучин уулын ойролцоох майхандаа (B3) */
 function homeOf(state: GameState, h: Helper): { x: number; z: number } {
-  const d = state.helpers.dwellings.find((x) => (h.family ? x.familyId === h.familyId : x.kind !== 'familyGer'));
+  const hc = h.task === 'herd' && h.herd === 'horse' ? state.helpers.dwellings.find((x) => x.kind === 'horseCamp' && x.helperId === h.id && x.campId === state.campId) : undefined;
+  if (hc) return { x: hc.x + 2.5, z: hc.z + 1.5 };
+  const d = state.helpers.dwellings.find((x) => (h.family ? x.familyId === h.familyId : x.kind !== 'familyGer' && x.kind !== 'horseCamp'));
   return d ? { x: d.x + 3, z: d.z + 2 } : { x: 4, z: 6 };
 }
 
@@ -359,17 +370,18 @@ function driveAnimal(a: Animal, x: number, z: number, rng: Rng, step: number): v
   a.drivenAt = step;
 }
 
-/** Хотын ойролцоох хамгийн сайн бэлчээрийн цэг (чонын нутгаас зайдуу) */
-function bestPasture(cfg: GameConfig, state: GameState, quality: Record<string, number>, R: number): { x: number; z: number; score: number } {
+/** (cx, cz)-аас R радиус дотор хамгийн сайн бэлчээрийн цэг, чонын нутгаас (d.r + margin) зайдуу */
+function bestPasture(cfg: GameConfig, state: GameState, quality: Record<string, number>, R: number, cx = 0, cz = 0, minR = 25): { x: number; z: number; score: number } {
   const g = state.grass;
   const dens = state.wolves.dens;
-  let best = { x: 30, z: 0, score: -1 };
+  const margin = cfg.helpers.herder.wolfAvoid + 12;
+  let best = { x: cx + 30, z: cz, score: -1 };
   for (let iz = 0; iz < g.n; iz += 5) {
     for (let ix = 0; ix < g.n; ix += 5) {
       const x = -g.half + (ix + 0.5) * g.cell, z = -g.half + (iz + 0.5) * g.cell;
-      const r = Math.hypot(x, z);
-      if (r > R || r < 25) continue;
-      if (dens.some((d) => Math.hypot(x - d.x, z - d.z) < d.r + 18)) continue;
+      const r = Math.hypot(x - cx, z - cz);
+      if (r > R || Math.hypot(x, z) < minR) continue;
+      if (dens.some((d) => Math.hypot(x - d.x, z - d.z) < d.r + margin)) continue;
       const i = iz * g.n + ix;
       const s = Math.pow(quality[typeIdOf(g, i)] ?? 0, 1.5) * absBiomass(cfg, g, i) - r * 0.0008;
       if (s > best.score) best = { x, z, score: s };
@@ -378,18 +390,65 @@ function bestPasture(cfg: GameConfig, state: GameState, quality: Record<string, 
   return best;
 }
 
+/**
+ * Адуучны майхны газар (B3): хотоос horseCamp.minR–maxR зайд, уулын (foothill, ар, өвөр) бэлчээрт,
+ * чонын үүрээс denMargin-аас хол, уснаас зайтай. Бууц бүрт нэг удаа тооцно.
+ */
+function ensureHorseCamp(cfg: GameConfig, state: GameState, h: Helper, quality: Record<string, number>): void {
+  const hs = state.helpers;
+  if (hs.dwellings.some((d) => d.kind === 'horseCamp' && d.helperId === h.id && d.campId === state.campId)) return;
+  hs.dwellings = hs.dwellings.filter((d) => !(d.kind === 'horseCamp' && d.helperId === h.id));
+  const C = cfg.helpers.herder.horseCamp;
+  const g = state.grass;
+  const camp = cfg.camps.camps[state.campId];
+  const home = cfg.camps.home;
+  let best = { x: home.x + C.minR, z: home.z, s: -1 };
+  for (let iz = 0; iz < g.n; iz += 4) {
+    for (let ix = 0; ix < g.n; ix += 4) {
+      const x = -g.half + (ix + 0.5) * g.cell, z = -g.half + (iz + 0.5) * g.cell;
+      const r = Math.hypot(x - home.x, z - home.z);
+      if (r < C.minR || r > C.maxR) continue;
+      if (state.wolves.dens.some((d) => Math.hypot(x - d.x, z - d.z) < d.r + C.denMargin)) continue;
+      if (camp && waterDistance(camp.waterShape, x, z) < 12) continue;
+      const i = iz * g.n + ix;
+      const t = typeIdOf(g, i);
+      const mountain = (C.mountainTypes as string[]).includes(t) ? C.mountainBonus : 1;
+      const s = Math.pow(quality[t] ?? 0, 1.5) * absBiomass(cfg, g, i) * mountain;
+      if (s > best.s) best = { x, z, s };
+    }
+  }
+  hs.dwellings.push({ kind: 'horseCamp', x: Math.round(best.x), z: Math.round(best.z), helperId: h.id, campId: state.campId });
+}
+
+/** Туслахын хамгаалалтын бүсийн радиус: адуучин шөнө майхны дэргэд адуугаа манана (B3) */
+export function helperGuardRadius(cfg: GameConfig, h: Helper): number {
+  const H = cfg.helpers.herder;
+  return h.herd === 'horse' && h.mode === 'sleep' ? H.horseCamp.nightGuardRadius : H.protectRadius;
+}
+
 function areaScore(cfg: GameConfig, state: GameState, quality: Record<string, number>, x: number, z: number): number {
   const i = cellIndex(state.grass, x, z);
   if (i < 0) return 0;
   return Math.pow(quality[typeIdOf(state.grass, i)] ?? 0, 1.5) * absBiomass(cfg, state.grass, i);
 }
 
-/** Малчны нэг минут */
+/** Малчны өдрийн үе (B2): out — өглөө тууж гаргах, visit — өдөр шалгах, evening — орой тууж ирэх, idle — гэртээ */
+export function herderPhase(cfg: GameConfig, h: Helper, minute: number, day: number): 'out' | 'visit' | 'evening' | 'idle' {
+  const S = cfg.helpers.herder.schedule;
+  if (minute >= cfg.helpers.herder.homeHour * 60) return 'evening';
+  if (minute < cfg.time.dayStartMinute + S.outMinutes && h.outDay !== day) return 'out';
+  for (const vh of S.visitHours) if (minute >= vh * 60 && minute < vh * 60 + S.visitMinutes) return 'visit';
+  return 'idle';
+}
+
+/** Малчны нэг минут (B2, B3) */
 function herderStep(cfg: GameConfig, state: GameState, rng: Rng, h: Helper, quality: Record<string, number>): void {
   const H = cfg.helpers.herder;
   const t = state.time;
+  const horse = h.herd === 'horse';
+  if (horse) ensureHorseCamp(cfg, state, h, quality);
+  const home = homeOf(state, h);
   if (isNight(t, cfg.time)) {
-    const home = homeOf(state, h);
     h.tx = home.x;
     h.tz = home.z;
     if (moveToward(h, H.speed)) h.mode = 'sleep';
@@ -398,66 +457,92 @@ function herderStep(cfg: GameConfig, state: GameState, rng: Rng, h: Helper, qual
   h.mode = 'work';
   const f = flock(state, h.herd);
   if (!f.list.length) {
-    const home = homeOf(state, h);
     h.tx = home.x;
     h.tz = home.z;
     moveToward(h, H.speed);
     return;
   }
   if ((state.step + h.id) % H.decideEverySteps === 0) {
+    const phase = herderPhase(cfg, h, t.minute, t.day);
     let target: { x: number; z: number } | null = null;
-    // 1) Чоно сүрэг рүү дайрч байна — тийш давхиж үргээнэ
+    // 1) Чоно сүрэг рүү дайрч байна — анзаарвал (noticeRadius) тийш давхиж үргээнэ
     const ids = new Set(f.list.map((a) => a.id));
-    const hunter = state.wolves.list.find((o) => o.mode === 'hunt' && ids.has(o.targetId));
+    const hunter = state.wolves.list.find((o) => o.mode === 'hunt' && ids.has(o.targetId) && Math.hypot(o.x - h.x, o.z - h.z) <= H.noticeRadius);
     if (hunter) {
       target = { x: hunter.x, z: hunter.z };
       if (Math.hypot(hunter.x - h.x, hunter.z - h.z) <= H.scareRadius) scareWolf(cfg, hunter);
     }
-    const homeEvening = t.minute >= H.homeHour * 60 && t.minute < cfg.time.sleepMinute;
-    // 2) Чонын нутагт орсон эсвэл сүргээс тасарсан мал — эргүүлнэ
+    if (!target && phase === 'idle') target = home;   // өдөр гэртээ (сүрэг дээрээ өдөржин байхгүй)
     if (!target) {
-      let worst: Animal | null = null, wd = 0;
+      const atFlock = Math.hypot(h.x - f.x, h.z - f.z) < H.atFlockDistance;
+      // Сүрэгтэйгээ байхдаа: чонын нутагт ойртсон, тасарсан малыг эргүүлнэ
+      let worst: Animal | null = null, wd = 0, wolfDen: { x: number; z: number; r: number } | null = null;
       for (const a of f.list) {
         if (a.mode === 'home' || a.mode === 'sleep' || a.mode === 'driven' || a.mode === 'drink') continue;
-        const inWolf = state.wolves.dens.some((d) => Math.hypot(a.x - d.x, a.z - d.z) < d.r + H.wolfWatch);
+        const den = state.wolves.dens.find((d) => Math.hypot(a.x - d.x, a.z - d.z) < d.r + H.wolfAvoid);
         const stray = Math.hypot(a.x - f.x, a.z - f.z);
-        const score = inWolf ? 1000 + stray : stray > H.strayDistance ? stray : 0;
+        const score = den ? 1000 + stray : stray > H.strayDistance ? stray : 0;
         if (score > wd) {
           wd = score;
           worst = a;
+          wolfDen = den ?? null;
         }
       }
-      if (worst) {
+      if (worst && (atFlock || wolfDen)) {
         target = { x: worst.x, z: worst.z };
         if (Math.hypot(worst.x - h.x, worst.z - h.z) < 12) {
-          const goal = homeEvening ? homeSpot(cfg, rng, worst.species) : { x: f.x, z: f.z };
-          driveAnimal(worst, goal.x, goal.z, rng, state.step);
+          if (wolfDen) {
+            // Чонын нутгаас эсрэг тийш тууна: ойролцоох сүргийн малыг хамт
+            const ux = worst.x - wolfDen.x, uz = worst.z - wolfDen.z, l = Math.hypot(ux, uz) || 1;
+            const R = wolfDen.r + H.wolfAvoid + 15;
+            const gx = wolfDen.x + (ux / l) * R, gz = wolfDen.z + (uz / l) * R;
+            for (const a of f.list) if (Math.hypot(a.x - worst.x, a.z - worst.z) < 20 && a.mode !== 'home' && a.mode !== 'sleep') driveAnimal(a, gx + (a.x - worst.x) * 0.3, gz + (a.z - worst.z) * 0.3, rng, state.step);
+          } else {
+            const goal = phase === 'evening' ? eveningSpot(cfg, rng, h, home, worst.species) : { x: f.x, z: f.z };
+            driveAnimal(worst, goal.x, goal.z, rng, state.step);
+          }
         }
       }
-    }
-    // 3) Орой сүргээ хот руу тууна (тасарсан мал хотлоно)
-    if (!target && homeEvening && h.homeDriven !== t.day) {
-      h.homeDriven = t.day;
-      const far = f.list.filter((a) => Math.hypot(a.x - cfg.camps.home.x, a.z - cfg.camps.home.z) > 60 && a.mode !== 'home' && a.mode !== 'sleep');
-      for (const a of far) {
-        const p = homeSpot(cfg, rng, a.species);
-        driveAnimal(a, (a.x + p.x) / 2, (a.z + p.z) / 2, rng, state.step);
+      if (!target && !atFlock) target = { x: f.x, z: f.z };   // сүрэг рүүгээ явна
+      if (!target && phase === 'out') {
+        // 2) Өглөө: сүргээ сайн бэлчээрт тууж гаргаад гэртээ буцна
+        h.outDay = t.day;
+        h.lastPasture = state.step;
+        const b = horse ? bestPasture(cfg, state, quality, H.horseCamp.pastureRadius, home.x, home.z, 25) : bestPasture(cfg, state, quality, H.pastureSearchRadius);
+        for (const a of f.list) if (a.mode !== 'home' && a.mode !== 'drink') driveAnimal(a, b.x + (a.x - f.x) * 0.3, b.z + (a.z - f.z) * 0.3, rng, state.step);
+        target = home;
       }
-    }
-    // 4) Сайн бэлчээр рүү хөтлөх
-    if (!target && !homeEvening && state.step - h.lastPasture >= H.pastureEveryMinutes) {
-      h.lastPasture = state.step;
-      const b = bestPasture(cfg, state, quality, H.pastureSearchRadius);
-      if (b.score > areaScore(cfg, state, quality, f.x, f.z) * 1.25) {
-        for (const a of f.list) if (a.mode !== 'home' && a.mode !== 'sleep' && a.mode !== 'drink') driveAnimal(a, b.x + (a.x - f.x) * 0.3, b.z + (a.z - f.z) * 0.3, rng, state.step);
-        target = b;
+      if (!target && phase === 'visit' && state.step - h.lastPasture >= H.pastureEveryMinutes) {
+        // 3) Өдөр очиход: бэлчээр муудсан бол илүү сайн газар руу шилжүүлнэ
+        h.lastPasture = state.step;
+        const b = horse ? bestPasture(cfg, state, quality, H.horseCamp.pastureRadius, home.x, home.z, 25) : bestPasture(cfg, state, quality, H.pastureSearchRadius);
+        if (b.score > areaScore(cfg, state, quality, f.x, f.z) * 1.25) {
+          for (const a of f.list) if (a.mode !== 'home' && a.mode !== 'sleep' && a.mode !== 'drink') driveAnimal(a, b.x + (a.x - f.x) * 0.3, b.z + (a.z - f.z) * 0.3, rng, state.step);
+          target = b;
+        }
       }
+      if (!target && phase === 'evening' && h.homeDriven !== t.day) {
+        // 4) Орой: сүргээ хот руу (адуучин — майхан руугаа) тууж ирнэ
+        h.homeDriven = t.day;
+        for (const a of f.list) {
+          if (a.mode === 'home' || a.mode === 'sleep') continue;
+          const p = eveningSpot(cfg, rng, h, home, a.species);
+          if (Math.hypot(a.x - p.x, a.z - p.z) > (horse ? H.horseCamp.nightRadius : 30)) driveAnimal(a, p.x, p.z, rng, state.step);
+        }
+      }
+      if (!target) target = phase === 'evening' ? { x: (f.x + home.x) / 2, z: (f.z + home.z) / 2 } : { x: f.x + 6, z: f.z + 4 };
     }
-    if (!target) target = { x: f.x + 6, z: f.z + 4 };   // сүргээ дагана
     h.tx = target.x;
     h.tz = target.z;
   }
   moveToward(h, H.speed);
+}
+
+/** Орой туух газар: хонь, үхэр хотондоо; адуу адуучны майхны дэргэд (B3) */
+function eveningSpot(cfg: GameConfig, rng: Rng, h: Helper, home: { x: number; z: number }, sp: Species): { x: number; z: number } {
+  if (h.herd !== 'horse') return homeSpot(cfg, rng, sp);
+  const r = Math.sqrt(rng.next()) * cfg.helpers.herder.horseCamp.nightRadius * 0.8, a = rng.range(0, Math.PI * 2);
+  return { x: home.x + Math.cos(a) * r, z: home.z + Math.sin(a) * r };
 }
 
 /** Хүүхэд цуглуулагчийн нэг минут */
@@ -586,6 +671,11 @@ function driverStep(cfg: GameConfig, state: GameState, h: Helper): HelperEvent[]
 /** Минут бүр: бүх туслах ажиллана */
 export function helpersStep(cfg: GameConfig, state: GameState, rng: Rng, quality: Record<string, number>): HelperEvent[] {
   const ev: HelperEvent[] = [];
+  // Адуучин биш болсон (халагдсан, үүрэг сольсон) туслахын майхныг авна
+  const hs = state.helpers;
+  if (hs.dwellings.some((d) => d.kind === 'horseCamp')) {
+    hs.dwellings = hs.dwellings.filter((d) => d.kind !== 'horseCamp' || hs.list.some((h) => h.id === d.helperId && h.task === 'herd' && h.herd === 'horse'));
+  }
   for (const h of state.helpers.list) {
     if (h.task === 'otor') {
       h.mode = 'away';

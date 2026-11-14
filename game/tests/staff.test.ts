@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { cfg, DAY, newSim, steps } from './helpers';
-import { addDwelling, bedsTotal, refreshCandidates, payWages, spareTents, type Candidate } from '../src/sim/systems/helpers';
+import { addDwelling, bedsTotal, herderPhase, refreshCandidates, payWages, spareTents, type Candidate } from '../src/sim/systems/helpers';
 import { herdSheepUnits } from '../src/sim/systems/animals';
 import { protectionZones, isProtected } from '../src/sim/systems/wolves';
 import { addVehicle } from '../src/sim/systems/travel';
@@ -156,5 +156,74 @@ describe('Туслах малчид (M5)', () => {
     expect(sim.command({ type: 'recallOtor', helper: h.id }).ok).toBe(true);
     expect(sim.state.animals.filter((a) => ids.includes(a.id)).length).toBeGreaterThanOrEqual(4);
     expect(h.task).toBe('herd');
+  });
+
+  describe('Малчны хуваарь ба адуучин (B2, B3 — хэрэглэгчийн дүрэм 2026-11-14)', () => {
+    const toMinute = (sim: Sim, m: number): void => {
+      while (sim.state.time.minute !== m) sim.step();
+    };
+
+    it('малчин өглөө сүргээ тууж гаргаад гэртээ ирнэ, өдөр 1–2 удаа очно, орой тууж ирнэ', () => {
+      const sim = newSim(11);
+      hireOne(sim, true);
+      sim.state.wolves.peaceful = true;
+      const h = sim.state.helpers.list.find((x) => x.task === 'herd')!;
+      h.herd = 'sheep';
+      const S = cfg.helpers.herder.schedule;
+      expect(herderPhase(cfg, h, 13 * 60, 1)).toBe('idle');
+      expect(herderPhase(cfg, h, S.visitHours[0]! * 60 + 10, 1)).toBe('visit');
+      expect(herderPhase(cfg, h, cfg.helpers.herder.homeHour * 60 + 5, 1)).toBe('evening');
+      toMinute(sim, 13 * 60 + 30);   // өдөр — гэртээ
+      expect(h.outDay).toBe(sim.state.time.day);
+      const sheep = sim.state.animals.filter((a) => a.species === 'sheep');
+      const ger = sim.state.helpers.dwellings.find((d) => d.familyId === h.familyId)!;
+      expect(Math.hypot(h.x - ger.x, h.z - ger.z)).toBeLessThan(5);       // гэртээ (сүрэг дээрээ өдөржин биш)
+      toMinute(sim, S.visitHours[1]! * 60 + 40);   // өдрийн 2 дахь эргэлт — сүрэг дээрээ
+      const fx2 = sheep.reduce((t, a) => t + a.x, 0) / sheep.length, fz2 = sheep.reduce((t, a) => t + a.z, 0) / sheep.length;
+      expect(Math.hypot(h.x - fx2, h.z - fz2)).toBeLessThan(cfg.helpers.herder.atFlockDistance + 8);
+    });
+
+    it('чонын нутагт ойртсон малыг чонын үүрнээс эсрэг тийш тууна', () => {
+      const sim = newSim(12);
+      hireOne(sim, true);
+      sim.state.wolves.peaceful = true;
+      const h = sim.state.helpers.list.find((x) => x.task === 'herd')!;
+      h.herd = 'sheep';
+      const den = sim.state.wolves.dens[0]!;
+      const a = sim.state.animals.find((x) => x.species === 'sheep')!;
+      const ux = -den.x / Math.hypot(den.x, den.z), uz = -den.z / Math.hypot(den.x, den.z);
+      a.x = a.tx = den.x + ux * (den.r + 5);
+      a.z = a.tz = den.z + uz * (den.r + 5);
+      h.x = h.tx = a.x + 3;
+      h.z = h.tz = a.z;
+      steps(sim, 3 * 60);
+      expect(Math.hypot(a.x - den.x, a.z - den.z)).toBeGreaterThan(den.r + cfg.helpers.herder.wolfAvoid);
+    });
+
+    it('адуучин уулын ойролцоо майхнаа барьж, орой адуугаа дөхүүлж манаж хононо', () => {
+      const sim = newSim(13);
+      hireOne(sim, true);
+      sim.state.wolves.peaceful = true;
+      const h = sim.state.helpers.list.find((x) => x.task === 'herd')!;
+      expect(sim.command({ type: 'helperTask', helper: h.id, task: 'herd', herd: 'horse' }).ok).toBe(true);
+      expect(sim.command({ type: 'debugAddAnimals', n: 0 }).ok).toBe(true);
+      // Адуу нэмнэ (5)
+      const base = sim.state.animals.find((a) => a.species === 'horse' && !a.riding) ?? sim.state.animals.find((a) => a.riding)!;
+      for (let k = 0; k < 5; k++) sim.state.animals.push({ ...base, id: sim.state.nextId++, riding: false, x: 40 + k, z: 20, tx: 40 + k, tz: 20, mode: 'graze', ownerId: undefined });
+      steps(sim, 20);
+      const C = cfg.helpers.herder.horseCamp;
+      const camp = sim.state.helpers.dwellings.find((d) => d.kind === 'horseCamp' && d.helperId === h.id)!;
+      expect(camp).toBeTruthy();
+      const r = Math.hypot(camp.x, camp.z);
+      expect(r).toBeGreaterThanOrEqual(C.minR - 3);
+      expect(r).toBeLessThanOrEqual(C.maxR + 3);
+      for (const d of sim.state.wolves.dens) expect(Math.hypot(camp.x - d.x, camp.z - d.z)).toBeGreaterThan(d.r + C.denMargin - 4);
+      toMinute(sim, cfg.time.sleepMinute + 60);   // шөнө
+      const horses = sim.state.animals.filter((a) => a.species === 'horse' && !a.riding);
+      const zones = protectionZones(cfg, sim.state);
+      expect(Math.hypot(h.x - camp.x, h.z - camp.z)).toBeLessThan(5);
+      const near = horses.filter((a) => Math.hypot(a.x - camp.x, a.z - camp.z) < C.nightGuardRadius && isProtected(zones, a.x, a.z));
+      expect(near.length).toBeGreaterThanOrEqual(horses.length - 1);
+    });
   });
 });

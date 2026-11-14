@@ -143,6 +143,7 @@ export function applyCheat(sim: Sim, action: CheatAction): string {
       best.w.targetId = best.id;
       best.w.forced = true;
       best.w.fed = 0;
+      best.w.hunger = Math.max(best.w.hunger ?? 0, cfg.wolves.hunger.hungryAtDays);
       best.w.scared = 0;
       return `🐺 Чоно ${Math.round(best.d)} м зайтай мал руу дайрлаа`;
     }

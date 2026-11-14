@@ -116,7 +116,7 @@ export class StaffView {
       keys.add(key);
       let o = this.dwellings.get(key);
       if (!o) {
-        o = d.kind === 'helperTent' ? smallTent() : smallGer(d.kind === 'helperGer' ? 0.85 : 1);
+        o = d.kind === 'helperTent' || d.kind === 'horseCamp' ? smallTent() : smallGer(d.kind === 'helperGer' ? 0.85 : 1);
         o.rotation.y = Math.atan2(-d.x, -d.z);   // хаалга хот руу
         this.group.add(o);
         this.dwellings.set(key, o);

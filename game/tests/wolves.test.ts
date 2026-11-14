@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { cfg, newSim, steps } from './helpers';
-import { isProtected, protectionZones } from '../src/sim/systems/wolves';
+import { hungerStage, isProtected, protectionZones } from '../src/sim/systems/wolves';
 import type { GameState } from '../src/sim/state';
 
 /** Нэг хонийг 1-р үүрний нутагт, бусдыг хотод тавина */
@@ -15,6 +15,7 @@ function baitAtDen(s: GameState): number {
   }
   bait.x = bait.tx = den.x + 4;
   bait.z = bait.tz = den.z;
+  for (const o of s.wolves.list) o.hunger = 2;   // өлссөн (B6): нутагтаа орсон малд дайрна
   return bait.id;
 }
 
@@ -207,5 +208,86 @@ describe('Мал чоноос үргэж тарна (хэрэглэгчийн д
     sim.step();
     sim.step();
     expect(sheepOf(sim.state).some((a) => a.mode === 'flee')).toBe(false);
+  });
+
+  describe('Өлсгөлөн (B6, хэрэглэгчийн дүрэм 2026-11-14)', () => {
+    it('цадсан чоно үүрэндээ орж, нутагт нь орсон малд дайрахгүй', () => {
+      const sim = newSim(32);
+      baitAtDen(sim.state);
+      for (const o of sim.state.wolves.list) o.hunger = 0;
+      let hunts = 0;
+      sim.on((e) => {
+        if (e.type === 'wolfHunt') hunts++;
+      });
+      steps(sim, 8 * 60);
+      expect(hunts).toBe(0);
+      const den = sim.state.wolves.dens[0]!;
+      for (const o of sim.state.wolves.list.filter((x) => x.den === 0)) {
+        expect(o.mode).toBe('den');
+        expect(Math.hypot(o.x - den.x, o.z - den.z)).toBeLessThan(1);
+      }
+    });
+
+    it('өлсгөлөн цаг өнгөрөх тусам нэмэгдэж, цадсан → өлссөн → маш өлссөн болно', () => {
+      const sim = newSim(33);
+      sim.state.wolves.peaceful = true;
+      const o = sim.state.wolves.list[0]!;
+      o.hunger = 0;
+      expect(hungerStage(cfg, o)).toBe('fed');
+      o.hunger = cfg.wolves.hunger.hungryAtDays;
+      expect(hungerStage(cfg, o)).toBe('hungry');
+      o.hunger = cfg.wolves.hunger.starvingAtDays;
+      expect(hungerStage(cfg, o)).toBe('starving');
+    });
+
+    it('маш өлссөн чоно өөр үүр рүү аялж, замдаа таарсан малд шууд дайрна', () => {
+      const sim = newSim(34);
+      const ws = sim.state.wolves;
+      expect(ws.dens.length).toBeGreaterThan(1);
+      for (const a of sim.state.animals) if (!a.riding) {
+        a.x = a.tx = 20;
+        a.z = a.tz = 4;
+      }
+      const o = ws.list.find((x) => x.den === 0)!;
+      for (const x of ws.list) x.hunger = x === o ? cfg.wolves.hunger.starvingAtDays + 1 : 0;
+      steps(sim, 3);
+      expect(o.travel).not.toBeUndefined();
+      expect(o.travel).not.toBe(0);
+      // Замд нь (чонын урд) хамгаалалтгүй хонь тавина
+      const bait = sim.state.animals.find((a) => a.species === 'sheep')!;
+      const td = ws.dens[o.travel!]!;
+      const ux = td.x - o.x, uz = td.z - o.z, l = Math.hypot(ux, uz);
+      bait.x = bait.tx = o.x + (ux / l) * 15;
+      bait.z = bait.tz = o.z + (uz / l) * 15;
+      let hunted = 0;
+      sim.on((e) => {
+        if (e.type === 'wolfHunt' && e.animalId === bait.id) hunted++;
+      });
+      steps(sim, 6);
+      expect(hunted).toBe(1);
+    });
+
+    it('барьсан малын мах үүрний нөөцөд орж, тэр үүрний чоно тэнцүү хувааж иднэ; том мал олон хоног', () => {
+      const sim = newSim(35);
+      sim.state.wolves.peaceful = true;
+      const ws = sim.state.wolves;
+      const den = ws.dens[0]!;
+      const pack = ws.list.filter((x) => x.den === 0);
+      ws.list = ws.list.filter((x) => x.den === 0);
+      for (const x of pack) {
+        x.x = x.tx = den.x;
+        x.z = x.tz = den.z;
+        x.hunger = 2;
+      }
+      den.food = 200;   // жишээ нь үхэр барьсан
+      steps(sim, 6 * 60);
+      const h = pack.map((x) => x.hunger!);
+      expect(Math.max(...h) - Math.min(...h)).toBeLessThan(0.05);   // тэнцүү
+      expect(Math.max(...h)).toBeLessThan(0.5);
+      const eatenPerWolf = (200 - den.food!) / pack.length;
+      expect(eatenPerWolf).toBeGreaterThan(4);
+      // Үлдсэн нөөц олон хоногт хүрнэ (өдөрт dailyKg × чонын тоо)
+      expect(den.food! / (cfg.wolves.hunger.dailyKg * pack.length)).toBeGreaterThan(5);
+    });
   });
 });

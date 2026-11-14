@@ -175,7 +175,7 @@ export function dogsStep(cfg: GameConfig, state: GameState, herds?: Herd[]): voi
     // Чоно хөөх
     if (d.mode === 'chase') {
       const w = state.wolves.list.find((o) => o.id === d.wolfId);
-      if (!w || w.mode === 'flee' || Math.hypot(w.x - goal.ax, w.z - goal.az) > c.leash) {
+      if (!w || w.mode === 'flee' || w.mode === 'den' || Math.hypot(w.x - goal.ax, w.z - goal.az) > c.leash) {
         d.mode = 'go';
         d.wolfId = 0;
       } else {
@@ -192,7 +192,7 @@ export function dogsStep(cfg: GameConfig, state: GameState, herds?: Herd[]): voi
     if ((state.step + d.id) % 2 === 0) {
       let target = 0, bd = c.alertRadius;
       for (const w of state.wolves.list) {
-        if (w.mode === 'flee') continue;
+        if (w.mode === 'flee' || w.mode === 'den') continue;   // үүрэндээ байгаа цадсан чоныг хөөхгүй
         const dist = Math.hypot(w.x - d.x, w.z - d.z);
         if (dist < bd && Math.hypot(w.x - goal.ax, w.z - goal.az) <= c.leash) {
           bd = dist;
