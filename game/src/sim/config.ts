@@ -30,6 +30,7 @@ export interface TimeConfig {
   nightEndMinute: number;        // дараа өглөөний 06:00 (= 1800)
   realSecondsPerGameHour: number;
   nightRealSecondsPerGameHour: number;
+  mapFastForward: number;        // газрын зураг дээр Shift — цаг хурдасгах
   speeds: number[];
   monthDays: number;
   season: 'spring' | 'summer' | 'autumn' | 'winter';

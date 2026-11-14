@@ -3,7 +3,7 @@ import { cfg, newSim, steps } from './helpers';
 import * as storage from '../src/sim/systems/storage';
 import { AutoTrip } from '../src/sim/autotrip';
 import { bestTruck, parkingSpot } from '../src/sim/systems/trip';
-import { addVehicle, fleetOf, mapSpeedKmPerMin, sumId } from '../src/sim/systems/travel';
+import { addVehicle, droveSlows, fleetOf, mapSpeedKmPerMin, sumId } from '../src/sim/systems/travel';
 
 const SUM = sumId(cfg);
 const dist = (a: { x: number; z: number }, b: { x: number; z: number }) => Math.hypot(a.x - b.x, a.z - b.z);
@@ -147,5 +147,12 @@ describe('Газрын зураг, тээвэр, Худалдаачин (M4.6)',
     const truckMin = sim.state.step - s0;
     expect((sim.state.today.expenses.fuel ?? 0) + 0).toBeGreaterThanOrEqual(fuel0);
     expect(truckMin).toBeLessThan(((2 * cfg.vehicles.sumCenterKm) / cfg.vehicles.riding.mapKmh) * 60 * 0.6);
+  });
+  it('ганц хонь тууж явбал удаашрахгүй; 2+ хонь эсвэл ганц үхэр бол удаашрна', () => {
+    expect(droveSlows([{ species: 'sheep' }])).toBe(false);
+    expect(droveSlows([{ species: 'goat' }])).toBe(false);
+    expect(droveSlows([{ species: 'sheep' }, { species: 'goat' }])).toBe(true);
+    expect(droveSlows([{ species: 'cow' }])).toBe(true);
+    expect(droveSlows([{ species: 'horse' }])).toBe(true);
   });
 });

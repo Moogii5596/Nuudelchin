@@ -51,6 +51,11 @@ export class WorldMapView {
   private sun: THREE.DirectionalLight;
   private hemi: THREE.HemisphereLight;
   zoom = 1;
+  /** Камерын эргэлт (хулганы баруун товч) ба хазайлт (дунд товч) — FollowCamera-аас */
+  yaw = 0;
+  pitch = 0.95;
+  /** Sim алхмын өмнөх байрлал: алхам хооронд жигд зөөлрүүлнэ (морьтой хүн гацахгүй) */
+  private prev: { x: number; z: number } | null = null;
 
   constructor(private cfg: GameConfig) {
     const wm = cfg.worldmap;
@@ -229,8 +234,21 @@ export class WorldMapView {
 
   private bob = 0;
 
-  update(state: GameState, dt: number, daylight: number): void {
-    const m = state.map;
+  /** Sim алхмын өмнө дуудна */
+  snapshot(state: GameState): void {
+    this.prev = { x: state.map.x, z: state.map.z };
+  }
+
+  update(state: GameState, dt: number, daylight: number, alpha = 1): void {
+    const m0 = state.map;
+    // Алхам хооронд зөөлрүүлсэн байрлал
+    let px = m0.x, pz = m0.z;
+    const pv = this.prev;
+    if (pv && Math.hypot(pv.x - m0.x, pv.z - m0.z) < 2) {
+      px = pv.x + (m0.x - pv.x) * alpha;
+      pz = pv.z + (m0.z - pv.z) * alpha;
+    }
+    const m = { ...m0, x: px, z: pz };
     // Гэрийн бууцны нэр «(таны бууц)»
     if (this.homeId !== state.campId) {
       const old = this.labels.get(this.homeId);
@@ -252,12 +270,12 @@ export class WorldMapView {
       (this.line.geometry as THREE.BufferGeometry).setFromPoints([this.party.position.clone().setY(y + 0.4), this.target.position]);
       this.line.computeLineDistances();
     }
-    // Камер дагана
-    const goal = new THREE.Vector3(m.x * U, y + 120 * this.zoom, m.z * U + 85 * this.zoom);
-    if (this.camPos.lengthSq() === 0) this.camPos.copy(goal);
-    this.camPos.lerp(goal, Math.min(1, dt * 4));
+    // Камер тоглогчийг шууд дагана (эргүүлэх, хазайлгах, томруулах)
+    const D = 147 * this.zoom;
+    const cp = Math.cos(this.pitch);
+    this.camPos.set(m.x * U + Math.sin(this.yaw) * cp * D, y + Math.sin(this.pitch) * D, m.z * U + Math.cos(this.yaw) * cp * D);
     this.camera.position.copy(this.camPos);
-    this.camera.lookAt(this.camPos.x, this.camPos.y - 120 * this.zoom, this.camPos.z - 85 * this.zoom);
+    this.camera.lookAt(m.x * U, y, m.z * U);
     // Өдөр, шөнө
     const bg = new THREE.Color(0x1a2440).lerp(new THREE.Color(0x9cc8e8), daylight);
     (this.scene.background as THREE.Color).copy(bg);

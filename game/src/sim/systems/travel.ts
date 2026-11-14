@@ -222,10 +222,19 @@ export function mapSpeedKmPerMin(cfg: GameConfig, v: VehicleId | null, droving =
   return cfg.vehicles.sumCenterKm / c.oneWayHours / 60;
 }
 
+/**
+ * Тууж яваа мал аяллыг удаашруулах эсэх (хэрэглэгчийн дүрэм 2026-11-14):
+ * 2+ хонь ямаа, эсвэл ганц ч гэсэн үхэр/адуу бол удаан; ганц хонь/ямаа бол хурд хэвээр.
+ */
+export function droveSlows(drove: Pick<Animal, 'species'>[]): boolean {
+  if (drove.some((a) => a.species === 'cow' || a.species === 'horse')) return true;
+  return drove.length > 1;
+}
+
 /** Одоогийн аяллын хурд */
 export function partySpeedKmPerMin(cfg: GameConfig, state: GameState): number {
   const p = state.player;
-  return mapSpeedKmPerMin(cfg, p.driving, !p.driving && p.drove.length > 0);
+  return mapSpeedKmPerMin(cfg, p.driving, !p.driving && droveSlows(p.drove));
 }
 
 /** Нэг тоглоомын минут: газрын зураг дээр явна. Ирсэн бол 3D руу орно */

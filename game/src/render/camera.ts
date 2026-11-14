@@ -1,6 +1,8 @@
 /**
  * Малчныг дагах камер (прототип v1.2): хулганаар чирж эргүүлнэ, дугуйгаар ойртуулна.
  * Чирээгүй товшилтыг onClick-ээр (газар дээр дарж явах) дамжуулна.
+ * M4.6: газрын зургийн горимд (mapMode) хулганы баруун товчоор чирэхэд эргүүлнэ, дунд товчоор дээш доош хазайлгана
+ * (mapYaw, mapPitch). Зүүн товч — зөвхөн дарах.
  */
 import * as THREE from 'three';
 import { clamp } from './util';
@@ -11,14 +13,20 @@ export class FollowCamera {
   pitch = 0.55;
   dist = 18;
   onClick: ((ndcX: number, ndcY: number, double: boolean) => void) | null = null;
-  private ptr: { x: number; y: number; sx: number; sy: number; id: number; drag: boolean } | null = null;
+  /** Газрын зураг (M4.6) */
+  mapMode = false;
+  mapYaw = 0;
+  mapPitch = 0.95;
+  private ptr: { x: number; y: number; sx: number; sy: number; id: number; drag: boolean; button: number } | null = null;
   private lastTap = 0;
 
   constructor(dom: HTMLElement, aspect: number) {
     this.camera = new THREE.PerspectiveCamera(55, aspect, 0.3, 900);
+    dom.addEventListener('contextmenu', (e) => e.preventDefault());
     dom.addEventListener('pointerdown', (e) => {
       dom.focus();
-      this.ptr = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, id: e.pointerId, drag: false };
+      if (e.button === 1) e.preventDefault();   // дунд товчны автомат гүйлгэлтгүй
+      this.ptr = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, id: e.pointerId, drag: false, button: e.button };
       dom.setPointerCapture(e.pointerId);
     });
     dom.addEventListener('pointermove', (e) => {
@@ -26,8 +34,13 @@ export class FollowCamera {
       if (!p || e.pointerId !== p.id) return;
       if (!p.drag && Math.hypot(e.clientX - p.sx, e.clientY - p.sy) > 7) p.drag = true;
       if (p.drag) {
-        this.yaw -= (e.clientX - p.x) * 0.006;
-        this.pitch = clamp(this.pitch + (e.clientY - p.y) * 0.004, 0.12, 1.35);
+        if (this.mapMode) {
+          if (p.button === 2) this.mapYaw -= (e.clientX - p.x) * 0.006;
+          else if (p.button === 1) this.mapPitch = clamp(this.mapPitch + (e.clientY - p.y) * 0.004, 0.3, 1.45);
+        } else {
+          this.yaw -= (e.clientX - p.x) * 0.006;
+          this.pitch = clamp(this.pitch + (e.clientY - p.y) * 0.004, 0.12, 1.35);
+        }
       }
       p.x = e.clientX;
       p.y = e.clientY;
@@ -36,7 +49,7 @@ export class FollowCamera {
       const p = this.ptr;
       if (!p || e.pointerId !== p.id) return;
       this.ptr = null;
-      if (p.drag) return;
+      if (p.drag || p.button !== 0) return;
       const now = performance.now();
       const dbl = now - this.lastTap < 320;
       this.lastTap = now;

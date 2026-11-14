@@ -123,7 +123,7 @@ function start(): void {
   const updatePrompt = (): void => {
     const p = state.player;
     let html = '';
-    if (!panels.isOpen && p.place === 'map') html = 'Газрын зураг: очих газраа хулганаар дарна (сумын төв, бууц)';
+    if (!panels.isOpen && p.place === 'map') html = 'Газрын зураг: очих газраа зүүн товчоор дарна · баруун товч — эргүүлэх · дунд товч — хазайлгах · дугуй — томруулах · <kbd>Shift</kbd> — цаг хурдасгах';
     else if (!panels.isOpen && p.driving) html = '<kbd>W</kbd><kbd>S</kbd> явах/тоормос · <kbd>A</kbd><kbd>D</kbd> эргэх · <kbd>V</kbd> буух' + (p.place === 'camp' && Math.hypot(p.x - cfg.camps.home.x, p.z - cfg.camps.home.z) < cfg.vehicles.road.loadRange ? ' · <kbd>T</kbd> ачих/буулгах' : '') + ' · захын хязгаар руу явбал газрын зураг';
     else if (!panels.isOpen && p.place === 'sum') {
       const sh = cfg.worldmap.sum3d.shop;
@@ -153,7 +153,9 @@ function start(): void {
     worstMs = Math.max(worstMs, rawDt * 1000);
     const paused = panels.isOpen;
 
-    const speed = cfg.time.speeds[speedIdx] ?? 1;
+    // Газрын зураг дээр Shift — цаг хурдасна (M4.6)
+    const fast = state.player.place === 'map' && !state.move && (controller.isDown('ShiftLeft') || controller.isDown('ShiftRight'));
+    const speed = (cfg.time.speeds[speedIdx] ?? 1) * (fast ? cfg.time.mapFastForward : 1);
     if (!paused) {
       controller.update(dt, state, view.cam.forward());
       acc += dt * speed;
@@ -223,7 +225,7 @@ function start(): void {
         `${t('hud.animals')}: ${counts.join(' · ')}<br>` +
         `📦 ${fmtNum(storage.used(state))}/${storage.capacity(cfg, state)} · ✋ ${carryTxt} (${fmtNum(carried)}/${cfg.products.carryUnits})${onGround ? ` · газарт ${onGround}` : ''}<br>` +
         `${t('hud.camp')}: ${t('camp.' + state.campId)} · ${t('hud.grass')} ${Math.round(grassAvg * 100)}% · ${t('hud.degrade')} ${Math.round(degrade * 100)}%<br>` +
-        `${status} · ${t('hud.speed')}: ${speed}× <small>(1/2/3)</small><br>` +
+        `${status} · ${t('hud.speed')}: ${speed}×${fast ? ' ⏩' : ''} <small>(1/2/3)</small><br>` +
         dogsTxt +
         alert +
         `<small>${t('hud.milestone')} · ${t('help.hint')}${view.heatmap ? ' · G: heatmap' : ''}${view.zones.visible ? ' · Z: бүс' : ''}${state.wolves.peaceful ? ' · чоно унтраасан' : ''}</small>`;

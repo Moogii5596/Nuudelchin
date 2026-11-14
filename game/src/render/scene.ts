@@ -101,6 +101,7 @@ export class GameView {
   /** Sim алхмын өмнө (interpolation) */
   snapshot(state: GameState): void {
     this.animals.snapshot(state);
+    this.map.snapshot(state);
   }
 
   /** Дэлгэцийн цэгээс газрын байрлал */
@@ -123,11 +124,15 @@ export class GameView {
     this.applyDaylight(state.time.minute);
     // Газрын зураг: өөрийн scene, камертай (M4.6)
     if (p.place === 'map') {
+      this.cam.mapMode = true;
       this.map.zoom = Math.min(2.2, Math.max(0.45, this.cam.dist / 18));   // хулганы дугуйгаар томруулах
-      this.map.update(state, dt, this.daylight);
+      this.map.yaw = this.cam.mapYaw;
+      this.map.pitch = this.cam.mapPitch;
+      this.map.update(state, dt, this.daylight, alpha);
       this.renderer.render(this.map.scene, this.map.camera);
       return;
     }
+    this.cam.mapMode = false;
     const camp = p.place === 'camp';
     this.terrain.group.visible = this.animals.group.visible = this.items.group.visible = this.zones.group.visible = camp;
     this.sum.group.visible = !camp;

@@ -153,6 +153,11 @@ export class PlayerController {
     if (manual || r.ok) this.hooks.onAction('pickup', r);
   }
 
+  /** Товч дарагдсан эсэх (газрын зураг дээр Shift — цаг хурдасгах) */
+  isDown(code: string): boolean {
+    return this.keys.has(code);
+  }
+
   /** Газар дээр дарсан */
   moveTo(x: number, z: number, run: boolean): void {
     this.target = { x, z, run };
