@@ -1,3 +1,10 @@
+---
+title: 04. Мал аж ахуй
+type: Spec
+status: Draft
+last_updated: 2026-11-13
+tags: [v1, gdd]
+---
 # 04. Мал аж ахуй
 
 ## 1. Хонин толгой (ХТ)

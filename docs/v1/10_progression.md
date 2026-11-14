@@ -1,3 +1,10 @@
+---
+title: 10. Ахиц дэвшил
+type: Spec
+status: Draft
+last_updated: 2026-11-13
+tags: [v1, gdd]
+---
 # 10. Ахиц дэвшил
 
 ## 1. Ахиц дэвшлийн шат

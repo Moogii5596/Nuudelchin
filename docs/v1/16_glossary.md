@@ -1,3 +1,10 @@
+---
+title: 16. Нэр томьёоны толь
+type: Guide
+status: Draft
+last_updated: 2026-11-13
+tags: [v1, gdd, glossary]
+---
 # 16. Нэр томьёоны толь
 
 Кодын нэршилд англи `snake_case` (өгөгдөл) болон `PascalCase` (класс) ашиглана. Монгол нэрийг орчуулгын файлд (`mn.json`) хадгална.

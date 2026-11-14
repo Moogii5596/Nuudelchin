@@ -1,3 +1,10 @@
+---
+title: 13. Техникийн баримт бичиг
+type: Architecture
+status: Draft
+last_updated: 2026-11-13
+tags: [v1, gdd, tech]
+---
 # 13. Техникийн баримт бичиг
 
 ## 1. Хөдөлгүүр сонголт

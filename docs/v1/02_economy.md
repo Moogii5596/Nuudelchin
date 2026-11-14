@@ -1,3 +1,10 @@
+---
+title: 02. Эдийн засаг
+type: Spec
+status: Draft
+last_updated: 2026-11-13
+tags: [v1, gdd]
+---
 # 02. Эдийн засаг
 
 ## 1. Мөнгө

@@ -1,3 +1,10 @@
+---
+title: 00. Алсын хараа
+type: Spec
+status: Draft
+last_updated: 2026-11-13
+tags: [v1, gdd]
+---
 # 00. Алсын хараа
 
 ## 1. Тоглоомын тухай

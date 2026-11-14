@@ -1,3 +1,10 @@
+---
+title: 07. Гэр бүл ба NPC
+type: Spec
+status: Draft
+last_updated: 2026-11-13
+tags: [v1, gdd]
+---
 # 07. Гэр бүл ба NPC
 
 ## 1. Гол дүр
