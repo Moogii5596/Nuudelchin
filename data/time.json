@@ -1,13 +1,22 @@
 {
-  "_doc": "Цаг. mvp-spec.md §2, §9. Тоглоомын минут бол симуляцын нэг алхам. animalYearDays = төллөлтийн мөчлөг ба малын 1 нас (M1.5: 50 өдөр — зорилгод 1× хурдаар 4–6 цагт хүрэхээр тааруулсан).",
+  "_doc": "Цаг. mvp-spec.md §2, §9. Тоглоомын минут бол симуляцын нэг алхам. animalYearDays = төллөлтийн мөчлөг ба малын 1 нас (M1.5: 50 өдөр). M4.5 (хэрэглэгчийн дүрэм 2026-11-14): шөнө нэмэгдсэн — өдөр 06:00-аас дараа өглөөний 06:00 хүртэл (nightEndMinute = 30:00). dayEndMinute (20:00) — өдрийн тайлан. homeMinute — мал хотондоо харьж эхлэх цаг. sleepMinute — хотондоо хүрээгүй мал хүрсэн газраа хоноглоно. nightRealSecondsPerGameHour — шөнө 1× хурдаар тоглоомын 1 цаг хэдэн бодит секунд (🙋 түр: шөнө хурдан өнгөрнө). season — одоогийн улирал (MVP: зөвхөн зун, M5.5-д улирал солигдоно).",
   "dayStartMinute": 360,
   "dayEndMinute": 1200,
+  "homeMinute": {
+    "sheep": 1140,
+    "goat": 1140,
+    "cow": 1110
+  },
+  "sleepMinute": 1260,
+  "nightEndMinute": 1800,
   "realSecondsPerGameHour": 10,
+  "nightRealSecondsPerGameHour": 2,
   "speeds": [
     1,
     2,
     4
   ],
   "monthDays": 5,
-  "animalYearDays": 50
+  "animalYearDays": 50,
+  "season": "summer"
 }

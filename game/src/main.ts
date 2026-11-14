@@ -8,7 +8,7 @@
 import { loadConfig, SPECIES } from './sim/config';
 import { createInitialState, type TripState } from './sim/state';
 import { Sim } from './sim/sim';
-import { formatTime, realSecondsPerMinute } from './sim/clock';
+import { formatTime, isNight, realSecondsPerMinute } from './sim/clock';
 import { averageBiomass } from './sim/systems/pasture';
 import * as storage from './sim/systems/storage';
 import { ridingHorse } from './sim/systems/herder';
@@ -62,6 +62,8 @@ function start(): void {
       }
     } else if (e.type === 'wolfKill') toast(`🐺 Чоно ${t('species.' + e.species).toLowerCase()} барьж авлаа`, 'bad');
     else if (e.type === 'wolfGiveUp') toast('Чоно ангаа орхилоо', 'good');
+    else if (e.type === 'wolfRaid') toast(`🌙 Шөнө ${e.n > 1 ? e.n + ' чоно' : 'чоно'} хот руу дөхөж байна — хотоос гадуур хоносон мал аюултай`, 'bad');
+    else if (e.type === 'hour' && e.hour === Math.ceil(Math.min(...Object.values(cfg.time.homeMinute)) / 60)) toast('🌇 Орой боллоо — мал хотондоо харьж байна', '');
   });
 
   let speedIdx = Math.max(0, Math.min(cfg.time.speeds.length - 1, (Number(qs.get('speed')) || 1) - 1));
@@ -95,7 +97,8 @@ function start(): void {
   };
   view.renderer.domElement.focus();
 
-  const secPerMinute = realSecondsPerMinute(cfg.time);
+  // Шөнө тоглоомын цаг хурдан өнгөрнө (M4.5)
+  const secPerMinuteNow = (): number => realSecondsPerMinute(cfg.time, state.time.minute);
   let acc = 0;
   let last = performance.now();
   let hudT = 0;
@@ -147,16 +150,17 @@ function start(): void {
       controller.update(dt, state, view.cam.forward());
       acc += dt * speed;
       let steps = 0;
-      while (acc >= secPerMinute && steps < 60 && !panels.isOpen) {
+      while (acc >= secPerMinuteNow() && steps < 60 && !panels.isOpen) {
+        acc -= secPerMinuteNow();
         view.snapshot(state);
         sim.step();
-        acc -= secPerMinute;
         steps++;
       }
       if (steps >= 60) acc = 0;
       watchTrip();
     }
-    view.frame(state, Math.min(1, acc / secPerMinute), paused ? 0 : dt, paused ? 0 : secPerMinute / speed);
+    const spm = secPerMinuteNow();
+    view.frame(state, Math.min(1, acc / spm), paused ? 0 : dt, paused ? 0 : spm / speed);
 
     fpsFrames++;
     fpsT += rawDt;
@@ -189,7 +193,7 @@ function start(): void {
       let status = (p.mounted ? t('hud.mounted') : t('hud.onFoot')) + ' · ' + (p.holdingUurga ? t('hud.uurga') : t('hud.noUurga'));
       if (state.trip) {
         const tr = state.trip;
-        status = `${tr.vehicle === 'truck' ? '🚚' : '🐴'} ${tr.arrived ? 'Сумын төвөөс буцаж байна' : 'Сумын төв рүү явж байна'} · ${fmtMinutes(tr.total - tr.elapsed)}`;
+        status = `${cfg.vehicles[tr.vehicle].emoji} ${tr.arrived ? 'Сумын төвөөс буцаж байна' : 'Сумын төв рүү явж байна'} · ${fmtMinutes(tr.total - tr.elapsed)}`;
       } else if (state.move) status = `🏕 ${t('camp.' + state.move.to)} руу нүүж байна · ${fmtMinutes(state.move.remaining)}`;
       const hunts = huntingWolves(state);
       let alert = '';
@@ -202,7 +206,7 @@ function start(): void {
         ? `🐕 ${state.dogs.map((d) => `${d.name}: ${d.mode === 'chase' ? 'чоно хөөж байна' : DOG_ORDER_NAME[d.order].toLowerCase()}`).join(' · ')} <small>(K)</small><br>`
         : '';
       hud.innerHTML =
-        `<b>${t('hud.day', { day: state.time.day })}</b> · ${formatTime(state.time)}${paused ? ' · ⏸' : ''}<br>` +
+        `<b>${t('hud.day', { day: state.time.day })}</b> · ${isNight(state.time, cfg.time) ? '🌙' : '☀️'} ${formatTime(state.time)}${paused ? ' · ⏸' : ''}<br>` +
         `${t('hud.money')}: <b>${fmtMoney(state.money)}</b><br>` +
         `${t('hud.animals')}: ${counts.join(' · ')}<br>` +
         `📦 ${fmtNum(storage.used(state))}/${storage.capacity(cfg, state)} · ✋ ${carryTxt} (${fmtNum(carried)}/${cfg.products.carryUnits})${onGround ? ` · газарт ${onGround}` : ''}<br>` +

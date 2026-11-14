@@ -10,8 +10,10 @@ export function newSim(seed = 1, mutate?: (s: GameState) => void): Sim {
   return new Sim(cfg, st);
 }
 
-/** Нэг тоглоомын өдрийн минут */
-export const DAY = cfg.time.dayEndMinute - cfg.time.dayStartMinute;
+/** Нэг тоглоомын бүтэн өдөр (06:00 → дараа өглөөний 06:00, шөнөтэй — M4.5) */
+export const DAY = cfg.time.nightEndMinute - cfg.time.dayStartMinute;
+/** 06:00-аас 20:00 (өдрийн тайлан) хүртэлх минут */
+export const ACTIVE_DAY = cfg.time.dayEndMinute - cfg.time.dayStartMinute;
 
 export function steps(sim: Sim, n: number): void {
   for (let i = 0; i < n; i++) sim.step();

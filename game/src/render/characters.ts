@@ -178,6 +178,22 @@ export class CharactersView {
     this.actionT = 0.9;
   }
 
+  /** Аялалд малчин тэрэг дээр сууна (M4.5). seat = null бол харагдахгүй (машины кабинд эсвэл газрын зургаас гадуур) */
+  seatHerder(seat: { x: number; y: number; z: number; h: number; inCab: boolean } | null): void {
+    const H = this.herder;
+    if (!seat || seat.inCab) {
+      H.root.visible = false;
+      return;
+    }
+    H.root.visible = true;
+    H.root.position.set(seat.x, seat.y - 0.75, seat.z);
+    H.root.rotation.y = seat.h;
+    H.legs[0]!.rotation.set(-1.4, 0, 0);
+    H.legs[1]!.rotation.set(-1.4, 0, 0);
+    H.arms[0]!.rotation.x = -0.9;
+    H.arms[1]!.rotation.x = -0.9;
+  }
+
   get herderObject(): THREE.Object3D {
     return this.herder.root;
   }

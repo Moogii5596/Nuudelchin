@@ -10,6 +10,7 @@
  *   Малчин тууж авчирсан бол settleMinutes хугацаанд тэндээ үлдэнэ.
  * - Малчин тууж байгаа ('driven'), эсвэл чоноос айж зугтаж байгаа ('flee') малтай сүрэг өөрөө шийдэхгүй.
  */
+import { phaseOf } from '../clock';
 import type { GameConfig, Species, WaterShape } from '../config';
 import type { Rng } from '../rng';
 import type { Animal, GameState } from '../state';
@@ -184,6 +185,7 @@ export function herdDecide(cfg: GameConfig, state: GameState, rng: Rng, quality:
   const h = cfg.pasture.grazing.herd;
   const camp = cfg.camps.camps[state.campId];
   if (!camp) return [];
+  if (phaseOf(state.time, cfg.time) !== 'day') return [];   // орой хотондоо харина, шөнө унтана (night.ts)
   const out: HerdDecision[] = [];
   const seek = cfg.animals.thirst.seekWaterAt ?? 50;
   const dayLen = cfg.time.dayEndMinute - cfg.time.dayStartMinute;
@@ -192,7 +194,7 @@ export function herdDecide(cfg: GameConfig, state: GameState, rng: Rng, quality:
 
   for (const hd of herds) {
     const m = hd.members;
-    if (m.some((a) => a.mode === 'driven' || a.mode === 'flee')) continue;
+    if (m.some((a) => a.mode === 'driven' || a.mode === 'flee' || a.mode === 'home' || a.mode === 'sleep')) continue;
 
     // 1) Ус — сүргийн дундаж цангалтаар
     const dW = waterDistance(camp.waterShape, hd.x, hd.z);

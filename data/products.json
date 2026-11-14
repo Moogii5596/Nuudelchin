@@ -1,13 +1,16 @@
 {
-  "_doc": "Бүтээгдэхүүн. mvp-spec.md §4, §5.1 (түр үнэ ×3.2 — хэрэглэгч шалгана).",
+  "_doc": "Бүтээгдэхүүн. mvp-spec.md §4, §5.1 (түр үнэ ×3.2 — хэрэглэгч шалгана). M4.5 (хэрэглэгчийн дүрэм 2026-11-14): мал сүү, ноосоо өглөө бэлчээрт гарахдаа ХОНОСОН газраа (ихэвчлэн хотондоо) үлдээнэ. Хэмжээ нь өмнөх өдөр бэлчээрт идсэн өвснөөс хамаарна: идшийн хүчин зүйл = (өчигдрийн идэш − minGut) / (fullGut − minGut), 0–1.",
   "drops": {
+    "_doc": "milk: өдрийн литр = litersPerDay × (condBase + condGain × тарга) × идшийн хүчин зүйл (сүүтэй үнээ). wool/cashmere: өдөр бүр идшийн хүчин зүйлээр ахиж, everyDays хүрэхэд amount унагана (тарга minCondition-оос бага бол ахихгүй).",
+    "minGut": 0.3,
+    "fullGut": 0.9,
     "milk": {
       "from": "cow",
       "amount": 1,
-      "everyHours": 2.5,
-      "minGutFill": 0.5,
-      "requiresLactating": true,
-      "minGutFillPace": 0.5
+      "litersPerDay": 5.6,
+      "condBase": 0.6,
+      "condGain": 0.6,
+      "requiresLactating": true
     },
     "wool": {
       "from": "sheep",

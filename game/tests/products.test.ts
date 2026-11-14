@@ -3,12 +3,16 @@ import { cfg, DAY, newSim, steps } from './helpers';
 import * as storage from '../src/sim/systems/storage';
 
 describe('Бүтээгдэхүүн, агуулах, боловсруулалт (mvp-spec.md §4)', () => {
-  it('сүүтэй үнээ өдөрт ~5 сав сүү газарт унагана', () => {
+  it('сүүтэй үнээ өглөө хотонд (хоносон газраа) ~5 сав сүү үлдээнэ (M4.5)', () => {
     const sim = newSim(2);
-    steps(sim, DAY - 1);
-    const milk = sim.state.items.filter((i) => i.product === 'milk' || i.product === 'tarag').length;
-    expect(milk).toBeGreaterThanOrEqual(6);  // 2 үнээ
-    expect(milk).toBeLessThanOrEqual(14);
+    steps(sim, DAY - 2);
+    expect(sim.state.items.filter((i) => i.product === 'milk').length).toBe(0);   // өдөр сүү унахгүй
+    steps(sim, 2);   // 06:00 өглөө
+    const milk = sim.state.items.filter((i) => i.product === 'milk');
+    expect(milk.length).toBeGreaterThanOrEqual(6);  // 2 үнээ
+    expect(milk.length).toBeLessThanOrEqual(14);
+    const yard = cfg.camps.home.cowYard;
+    for (const m of milk) expect(Math.hypot(m.x - yard.x, m.z - yard.z)).toBeLessThan(yard.r + 4);
   });
   it('газарт удсан сүү тараг болж, дараа нь муудна', () => {
     const sim = newSim(2);

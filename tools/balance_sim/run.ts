@@ -17,7 +17,8 @@ import { Sim, type DayReport } from '../../game/src/sim/sim';
 import { herdSheepUnits } from '../../game/src/sim/systems/animals';
 import { absBiomass, typeIdOf, typeQualities } from '../../game/src/sim/systems/pasture';
 import * as storage from '../../game/src/sim/systems/storage';
-import { orderPrice } from '../../game/src/sim/systems/trip';
+import { bestTruck, orderPrice } from '../../game/src/sim/systems/trip';
+import { realSecondsPerDay } from '../../game/src/sim/clock';
 import { findHerds } from '../../game/src/sim/systems/herds';
 
 const args = Object.fromEntries(
@@ -83,7 +84,7 @@ function processAll(sim: Sim): void {
 /** Илүүдэл эр мал (үржлийн 1 эрээс бусад, 0.75+ настай) — тэргэнд багтах хэмжээгээр */
 function surplusMales(sim: Sim): number[] {
   const { cfg, state } = sim;
-  const v = state.vehicles.includes('truck') ? 'truck' : 'horseCart';
+  const v = bestTruck(cfg, state) ?? 'horseCart';
   const slots = cfg.vehicles[v].sheepSlots;
   const rams = state.animals
     .filter((a) => a.species === 'sheep' && a.sex === 'm' && !a.riding)
@@ -95,7 +96,7 @@ function surplusMales(sim: Sim): number[] {
 function tripIfUseful(sim: Sim, buy: BuyOrder[], minUnits: number, sellAnimalIds: number[] = []): void {
   const { cfg, state } = sim;
   if (state.trip || state.player.away) return;
-  const v = state.vehicles.includes('truck') ? 'truck' : 'horseCart';
+  const v = bestTruck(cfg, state) ?? 'horseCart';
   const cap = cfg.vehicles[v].capacity;
   const sell: Partial<Record<ProductId, number>> = {};
   let units = 0;
@@ -275,7 +276,7 @@ const fmt = (n: number) => (Number.isFinite(n) ? Math.round(n).toLocaleString('e
 
 const cfg = loadConfig();
 const overrides = applyOverrides(cfg);
-const dayHours = ((cfg.time.dayEndMinute - cfg.time.dayStartMinute) / 60) * cfg.time.realSecondsPerGameHour / 3600;
+const dayHours = realSecondsPerDay(cfg.time) / 3600;   // M4.5: шөнө хурдан өнгөрнө
 console.log(`# Тэнцвэрийн тайлан — ${SEEDS} seed × ${DAYS} өдөр (1 өдөр = 1× хурдаар ${(dayHours * 60).toFixed(1)} мин)` + (overrides.length ? ` · ${overrides.join(', ')}` : '') + '\n');
 
 const only = args.only ? String(args.only).split(',') : null;

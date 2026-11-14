@@ -1,8 +1,71 @@
 {
-  "_doc": "Тээвэр. mvp-spec.md §5.2, water-horses-transport.md §3.",
+  "_doc": "Тээвэр. mvp-spec.md §5.2, water-horses-transport.md §3. M4.5 (хэрэглэгчийн дүрэм 2026-11-14): тэрэг, машин бууцнаас замаар сумын төв рүү явж, буцаж ирэх нь харагдана. Ачааны машин 2 төрөл: Портер — даац их, Амжиргаа цагаан — даац бага, бензин адил. 🙋 Үнэ, даац түр. visibleSpeed = бууцны газар дээр харагдах хэсгийн дундаж хурд (м/тоглоомын минут; эхэндээ аажим хурдалж, ирэхдээ аажим зогсоно); замын үлдсэн хэсэг газрын зургаас гадуур. Тоглоомын цаг бодитоос 360 дахин хурдан тул машин хурдан харагдана.",
   "fuelPricePerL": 3600,
   "sumCenterKm": 25,
   "campDistanceKm": 15,
-  "horseCart": { "capacity": 30,  "oneWayHours": 1.5,  "fuelPer100km": 0,  "price": 0,        "sheepSlots": 3,  "cowSlots": 1 },
-  "truck":     { "capacity": 150, "oneWayHours": 0.42, "fuelPer100km": 15, "price": 19000000, "sheepSlots": 15, "cowSlots": 4 }
+  "road": {
+    "_doc": "Сумын төвийн зам: майхны дэргэдэх зогсоолоос (start) dir зүг рүү length м (бууцны захын толгод хүртэл). parking = тээвэр бүрийн зогсоол",
+    "start": {
+      "x": 6,
+      "z": -14
+    },
+    "dir": {
+      "x": 1,
+      "z": 0
+    },
+    "length": 150,
+    "parking": {
+      "horseCart": {
+        "x": -4,
+        "z": -9,
+        "heading": 1.57
+      },
+      "porter": {
+        "x": 5,
+        "z": -19,
+        "heading": 1.57
+      },
+      "amjirgaa": {
+        "x": 13,
+        "z": -19,
+        "heading": 1.57
+      }
+    }
+  },
+  "horseCart": {
+    "name": "Морин тэрэг",
+    "emoji": "🐴",
+    "truck": false,
+    "capacity": 30,
+    "oneWayHours": 1.5,
+    "fuelPer100km": 0,
+    "price": 0,
+    "sheepSlots": 3,
+    "cowSlots": 1,
+    "visibleSpeed": 2
+  },
+  "porter": {
+    "name": "Портер",
+    "emoji": "🚚",
+    "truck": true,
+    "capacity": 150,
+    "oneWayHours": 0.42,
+    "fuelPer100km": 15,
+    "price": 19000000,
+    "sheepSlots": 15,
+    "cowSlots": 4,
+    "visibleSpeed": 7
+  },
+  "amjirgaa": {
+    "name": "Амжиргаа цагаан",
+    "emoji": "🛻",
+    "truck": true,
+    "capacity": 80,
+    "oneWayHours": 0.42,
+    "fuelPer100km": 15,
+    "price": 12000000,
+    "sheepSlots": 8,
+    "cowSlots": 2,
+    "visibleSpeed": 7
+  }
 }

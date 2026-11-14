@@ -12,7 +12,7 @@ import type { Command, CommandResult } from '../../sim/commands';
 import type { DayReport } from '../../sim/sim';
 import * as storage from '../../sim/systems/storage';
 import { recipe } from '../../sim/systems/processing';
-import { animalSlots, orderPrice, productPrice } from '../../sim/systems/trip';
+import { animalSlots, bestTruck, orderPrice, productPrice } from '../../sim/systems/trip';
 import { salePrice } from '../../sim/systems/animals';
 import { realSecondsPerMinute } from '../../sim/clock';
 import { DOG_ORDER_NAME, type DogOrderKind } from '../../sim/systems/dogs';
@@ -118,7 +118,7 @@ export class Panels {
         return;
       }
       this.draft = {
-        vehicle: this.state.vehicles.includes('truck') ? 'truck' : 'horseCart',
+        vehicle: bestTruck(this.cfg, this.state) ?? 'horseCart',
         sell: {},
         sellGroups: {},
         buyAnimals: {},
@@ -244,7 +244,11 @@ export class Panels {
     if (next) out.push({ key: 'storage', label: state.storageLevel === 0 ? 'Модон амбаар' : 'Том агуулах', note: `Багтаамж ${next.capacity} нэгж`, order: { kind: 'storage' } });
     if (state.home !== 'ger') out.push({ key: 'ger', label: 'Гэр (4 ханатай)', note: 'Зорилго: гэр + 40 хонин толгой', order: { kind: 'ger' } });
     if (state.dogs.length < cfg.dogs.maxDogs) out.push({ key: 'dog', label: 'Нохой (банхар)', note: `10 м хамгаалалтын бүс, ойртсон чоныг хөөнө · хоол өдөрт ${fmtMoney(cfg.dogs.foodPerDay)} · K — команд`, order: { kind: 'dog' } });
-    if (!state.vehicles.includes('truck')) out.push({ key: 'truck', label: 'Ачааны машин', note: `${cfg.vehicles.truck.capacity} нэгж, нэг тийш ${Math.round(cfg.vehicles.truck.oneWayHours * 60)} мин, бензинтэй`, order: { kind: 'vehicle', id: 'truck' } });
+    for (const id of ['porter', 'amjirgaa'] as const) {
+      if (state.vehicles.includes(id)) continue;
+      const v = cfg.vehicles[id];
+      out.push({ key: id, label: `${v.emoji} ${v.name} (ачааны машин)`, note: `${v.capacity} нэгж, ${v.sheepSlots} хонь / ${v.cowSlots} үхэр, нэг тийш ${Math.round(v.oneWayHours * 60)} мин, ${v.fuelPer100km} л/100 км`, order: { kind: 'vehicle', id } });
+    }
     return out;
   }
 
@@ -281,9 +285,9 @@ export class Panels {
     const fuel = ((cfg.vehicles.sumCenterKm * 2 * v.fuelPer100km) / 100) * cfg.vehicles.fuelPricePerL;
     const after = state.money + income - cost - fuel;
     const tripMin = Math.round(v.oneWayHours * 2 * 60);
-    const realSec = tripMin * realSecondsPerMinute(cfg.time);
+    const realSec = tripMin * realSecondsPerMinute(cfg.time, state.time.minute);
 
-    const vehicles = state.vehicles.map((id) => `<button class="btn ${id === d.vehicle ? 'gold' : ''}" data-act="veh:${id}">${id === 'truck' ? '🚚 Ачааны машин' : '🐴 Морин тэрэг'} (${cfg.vehicles[id].capacity})</button>`).join(' ');
+    const vehicles = state.vehicles.map((id) => `<button class="btn ${id === d.vehicle ? 'gold' : ''}" data-act="veh:${id}">${cfg.vehicles[id].emoji} ${cfg.vehicles[id].name} (${cfg.vehicles[id].capacity})</button>`).join(' ');
 
     const prodRows = PRODUCTS.map((p) => {
       const have = storage.count(state, p);
@@ -430,10 +434,11 @@ export class Panels {
   private campsHtml(): string {
     const { cfg, state } = this;
     const deg = cfg.pasture.degradation;
-    const byTruck = state.vehicles.includes('truck');
+    const truck = bestTruck(cfg, state);
+    const byTruck = truck !== null;
     const hours = moveHours(cfg, state, byTruck);
     const trips = state.home === 'ger' ? Number(cfg.camps.move.truckTripsGer) : Number(cfg.camps.move.truckTripsTent);
-    const fuel = byTruck ? ((cfg.vehicles.campDistanceKm * 2 * trips * cfg.vehicles.truck.fuelPer100km) / 100) * cfg.vehicles.fuelPricePerL : 0;
+    const fuel = truck ? ((cfg.vehicles.campDistanceKm * 2 * trips * cfg.vehicles[truck].fuelPer100km) / 100) * cfg.vehicles.fuelPricePerL : 0;
     const su = herdSheepUnits(state, cfg.animals);
     const gainPerDay = deg.gainPerDayAtCapacity * (su / deg.campCapacitySheepUnits);
     const near = Math.hypot(state.player.x - cfg.camps.home.x, state.player.z - cfg.camps.home.z) <= cfg.camps.home.storageRadius * 2;
@@ -572,7 +577,7 @@ export class Panels {
         const plan = this.planFromDraft();
         const r = this.hooks.dispatch({ type: 'trip', plan: { vehicle: d.vehicle, sell: plan.sell, sellAnimalIds: plan.sellIds, buy: plan.buy } });
         if (r.ok) {
-          this.hooks.toast(d.vehicle === 'truck' ? '🚚 Сумын төв рүү машинаар явлаа' : '🐴 Сумын төв рүү тэргээр явлаа', 'good');
+          this.hooks.toast(`${cfg.vehicles[d.vehicle].emoji} ${cfg.vehicles[d.vehicle].name} сумын төв рүү явлаа`, 'good');
           this.close();
           return;
         }

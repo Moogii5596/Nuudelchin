@@ -235,14 +235,14 @@ export class AnimalsView {
 
       // Толгой: бэлчиж байхад доош, хэвтэж хивэх үед бага зэрэг
       const grazing = a.mode === 'graze' && speed < 1.5;
-      const headTarget = grazing ? def.grazeHead + Math.sin(this.frameNo * 0.05 + a.id) * 0.08 : a.mode === 'rest' ? 0.15 : 0;
+      const headTarget = grazing ? def.grazeHead + Math.sin(this.frameNo * 0.05 + a.id) * 0.08 : a.mode === 'rest' || a.mode === 'sleep' ? 0.15 : 0;
       v.head += (headTarget - v.head) * Math.min(1, dt * 3);
 
       // Хэмжээ: насаар (жингийн шоо язгуур), таргаар өргөн
       const mature = animals.species[a.species].matureKg[a.sex];
       const sc = Math.max(0.35, Math.cbrt(frameKg(a, animals) / mature));
       const fat = 0.85 + 0.3 * a.condition;
-      const resting = a.mode === 'rest';
+      const resting = a.mode === 'rest' || a.mode === 'sleep';
       const y = heightAt(x, z) + (resting ? -def.legTop * 0.55 * sc : Math.abs(Math.sin(v.phase)) * 0.04 * walk);
 
       this.p.set(x, y, z);

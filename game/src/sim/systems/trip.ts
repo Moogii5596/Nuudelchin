@@ -1,6 +1,8 @@
 /**
  * Сумын төвийн аялал: тэрэг/машинд ачаа ачиж зарах, бараа, мал авах (mvp-spec.md §5).
  * Хагас замд (сумын төвд) зарж, авна. Буцаж ирэхэд авсан зүйл хүргэгдэнэ.
+ * M4.5 (хэрэглэгчийн дүрэм 2026-11-14): тэрэг, машин зогсоолоосоо замаар явж бууцны захын толгод
+ * давж алга болно, буцахдаа мөн замаар ирнэ (tripPose). Малчин тэрэг/машин дээрээ сууж явна.
  */
 import type { GameConfig } from '../config';
 import type { Rng } from '../rng';
@@ -9,8 +11,79 @@ import { buyPrice, salePrice } from './animals';
 import * as storage from './storage';
 import { newDog } from './dogs';
 
-export function vehicleCfg(cfg: GameConfig, v: VehicleId) {
+export type VehicleSpec = GameConfig['vehicles']['porter'];
+
+export function vehicleCfg(cfg: GameConfig, v: VehicleId): VehicleSpec {
   return cfg.vehicles[v];
+}
+
+/** Эзэмшиж буй хамгийн их даацтай ачааны машин (нүүх, сумын төвд анхдагч) */
+export function bestTruck(cfg: GameConfig, state: GameState): VehicleId | null {
+  let best: VehicleId | null = null;
+  for (const v of state.vehicles) {
+    const c = vehicleCfg(cfg, v);
+    if (c.truck && (!best || c.capacity > vehicleCfg(cfg, best).capacity)) best = v;
+  }
+  return best;
+}
+
+/** Тээврийн зогсоол (майхны дэргэд) */
+export function parkingSpot(cfg: GameConfig, v: VehicleId): { x: number; z: number; heading: number } {
+  return (cfg.vehicles.road.parking as Record<string, { x: number; z: number; heading: number }>)[v] ?? { x: 0, z: -12, heading: 0 };
+}
+
+/** Замын харагдах хэсгийг туулах хугацаа (минут) — нэг тийш */
+export function visibleLegMinutes(cfg: GameConfig, v: VehicleId, total: number): number {
+  const c = vehicleCfg(cfg, v);
+  return Math.min(cfg.vehicles.road.length / c.visibleSpeed, (total / 2) * 0.9);
+}
+
+/**
+ * Харагдах хэсгийн явц (0–1 цаг → 0–1 зай). Эхэндээ аажим хурдалж (accel хувь), дараа нь тогтмол хурдтай.
+ * Буцахдаа эсрэгээр: тогтмол хурдтай ирж, зогсоол руу аажим удааширч зогсоно.
+ */
+function legDistance(u: number, accel = 0.25): number {
+  const x = Math.min(1, Math.max(0, u));
+  const v = 1 / (1 - accel / 2);
+  return x < accel ? (v * x * x) / (2 * accel) : v * (accel / 2 + (x - accel));
+}
+
+/**
+ * Аялж буй тээврийн байрлал. Зогсоолоос замын эхлэл рүү, тэндээс dir зүг рүү length м.
+ * elapsed бутархай байж болно (дүрслэл алхам хооронд зөөлрүүлнэ).
+ * visible = false бол газрын зургаас гадуур (сумын төв рүү замдаа).
+ */
+export function tripPose(cfg: GameConfig, t: Pick<TripState, 'vehicle' | 'elapsed' | 'total'>): { x: number; z: number; heading: number; visible: boolean } {
+  const r = cfg.vehicles.road;
+  const leg = visibleLegMinutes(cfg, t.vehicle, t.total);
+  const p = parkingSpot(cfg, t.vehicle);
+  const lead = Math.hypot(r.start.x - p.x, r.start.z - p.z);
+  const total = lead + r.length;
+  let d: number, back = false;
+  if (t.elapsed <= leg) d = legDistance(t.elapsed / leg) * total;
+  else if (t.elapsed >= t.total - leg) {
+    d = legDistance((t.total - t.elapsed) / leg) * total;
+    back = true;
+  } else return { x: r.start.x + r.dir.x * r.length, z: r.start.z + r.dir.z * r.length, heading: Math.atan2(r.dir.x, r.dir.z), visible: false };
+  let x: number, z: number, hx: number, hz: number;
+  if (d <= lead && lead > 0) {
+    const k = d / lead;
+    x = p.x + (r.start.x - p.x) * k;
+    z = p.z + (r.start.z - p.z) * k;
+    hx = r.start.x - p.x;
+    hz = r.start.z - p.z;
+  } else {
+    const k = d - lead;
+    x = r.start.x + r.dir.x * k;
+    z = r.start.z + r.dir.z * k;
+    hx = r.dir.x;
+    hz = r.dir.z;
+  }
+  if (back) {
+    hx = -hx;
+    hz = -hz;
+  }
+  return { x, z, heading: Math.atan2(hx, hz), visible: true };
 }
 
 export function productPrice(cfg: GameConfig, p: ProductId): number {
@@ -80,6 +153,7 @@ export function startTrip(cfg: GameConfig, state: GameState, plan: TripPlan): st
   };
   state.trip = trip;
   state.player.away = true;
+  state.player.mounted = false;
   const km = cfg.vehicles.sumCenterKm * 2;
   const fuel = (km * v.fuelPer100km) / 100;
   if (fuel > 0) spend(state, 'fuel', fuel * cfg.vehicles.fuelPricePerL);
@@ -119,6 +193,15 @@ export function tripStep(cfg: GameConfig, state: GameState, rng: Rng): void {
     deliver(cfg, state, rng, t.bought);
     state.trip = null;
     state.player.away = false;
+    const p = parkingSpot(cfg, t.vehicle);
+    state.player.x = p.x + 2;
+    state.player.z = p.z + 2.5;
+  } else {
+    // Малчин тэрэг/машин дээрээ сууж явна
+    const pose = tripPose(cfg, t);
+    state.player.x = pose.x;
+    state.player.z = pose.z;
+    state.player.heading = pose.heading;
   }
 }
 

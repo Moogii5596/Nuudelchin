@@ -9,13 +9,14 @@ import { buildGrid, type GrassGrid } from './systems/pasture';
 import { spawnWolves, type WolfState } from './systems/wolves';
 import type { Dog } from './systems/dogs';
 
-export const SAVE_VERSION = 6;   // 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих · 6: нохой, чонын дайралт, сүргийн нүүдэл (M4)
+export const SAVE_VERSION = 7;   // 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих · 6: нохой, чонын дайралт, сүргийн нүүдэл (M4) · 7: шөнө, хотлох, өглөөний бүтээгдэхүүн, Портер/Амжиргаа, шөнийн чоно (M4.5)
 
 export type ProductId = 'milk' | 'tarag' | 'aaruul' | 'urum' | 'wool' | 'felt' | 'cashmere';
 export const PRODUCTS: readonly ProductId[] = ['milk', 'tarag', 'aaruul', 'urum', 'wool', 'felt', 'cashmere'];
 
-/** trek = сүргээрээ шинэ бэлчээр рүү нүүж байна (systems/herds.ts) · flee = чоноос айж зугтаж байна (systems/wolves.ts) */
-export type AnimalMode = 'graze' | 'drink' | 'rest' | 'driven' | 'trek' | 'flee';
+/** trek = сүргээрээ шинэ бэлчээр рүү нүүж байна (systems/herds.ts) · flee = чоноос айж зугтаж байна (systems/wolves.ts)
+ *  home = орой хотондоо харьж байна · sleep = хэвтэж унтаж байна (systems/night.ts, M4.5) */
+export type AnimalMode = 'graze' | 'drink' | 'rest' | 'driven' | 'trek' | 'flee' | 'home' | 'sleep';
 
 export interface Animal {
   id: number;
@@ -25,14 +26,15 @@ export interface Animal {
   condition: number;     // тарга 0–1
   health: number;        // 0–100
   gutFill: number;       // өнөөдрийн идэш 0–1 (өдрийн тааз = 1)
+  lastGut: number;       // өчигдрийн идэш — өглөөний сүү, ноосны хэмжээ (M4.5)
   dietSum: number;       // Σ(идсэн хэмжээ × чанар) — dietQuality = dietSum / gutFill
   thirst: number;        // 0–100
   thirstMaxedToday: boolean;
   lactating: boolean;
   riding: boolean;
   cycleOffset: number;   // төллөлтийн мөчлөгийн өдөр (бүх мал нэг өдөр төллөхгүй)
-  milkTimer: number;     // сүү унах хүртэлх минут
-  fiberDays: number;     // ноос/ноолуур унах хүртэлх өдөр
+  milkTimer: number;     // хуримтлагдсан сүүний бутархай литр (өглөө бүхэл литрээр унана)
+  fiberDays: number;     // ноос/ноолуурын ахиц (өдөр); everyDays хүрэхэд өглөө унана
   mode: AnimalMode;
   drivenAt: number;      // сүүлд туугдсан (айсан) алхам — herds.ts: туугдсан газраа тодорхой хугацаа үлдэнэ
   x: number;
@@ -66,7 +68,8 @@ export interface ProcessorState {
   pending: Partial<Record<ProductId, number>>;   // дууссан ч агуулахад багтаагүй гаралт
 }
 
-export type VehicleId = 'horseCart' | 'truck';
+export type VehicleId = 'horseCart' | 'porter' | 'amjirgaa';
+export const VEHICLES: readonly VehicleId[] = ['horseCart', 'porter', 'amjirgaa'];
 
 export type BuyOrder =
   | { kind: 'animal'; species: Species; sex: Sex; age: number }
@@ -160,13 +163,14 @@ export function newAnimal(
     condition: o.condition ?? 0.6,
     health: 100,
     gutFill: 0,
+    lastGut: 0.8,
     dietSum: 0,
     thirst: rng.range(0, 30),
     thirstMaxedToday: false,
     lactating: Boolean(o.lactating),
     riding: Boolean(o.riding),
     cycleOffset: rng.int(0, cfg.time.animalYearDays - 1),
-    milkTimer: rng.range(0, 60),
+    milkTimer: rng.range(0, 1),
     fiberDays: rng.range(0, 3),
     mode: 'graze',
     drivenAt: -1e9,

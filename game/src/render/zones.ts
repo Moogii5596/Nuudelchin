@@ -10,6 +10,7 @@ import { protectionZones, type Zone } from '../sim/systems/wolves';
 const SEG = 48;
 const COLOR: Record<Zone['kind'], number> = {
   pen: 0x3fbf5f,
+  yard: 0x3fbf5f,
   home: 0x3fbf5f,
   herder: 0x3d8bff,
   horse: 0x9a7bff,

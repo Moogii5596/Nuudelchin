@@ -18,6 +18,7 @@ import { drinkPoint, type FlockCenter } from './herds';
 
 export type { FlockCenter };
 import { waterDistance } from '../terrain';
+import { activeDayMinutes, isNight } from '../clock';
 
 export function flockCenters(state: GameState): Partial<Record<Species, FlockCenter>> {
   const acc: Partial<Record<Species, FlockCenter>> = {};
@@ -50,7 +51,7 @@ function decide(cfg: GameConfig, state: GameState, rng: Rng, a: Animal, quality:
   const camp = cfg.camps.camps[state.campId];
 
   // Туугдаж, нүүж, ус руу явж буй мал зорилтдоо хүртлээ шийдэхгүй
-  if (a.mode === 'driven' || a.mode === 'trek' || a.mode === 'drink' || a.mode === 'flee') return;
+  if (a.mode === 'driven' || a.mode === 'trek' || a.mode === 'drink' || a.mode === 'flee' || a.mode === 'home' || a.mode === 'sleep') return;
 
   // Уснаас ойрхон бол нэг нэгээрээ очиж ууна. Хол бол сүрэг хамтдаа шийднэ (herds.ts)
   if (a.thirst >= (th.seekWaterAt ?? 50) && camp && waterDistance(camp.waterShape, a.x, a.z) <= g.herd.nearWaterDistance) {
@@ -148,11 +149,25 @@ export function grazingStep(
 ): void {
   const g = cfg.pasture.grazing;
   const th = cfg.animals.thirst;
-  const minutesPerDay = cfg.time.dayEndMinute - cfg.time.dayStartMinute;
+  const minutesPerDay = activeDayMinutes(cfg.time);
   const grid = state.grass;
+  const night = isNight(state.time, cfg.time);
 
   for (const a of state.animals) {
     if (a.riding) continue; // унаа морь уяан дээр (тэжээгдсэн гэж үзнэ)
+
+    if (night) {
+      // Шөнө (M4.5): идэхгүй, цангахгүй. Туугдаж, зугтаж дууссан мал хүрсэн газраа унтана
+      if (a.mode === 'driven' || a.mode === 'flee') {
+        a.drivenAt = state.step;
+        if (moveToward(a, a.mode === 'flee' ? cfg.wolves.fear.speed : g.travelSpeed)) a.mode = 'sleep';
+      } else if (a.mode !== 'sleep') {
+        a.mode = 'sleep';
+        a.tx = a.x;
+        a.tz = a.z;
+      }
+      continue;
+    }
 
     // Цангалт
     const sp = cfg.animals.species[a.species];
@@ -185,7 +200,13 @@ export function grazingStep(
         }
         break;
       }
+      case 'home': {
+        // Орой хотондоо харьж байна (night.ts) — хүрээд хэвтэнэ
+        if (moveToward(a, g.travelSpeed)) a.mode = 'sleep';
+        break;
+      }
       case 'rest':
+      case 'sleep':
         break;
       case 'graze': {
         const dist = Math.hypot(a.tx - a.x, a.tz - a.z);

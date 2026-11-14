@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { DAY, newSim, steps } from './helpers';
+import { ACTIVE_DAY, newSim, steps } from './helpers';
 
 describe('Бэлчээрлэлт', () => {
   it('сайн бэлчээрт мал өдрийн таазандаа хүрнэ', () => {
     const sim = newSim(5);
-    steps(sim, DAY - 1);
+    steps(sim, ACTIVE_DAY - 1);   // 19:59 — орой хотондоо харихаас өмнө цадсан байна
     const grazers = sim.state.animals.filter((a) => !a.riding);
     const avg = grazers.reduce((s, a) => s + a.gutFill, 0) / grazers.length;
     expect(avg).toBeGreaterThan(0.85);

@@ -7,6 +7,9 @@
  *     Мал хамгаалалтын бүсэд орох, нутгаас хэт холдох, чоно үргээх үед ангаа орхино.
  *     Чоно хамгаалалтын бүс рүү орж чадахгүй.
  *
+ * M4.5: шөнө (21:00) улирал, бууцны чонын түвшнээс хамаарсан магадлалтай 1 (өвөл, хавар 2 хүртэл) чоно
+ *     хот руу дөхөж, хамгаалалтын бүсээс гадна хоносон малд дайрна (nightRaid). Бүх чоно нэг дор ирэхгүй.
+ *
  * Чонын хөдөлгөөн өөрийн seed-тэй генератортой (state.wolves.rngState) тул
  * бэлчээрлэлт, төллөлтийн санамсаргүй дарааллыг өөрчлөхгүй.
  */
@@ -38,6 +41,7 @@ export interface Wolf {
   targetId: number;      // хөөж буй мал (0 = үгүй)
   fed: number;           // дахин ан хийх хүртэлх минут (цадсан / ангаа алдсан)
   forced?: boolean;      // туршилтын цэсээр дайруулсан: нутгийн хязгаарыг үл тооно
+  raid?: boolean;        // шөнө хот руу дөхөж буй чоно (M4.5): нутгийн хязгааргүй
 }
 
 export interface WolfState {
@@ -50,7 +54,7 @@ export interface WolfState {
 
 /** Хамгаалалтын бүс: чоно орохгүй, доторх малд дайрахгүй */
 export interface Zone {
-  kind: 'pen' | 'home' | 'herder' | 'horse' | 'stallion' | 'dog';
+  kind: 'pen' | 'yard' | 'home' | 'herder' | 'horse' | 'stallion' | 'dog';
   x: number;
   z: number;
   r: number;
@@ -59,7 +63,8 @@ export interface Zone {
 export type WolfEvent =
   | { type: 'wolfHunt'; species: Species; animalId: number; x: number; z: number }
   | { type: 'wolfKill'; species: Species; animalId: number; x: number; z: number }
-  | { type: 'wolfGiveUp'; species: Species; animalId: number; x: number; z: number };
+  | { type: 'wolfGiveUp'; species: Species; animalId: number; x: number; z: number }
+  | { type: 'wolfRaid'; n: number };   // шөнө хот руу дөхөж буй чонын тоо (M4.5)
 
 /** seed ба бууцны нэрээс тогтмол тоо: нэг бууцны үүр үргэлж нэг газар байна */
 function campSeed(seed: number, campId: string): number {
@@ -98,6 +103,7 @@ export function protectionZones(cfg: GameConfig, state: GameState): Zone[] {
   const home = cfg.camps.home;
   const zones: Zone[] = [
     { kind: 'pen', x: home.pen.x, z: home.pen.z, r: home.pen.r + pr.pen },
+    { kind: 'yard', x: home.cowYard.x, z: home.cowYard.z, r: home.cowYard.r + pr.pen },   // үхрийн хэвтэр (M4.5)
     { kind: 'home', x: home.x, z: home.z, r: state.home === 'ger' ? pr.ger : pr.tent },
   ];
   const p = state.player;
@@ -149,15 +155,16 @@ function pushOut(o: Wolf, zones: Zone[]): void {
 }
 
 /**
- * Мал чоноос айж үргэнэ (хэрэглэгчийн дүрэм 2026-11-13): чоно ойртвол мал эсрэг зүг рүү
- * санамсаргүй хазайж (сүрэг тарж) гүйнэ, ойрын мал дагаж цугтана.
+ * Мал чоноос айж үргэнэ (хэрэглэгчийн дүрэм 2026-11-13): дайрч буй чоно ойртвол мал эсрэг зүг рүү
+ * санамсаргүй хазайж (сүрэг тарж) гүйнэ, ойрын мал дагаж цугтана. Тэнэж яваа чоно сэм дөхдөг тул
+ * зөвхөн ойрхон (roamMult) ирэхэд л үргэнэ.
  * Хамгаалалтын бүс доторх мал, азарга айхгүй. Айж зугтаж буй чоноос үргэхгүй.
  * Тоо (тест, тэнцвэрт): үргэсэн малын тоо.
  */
 export function spookAnimals(cfg: GameConfig, state: GameState, zones: Zone[], rng: Rng): number {
   const f = cfg.wolves.fear;
   const sense = f.senseRadius as Record<string, number>;
-  const maxR = Math.max(...Object.values(sense)) * f.huntMult;
+  const maxR = Math.max(...Object.values(sense));
   const adultHorse = cfg.animals.species.horse.adultAge;
   const scary = state.wolves.list.filter((o) => o.mode !== 'flee');
   if (!scary.length) return 0;
@@ -180,7 +187,7 @@ export function spookAnimals(cfg: GameConfig, state: GameState, zones: Zone[], r
       const dx = a.x - o.x, dz = a.z - o.z;
       if (Math.abs(dx) > maxR || Math.abs(dz) > maxR) continue;
       const d = Math.hypot(dx, dz);
-      const R = (sense[a.species] ?? 15) * (o.mode === 'hunt' ? f.huntMult : 1);
+      const R = (sense[a.species] ?? 15) * (o.mode === 'hunt' ? 1 : f.roamMult);
       if (d < R && d < nd) {
         nd = d;
         near = o;
@@ -260,7 +267,7 @@ export function wolvesStep(cfg: GameConfig, state: GameState): WolfEvent[] {
       if (!a || killed.has(a.id) || !attacks) {
         o.mode = 'roam';
         o.targetId = 0;
-      } else if (isProtected(zones, a.x, a.z) || (!o.forced && Math.hypot(a.x - den.x, a.z - den.z) > den.r + at.chaseRange)) {
+      } else if (isProtected(zones, a.x, a.z) || (!o.forced && !o.raid && Math.hypot(a.x - den.x, a.z - den.z) > den.r + at.chaseRange)) {
         // Мал хамгаалалтад орсон эсвэл нутгаас хэт холдсон — ангаа орхино
         events.push({ type: 'wolfGiveUp', species: a.species, animalId: a.id, x: a.x, z: a.z });
         o.mode = 'roam';
@@ -278,12 +285,16 @@ export function wolvesStep(cfg: GameConfig, state: GameState): WolfEvent[] {
           o.mode = 'drag';
           o.targetId = 0;
           o.forced = false;
+          o.raid = false;   // шөнийн дайрагч мал барьвал үүр лүүгээ буцна
           o.fed = at.fedMinutes;
+        }
       }
     } else {
       // Тэнэх; нутагтаа хамгаалалтгүй мал байвал анзаарч магадгүй
       let started = false;
-      if (attacks && o.fed <= 0 && o.scared <= 0 && (state.step + o.id) % at.checkEverySteps === 0) {
+      if (o.raid && attacks && o.scared <= 0) {
+        started = raidStep(cfg, state, o, zones, rng, killed, vulnerability, events);
+      } else if (attacks && o.fed <= 0 && o.scared <= 0 && (state.step + o.id) % at.checkEverySteps === 0) {
         const R = den.r + at.territoryMargin;
         // Хамгийн ойр, эмзэг малыг сонгоно (зай / эмзэг байдал)
         let best: Animal | undefined, bd = Infinity;
@@ -308,7 +319,18 @@ export function wolvesStep(cfg: GameConfig, state: GameState): WolfEvent[] {
           events.push({ type: 'wolfHunt', species: best.species, animalId: best.id, x: best.x, z: best.z });
         }
       }
-      if (!started) {
+      if (!started && o.raid && attacks) {
+        // Хот руу дөхнө: хотоос approachDistance зайд, үүрнийхээ зүгээс тойрон тэнэнэ
+        if ((state.step + o.id * 5) % w.roamEverySteps === 0) {
+          const home = cfg.camps.home;
+          const base = Math.atan2(den.z - home.z, den.x - home.x);
+          const ang = base + rng.range(-0.9, 0.9);
+          const r = cfg.wolves.night.approachDistance * rng.range(0.8, 1.2);
+          o.tx = home.x + Math.cos(ang) * r;
+          o.tz = home.z + Math.sin(ang) * r;
+        }
+        moveToward(o, w.speed.roam * 2);
+      } else if (!started) {
         if ((state.step + o.id * 5) % w.roamEverySteps === 0) {
           const a = rng.range(0, Math.PI * 2), r = rng.range(0, den.r * 0.8);
           o.tx = den.x + Math.cos(a) * r;
@@ -323,6 +345,81 @@ export function wolvesStep(cfg: GameConfig, state: GameState): WolfEvent[] {
   if (state.step % cfg.wolves.fear.everySteps === 0) spookAnimals(cfg, state, zones, rng);
   ws.rngState = rng.state;
   return events;
+}
+
+/** Шөнийн дайрагч: хотын ойр (raidRadius) хамгаалалтгүй малыг анзаарвал ан хийж эхэлнэ */
+function raidStep(
+  cfg: GameConfig,
+  state: GameState,
+  o: Wolf,
+  zones: Zone[],
+  rng: Rng,
+  killed: Set<number>,
+  vulnerability: (a: Animal) => number,
+  events: WolfEvent[],
+): boolean {
+  const n = cfg.wolves.night;
+  if ((state.step + o.id) % cfg.wolves.attack.checkEverySteps !== 0) return false;
+  const home = cfg.camps.home;
+  let best: Animal | undefined, bd = Infinity;
+  for (const a of state.animals) {
+    if (a.riding || killed.has(a.id)) continue;
+    if (Math.abs(a.x - home.x) > n.raidRadius || Math.abs(a.z - home.z) > n.raidRadius) continue;
+    if (Math.hypot(a.x - home.x, a.z - home.z) > n.raidRadius) continue;
+    if (isProtected(zones, a.x, a.z)) continue;
+    if (state.wolves.list.some((x) => x !== o && x.targetId === a.id)) continue;
+    const v = vulnerability(a);
+    if (v <= 0) continue;
+    const d = Math.hypot(a.x - o.x, a.z - o.z) / v;
+    if (d < bd) {
+      bd = d;
+      best = a;
+    }
+  }
+  if (!best || !rng.chance(n.noticeChance * vulnerability(best))) return false;
+  o.mode = 'hunt';
+  o.targetId = best.id;
+  events.push({ type: 'wolfHunt', species: best.species, animalId: best.id, x: best.x, z: best.z });
+  return true;
+}
+
+/**
+ * 21:00: энэ шөнө хот руу дөхөх чоныг сонгоно (хэрэглэгчийн дүрэм 2026-11-14: зун цөөн, өвөл хавар олон).
+ * Сонгогдсон чонын тоог буцаана.
+ */
+export function nightRaid(cfg: GameConfig, state: GameState): number {
+  const ws = state.wolves;
+  const n = cfg.wolves.night;
+  if (!ws.list.length || ws.peaceful || !cfg.wolves.attack.enabled) return 0;
+  const season = cfg.time.season;
+  const level = cfg.camps.camps[state.campId]?.wolfLevel ?? 'medium';
+  const p = Math.min(1, ((n.raidChance as Record<string, number>)[season] ?? 0) * ((n.levelMult as Record<string, number>)[level] ?? 1));
+  const max = (n.maxRaiders as Record<string, number>)[season] ?? 1;
+  const rng = Rng.fromState(ws.rngState);
+  let count = 0;
+  for (let k = 0; k < max; k++) if (rng.chance(k === 0 ? p : p * 0.5)) count++;
+  const free = ws.list.filter((o) => o.mode === 'roam' && o.fed <= 0);
+  let picked = 0;
+  for (let k = 0; k < count && free.length; k++) {
+    const i = Math.floor(rng.next() * free.length);
+    const o = free.splice(i, 1)[0]!;
+    o.raid = true;
+    picked++;
+  }
+  ws.rngState = rng.state;
+  return picked;
+}
+
+/** 06:00: шөнийн дайралт дуусна — чоно үүр лүүгээ буцна */
+export function endRaid(state: GameState): void {
+  for (const o of state.wolves.list) {
+    if (!o.raid) continue;
+    o.raid = false;
+    if (o.mode === 'hunt') {
+      o.mode = 'roam';
+      o.targetId = 0;
+    }
+  }
 }
 
 /** «Чоно үргээх»: малчны ойрын чоно айж үүр лүүгээ гүйнэ. Үргээсэн чонын тоо */

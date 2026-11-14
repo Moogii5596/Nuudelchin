@@ -23,10 +23,15 @@ export const SPECIES: readonly Species[] = ['sheep', 'goat', 'cow', 'horse'];
 
 export interface TimeConfig {
   dayStartMinute: number;
-  dayEndMinute: number;
+  dayEndMinute: number;          // 20:00 — өдрийн тайлан
+  homeMinute: Record<string, number>;   // мал хотондоо харьж эхлэх цаг (төрлөөр; адуу харихгүй)
+  sleepMinute: number;           // 21:00 — шөнө: хүрээгүй мал хүрсэн газраа хоноглоно
+  nightEndMinute: number;        // дараа өглөөний 06:00 (= 1800)
   realSecondsPerGameHour: number;
+  nightRealSecondsPerGameHour: number;
   speeds: number[];
   monthDays: number;
+  season: 'spring' | 'summer' | 'autumn' | 'winter';
   animalYearDays: number;
 }
 
@@ -158,6 +163,7 @@ export interface HomeConfig {
   storageRadius: number;
   pen: { x: number; z: number; r: number };   // хаалга нь майхны эсрэг талд
   post: { x: number; z: number };
+  cowYard: { x: number; z: number; r: number };   // үхэр шөнө хэвтэх газар (M4.5)
   tentRadius: number;
   gerRadius: number;
 }
@@ -189,7 +195,7 @@ export interface GameConfig {
 
 export function loadConfig(): GameConfig {
   const cfg: GameConfig = {
-    time: timeJson,
+    time: timeJson as unknown as TimeConfig,
     animals: animalsJson as unknown as AnimalsConfig,
     products: productsJson,
     processing: processingJson,
@@ -216,6 +222,9 @@ export function validateConfig(cfg: GameConfig): string[] {
   const e: string[] = [];
   const t = cfg.time;
   if (!(t.dayEndMinute > t.dayStartMinute)) e.push('time: dayEndMinute > dayStartMinute байх ёстой');
+  if (!(t.sleepMinute > t.dayEndMinute && t.nightEndMinute > t.sleepMinute)) e.push('time: dayEndMinute < sleepMinute < nightEndMinute');
+  if (t.nightEndMinute - t.dayStartMinute !== 1440) e.push('time: nightEndMinute − dayStartMinute = 1440 (24 цаг)');
+  for (const [sp, m] of Object.entries(t.homeMinute ?? {})) if (!(m > t.dayStartMinute && m < t.sleepMinute)) e.push(`time.homeMinute.${sp}: өглөө ба sleepMinute хооронд`);
   if (t.monthDays < 1 || t.animalYearDays < 1) e.push('time: monthDays, animalYearDays ≥ 1');
 
   for (const sp of SPECIES) {

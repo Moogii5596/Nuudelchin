@@ -9,6 +9,7 @@ import type { GameState } from '../state';
 import { buildGrid } from './pasture';
 import { spawnWolves } from './wolves';
 import { relocateDogs } from './dogs';
+import { bestTruck } from './trip';
 
 export function moveHours(cfg: GameConfig, state: GameState, byTruck: boolean): number {
   const m = cfg.camps.move;
@@ -21,10 +22,11 @@ export function startMove(cfg: GameConfig, state: GameState, to: string): string
   if (!cfg.camps.camps[to]) return 'Ийм бууц алга';
   if (to === state.campId) return 'Аль хэдийн энэ бууцанд байна';
   if (state.trip || state.move || state.player.away) return 'Малчин завгүй';
-  const byTruck = state.vehicles.includes('truck');
-  if (byTruck) {
+  const truck = bestTruck(cfg, state);
+  const byTruck = truck !== null;
+  if (truck) {
     const trips = state.home === 'ger' ? Number(cfg.camps.move.truckTripsGer) : Number(cfg.camps.move.truckTripsTent);
-    const liters = (cfg.vehicles.campDistanceKm * 2 * trips * cfg.vehicles.truck.fuelPer100km) / 100;
+    const liters = (cfg.vehicles.campDistanceKm * 2 * trips * cfg.vehicles[truck].fuelPer100km) / 100;
     const cost = liters * cfg.vehicles.fuelPricePerL;
     state.money -= cost;
     state.today.expenses.fuel = (state.today.expenses.fuel ?? 0) + cost;

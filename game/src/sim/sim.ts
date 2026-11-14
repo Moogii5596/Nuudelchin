@@ -12,13 +12,14 @@ import { cohesionCenters, findHerds, herdDecide, type FlockCenter, type Herd, ty
 import { dogsStep } from './systems/dogs';
 import { dailyAnimals, herdSheepUnits, liveWeightKg } from './systems/animals';
 import { dailyBreeding } from './systems/breeding';
-import { dailyFiber, groundAgingStep, productionStep } from './systems/production';
+import { groundAgingStep } from './systems/production';
+import { eveningStep, morning, sleepAll } from './systems/night';
 import { processingStep } from './systems/processing';
 import * as storage from './systems/storage';
 import { tripStep } from './systems/trip';
 import { moveStep } from './systems/camps';
 import { herderStep } from './systems/herder';
-import { wolvesStep, type WolfEvent } from './systems/wolves';
+import { wolvesStep, nightRaid, endRaid, type WolfEvent } from './systems/wolves';
 
 export interface DayReport extends DayStats {
   day: number;
@@ -87,10 +88,10 @@ export class Sim {
       this.herdDecisions = herdDecide(cfg, state, rng, this.quality, herds);
     }
     herderStep(cfg, state);
+    eveningStep(cfg, state, rng);
     grazingStep(cfg, state, rng, this.quality, this.centers);
     dogsStep(cfg, state, herds);
     for (const ev of wolvesStep(cfg, state)) this.emit(ev);
-    productionStep(cfg, state, rng);
     groundAgingStep(cfg, state);
     processingStep(cfg, state);
     tripStep(cfg, state, rng);
@@ -102,6 +103,14 @@ export class Sim {
     const events = tick(state.time, cfg.time);
     for (const ev of events) {
       if (ev.type === 'dayEnd') this.endDay(ev.day);
+      else if (ev.type === 'nightStart') {
+        sleepAll(state);
+        const n = nightRaid(cfg, state);
+        if (n) this.emit({ type: 'wolfRaid', n });
+      } else if (ev.type === 'dayStart') {
+        morning(cfg, state, rng);
+        endRaid(state);
+      }
       this.emit(ev);
     }
     state.rngState = rng.state;
@@ -125,12 +134,12 @@ export class Sim {
     const grazers = state.animals.filter((a) => !a.riding);
     const avgGut = grazers.length ? grazers.reduce((s, a) => s + a.gutFill, 0) / grazers.length : 0;
 
+    for (const a of state.animals) a.lastGut = a.gutFill;   // өглөөний сүү, ноос (night.ts)
     const dead = dailyAnimals(cfg, state);
     t.deaths += dead.length;
     const br = dailyBreeding(cfg, state, rng);
     t.births += br.births;
     if (br.bullFees) this.spend('neighborBull', br.bullFees);
-    dailyFiber(cfg, state, rng);
 
     const su = herdSheepUnits(state, cfg.animals);
     dailyCampDegrade(cfg, state.camps, state.campId, su);
