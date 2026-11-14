@@ -85,10 +85,23 @@ export async function landscapeFullscreen(): Promise<boolean> {
   }
 }
 
-/** Service worker: Android-д суулгах нөхцөл. Кэш хийхгүй — шинэ хувилбар шууд ирнэ */
-export function registerServiceWorker(): void {
+/**
+ * Service worker: утсандаа суулгах нөхцөл + интернетгүй тоглох (sw-template.js).
+ * onOfflineReady — бүх файл утсанд хадгалагдаж дуусахад (анх удаа эсвэл шинэ хувилбар гарахад) дуудагдана.
+ */
+export function registerServiceWorker(onOfflineReady?: (firstTime: boolean) => void): void {
   if (!import.meta.env.PROD || !('serviceWorker' in navigator)) return;
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('message', (e: MessageEvent<{ type?: string }>) => {
+    if (e.data?.type === 'offline-ready') onOfflineReady?.(!hadController);
+  });
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => undefined);
   });
+}
+
+/** Интернет тасрах / сэргэх үед */
+export function onConnectionChange(f: (online: boolean) => void): void {
+  window.addEventListener('online', () => f(true));
+  window.addEventListener('offline', () => f(false));
 }

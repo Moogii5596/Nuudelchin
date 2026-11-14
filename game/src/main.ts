@@ -25,7 +25,7 @@ import { PRODUCT_EMOJI, SEASON_EMOJI, SEASON_NAME, fmtMinutes, fmtMoney, fmtNum 
 import { PlayerController } from './input/controller';
 import { t } from './i18n/i18n';
 import { TouchUI } from './input/touch';
-import { registerServiceWorker } from './pwa';
+import { registerServiceWorker, onConnectionChange } from './pwa';
 import { isTouch, touchKeys, quality, QUALITIES, QUALITY_NAME, QUALITY_SPEC, setQuality } from './device';
 
 function toast(msg: string, kind: '' | 'good' | 'bad' = ''): void {
@@ -322,7 +322,11 @@ function start(): void {
   (window as unknown as { __game: unknown }).__game = { cfg, state, sim, view, panels, get fps() { return fps; } };
 }
 
-registerServiceWorker();
+// Интернетгүй тоглох: анх нээхэд бүх файл утсанд хадгалагдана (sw-template.js)
+registerServiceWorker((firstTime) =>
+  toast(firstTime ? '📥 Тоглоом төхөөрөмжид хадгалагдлаа — дараа нь интернетгүй ч тоглоно' : '📥 Шинэ хувилбар хадгалагдлаа — дараагийн нээлтээс ажиллана', 'good'),
+);
+onConnectionChange((online) => toast(online ? '📶 Интернет сэргэлээ' : '📴 Интернет тасарлаа — тоглоом үргэлжилнэ, санаа зовох хэрэггүй', online ? 'good' : ''));
 
 try {
   start();
