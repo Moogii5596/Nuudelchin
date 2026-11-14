@@ -11,6 +11,7 @@ import { spawnWolves } from './wolves';
 import { relocateDogs } from './dogs';
 import { bestTruck, parkingSpot } from './trip';
 import { syncAway } from './travel';
+import { relocateHelpers } from './helpers';
 
 export function moveHours(cfg: GameConfig, state: GameState, byTruck: boolean): number {
   const m = cfg.camps.move;
@@ -82,6 +83,7 @@ export function moveStep(cfg: GameConfig, state: GameState, rng: Rng): boolean {
   state.wolves = spawnWolves(cfg, state.seed, mv.to);
   state.wolves.peaceful = peaceful;
   relocateDogs(cfg, state);
+  relocateHelpers(state);
   state.move = null;
   syncAway(state);
   return true;

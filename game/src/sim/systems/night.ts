@@ -86,6 +86,7 @@ export function morning(cfg: GameConfig, state: GameState, rng: Rng): void {
   const d = cfg.products.drops;
   for (const a of state.animals) {
     if (a.riding) continue;
+    // Туслахын малын сүү, ноос ч тоглогчийнх (тоглогчийн бэлчээрт бэлчдэг)
     if (a.species === 'cow' && a.sex === 'f' && a.lactating) {
       a.milkTimer += dailyMilkLiters(cfg, a);
       while (a.milkTimer >= d.milk.amount) {

@@ -146,7 +146,7 @@ export function takeFromStorage(cfg: GameConfig, state: GameState, products: Par
 export function droveAnimals(state: GameState, animalIds: number[]): string | null {
   const p = state.player;
   if (!p.mounted || p.driving) return 'Морьтой үед л мал тууж явна';
-  const list = state.animals.filter((a) => animalIds.includes(a.id) && !a.riding);
+  const list = state.animals.filter((a) => animalIds.includes(a.id) && !a.riding && a.ownerId === undefined);
   if (!list.length) return 'Мал сонгоогүй';
   state.animals = state.animals.filter((a) => !list.includes(a));
   p.drove.push(...list);
@@ -360,7 +360,7 @@ export function loadCargo(
   const v = vehicleCfg(cfg, id);
   const units = Object.values(products).reduce((s, n) => s + (n ?? 0), 0);
   if (cargoUnits(f) + units > v.capacity + 1e-9) return `Ачаа багтахгүй (${Math.round(cargoUnits(f) + units)}/${v.capacity})`;
-  const animals = state.animals.filter((a) => animalIds.includes(a.id) && !a.riding);
+  const animals = state.animals.filter((a) => animalIds.includes(a.id) && !a.riding && a.ownerId === undefined);
   const slots = animals.reduce((s, a) => s + animalSlots(cfg, id, a.species), 0);
   if (cargoSlots(cfg, f) + slots > v.sheepSlots + 1e-9) return `Мал багтахгүй (${v.sheepSlots} хонь эсвэл ${v.cowSlots} үхэр)`;
   for (const [p, n] of Object.entries(products)) {

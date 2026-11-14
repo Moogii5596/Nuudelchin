@@ -11,7 +11,7 @@ import type { Sim } from './sim';
 import { driveFlock } from './systems/grazing';
 import * as storage from './systems/storage';
 import * as processing from './systems/processing';
-import { boardBest, driveVehicle, enterVehicle, exitVehicle, leaveToMap, loadCargo, mapGo, migrateHere, takeFromStorage, droveAnimals, trade, unloadCargo, type TradePlan } from './systems/travel';
+import { boardBest, canTravel, driveVehicle, enterVehicle, exitVehicle, leaveToMap, loadCargo, mapGo, migrateHere, takeFromStorage, droveAnimals, trade, unloadCargo, type TradePlan } from './systems/travel';
 import { startMove } from './systems/camps';
 import { shout, toggleMount, toggleUurga } from './systems/herder';
 import { scareWolves } from './systems/wolves';
@@ -19,6 +19,7 @@ import { newAnimal } from './state';
 import { SPECIES } from './config';
 import { orderDog, DOG_ORDER_NAME, type DogOrderKind } from './systems/dogs';
 import { applyCheat, type CheatAction } from './systems/cheats';
+import { fire, hire, payWithAnimal, recallOtor, refreshCandidates, sendOtor, setTask, type HelperTask, type HerdGroup } from './systems/helpers';
 
 export type Command =
   | { type: 'movePlayer'; x: number; z: number; heading?: number }
@@ -36,6 +37,7 @@ export type Command =
   | { type: 'boardBest' }             // бот, туслах: хамгийн их даацтай тээвэрт шууд суух
   | { type: 'driveVehicle'; x: number; z: number; heading: number }
   | { type: 'leaveToMap'; dirX: number; dirZ: number }   // бот: 3D-ийн хязгаар хүртэл жолоодсонтой адил
+  | { type: 'quickMap' }             // Tab: шууд газрын зураг руу (явган бол унаа мориндоо мордоно)
   | { type: 'mapGo'; x: number; z: number; dest: string | null }
   | { type: 'migrateHere' }
   | { type: 'loadCargo'; vehicle: VehicleId; products: Partial<Record<ProductId, number>>; animalIds: number[] }
@@ -46,6 +48,13 @@ export type Command =
   | { type: 'neighborBull'; on: boolean }
   | { type: 'moveCamp'; to: string }
   | { type: 'dogOrder'; dog: number | 'all'; order: DogOrderKind; herd?: Species }   // нохойн команд (K цонх, N)
+  | { type: 'teahouse' }                                                  // цайны газрын нэр дэвшигчдийг шинэчлэх (M5)
+  | { type: 'hire'; candidate: number }                                   // цайны газар (M5)
+  | { type: 'fireHelper'; helper: number }
+  | { type: 'helperTask'; helper: number; task: HelperTask; herd?: HerdGroup }
+  | { type: 'payWithAnimal'; helper: number; animal: number }
+  | { type: 'sendOtor'; helper: number; animalIds: number[]; camp: string }
+  | { type: 'recallOtor'; helper: number }
   | { type: 'cheat'; action: CheatAction };                                          // туршилтын цэс (`)
 
 export interface CommandResult {
@@ -59,7 +68,7 @@ export function nearHome(cfg: { camps: { home: { x: number; z: number; storageRa
   return Math.hypot(p.x - h.x, p.z - h.z) <= h.storageRadius * 2;
 }
 
-const CAMP_ONLY = new Set<Command['type']>(['shout', 'callHorse', 'scareWolves', 'pickup', 'deposit', 'drive', 'process', 'moveCamp', 'dogOrder', 'loadCargo', 'unloadCargo', 'takeFromStorage', 'droveAnimals']);
+const CAMP_ONLY = new Set<Command['type']>(['payWithAnimal', 'sendOtor', 'recallOtor', 'shout', 'callHorse', 'scareWolves', 'pickup', 'deposit', 'drive', 'process', 'moveCamp', 'dogOrder', 'loadCargo', 'unloadCargo', 'takeFromStorage', 'droveAnimals']);
 /** Тэрэг/машин жолоодож байхад хийхгүй ажлууд */
 const NOT_DRIVING = new Set<Command['type']>(['toggleMount', 'callHorse', 'pickup', 'deposit', 'drive', 'process', 'moveCamp', 'dogOrder', 'takeFromStorage']);
 
@@ -195,6 +204,21 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
       if (ev) sim.emitTravel(ev);
       return ok();
     }
+    case 'quickMap': {
+      if (p.place === 'map') return fail('Газрын зураг дээр байна');
+      if (!canTravel(state)) {
+        // Явган бол унаа мориндоо мордоно, морьгүй бол тэрэг/машиндаа сууна
+        const horse = state.animals.find((a) => a.riding);
+        if (horse) {
+          p.mounted = true;
+          p.horseCalled = false;
+        } else if (!boardBest(cfg, state)) return fail('Унаа морь, тэрэг машин алга');
+      }
+      const R = Math.hypot(p.x, p.z);
+      const err = R > 5 ? leaveToMap(cfg, state, p.x, p.z) : leaveToMap(cfg, state, Math.sin(p.heading), Math.cos(p.heading));
+      if (!err) sim.emitTravel({ type: 'leftToMap' });
+      return err ? fail(err) : ok();
+    }
     case 'leaveToMap': {
       const err = leaveToMap(cfg, state, cmd.dirX, cmd.dirZ);
       if (!err) sim.emitTravel({ type: 'leftToMap' });
@@ -244,6 +268,35 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
 
     case 'cheat':
       return ok(applyCheat(sim, cmd.action));
+
+    case 'teahouse':
+      refreshCandidates(cfg, state);
+      return ok();
+    case 'hire': {
+      refreshCandidates(cfg, state);
+      const err = hire(cfg, state, cmd.candidate, proximity);
+      return err ? fail(err) : ok('Туслах хөлсөллөө — таны бууц руу явлаа');
+    }
+    case 'fireHelper': {
+      const err = fire(state, cmd.helper);
+      return err ? fail(err) : ok('Туслах ажлаас гарлаа');
+    }
+    case 'helperTask': {
+      const err = setTask(state, cmd.helper, cmd.task, cmd.herd);
+      return err ? fail(err) : ok();
+    }
+    case 'payWithAnimal': {
+      const err = payWithAnimal(cfg, state, cmd.helper, cmd.animal);
+      return err ? fail(err) : ok('Цалинг малаар өглөө');
+    }
+    case 'sendOtor': {
+      const err = sendOtor(cfg, state, cmd.helper, cmd.animalIds, cmd.camp);
+      return err ? fail(err) : ok('Отор явлаа');
+    }
+    case 'recallOtor': {
+      const err = recallOtor(cfg, state, cmd.helper, sim.random);
+      return err ? fail(err) : ok('Отроос буцлаа');
+    }
 
     case 'moveCamp': {
       if (proximity && !nearHome(cfg, p)) return fail('Нүүхийн тулд майхандаа оч (ачаа бараагаа ачина)');

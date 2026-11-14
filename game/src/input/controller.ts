@@ -9,14 +9,14 @@ import type { GameState } from '../sim/state';
 import type { Command, CommandResult } from '../sim/commands';
 import { riverZ } from '../sim/terrain';
 
-export type ActionKind = 'shout' | 'scare' | 'call' | 'mount' | 'uurga' | 'pickup' | 'deposit' | 'dog' | 'vehicle';
+export type ActionKind = 'shout' | 'scare' | 'call' | 'mount' | 'uurga' | 'pickup' | 'deposit' | 'dog' | 'vehicle' | 'map';
 
 export interface ControllerHooks {
   dispatch: (cmd: Command) => CommandResult;
   /** Командын үр дүн (мэдэгдэл, бичиг) */
   onAction: (kind: ActionKind, res: CommandResult) => void;
   onSpeed: (idx: number) => void;
-  onToggle: (what: 'heatmap' | 'help' | 'cheat' | 'storage' | 'trade' | 'dogs' | 'camps' | 'zones') => void;
+  onToggle: (what: 'heatmap' | 'help' | 'cheat' | 'storage' | 'trade' | 'dogs' | 'camps' | 'zones' | 'helpers') => void;
   /** Цонх нээлттэй үед удирдлага ажиллахгүй */
   blocked: () => boolean;
   /** Одоогийн төлөв (E товчны үйлдлийг сонгоход) */
@@ -88,6 +88,15 @@ export class PlayerController {
           break;
         case 'KeyK':
           this.hooks.onToggle('dogs');
+          break;
+        case 'Tab':
+          // Газрын зураг руу шууд гарах (M4.6)
+          e.preventDefault();
+          this.vSpeed = 0;
+          this.hooks.onAction('map', this.hooks.dispatch({ type: 'quickMap' }));
+          break;
+        case 'KeyJ':
+          this.hooks.onToggle('helpers');
           break;
         case 'KeyM':
           this.hooks.onToggle('camps');

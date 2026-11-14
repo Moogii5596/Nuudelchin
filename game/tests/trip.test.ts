@@ -44,6 +44,21 @@ describe('Газрын зураг, тээвэр, Худалдаачин (M4.6)',
     expect(sim.state.map.x).toBeLessThan(home.x);   // баруун зүгт гарсан
   });
 
+  it('Tab: явган байсан ч мориндоо мордоод шууд газрын зураг руу гарна; сумын төвөөс ч гарна', () => {
+    const sim = newSim(31);
+    const p = sim.state.player;
+    expect(p.mounted).toBe(false);
+    expect(sim.command({ type: 'quickMap' }).ok).toBe(true);
+    expect(p.place).toBe('map');
+    expect(p.mounted).toBe(true);
+    expect(sim.command({ type: 'quickMap' }).ok).toBe(false);
+    sim.command({ type: 'mapGo', x: 0, z: 0, dest: sumId(cfg) });
+    for (let i = 0; i < 2000 && p.place !== 'sum'; i++) sim.step();
+    expect(p.place).toBe('sum');
+    expect(sim.command({ type: 'quickMap' }).ok).toBe(true);
+    expect(p.place).toBe('map');
+  });
+
   it('газрын зураг дээр явж байхдаа очих газраа сольж, сумын төвд хүрэхэд сумын төвийн 3D-д орно', () => {
     const sim = newSim(4);
     sim.command({ type: 'boardBest' }, false);

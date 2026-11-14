@@ -59,6 +59,7 @@ export function dailyBreeding(cfg: GameConfig, state: GameState, rng: Rng): Bree
         }),
       );
       born[born.length - 1]!.motherId = a.id;
+      if (a.ownerId !== undefined) born[born.length - 1]!.ownerId = a.ownerId;   // туслахын малын төл туслахынх
       res.births++;
     }
   }

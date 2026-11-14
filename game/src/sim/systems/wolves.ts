@@ -19,6 +19,7 @@ import type { Animal, GameState } from '../state';
 import { waterDistance } from '../terrain';
 import { realSecondsPerMinute } from '../clock';
 import { flockKey } from './herds';
+import { guardingHelpers } from './helpers';
 
 export interface Den {
   x: number;
@@ -54,7 +55,7 @@ export interface WolfState {
 
 /** Хамгаалалтын бүс: чоно орохгүй, доторх малд дайрахгүй */
 export interface Zone {
-  kind: 'pen' | 'yard' | 'home' | 'herder' | 'horse' | 'stallion' | 'dog';
+  kind: 'pen' | 'yard' | 'home' | 'herder' | 'helper' | 'horse' | 'stallion' | 'dog';
   x: number;
   z: number;
   r: number;
@@ -117,6 +118,7 @@ export function protectionZones(cfg: GameConfig, state: GameState): Zone[] {
     }
   }
   for (const d of state.dogs) zones.push({ kind: 'dog', x: d.x, z: d.z, r: pr.dog });
+  for (const h of guardingHelpers(state)) zones.push({ kind: 'helper', x: h.x, z: h.z, r: cfg.helpers.herder.protectRadius });
   return zones;
 }
 

@@ -167,6 +167,7 @@ export class AnimalsView {
   private p = new THREE.Vector3();
   private s = new THREE.Vector3();
   private c = new THREE.Color();
+  private tint = new THREE.Color(0xa0522d);
   private yAxis = new THREE.Vector3(0, 1, 0);
 
   constructor(private cfg: GameConfig) {
@@ -253,7 +254,9 @@ export class AnimalsView {
       this.mHead.makeTranslation(def.headPivot[0], def.headPivot[1], def.headPivot[2]).multiply(this.mRot);
       this.mHead.premultiply(this.mBase);
 
-      const bodyCol = def.palette[(a.id * 7 + 3) % def.palette.length] ?? def.palette[0]!;
+      let bodyCol = def.palette[(a.id * 7 + 3) % def.palette.length] ?? def.palette[0]!;
+      // Туслахын мал (цалинг малаар өгсөн, M5) — өөр өнгөтэй
+      if (a.ownerId !== undefined) bodyCol = this.c.setHex(bodyCol).lerp(this.tint, 0.6).getHex();
       def.parts.forEach((part, pi) => {
         if (part.only && !part.only(a)) return;
         const mesh = sm.meshes[pi]!;

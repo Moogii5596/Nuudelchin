@@ -16,17 +16,17 @@ export interface Rig {
   arms: THREE.Group[];
 }
 
-export function makeHerder(): Rig {
+export function makeHerder(deel = 0x2f5d9b, hem = 0x2a528a, hat = 0xa52a2a): Rig {
   const g = new THREE.Group();
   // Нуруун дээрх уут (гарт барьсан бүтээгдэхүүн)
   const sack = meshBox(0.5, 0.6, 0.3, 0xb89a6a, 0, 1.35, -0.38, g);
   sack.name = 'sack';
   sack.visible = false;
   const legs = [limb(0.2, 0.85, 0x2b1d14, -0.15, 0.85, 0, g), limb(0.2, 0.85, 0x2b1d14, 0.15, 0.85, 0, g)];
-  meshBox(0.62, 0.9, 0.4, 0x2f5d9b, 0, 1.3, 0, g);            // дээл
+  meshBox(0.62, 0.9, 0.4, deel, 0, 1.3, 0, g);            // дээл
   meshBox(0.64, 0.14, 0.42, 0xe0b030, 0, 1.05, 0, g);          // бүс
-  meshBox(0.69, 0.3, 0.44, 0x2a528a, 0, 1.0, 0, g);            // дээлийн хормой
-  const arms = [limb(0.16, 0.75, 0x2f5d9b, -0.4, 1.7, 0, g), limb(0.16, 0.75, 0x2f5d9b, 0.4, 1.7, 0, g)];
+  meshBox(0.69, 0.3, 0.44, hem, 0, 1.0, 0, g);            // дээлийн хормой
+  const arms = [limb(0.16, 0.75, deel, -0.4, 1.7, 0, g), limb(0.16, 0.75, deel, 0.4, 1.7, 0, g)];
   // Шилбүүр/богино уурга — баруун гарт, урагшаа хазайж
   const uurga = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.035, 2.2, 6), mat(0x8a6a3a));
   uurga.name = 'uurga';
@@ -42,7 +42,7 @@ export function makeHerder(): Rig {
   const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.3, 0.1, 10), mat(0x6b3d1e));
   brim.position.y = 2.13;
   g.add(brim);
-  const top = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.32, 8), mat(0xa52a2a));
+  const top = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.32, 8), mat(hat));
   top.position.y = 2.32;
   g.add(top);
   const knob = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 5), mat(0xe0b030));
@@ -116,7 +116,7 @@ function makeDog(): Rig {
   return { root: g, legs, arms: [] };
 }
 
-function swingLegs(r: Rig, sw: number): void {
+export function swingLegs(r: Rig, sw: number): void {
   const L = r.legs;
   if (L.length === 4) {
     L[0]!.rotation.x = sw;

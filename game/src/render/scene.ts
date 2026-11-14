@@ -15,6 +15,7 @@ import { VehiclesView } from './vehicles';
 import { angDiff } from './util';
 import { SumCenterView } from './sumcenter';
 import { WorldMapView } from './worldmap';
+import { StaffView } from './staff';
 
 /** Бэлчээрийн өнгийг хэр олон удаа шинэчлэх (бодит секунд) */
 const GRASS_REFRESH_SEC = 0.4;
@@ -31,6 +32,7 @@ export class GameView {
   readonly vehicles: VehiclesView;
   readonly sum: SumCenterView;
   readonly map: WorldMapView;
+  readonly staff = new StaffView();
   private daylight = 1;
   heatmap = false;
   private sun: THREE.DirectionalLight;
@@ -83,7 +85,7 @@ export class GameView {
     this.sum = new SumCenterView(cfg);
     this.map = new WorldMapView(cfg);
     this.map.resize(container.clientWidth / container.clientHeight);
-    this.scene.add(this.terrain.group, this.animals.group, this.characters.group, this.items.group, this.zones.group, this.vehicles.group, this.sum.group);
+    this.scene.add(this.terrain.group, this.animals.group, this.characters.group, this.items.group, this.zones.group, this.vehicles.group, this.sum.group, this.staff.group);
     this.terrain.sync(state);
     this.terrain.updateGrass(state, this.heatmap);
 
@@ -134,7 +136,7 @@ export class GameView {
     }
     this.cam.mapMode = false;
     const camp = p.place === 'camp';
-    this.terrain.group.visible = this.animals.group.visible = this.items.group.visible = this.zones.group.visible = camp;
+    this.terrain.group.visible = this.animals.group.visible = this.items.group.visible = this.zones.group.visible = this.staff.group.visible = camp;
     this.sum.group.visible = !camp;
     this.homeLight.visible = camp;
     if (camp) {
@@ -150,6 +152,7 @@ export class GameView {
       this.animals.update(state, this.heightAt, alpha, dt, stepSec);
       this.items.update(state, this.heightAt, dt);
       this.zones.update(state, this.heightAt);
+      this.staff.update(state, this.heightAt, dt);
     }
     this.characters.update(state, this.heightAt, dt);
     this.vehicles.update(state, this.heightAt, dt);

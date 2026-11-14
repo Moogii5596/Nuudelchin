@@ -2,6 +2,7 @@
  * Цонхнууд (M3): агуулах ба боловсруулалт (B), өдрийн тайлан (20:00).
  * M4.6: ачаа (T, хотонд — гартаа авах, тээвэрт ачих/буулгах), Худалдаачин (E/T, сумын төвд), өөр бууцанд ирэх.
  * M4: нохойн команд (K), бууц сэлгэх (M), туршилтын цэс (`).
+ * M5: цайны газар (сумын төвд E — туслах хөлслөх), туслахууд (J — үүрэг, малаар цалин, отор, халах).
  * GameState-ийг зөвхөн уншиж, үйлдлийг Command-аар илгээнэ (architecture.md §3.1).
  * Цонх нээлттэй үед тоглоом түр зогсоно.
  */
@@ -21,12 +22,21 @@ import { flockKey } from '../../sim/systems/herds';
 import { moveHours } from '../../sim/systems/camps';
 import { herdSheepUnits } from '../../sim/systems/animals';
 import type { CheatAction } from '../../sim/systems/cheats';
+import { bedsTotal, bedsUsed, nearTeahouse, playerOwned, spareTents, type Helper, type HerdGroup } from '../../sim/systems/helpers';
 import {
   PASTURE_NAME, PRODUCT_EMOJI, PROCESSOR_NAME, WATER_NAME, WOLF_LEVEL_NAME, expenseName, fmtMinutes, fmtMoney, fmtNum, productName, speciesEmoji, stageName, unitOf,
 } from './names';
 import { t } from '../../i18n/i18n';
 
-type Kind = 'storage' | 'cargo' | 'shop' | 'arrive' | 'report' | 'dogs' | 'camps' | 'cheat';
+type Kind = 'storage' | 'cargo' | 'shop' | 'arrive' | 'report' | 'dogs' | 'camps' | 'cheat' | 'teahouse' | 'helpers';
+
+/** Туслахуудын цонхны дэд хэсэг: жагсаалт, отор явуулах, малаар цалинжуулах */
+interface HelperView {
+  mode: 'list' | 'otor' | 'pay';
+  helper: number;
+  camp: string;
+  counts: Record<string, number>;
+}
 
 const HERD_NAME: Record<string, string> = { sheep: '🐑 Хонь ямаа', cow: '🐄 Үхэр', horse: '🐎 Адуу' };
 
@@ -81,6 +91,7 @@ export class Panels {
   private report: DayReport | null = null;
   private reports: DayReport[] = [];
   private arriveCamp = '';
+  private hv: HelperView = { mode: 'list', helper: 0, camp: '', counts: {} };
 
   constructor(private cfg: GameConfig, private state: GameState, private hooks: UiHooks) {
     this.root = document.getElementById('modal')!;
@@ -100,6 +111,7 @@ export class Panels {
         (e.code === 'KeyT' && (this.kind === 'cargo' || this.kind === 'shop')) ||
         (e.code === 'KeyK' && this.kind === 'dogs') ||
         (e.code === 'KeyM' && this.kind === 'camps') ||
+        (e.code === 'KeyJ' && this.kind === 'helpers') ||
         (e.code === 'Backquote' && this.kind === 'cheat')
       ) this.close();
     });
@@ -122,6 +134,11 @@ export class Panels {
       const v = st.player.driving ?? here.sort((a, b) => this.cfg.vehicles[b.id].capacity - this.cfg.vehicles[a.id].capacity)[0]?.id ?? null;
       this.draft = { vehicle: v, take: {}, sell: {}, sellGroups: {}, buyAnimals: {}, buyItems: new Set() };
     }
+    if (kind === 'teahouse') {
+      if (this.state.player.place !== 'sum') return;
+      this.hooks.dispatch({ type: 'teahouse' });
+    }
+    if (kind === 'helpers') this.hv = { mode: 'list', helper: 0, camp: '', counts: {} };
     this.kind = kind;
     this.root.style.display = 'flex';
     this.render();
@@ -153,7 +170,7 @@ export class Panels {
 
   /** Цонх нээлттэй үед төлөв өөрчлөгдвөл (боловсруулалтын хугацаа г.м.) */
   refresh(): void {
-    if (this.kind === 'storage' || this.kind === 'dogs' || this.kind === 'camps') this.render();
+    if (this.kind === 'storage' || this.kind === 'dogs' || this.kind === 'camps' || (this.kind === 'helpers' && this.hv.mode === 'list')) this.render();
   }
 
   /** Газрын зураг дээр өөр бууцанд ирлээ */
@@ -173,6 +190,8 @@ export class Panels {
     else if (this.kind === 'dogs') this.box.innerHTML = this.dogsHtml();
     else if (this.kind === 'camps') this.box.innerHTML = this.campsHtml();
     else if (this.kind === 'cheat') this.box.innerHTML = this.cheatHtml();
+    else if (this.kind === 'teahouse') this.box.innerHTML = this.teahouseHtml();
+    else if (this.kind === 'helpers') this.box.innerHTML = this.helpersHtml();
     this.box.scrollTop = scroll;
   }
 
@@ -225,7 +244,7 @@ export class Panels {
   private animalGroups(src: Animal[] = this.state.animals): { key: string; label: string; list: Animal[] }[] {
     const groups = new Map<string, { key: string; label: string; list: Animal[] }>();
     for (const a of src) {
-      if (a.riding) continue;
+      if (a.riding || !playerOwned(a)) continue;   // туслахын малыг тоглогч зарж, ачиж чадахгүй
       const label = stageName(this.cfg, a.species, a.sex, a.age);
       const key = `${a.species}|${a.sex}|${label}`;
       let g = groups.get(key);
@@ -250,6 +269,10 @@ export class Panels {
     if (next) out.push({ key: 'storage', label: state.storageLevel === 0 ? 'Модон амбаар' : 'Том агуулах', note: `Багтаамж ${next.capacity} нэгж`, order: { kind: 'storage' } });
     if (state.home !== 'ger') out.push({ key: 'ger', label: 'Гэр (4 ханатай)', note: 'Зорилго: гэр + 40 хонин толгой', order: { kind: 'ger' } });
     if (state.dogs.length < cfg.dogs.maxDogs) out.push({ key: 'dog', label: 'Нохой (банхар)', note: `10 м хамгаалалтын бүс, ойртсон чоныг хөөнө · хоол өдөрт ${fmtMoney(cfg.dogs.foodPerDay)} · K — команд`, order: { kind: 'dog' } });
+    const H = cfg.helpers;
+    out.push({ key: 'helperTent', label: '⛺ Туслахын майхан', note: `Ганц бие ${H.housing.helperTent.beds} туслахын ор · одоо ${bedsUsed(state)}/${bedsTotal(cfg, state)}`, order: { kind: 'helperTent' } });
+    out.push({ key: 'helperGer', label: '🛖 Туслахын гэр', note: `Ганц бие ${H.housing.helperGer.beds} туслахын ор`, order: { kind: 'helperGer' } });
+    out.push({ key: 'otorTent', label: '⛺ Отрын майхан', note: `Малчныг отор явуулахад нэг илүү майхан хэрэгтэй (гэртэй болбол хуучин майхан тань илүү болно) · одоо сул ${spareTents(state)}`, order: { kind: 'otorTent' } });
     for (const id of ['horseCart', 'porter', 'amjirgaa'] as const) {
       if (state.vehicles.includes(id)) continue;
       const v = cfg.vehicles[id];
@@ -583,6 +606,119 @@ export class Panels {
       <p class="muted">Энэ цэс тоглоомын дүрмийг турших зорилготой. \` — хаах.</p>`;
   }
 
+
+  // ======================= цайны газар (M5) =======================
+  private teahouseHtml(): string {
+    const { cfg, state } = this;
+    const H = cfg.helpers;
+    const near = nearTeahouse(cfg, state);
+    const per = H.payEveryDays;
+    const beds = bedsTotal(cfg, state);
+    const used = bedsUsed(state);
+    const icon = (m: { kind: string; sex: string }) => (m.kind === 'child' ? '🧒' : m.sex === 'f' ? '👩' : '👨');
+    const rows = state.helpers.candidates.map((c) => {
+      const who = c.members.map((m) => `${icon(m)} ${m.name}${m.kind === 'child' ? ' <span class="muted">(хүүхэд — цуглуулагч)</span>' : ''}`).join('<br>');
+      const type = c.family ? 'Айл · өөрийн гэртэй ирнэ' : 'Ганц бие · байр хэрэгтэй';
+      const noBed = !c.family && used + 1 > beds;
+      return `<tr><td>${who}<br><span class="muted">${type}</span></td><td class="num">${fmtMoney(c.wage * per)}<br><span class="muted">${per} хоног тутам</span></td>
+        <td><button class="btn gold" data-act="hire:${c.id}" ${near && !noBed ? '' : 'disabled'}>Хөлслөх</button>${noBed ? '<br><span class="bad">байр алга</span>' : ''}</td></tr>`;
+    }).join('');
+    return `<h2>☕ Цайны газар <span class="close" data-act="close">✕</span></h2>
+      <p class="muted">Ажил хайж буй малчид энд цай ууж сууна. Туслах өөрийн малгүй ирнэ. Айл өөрийн гэртэй, хүүхэд нь сүү, ноос түүнэ. Ганц биед Худалдаачнаас туслахын майхан/гэр авч өгнө (ор ${used}/${beds}). Цалинг ${per} хоног тутам мөнгөөр, эсвэл малаар урьдчилж өгнө (<kbd>J</kbd> — туслахууд).</p>
+      ${rows ? `<table><tr><th>Хүн</th><th class="num">Цалин</th><th></th></tr>${rows}</table>` : '<p>Өнөөдөр ажил хайсан хүн алга. Хэд хоногийн дараа дахин ирээрэй.</p>'}
+      ${near ? '' : '<p class="bad">Цайны газрын цэнхэр тойрог дотор оч.</p>'}
+      <p class="muted">Нэр дэвшигчид ${H.teahouse.refreshDays} хоног тутам солигдоно.</p>`;
+  }
+
+  // ======================= туслахууд (M5) =======================
+  private helpersHtml(): string {
+    if (this.hv.mode === 'otor') return this.otorHtml();
+    if (this.hv.mode === 'pay') return this.payHtml();
+    const { cfg, state } = this;
+    const hs = state.helpers;
+    const per = cfg.helpers.payEveryDays;
+    const head = `<h2>👥 Туслахууд <span class="close" data-act="close">✕</span></h2>`;
+    if (!hs.list.length)
+      return head + `<p>Туслах алга. Сумын төвийн <b>Цайны газар</b>-аас (цэнхэр тойрог, <kbd>E</kbd>) малчин айл эсвэл ганц бие туслах хөлслөнө.</p>
+        <p class="muted">Малчин сүргээ хариулж, чонын нутаг руу орвол эргүүлж, сайн бэлчээрт бэлчээж, орой хотлуулна. Хүүхэд сүү, ноос түүнэ. Малчинг жолооч болгож сумын төв явуулах, эсвэл мал тасалж өөр бууцанд отор гаргаж болно.</p>`;
+    const total = hs.list.reduce((s, h) => s + h.wage, 0) * per;
+    const md = cfg.time.monthDays;
+    const left = (md - (state.time.day % md)) % md;
+    const nextPay = left === 0 ? 'өнөөдөр 20:00-д' : `${left} хоногийн дараа`;
+    const owned = (h: Helper) => state.animals.filter((a) => a.ownerId === h.id).length + hs.otor.reduce((s, g) => s + g.animals.filter((a) => a.ownerId === h.id).length, 0);
+    const icon = (h: Helper) => (h.kind === 'child' ? '🧒' : h.sex === 'f' ? '👩' : '👨');
+    const herdBtn = (h: Helper, g: HerdGroup) => `<button class="btn sm ${h.task === 'herd' && h.herd === g ? 'gold' : ''}" data-act="task:${h.id}|herd|${g}">${HERD_NAME[g]}</button>`;
+    const rows = hs.list.map((h) => {
+      let what = '';
+      let btns = '';
+      if (h.kind === 'child') what = '🧺 Цуглуулагч — сүү, ноос түүж агуулахад хийнэ';
+      else if (h.task === 'otor') {
+        const g = hs.otor.find((x) => x.helperId === h.id);
+        what = g ? `🏕 Отор: ${t('camp.' + g.campId)} · ${g.animals.length} мал · ${g.days} хоног` : '🏕 Отор';
+        btns = `<button class="btn sm gold" data-act="recall:${h.id}">Отроос буцаах</button>`;
+      } else if (h.trip) {
+        what = `${cfg.vehicles[h.trip.vehicle].emoji} Сумын төв явж байна · ~${fmtMinutes(Math.round(h.trip.remaining))}`;
+      } else {
+        what = h.task === 'drive' ? `🚚 Жолооч — ${cfg.helpers.driver.departHour}:00-д агуулахын ачааг сумын төвд зарна` : `${HERD_NAME[h.herd]} хариулж байна`;
+        btns = `${herdBtn(h, 'sheep')} ${herdBtn(h, 'cow')} ${herdBtn(h, 'horse')} <button class="btn sm ${h.task === 'drive' ? 'gold' : ''}" data-act="task:${h.id}|drive">🚚 Жолооч</button>
+          <button class="btn sm" data-act="otorOpen:${h.id}">🏕 Отор…</button>`;
+      }
+      const pay = h.task === 'otor' || h.trip ? '' : `<button class="btn sm" data-act="payOpen:${h.id}">🐑 Малаар цалинжуулах</button> <button class="btn sm" data-act="fire:${h.id}">Халах</button>`;
+      const own = owned(h);
+      return `<tr><td>${icon(h)} <b>${h.name}</b>${h.family ? ' <span class="muted">(айл)</span>' : ''}<br><span class="muted">${what}</span></td>
+        <td class="num">${fmtMoney(h.wage * per)}<br><span class="muted">${h.prepaid > 0 ? `урьдчилгаа ${fmtMoney(h.prepaid)}` : h.prepaid < 0 ? `өр ${fmtMoney(-h.prepaid)}` : ''}${own ? ` · 🟤 ${own} мал` : ''}</span></td>
+        <td>${btns}<br>${pay}</td></tr>`;
+    }).join('');
+    return head + `<p class="muted">Цалин ${per} хоног тутам: нийт <b>${fmtMoney(total)}</b> · дараагийн цалин ${nextPay} · ганц биеийн ор ${bedsUsed(state)}/${bedsTotal(cfg, state)} · сул отрын майхан ${spareTents(state)}</p>
+      <table><tr><th>Туслах</th><th class="num">Цалин</th><th>Үүрэг</th></tr>${rows}</table>
+      <p class="muted">Мөнгө хүрэхгүй бол туслах айлаараа (малаа авч) явна. Малаар өгсөн мал хүрэн өнгөтэй, туслахынх боловч сүү, ноос нь танд үлдэнэ.</p>`;
+  }
+
+  private otorHtml(): string {
+    const { cfg, state } = this;
+    const v = this.hv;
+    const h = state.helpers.list.find((x) => x.id === v.helper);
+    if (!h) return '';
+    const spare = spareTents(state);
+    const camps = Object.keys(cfg.camps.camps).filter((id) => id !== state.campId)
+      .map((id) => `<button class="btn ${v.camp === id ? 'gold' : ''}" data-act="oc:${id}">${t('camp.' + id)}</button>`).join(' ');
+    const groups = this.animalGroups();
+    const rows = groups.map((g) => {
+      const n = v.counts[g.key] ?? 0;
+      return `<tr><td>${g.label} <span class="muted">(${g.list.length})</span></td>
+        <td class="ctl"><button class="btn sm" data-act="oa-:${g.key}">−</button><b>${n}</b><button class="btn sm" data-act="oa+:${g.key}">+</button><button class="btn sm" data-act="oaAll:${g.key}">бүгд</button></td></tr>`;
+    }).join('');
+    const n = Object.values(v.counts).reduce((s, x) => s + x, 0);
+    const errs: string[] = [];
+    if (spare <= 0) errs.push('Илүү майхан алга — гэртэй болох эсвэл Худалдаачнаас отрын майхан ав');
+    if (state.player.place !== 'camp') errs.push('Бууцандаа байх үед явуулна');
+    return `<h2>🏕 ${h.name}-г отор гаргах <span class="close" data-act="close">✕</span></h2>
+      <p class="muted">Тасалсан мал өөр бууцны бэлчээрт бэлчинэ: энэ бууцны бэлчээр амарна, тэр бууц доройтоно. Отор дээр бага зэрэг чонын эрсдэлтэй. Сул отрын майхан: <b>${spare}</b>.</p>
+      <h3>Бууц</h3><p>${camps}</p>
+      <h3>Мал (${n})</h3><table>${rows}</table>
+      ${errs.length ? `<p class="bad">${errs.join(' · ')}</p>` : ''}
+      <p><button class="btn gold" data-act="doOtor" ${errs.length || !n || !v.camp ? 'disabled' : ''}>Отор явуулах</button> <button class="btn" data-act="hvBack">← Буцах</button></p>`;
+  }
+
+  private payHtml(): string {
+    const { cfg, state } = this;
+    const h = state.helpers.list.find((x) => x.id === this.hv.helper);
+    if (!h) return '';
+    const per = cfg.helpers.payEveryDays;
+    const fam = state.helpers.list.filter((x) => x.familyId === h.familyId);
+    const due = fam.reduce((s, x) => s + x.wage, 0) * per;
+    const prepaid = fam.reduce((s, x) => s + x.prepaid, 0);
+    const rows = this.animalGroups().map((g) => {
+      const price = salePrice(g.list[0]!, cfg.animals);
+      return `<tr><td>${g.label} <span class="muted">(${g.list.length})</span></td><td class="num">${fmtMoney(price)}</td>
+        <td><button class="btn sm" data-act="pa:${g.key}">1 өгөх</button></td></tr>`;
+    }).join('');
+    return `<h2>🐑 ${h.name}-д малаар цалин өгөх <span class="close" data-act="close">✕</span></h2>
+      <p class="muted">Мал туслахынх болж хүрэн өнгөтэй болно. Үнэ нь урьдчилгаа болж, ${per} хоног тутмын цалингаас (айлын ${fmtMoney(due)}) хасагдана. Одоогийн урьдчилгаа: <b>${fmtMoney(prepaid)}</b> (~${due ? Math.floor(prepaid / due) : 0} удаагийн цалин). Туслахын малын сүү, ноос танд үлдэнэ; туслах явахдаа малаа авч явна.</p>
+      <table><tr><th>Мал</th><th class="num">Үнэ</th><th></th></tr>${rows}</table>
+      <p><button class="btn" data-act="hvBack">← Буцах</button></p>`;
+  }
+
   // ======================= үйлдлүүд =======================
   private act(a: string): void {
     const [cmd, arg = ''] = a.split(/:(.*)/s) as [string, string?];
@@ -734,6 +870,64 @@ export class Panels {
       case 'zones': {
         const on = this.hooks.toggleZones?.();
         this.hooks.toast(on ? 'Хамгаалалтын бүс харагдаж байна (Z)' : 'Хамгаалалтын бүс нуулаа', 'good');
+        break;
+      }
+      case 'hire': {
+        const r = this.hooks.dispatch({ type: 'hire', candidate: Number(arg) });
+        this.hooks.toast(r.msg ?? '', r.ok ? 'good' : 'bad');
+        break;
+      }
+      case 'task': {
+        const [id, task, herd] = arg.split('|');
+        const r = this.hooks.dispatch({ type: 'helperTask', helper: Number(id), task: task as 'herd' | 'drive', herd: herd as HerdGroup | undefined });
+        if (!r.ok) this.hooks.toast(r.msg ?? '', 'bad');
+        break;
+      }
+      case 'fire': {
+        const r = this.hooks.dispatch({ type: 'fireHelper', helper: Number(arg) });
+        this.hooks.toast(r.msg ?? '', r.ok ? 'good' : 'bad');
+        break;
+      }
+      case 'recall': {
+        const r = this.hooks.dispatch({ type: 'recallOtor', helper: Number(arg) });
+        this.hooks.toast(r.msg ?? '', r.ok ? 'good' : 'bad');
+        break;
+      }
+      case 'otorOpen':
+        this.hv = { mode: 'otor', helper: Number(arg), camp: '', counts: {} };
+        break;
+      case 'payOpen':
+        this.hv = { mode: 'pay', helper: Number(arg), camp: '', counts: {} };
+        break;
+      case 'hvBack':
+        this.hv = { mode: 'list', helper: 0, camp: '', counts: {} };
+        break;
+      case 'oc':
+        this.hv.camp = arg;
+        break;
+      case 'oa+':
+      case 'oa-':
+      case 'oaAll': {
+        const g = this.animalGroups().find((x) => x.key === arg);
+        const cur = this.hv.counts[arg] ?? 0;
+        const max = g?.list.length ?? 0;
+        this.hv.counts[arg] = cmd === 'oaAll' ? max : cmd === 'oa+' ? Math.min(cur + 1, max) : Math.max(0, cur - 1);
+        break;
+      }
+      case 'doOtor': {
+        const groups = this.animalGroups();
+        const ids = groups.flatMap((g) => g.list.slice(0, this.hv.counts[g.key] ?? 0).map((a) => a.id));
+        const r = this.hooks.dispatch({ type: 'sendOtor', helper: this.hv.helper, animalIds: ids, camp: this.hv.camp });
+        this.hooks.toast(r.ok ? `🏕 Отор ${t('camp.' + this.hv.camp)} руу явлаа (${ids.length} мал)` : r.msg ?? '', r.ok ? 'good' : 'bad');
+        if (r.ok) this.hv = { mode: 'list', helper: 0, camp: '', counts: {} };
+        break;
+      }
+      case 'pa': {
+        const g = this.animalGroups().find((x) => x.key === arg);
+        const a = g?.list[0];
+        if (!a) break;
+        const r = this.hooks.dispatch({ type: 'payWithAnimal', helper: this.hv.helper, animal: a.id });
+        this.hooks.toast(r.msg ?? '', r.ok ? 'good' : 'bad');
         break;
       }
       case 'bull': {

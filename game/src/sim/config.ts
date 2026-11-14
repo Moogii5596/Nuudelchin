@@ -185,7 +185,7 @@ export interface WorldMapConfig {
   river: [number, number][];
   mountains: [number, number, number][];
   forests: [number, number, number][];
-  sum3d: { shop: { x: number; z: number; r: number }; entry: { x: number; z: number }; parking: { x: number; z: number } };
+  sum3d: { shop: { x: number; z: number; r: number }; teahouse: { x: number; z: number; r: number }; entry: { x: number; z: number }; parking: { x: number; z: number } };
 }
 
 export interface StartAnimal {

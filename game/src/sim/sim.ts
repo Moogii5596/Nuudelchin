@@ -10,13 +10,14 @@ import { averageBiomass, dailyCampDegrade, dailyRegrowth, typeQualities } from '
 import { grazingStep } from './systems/grazing';
 import { cohesionCenters, findHerds, herdDecide, type FlockCenter, type Herd, type HerdDecision } from './systems/herds';
 import { dogsStep } from './systems/dogs';
-import { dailyAnimals, herdSheepUnits, liveWeightKg } from './systems/animals';
+import { dailyAnimals, grazingSheepUnits, herdSheepUnits, liveWeightKg } from './systems/animals';
 import { dailyBreeding } from './systems/breeding';
 import { groundAgingStep } from './systems/production';
 import { eveningStep, morning, sleepAll } from './systems/night';
 import { processingStep } from './systems/processing';
 import * as storage from './systems/storage';
 import { mapStep, syncAway, type TravelEvent } from './systems/travel';
+import { dailyOtor, helpersStep, payWages, refreshCandidates, type HelperEvent } from './systems/helpers';
 import { moveStep } from './systems/camps';
 import { herderStep } from './systems/herder';
 import { wolvesStep, nightRaid, endRaid, type WolfEvent } from './systems/wolves';
@@ -40,7 +41,7 @@ export interface DayReport extends DayStats {
   goalReached: boolean;
 }
 
-export type SimEvent = ClockEvent | WolfEvent | TravelEvent | { type: 'dayReport'; report: DayReport };
+export type SimEvent = ClockEvent | WolfEvent | TravelEvent | HelperEvent | { type: 'dayReport'; report: DayReport };
 
 export class Sim {
   readonly cfg: GameConfig;
@@ -96,6 +97,7 @@ export class Sim {
     }
     herderStep(cfg, state);
     eveningStep(cfg, state, rng);
+    for (const ev of helpersStep(cfg, state, rng, this.quality)) this.emit(ev);
     grazingStep(cfg, state, rng, this.quality, this.centers);
     dogsStep(cfg, state, herds);
     for (const ev of wolvesStep(cfg, state)) this.emit(ev);
@@ -112,6 +114,7 @@ export class Sim {
     const events = tick(state.time, cfg.time);
     for (const ev of events) {
       if (ev.type === 'dayEnd') this.endDay(ev.day);
+      else if (ev.type === 'monthEnd') for (const e2 of payWages(cfg, state)) this.emit(e2);
       else if (ev.type === 'nightStart') {
         sleepAll(state);
         const n = nightRaid(cfg, state);
@@ -119,6 +122,7 @@ export class Sim {
       } else if (ev.type === 'dayStart') {
         morning(cfg, state, rng);
         endRaid(state);
+        refreshCandidates(cfg, state);
       }
       this.emit(ev);
     }
@@ -151,7 +155,8 @@ export class Sim {
     if (br.bullFees) this.spend('neighborBull', br.bullFees);
 
     const su = herdSheepUnits(state, cfg.animals);
-    dailyCampDegrade(cfg, state.camps, state.campId, su);
+    dailyCampDegrade(cfg, state.camps, state.campId, grazingSheepUnits(state, cfg.animals));
+    for (const e2 of dailyOtor(cfg, state, rng)) this.emit(e2);
     const degrade = state.camps[state.campId]?.degrade ?? 0;
     dailyRegrowth(cfg, state.grass, degrade);
     this.quality = typeQualities(cfg, degrade);

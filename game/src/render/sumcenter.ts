@@ -135,6 +135,7 @@ export class SumCenterView {
     const roofs = [0xb03a2e, 0x2f7a4a, 0x2a5f9e, 0xc0782a, 0x7a3a8a];
     const walls = [0xefe8d8, 0xe6dcc6, 0xf2efe6, 0xd8cdb4];
     const shop = cfg.worldmap.sum3d.shop;
+    const tea = cfg.worldmap.sum3d.teahouse;
     const spots: [number, number, number][] = [];
     for (let i = -4; i <= 4; i++) {
       if (i === 0) continue;
@@ -143,6 +144,7 @@ export class SumCenterView {
     }
     for (const [x, z, r] of spots) {
       if (Math.hypot(x - shop.x, z - shop.z) < 16) continue;
+      if (Math.hypot(x - tea.x, z - tea.z) < 16) continue;
       if (Math.hypot(x, z) < 12) continue;
       house(st, x + rng.range(-1.5, 1.5), z + rng.range(-1, 1), rng.range(6, 9), rng.range(5, 7), walls[Math.floor(rng.next() * walls.length)]!, roofs[Math.floor(rng.next() * roofs.length)]!, r);
     }
@@ -204,6 +206,33 @@ export class SumCenterView {
     ring.rotation.x = -Math.PI / 2;
     ring.position.set(shop.x, sy + 0.12, shop.z);
     this.group.add(ring);
+    // ===== Цайны газар (M5) — туслах малчин хөлслөх =====
+    const th = new THREE.Group();
+    const ty = sumHeightAt(tea.x, tea.z);
+    th.position.set(tea.x, ty, tea.z - 4);
+    house(th, 0, 0, 10, 7, 0xe8d8c0, 0x8a3a1a, 0);
+    th.children[0]!.position.set(0, 0, 0);
+    const tsign = label('ЦАЙНЫ ГАЗАР', '#8a3a1a', '#fff1d0', 6.4, 1.5);
+    tsign.position.set(0, 3.05, 4.05);
+    th.add(tsign);
+    // Гадаа ширээ, сандал, уясан морь
+    for (const dx of [-2.6, 2.6]) {
+      const tb = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.08, 10), mat(0x7a5a3a));
+      tb.position.set(dx, 0.8, 5.6);
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.8, 6), mat(0x5a3a22));
+      leg.position.set(dx, 0.4, 5.6);
+      const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.08, 0.14, 8), mat(0xf2f2ee));
+      cup.position.set(dx + 0.2, 0.9, 5.5);
+      th.add(tb, leg, cup);
+    }
+    const post = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.1, 0.1), mat(0x6b4a2e));
+    post.position.set(-4.5, 1.2, 6.5);
+    th.add(post);
+    this.group.add(th);
+    const tring = new THREE.Mesh(new THREE.RingGeometry(tea.r - 0.35, tea.r, 48), new THREE.MeshBasicMaterial({ color: 0x7ad0ff, transparent: true, opacity: 0.5 }));
+    tring.rotation.x = -Math.PI / 2;
+    tring.position.set(tea.x, ty + 0.12, tea.z);
+    this.group.add(tring);
     // Алсын уулс
     for (let k = 0; k < 18; k++) {
       const a = (k / 18) * Math.PI * 2, r = 230 + rng.range(-20, 30), h = rng.range(20, 45);

@@ -66,8 +66,15 @@ export function sheepUnits(a: Pick<AnimalBody, 'species' | 'age'>, cfg: AnimalsC
   return a.age < 1 ? u * cfg.youngSheepUnitFactor : u;
 }
 
-/** Сүргийн нийт хонин толгой (унаа морийг тооцохгүй — mvp-spec.md §10) */
+/** Тоглогчийн сүргийн нийт хонин толгой (унаа морь, туслахын малыг тооцохгүй — mvp-spec.md §10, M5) */
 export function herdSheepUnits(state: GameState, cfg: AnimalsConfig): number {
+  let u = 0;
+  for (const a of state.animals) if (!a.riding && a.ownerId === undefined) u += sheepUnits(a, cfg);
+  return u;
+}
+
+/** Бэлчээрт ачаалал өгөх бүх мал (туслахынх ч орно) — бууцны доройтолд */
+export function grazingSheepUnits(state: GameState, cfg: AnimalsConfig): number {
   let u = 0;
   for (const a of state.animals) if (!a.riding) u += sheepUnits(a, cfg);
   return u;

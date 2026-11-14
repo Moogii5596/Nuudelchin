@@ -15,6 +15,7 @@ import { ridingHorse } from './sim/systems/herder';
 import { huntingWolves } from './sim/systems/wolves';
 import { DOG_ORDER_NAME } from './sim/systems/dogs';
 import { nearestVehicle, partySpeedKmPerMin } from './sim/systems/travel';
+import { nearTeahouse } from './sim/systems/helpers';
 import { GameView } from './render/scene';
 import { Panels } from './render/ui/panels';
 import { PRODUCT_EMOJI, fmtMinutes, fmtMoney, fmtNum } from './render/ui/names';
@@ -66,6 +67,9 @@ function start(): void {
     else if (e.type === 'leftToMap') toast('🗺 Газрын зураг — очих газраа хулганаар дарна (явж байхдаа сольж болно)', 'good');
     else if (e.type === 'arrived') toast(e.place === 'sum' ? '🏘 Сумын төвд ирлээ — Худалдаачны дэлгүүрт оч (шар тойрог, E)' : '🏠 Гэртээ ирлээ', 'good');
     else if (e.type === 'arriveCamp') panels.showArrive(e.campId);
+    else if (e.type === 'helperQuit') toast(e.reason === 'wage' ? `💸 Цалин хүрэлцээгүй — ${e.names.join(', ')} малаа аваад явлаа` : `${e.names.join(', ')} ажлаас гарлаа`, 'bad');
+    else if (e.type === 'helperTrip') toast(`🚚 ${e.name} сумын төвөөс ирлээ: ${fmtMoney(e.income)} орлого`, 'good');
+    else if (e.type === 'otorLoss') toast(`🐺 Отор дээр (${t('camp.' + e.campId)}) чоно ${t('species.' + e.species).toLowerCase()} барьлаа`, 'bad');
     else if (e.type === 'wolfRaid') toast(`🌙 Шөнө ${e.n > 1 ? e.n + ' чоно' : 'чоно'} хот руу дөхөж байна — хотоос гадуур хоносон мал аюултай`, 'bad');
     else if (e.type === 'hour' && e.hour === Math.ceil(Math.min(...Object.values(cfg.time.homeMinute)) / 60)) toast('🌇 Орой боллоо — мал хотондоо харьж байна', '');
   });
@@ -86,7 +90,8 @@ function start(): void {
     onToggle: (what) => {
       if (what === 'heatmap') view.toggleHeatmap(state);
       else if (what === 'storage') panels.open('storage');
-      else if (what === 'trade') panels.open(state.player.place === 'sum' ? 'shop' : 'cargo');
+      else if (what === 'trade') panels.open(state.player.place === 'sum' ? (nearTeahouse(cfg, state) ? 'teahouse' : 'shop') : 'cargo');
+      else if (what === 'helpers') panels.open('helpers');
       else if (what === 'dogs') panels.open('dogs');
       else if (what === 'camps') panels.open('camps');
       else if (what === 'cheat') panels.open('cheat');
@@ -124,11 +129,12 @@ function start(): void {
     const p = state.player;
     let html = '';
     if (!panels.isOpen && p.place === 'map') html = 'Газрын зураг: очих газраа зүүн товчоор дарна · баруун товч — эргүүлэх · дунд товч — хазайлгах · дугуй — томруулах · <kbd>Shift</kbd> — цаг хурдасгах';
-    else if (!panels.isOpen && p.driving) html = '<kbd>W</kbd><kbd>S</kbd> явах/тоормос · <kbd>A</kbd><kbd>D</kbd> эргэх · <kbd>V</kbd> буух' + (p.place === 'camp' && Math.hypot(p.x - cfg.camps.home.x, p.z - cfg.camps.home.z) < cfg.vehicles.road.loadRange ? ' · <kbd>T</kbd> ачих/буулгах' : '') + ' · захын хязгаар руу явбал газрын зураг';
+    else if (!panels.isOpen && p.driving) html = '<kbd>W</kbd><kbd>S</kbd> явах/тоормос · <kbd>A</kbd><kbd>D</kbd> эргэх · <kbd>V</kbd> буух' + (p.place === 'camp' && Math.hypot(p.x - cfg.camps.home.x, p.z - cfg.camps.home.z) < cfg.vehicles.road.loadRange ? ' · <kbd>T</kbd> ачих/буулгах' : '') + ' · захын хязгаар руу явбал эсвэл <kbd>Tab</kbd> — газрын зураг';
     else if (!panels.isOpen && p.place === 'sum') {
       const sh = cfg.worldmap.sum3d.shop;
       const nearV = nearestVehicle(cfg, state, cfg.vehicles.road.enterRange);
-      html = Math.hypot(p.x - sh.x, p.z - sh.z) <= sh.r ? '<kbd>E</kbd> Худалдаачин' : nearV ? '<kbd>V</kbd> тэрэг/машиндаа суух' : p.mounted ? 'Худалдаачны дэлгүүр — шар тойрог. Буцахдаа захын хязгаар руу давхи' : 'Худалдаачны дэлгүүр — шар тойрог';
+      const where = 'Худалдаачин — шар тойрог · Цайны газар (туслах хөлслөх) — цэнхэр тойрог';
+      html = Math.hypot(p.x - sh.x, p.z - sh.z) <= sh.r ? '<kbd>E</kbd> Худалдаачин' : nearTeahouse(cfg, state) ? '<kbd>E</kbd> Цайны газар — туслах малчин хөлслөх' : nearV ? '<kbd>V</kbd> тэрэг/машиндаа суух' : p.mounted ? where + '. Буцахдаа <kbd>Tab</kbd> эсвэл захын хязгаар руу давхи' : where + ' · <kbd>Tab</kbd> газрын зураг';
     } else if (!p.away && !panels.isOpen) {
       const home = cfg.camps.home;
       const dHome = Math.hypot(p.x - home.x, p.z - home.z);
@@ -137,10 +143,10 @@ function start(): void {
       const horse = ridingHorse(state);
       if (carried >= cfg.products.carryUnits - 1e-9 && dHome > home.storageRadius) html = 'Гар дүүрсэн — майхны дэргэдэх агуулах руу авчир';
       else if (nearItems) html = `<kbd>E</kbd> түүх (${nearItems})`;
-      else if (dHome <= home.storageRadius * 2) html = `<kbd>B</kbd> агуулах, боловсруулах · <kbd>T</kbd> сумын төвд зарах ачаа · <kbd>M</kbd> нүүх`;
+      else if (dHome <= home.storageRadius * 2) html = `<kbd>B</kbd> агуулах, боловсруулах · <kbd>T</kbd> сумын төвд зарах ачаа · <kbd>M</kbd> нүүх · <kbd>J</kbd> туслахууд · <kbd>Tab</kbd> газрын зураг`;
       else if (!p.mounted && nearestVehicle(cfg, state, cfg.vehicles.road.enterRange)) html = '<kbd>V</kbd> тэрэг/машиндаа суух';
       else if (!p.mounted && horse && Math.hypot(horse.x - p.x, horse.z - p.z) <= cfg.player.mountRange) html = '<kbd>F</kbd> морь унах';
-      else if (p.mounted && Math.hypot(p.x, p.z) > cfg.player.worldRadius - 25) html = 'Цааш давхивал газрын зураг руу гарна (сумын төв, өөр бууц)';
+      else if (p.mounted && Math.hypot(p.x, p.z) > cfg.player.worldRadius - 25) html = 'Цааш давхивал (эсвэл <kbd>Tab</kbd>) газрын зураг руу гарна (сумын төв, өөр бууц)';
     }
     prompt.innerHTML = html;
     prompt.style.display = html ? 'block' : 'none';
@@ -219,6 +225,10 @@ function start(): void {
       const dogsTxt = state.dogs.length
         ? `🐕 ${state.dogs.map((d) => `${d.name}: ${d.mode === 'chase' ? 'чоно хөөж байна' : DOG_ORDER_NAME[d.order].toLowerCase()}`).join(' · ')} <small>(K)</small><br>`
         : '';
+      const hs = state.helpers;
+      const helpersTxt = hs.list.length
+        ? `👥 Туслах ${hs.list.length}${hs.otor.length ? ` · 🏕 отор ${hs.otor.length}` : ''}${hs.list.some((h) => h.trip) ? ' · 🚚 замд' : ''} <small>(J)</small><br>`
+        : '';
       hud.innerHTML =
         `<b>${t('hud.day', { day: state.time.day })}</b> · ${isNight(state.time, cfg.time) ? '🌙' : '☀️'} ${formatTime(state.time)}${paused ? ' · ⏸' : ''}<br>` +
         `${t('hud.money')}: <b>${fmtMoney(state.money)}</b><br>` +
@@ -227,6 +237,7 @@ function start(): void {
         `${t('hud.camp')}: ${t('camp.' + state.campId)} · ${t('hud.grass')} ${Math.round(grassAvg * 100)}% · ${t('hud.degrade')} ${Math.round(degrade * 100)}%<br>` +
         `${status} · ${t('hud.speed')}: ${speed}×${fast ? ' ⏩' : ''} <small>(1/2/3)</small><br>` +
         dogsTxt +
+        helpersTxt +
         alert +
         `<small>${t('hud.milestone')} · ${t('help.hint')}${view.heatmap ? ' · G: heatmap' : ''}${view.zones.visible ? ' · Z: бүс' : ''}${state.wolves.peaceful ? ' · чоно унтраасан' : ''}</small>`;
       perf.textContent = `${fps.toFixed(0)} FPS · max ${worstShown.toFixed(0)} ms · ${view.drawCalls} draw · ${state.animals.length} мал`;

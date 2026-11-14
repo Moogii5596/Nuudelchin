@@ -4,7 +4,8 @@
  *   cd game && npx tsx ../tools/balance_sim/run.ts --seeds 30 --days 150
  *
  * Анхааруулга: стратегиуд бүтээгдэхүүн түүхэд алхах хугацааг тооцохгүй (proximity=false).
- * Тиймээс энэ нь гараар тоглолтын ДЭЭД хязгаар. Туслах (M5) ороогүй.
+ * Тиймээс энэ нь гараар тоглолтын ДЭЭД хязгаар.
+ * M5: «Менежер» — тоглогч бараг юу ч хийхгүй, туслах айл хөлсөлж (малчин + хүүхэд цуглуулагч), жолоочоор зарна.
  *
  * M4: чоно дайрна (`--wolves.attack.enabled 0` — унтраах). Стратегиуд малчныг сүргийнхээ дэргэд
  * байлгах (escort) хувиар ялгаатай, нохой авна. «Үлддэг» = Дунд, гэхдээ бууцаа хэзээ ч сэлгэхгүй
@@ -21,6 +22,7 @@ import { bestTruck, orderPrice } from '../../game/src/sim/systems/trip';
 import { AutoTrip } from '../../game/src/sim/autotrip';
 import { realSecondsPerDay } from '../../game/src/sim/clock';
 import { findHerds } from '../../game/src/sim/systems/herds';
+import { bedsTotal, bedsUsed } from '../../game/src/sim/systems/helpers';
 
 const args = Object.fromEntries(
   process.argv.slice(2).reduce<[string, string][]>((acc, v, i, arr) => {
@@ -238,11 +240,52 @@ const lazy: Strategy = {
   },
 };
 
+
+/** M5 Менежер: тоглогч өөрөө түүхгүй, хариулахгүй. Туслах айл хөлслөөд, 2 дахь малчныг жолооч болгоно */
+const manager: Strategy = {
+  name: 'Менежер',
+  onHour(sim, hour) {
+    const { cfg, state } = sim;
+    state.neighborBull = true;
+    const hs = state.helpers;
+    if (hour === 7 && rotateCamp(sim, 0.4)) return;
+    if (hour === 8) {
+      sim.command({ type: 'teahouse' }, false);
+      const adults = hs.list.filter((h) => h.kind === 'adult').length;
+      const wantAdults = state.fleet.length ? 2 : 1;
+      const monthly = (hs.list.reduce((a, h) => a + h.wage, 0) + 40_000) * cfg.helpers.payEveryDays;
+      if (adults < wantAdults && state.money > monthly * 2) {
+        const fam = hs.candidates.find((c) => c.family) ?? (bedsUsed(state) < bedsTotal(cfg, state) ? hs.candidates[0] : undefined);
+        if (fam) sim.command({ type: 'hire', candidate: fam.id }, false);
+      }
+      // Сүрэг тус бүрд малчин, үлдсэнийг жолооч
+      const ad = hs.list.filter((h) => h.kind === 'adult' && h.task !== 'otor' && !h.trip);
+      const groups: ('sheep' | 'cow')[] = ['sheep'];
+      ad.forEach((h, i) => {
+        if (i < groups.length) sim.command({ type: 'helperTask', helper: h.id, task: 'herd', herd: groups[i] }, false);
+        else if (state.fleet.length) sim.command({ type: 'helperTask', helper: h.id, task: 'drive' }, false);
+      });
+    }
+    // Цуглуулагч хүүхэдгүй бол тоглогч өөрөө түүнэ (Залхуу шиг)
+    if (!hs.list.some((h) => h.kind === 'child') && (hour === 10 || hour === 17)) collectAll(sim);
+    processAll(sim);
+    // Тоглогч 3 хоногт нэг удаа худалдан авалтаар сумын төв явна (тэрэг, гэр, тогоо, байр)
+    if (hour === 10 && state.time.day % 3 === 0) {
+      const orders = buyPlan(sim, 500_000, cfg.economy.goalSheepUnits, 1);
+      if (!hs.list.some((h) => h.family) && bedsTotal(cfg, state) === 0 && state.money > 1_500_000) orders.push({ kind: 'helperTent' });
+      tripIfUseful(sim, orders, 1, surplusMales(sim));
+    }
+  },
+};
+
 interface RunResult {
   goalDay: number | null;
   reports: DayReport[];
   wolfKills: number;
   killsBySp: Record<string, number>;
+  helpers: number;
+  wages: number;
+  driverIncome: number;
 }
 
 function run(cfg: GameConfig, strat: Strategy, seed: number): RunResult {
@@ -250,7 +293,9 @@ function run(cfg: GameConfig, strat: Strategy, seed: number): RunResult {
   const reports: DayReport[] = [];
   let wolfKills = 0;
   const killsBySp: Record<string, number> = {};
+  let driverIncome = 0;
   sim.on((e) => {
+    if (e.type === 'helperTrip') driverIncome += e.income;
     if (e.type === 'hour') strat.onHour(sim, e.hour);
     if (e.type === 'dayReport') reports.push(e.report);
     if (e.type === 'wolfKill') {
@@ -266,7 +311,8 @@ function run(cfg: GameConfig, strat: Strategy, seed: number): RunResult {
     sim.step();
     if (pendingTrip && pendingTrip.tick(sim)) pendingTrip = null;
   }
-  return { goalDay: sim.state.goalReachedDay, reports, wolfKills, killsBySp };
+  const wages = reports.reduce((a, r) => a + (r.expenses.wages ?? 0), 0);
+  return { goalDay: sim.state.goalReachedDay, reports, wolfKills, killsBySp, helpers: sim.state.helpers.list.length, wages, driverIncome };
 }
 
 /** Бүх seed-ийн нийт: төрлөөр */
@@ -290,12 +336,14 @@ const dayHours = realSecondsPerDay(cfg.time) / 3600;   // M4.5: шөнө хур�
 console.log(`# Тэнцвэрийн тайлан — ${SEEDS} seed × ${DAYS} өдөр (1 өдөр = 1× хурдаар ${(dayHours * 60).toFixed(1)} мин)` + (overrides.length ? ` · ${overrides.join(', ')}` : '') + '\n');
 
 const only = args.only ? String(args.only).split(',') : null;
-for (const strat of [active, medium, stayer, lazy].filter((s) => !only || only.includes(s.name))) {
+for (const strat of [active, medium, stayer, lazy, manager].filter((s) => !only || only.includes(s.name))) {
   const t0 = performance.now();
   const results = Array.from({ length: SEEDS }, (_, i) => run(cfg, strat, 1000 + i));
   const goalDays = results.map((r) => r.goalDay).filter((d): d is number => d !== null);
   console.log(`## ${strat.name}  (${((performance.now() - t0) / 1000).toFixed(1)} сек)`);
   console.log(`Зорилгод хүрсэн: ${goalDays.length}/${SEEDS}` + (goalDays.length ? ` · медиан ${median(goalDays)}-р өдөр (1× хурдаар ~${(median(goalDays) * dayHours).toFixed(1)} цаг)` : '') + ` · чонод барьдсан (медиан) ${median(results.map((r) => r.wolfKills))} мал` + killsTxt(results));
+  if (strat === manager)
+    console.log(`Туслах (эцэст, медиан) ${median(results.map((r) => r.helpers))} · нийт цалин ${fmt(median(results.map((r) => r.wages)))}₮ · жолоочийн орлого ${fmt(median(results.map((r) => r.driverIncome)))}₮`);
   console.log('| Өдөр | Мөнгө | Хонин толгой | Эм хонины жин | Тарга | Идэш | Өвс | Бууцны доройтол | Өдрийн орлого | Муудсан (нэгж/өдөр) |');
   console.log('|---|---|---|---|---|---|---|---|---|---|');
   for (const d of [10, 30, 60, 100, 150, 200].filter((d) => d <= DAYS)) {
