@@ -116,6 +116,14 @@ function start(): void {
   if (qs.get('heatmap') === '1') view.toggleHeatmap(state);
   const hud = document.getElementById('hud')!;
   const perf = document.getElementById('perf')!;
+  // FPS самбар: утсан дээр ❓ цэснээс асаана (суулгасан апп-д ?stats нэмэх боломжгүй)
+  const PERF_KEY = 'nuudel.showPerf';
+  let showPerf = qs.has('stats') || qs.get('perf') === '1';
+  try {
+    if (localStorage.getItem(PERF_KEY) === '1') showPerf = true;
+  } catch {
+    /* localStorage хаалттай бол үл тооно */
+  }
   const help = document.getElementById('help')!;
   const prompt = document.getElementById('prompt')!;
   help.innerHTML = `<h3>${t('help.title')}</h3>${isTouch ? t('help.touch') + '\n\n' + touchKeys(t('help.body')) : t('help.body')}<p><b>P</b> — зургийн горим (тоглоом түр зогсоно)</p>`;
@@ -190,7 +198,7 @@ function start(): void {
   const touchUI = isTouch && !captureMode ? new TouchUI(cfg, controller, { speedIdx: () => speedIdx, speeds: cfg.time.speeds }) : null;
   let hudCompact = isTouch;
   if (isTouch && !captureMode) {
-    if (qs.get('perf') !== '1' && !qs.has('stats')) perf.style.display = 'none';
+    if (!showPerf) perf.style.display = 'none';
     document.getElementById('toasts')!.appendChild(prompt);
     hud.addEventListener('click', () => {
       hudCompact = !hudCompact;
@@ -200,7 +208,7 @@ function start(): void {
     let q = quality;
     const helpBody = help.innerHTML;
     const renderHelp = (): void => {
-      help.innerHTML = '<span class="hclose" data-h="close">✕</span>' + helpBody + `<p class="hbtns"><button class="btn" data-h="q">⚙ График: ${QUALITY_NAME[q]}</button> <button class="btn" data-h="cheat">🛠 Туршилтын цэс</button> <button class="btn gold" data-h="close">✕ Хаах</button></p>`;
+      help.innerHTML = '<span class="hclose" data-h="close">✕</span>' + helpBody + `<p class="hbtns"><button class="btn" data-h="q">⚙ График: ${QUALITY_NAME[q]}</button> <button class="btn" data-h="perf">📊 FPS: ${showPerf ? 'Асаалттай' : 'Унтраалттай'}</button> <button class="btn" data-h="cheat">🛠 Туршилтын цэс</button> <button class="btn gold" data-h="close">✕ Хаах</button></p>`;
     };
     renderHelp();
     help.addEventListener('click', (e) => {
@@ -210,6 +218,17 @@ function start(): void {
         q = QUALITIES[(QUALITIES.indexOf(q) + 1) % QUALITIES.length]!;
         setQuality(q);
         view.applyQuality(QUALITY_SPEC[q], q, state);
+        renderHelp();
+        return;
+      }
+      if (b.dataset.h === 'perf') {
+        showPerf = !showPerf;
+        perf.style.display = showPerf ? '' : 'none';
+        try {
+          localStorage.setItem(PERF_KEY, showPerf ? '1' : '0');
+        } catch {
+          /* хадгалж чадахгүй бол энэ удаад л ажиллана */
+        }
         renderHelp();
         return;
       }
@@ -387,7 +406,7 @@ function start(): void {
           `<small>▾ дэлгэрэнгүй</small>`
         : touchKeys(full) + (isTouch ? '<br><small>▴ хураах</small>' : '');
       touchUI?.update(state, panels.isOpen || help.style.display === 'block');
-      perf.textContent = qs.has('stats')
+      perf.textContent = qs.has('stats') || showPerf
         ? `${fps.toFixed(0)} FPS · max ${worstShown.toFixed(0)} ms\n${view.drawCalls} draw · ${view.triangleCount.toLocaleString()} tris\n${state.animals.length} мал · ${view.renderer.info.memory.geometries} geo · ${view.renderer.info.memory.textures} tex`
         : `${fps.toFixed(0)} FPS · max ${worstShown.toFixed(0)} ms · ${view.drawCalls} draw · ${state.animals.length} мал`;
     }

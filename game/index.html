@@ -73,6 +73,7 @@
       /* ===================== Утас (body.touch — input/touch.ts) ===================== */
       body.touch { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
       body.touch #app canvas { touch-action: none; }
+      body.touch #perf { top: max(6px, env(safe-area-inset-top)); right: auto; left: 50%; transform: translateX(-50%); padding: 4px 8px; font-size: 10.5px; text-align: center; }
       body.touch #hud { top: max(6px, env(safe-area-inset-top)); left: max(6px, env(safe-area-inset-left)); padding: 5px 9px; font-size: 11.5px; line-height: 1.4;
                         max-width: 44vw; max-height: 62vh; overflow: hidden; pointer-events: auto; }
       body.touch #hud small { font-size: 10px; opacity: 0.8; }
