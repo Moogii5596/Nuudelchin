@@ -326,7 +326,7 @@ export class GameView {
     // Малчныг (жолоодож байвал тээврийг) дагана — байрлал кадр бүр бодит цагаар шинэчлэгддэг тул жигд
     const cx = p.x, cz = p.z;
     const ty = this.heightAt(cx, cz) + (p.mounted || p.driving ? 2.4 : 1.6);
-    this.cam.update(cx, cz, ty, this.heightAt);
+    this.cam.update(cx, cz, ty, this.heightAt, dt);
     this.terrain.updateGrassCenter(cx, cz, (this.scene.fog as THREE.Fog).far);
     this.skyDome.position.copy(this.cam.camera.position);
     this.stars.position.copy(this.cam.camera.position);

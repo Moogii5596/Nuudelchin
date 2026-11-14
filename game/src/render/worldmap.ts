@@ -50,6 +50,8 @@ export class WorldMapView {
   private ray = new THREE.Raycaster();
   private ndc = new THREE.Vector2();
   private camPos = new THREE.Vector3();
+  private camTarget = new THREE.Vector3();
+  private cameraReady = false;
   private sun: THREE.DirectionalLight;
   private hemi: THREE.HemisphereLight;
   zoom = 1;
@@ -309,8 +311,14 @@ export class WorldMapView {
     const D = 147 * this.zoom;
     const cp = Math.cos(this.pitch);
     this.camPos.set(m.x * U + Math.sin(this.yaw) * cp * D, y + Math.sin(this.pitch) * D, m.z * U + Math.cos(this.yaw) * cp * D);
-    this.camera.position.copy(this.camPos);
-    this.camera.lookAt(m.x * U, y, m.z * U);
+    this.camTarget.set(m.x * U, y, m.z * U);
+    if (!this.cameraReady || dt <= 0) {
+      this.camera.position.copy(this.camPos);
+      this.cameraReady = true;
+    } else {
+      this.camera.position.lerp(this.camPos, 1 - Math.exp(-dt * 8));
+    }
+    this.camera.lookAt(this.camTarget);
     // Өдөр, шөнө
     const bg = new THREE.Color(0x343546).lerp(new THREE.Color(visualStyle.palette.mapPaper), daylight);
     (this.scene.background as THREE.Color).copy(bg);

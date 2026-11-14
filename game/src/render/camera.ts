@@ -19,6 +19,11 @@ export class FollowCamera {
   mapPitch = 0.95;
   private ptr: { x: number; y: number; sx: number; sy: number; id: number; drag: boolean; button: number; touch: boolean } | null = null;
   private lastTap = 0;
+  private cameraReady = false;
+  private smoothPosition = new THREE.Vector3();
+  private smoothTarget = new THREE.Vector3();
+  private desiredPosition = new THREE.Vector3();
+  private desiredTarget = new THREE.Vector3();
   /** Утас: дэлгэцэн дээрх хуруунууд (хоёр хуруугаар чимхэж томруулна) */
   private touches = new Map<number, { x: number; y: number }>();
   private pinch: number | null = null;
@@ -108,13 +113,24 @@ export class FollowCamera {
     return { x: -Math.sin(this.yaw), z: -Math.cos(this.yaw) };
   }
 
-  update(tx: number, tz: number, ty: number, heightAt: (x: number, z: number) => number): void {
+  update(tx: number, tz: number, ty: number, heightAt: (x: number, z: number) => number, dt = 1 / 60): void {
     const cx = tx + Math.sin(this.yaw) * Math.cos(this.pitch) * this.dist;
     const cz = tz + Math.cos(this.yaw) * Math.cos(this.pitch) * this.dist;
     let cy = ty + Math.sin(this.pitch) * this.dist;
     cy = Math.max(cy, heightAt(cx, cz) + 1.2);
-    this.camera.position.set(cx, cy, cz);
-    this.camera.lookAt(tx, ty, tz);
+    this.desiredTarget.set(tx, ty, tz);
+    this.desiredPosition.set(cx, cy, cz);
+    if (!this.cameraReady || dt <= 0) {
+      this.smoothPosition.copy(this.desiredPosition);
+      this.smoothTarget.copy(this.desiredTarget);
+      this.cameraReady = true;
+    } else {
+      const blend = 1 - Math.exp(-dt * 10);
+      this.smoothPosition.lerp(this.desiredPosition, blend);
+      this.smoothTarget.lerp(this.desiredTarget, blend);
+    }
+    this.camera.position.copy(this.smoothPosition);
+    this.camera.lookAt(this.smoothTarget);
   }
 
   resize(aspect: number): void {

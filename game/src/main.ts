@@ -53,6 +53,7 @@ function start(): void {
     throw new Error('?shot нь 1–7 бүхэл тоо байх ёстой');
   }
   const captureMode = shot !== null;
+  let photoMode = captureMode;
   const seed = captureMode ? 20261113 : Number(qs.get('seed')) || 20261113;
   const state = createInitialState(cfg, seed);
   if (shot !== null) {
@@ -110,14 +111,14 @@ function start(): void {
     view.cam.pitch = preset.pitch;
     view.cam.dist = preset.dist;
     view.renderer.domElement.style.pointerEvents = 'none';
-    for (const id of ['hud', 'perf', 'help', 'prompt', 'toasts']) document.getElementById(id)!.style.display = 'none';
+    document.body.classList.add('photo-mode');
   }
   if (qs.get('heatmap') === '1') view.toggleHeatmap(state);
   const hud = document.getElementById('hud')!;
   const perf = document.getElementById('perf')!;
   const help = document.getElementById('help')!;
   const prompt = document.getElementById('prompt')!;
-  help.innerHTML = `<h3>${t('help.title')}</h3>${isTouch ? t('help.touch') + '\n\n' + touchKeys(t('help.body')) : t('help.body')}`;
+  help.innerHTML = `<h3>${t('help.title')}</h3>${isTouch ? t('help.touch') + '\n\n' + touchKeys(t('help.body')) : t('help.body')}<p><b>P</b> — зургийн горим (тоглоом түр зогсоно)</p>`;
   document.title = t('app.title');
 
   const panels = new Panels(cfg, state, { dispatch: (cmd) => sim.command(cmd), toast, toggleZones: () => view.zones.toggle() });
@@ -159,7 +160,7 @@ function start(): void {
   const controller = new PlayerController(cfg, {
     dispatch: (cmd) => sim.command(cmd),
     state: () => state,
-    blocked: () => panels.isOpen,
+    blocked: (code) => panels.isOpen || (photoMode && code !== 'KeyP'),
     onAction: (kind, res) => {
       if (res.ok && (kind === 'shout' || kind === 'scare' || kind === 'call')) view.characters.say(kind);
       if (res.msg) toast(res.msg, res.ok ? 'good' : 'bad');
@@ -170,6 +171,11 @@ function start(): void {
     },
     onToggle: (what) => {
       if (what === 'heatmap') view.toggleHeatmap(state);
+      else if (what === 'photo' && !captureMode) {
+        photoMode = !photoMode;
+        document.body.classList.toggle('photo-mode', photoMode);
+        if (!photoMode) toast('Зургийн горимоос гарлаа', 'good');
+      }
       else if (what === 'storage') panels.open('storage');
       else if (what === 'trade') panels.open(state.player.place === 'sum' ? (nearTeahouse(cfg, state) ? 'teahouse' : 'shop') : 'cargo');
       else if (what === 'helpers') panels.open('helpers');
@@ -234,6 +240,7 @@ function start(): void {
   let hudT = 0;
   let grassAvg = averageBiomass(state.grass, 120);
   let grassT = 0;
+  let previousPlace = state.player.place;
   // FPS хэмжилт
   let fpsFrames = 0, fpsT = 0, fps = 0, worstMs = 0, worstShown = 0;
 
@@ -274,7 +281,7 @@ function start(): void {
     const dt = Math.min(rawDt, 0.1);
     last = now;
     worstMs = Math.max(worstMs, rawDt * 1000);
-    const paused = captureMode || panels.isOpen || !!touchUI?.paused;
+    const paused = photoMode || panels.isOpen || !!touchUI?.paused;
 
     // Газрын зураг дээр Shift — цаг хурдасна (M4.6)
     const fast = state.player.place === 'map' && !state.move && (controller.isDown('ShiftLeft') || controller.isDown('ShiftRight'));
@@ -290,6 +297,13 @@ function start(): void {
         steps++;
       }
       if (steps >= 60) acc = 0;
+    }
+    if (state.player.place !== previousPlace) {
+      previousPlace = state.player.place;
+      const fade = document.getElementById('sceneFade')!;
+      fade.classList.remove('play');
+      void fade.offsetWidth;
+      fade.classList.add('play');
     }
     const spm = secPerMinuteNow();
     view.frame(state, Math.min(1, acc / spm), paused ? 0 : dt, paused ? 0 : spm / speed);

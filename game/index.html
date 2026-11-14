@@ -23,6 +23,12 @@
                    background: radial-gradient(ellipse at center, transparent 56%, rgba(32, 24, 28, 0.32) 100%); }
       #app[data-quality="mid"]::after { opacity: 0.1; }
       #app[data-quality="high"]::after { opacity: 0.16; }
+      body.photo-mode #hud, body.photo-mode #perf, body.photo-mode #help, body.photo-mode #prompt, body.photo-mode #toasts { display: none !important; }
+      body.photo-mode .joy, body.photo-mode .acts, body.photo-mode .tmenu { display: none !important; }
+      #sceneFade { position: fixed; inset: 0; z-index: 8; pointer-events: none; background: rgba(32, 24, 28, 0.42); opacity: 0; }
+      #sceneFade.play { animation: scene-fade 420ms ease-out both; }
+      @keyframes scene-fade { 0% { opacity: 0; } 22% { opacity: 1; } 100% { opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) { #sceneFade.play { animation: none; } }
       .panel { position: fixed; padding: 10px 14px; border: 1px solid rgba(232, 182, 76, 0.34); border-radius: 10px; background: rgba(30, 24, 18, 0.72);
                color: #f4ead6; font-size: 14px; line-height: 1.5; pointer-events: none; box-shadow: 0 6px 24px rgba(30, 20, 12, 0.14); }
       #hud { top: 12px; left: 12px; }
@@ -125,6 +131,7 @@
   </head>
   <body>
     <div id="app"></div>
+    <div id="sceneFade"></div>
     <div id="hud" class="panel"></div>
     <div id="perf" class="panel"></div>
     <div id="help" class="panel"></div>

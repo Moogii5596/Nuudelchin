@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import type { GameConfig } from '../sim/config';
 import { sumHeightAt } from '../sim/terrain';
 import { batchStatic, mat, VisualRng } from './util';
+import { paletteHex } from './style';
 
 function label(text: string, bg: string, fg: string, w = 4.2, h = 1): THREE.Mesh {
   const cv = document.createElement('canvas');
@@ -76,6 +77,31 @@ function yardWithGer(g: THREE.Group, x: number, z: number, s: number, rng: Visua
   roof.position.set(gx, sumHeightAt(gx, gz) + 2.15, gz);
   wall.castShadow = roof.castShadow = true;
   g.add(wall, roof);
+}
+
+function resident(g: THREE.Group, x: number, z: number, deel: number, hat: number, heading: number): void {
+  const person = new THREE.Group();
+  person.position.set(x, sumHeightAt(x, z), z);
+  person.rotation.y = heading;
+  for (const sx of [-0.13, 0.13]) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.62, 0.16), mat(paletteHex('woodDark')));
+    leg.position.set(sx, 0.36, 0);
+    person.add(leg);
+  }
+  const coat = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.9, 0.36), mat(deel));
+  coat.position.y = 1.08;
+  person.add(coat);
+  for (const sx of [-0.38, 0.38]) {
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.68, 0.18), mat(deel));
+    arm.position.set(sx, 1.15, 0);
+    person.add(arm);
+  }
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 7, 5), mat(0xc99a6e));
+  head.position.y = 1.72;
+  const cap = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.3, 6), mat(hat));
+  cap.position.y = 1.98;
+  person.add(head, cap);
+  g.add(person);
 }
 
 export class SumCenterView {
@@ -177,6 +203,27 @@ export class SumCenterView {
       t.castShadow = true;
       st.add(t);
     }
+    const poleXs = [-100, -50, 0, 50, 100];
+    const poleZ = 92;
+    for (const x of poleXs) {
+      const y = sumHeightAt(x, poleZ);
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.16, 7, 5), mat(paletteHex('woodDark')));
+      pole.position.set(x, y + 3.5, poleZ);
+      const crossbar = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.12, 0.12), mat(paletteHex('wood')));
+      crossbar.position.set(x, y + 6.7, poleZ);
+      st.add(pole, crossbar);
+    }
+    for (const offset of [-0.45, 0.45]) {
+      const wirePoints = poleXs.map((x) => new THREE.Vector3(x, sumHeightAt(x, poleZ) + 6.8, poleZ + offset));
+      const wire = new THREE.Mesh(
+        new THREE.TubeGeometry(new THREE.CatmullRomCurve3(wirePoints), 48, 0.025, 4, false),
+        mat(paletteHex('woodDark')),
+      );
+      st.add(wire);
+    }
+    resident(st, shop.x + 10, shop.z + 7, 0x2f5d9b, 0x8a3a2a, 0.2);
+    resident(st, tea.x - 9, tea.z + 6, 0x7b4b2b, 0x3d5d3d, -0.5);
+    resident(st, 12, 72, 0x6a3b54, 0x4b362b, Math.PI);
     this.group.add(batchStatic(st));
 
     // ===== Худалдаачны дэлгүүр =====

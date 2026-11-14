@@ -14,6 +14,8 @@ export interface Rig {
   root: THREE.Group;
   legs: THREE.Group[];
   arms: THREE.Group[];
+  head?: THREE.Group;
+  tail?: THREE.Object3D;
 }
 
 export function makeHerder(deel = 0x2f5d9b, hem = 0x2a528a, hat = 0xa52a2a): Rig {
@@ -58,11 +60,13 @@ export function makeHorse(color: number): Rig {
   meshBox(0.32, 0.8, 0.36, color, 0, 1.75, 0.72, g).rotation.x = 0.55;
   meshBox(0.3, 0.32, 0.62, color, 0, 2.08, 1.12, g);
   meshBox(0.08, 0.55, 0.4, dk, 0, 1.95, 0.62, g).rotation.x = 0.55;
-  meshBox(0.14, 0.8, 0.14, dk, 0, 1.15, -0.85, g).rotation.x = 0.35;
+  const tail = meshBox(0.14, 0.8, 0.14, dk, 0, 1.15, -0.85, g);
+  tail.name = 'tail';
+  tail.rotation.x = 0.35;
   meshBox(0.66, 0.12, 0.6, 0x8b2e2e, 0, 1.7, 0, g);   // эмээлийн гөлөм
   meshBox(0.18, 0.2, 0.6, 0x5a3a20, 0, 1.82, 0, g);   // эмээл
   const legs = ([[-0.2, 0.58], [0.2, 0.58], [-0.2, -0.58], [0.2, -0.58]] as const).map(([x, z]) => limb(0.14, 0.95, color, x, 0.95, z, g));
-  return { root: g, legs, arms: [] };
+  return { root: g, legs, arms: [], tail };
 }
 
 function makeWolf(): Rig {
@@ -71,6 +75,7 @@ function makeWolf(): Rig {
   meshBox(0.42, 0.5, 1.15, c, 0, 0.78, 0, g);
   meshBox(0.46, 0.42, 0.4, 0x8a847c, 0, 0.86, 0.42, g);
   const head = new THREE.Group();
+  head.name = 'head';
   head.position.set(0, 1.0, 0.72);
   g.add(head);
   meshBox(0.34, 0.32, 0.4, c, 0, 0, 0.05, head);
@@ -84,14 +89,16 @@ function makeWolf(): Rig {
     e.position.set(sx * 0.09, 0.06, 0.26);
     head.add(e);
   }
-  meshBox(0.14, 0.14, 0.6, dk, 0, 0.72, -0.78, g).rotation.x = 0.6;
+  const tail = meshBox(0.14, 0.14, 0.6, dk, 0, 0.72, -0.78, g);
+  tail.name = 'tail';
+  tail.rotation.x = 0.6;
   const legs = ([[-0.14, 0.4], [0.14, 0.4], [-0.14, -0.4], [0.14, -0.4]] as const).map(([x, z]) => limb(0.12, 0.56, dk, x, 0.56, z, g));
   // Барьсан мал (үүр лүүгээ чирэх үед)
   const prey = meshBox(0.5, 0.35, 0.8, 0xe8e2d4, 0.25, 0.35, 1.1, g);
   prey.name = 'prey';
   prey.rotation.y = 0.9;
   prey.visible = false;
-  return { root: g, legs, arms: [] };
+  return { root: g, legs, arms: [], head, tail };
 }
 
 /** Монгол банхар: хар, хүрэн хацартай */
@@ -111,9 +118,12 @@ function makeDog(): Rig {
     brow.position.set(sx * 0.08, 0.08, 0.165);
     head.add(brow);
   }
-  meshBox(0.1, 0.1, 0.45, c, 0, 0.78, -0.55, g).rotation.x = -0.7;   // сүүл (дээш эргэсэн)
+  const tail = meshBox(0.1, 0.1, 0.45, c, 0, 0.78, -0.55, g);
+  tail.name = 'tail';
+  tail.rotation.x = -0.7;   // сүүл (дээш эргэсэн)
   const legs = ([[-0.11, 0.3], [0.11, 0.3], [-0.11, -0.3], [0.11, -0.3]] as const).map(([x, z]) => limb(0.1, 0.45, c, x, 0.45, z, g));
-  return { root: g, legs, arms: [] };
+  head.name = 'head';
+  return { root: g, legs, arms: [], head, tail };
 }
 
 export function swingLegs(r: Rig, sw: number): void {
@@ -265,6 +275,7 @@ export class CharactersView {
       }
       this.horse.root.position.set(this.horsePos.x, heightAt(this.horsePos.x, this.horsePos.z), this.horsePos.z);
       this.horse.root.rotation.y = this.horsePos.h;
+      if (this.horse.tail) this.horse.tail.rotation.x = 0.35 + Math.sin(this.horsePhase * 0.65) * 0.12;
     }
 
     // ---- бичиг ----
@@ -303,8 +314,10 @@ export class CharactersView {
       v.phase += dt * sp * 3;
       swingLegs(v.rig, sp > 0.15 ? Math.sin(v.phase) * 0.8 : 0);
       const y = heightAt(v.x, v.z);
-      v.rig.root.position.set(v.x, y, v.z);
+      v.rig.root.position.set(v.x, y + (sp > 0.2 ? Math.abs(Math.sin(v.phase)) * 0.045 : 0), v.z);
       v.rig.root.rotation.y = v.h;
+      if (v.rig.head) v.rig.head.rotation.x = d.barkT > 0 ? -0.38 + Math.sin(v.phase * 2) * 0.06 : Math.sin(v.phase * 0.4) * 0.035;
+      if (v.rig.tail) v.rig.tail.rotation.x = -0.7 + Math.sin(v.phase * 0.7 + d.id) * 0.18;
       v.bark.visible = d.barkT > 0;
       v.bark.position.set(v.x, y + 1.9 + Math.sin(v.phase * 2) * 0.05, v.z);
     }
@@ -340,12 +353,15 @@ export class CharactersView {
       v.z = nz;
       v.phase += dt * sp * 2.2;
       swingLegs(v.rig, sp > 0.2 ? Math.sin(v.phase) * 0.7 : 0);
-      v.rig.root.position.set(v.x, heightAt(v.x, v.z), v.z);
+      const stalking = w.mode === 'hunt';
+      v.rig.root.position.set(v.x, heightAt(v.x, v.z) + (sp > 0.2 ? Math.abs(Math.sin(v.phase)) * 0.045 : 0) - (stalking ? 0.1 : 0), v.z);
       v.rig.root.rotation.y = v.h;
+      if (v.rig.head) v.rig.head.rotation.x = stalking ? -0.24 : w.mode === 'drag' ? 0.12 : Math.sin(v.phase * 0.4) * 0.04;
+      if (v.rig.tail) v.rig.tail.rotation.x = (w.mode === 'flee' ? 1 : 0.6) + Math.sin(v.phase * 0.65 + w.id) * 0.16;
       v.rig.root.visible = w.mode !== 'den';   // цадсан чоно үүрэндээ (B6) — харагдахгүй
     }
     for (const [id, v] of this.wolves) if (!alive.has(id)) {
-      this.group.remove(v.rig.root);
+      this.campGroup.remove(v.rig.root);
       this.wolves.delete(id);
     }
   }

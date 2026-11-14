@@ -11,11 +11,11 @@ import type { GameConfig, Species } from '../sim/config';
 import { SPECIES } from '../sim/config';
 import type { Animal, GameState } from '../sim/state';
 import { frameKg } from '../sim/systems/animals';
-import { angDiff, boxGeo, merge } from './util';
+import { angDiff, boxGeo, clamp, merge } from './util';
 import { paletteHex, visualStyle } from './style';
 import { quality as activeQuality, type Quality } from '../device';
 
-type Frame = 'body' | 'head' | 'leg';
+type Frame = 'body' | 'head' | 'leg' | 'tail';
 
 interface PartDef {
   geo: THREE.BufferGeometry;
@@ -28,6 +28,7 @@ interface PartDef {
 interface SpeciesDef {
   parts: PartDef[];
   headPivot: [number, number, number];
+  tailPivot: [number, number, number];
   grazeHead: number;               // бэлчих үеийн толгойн налуу (рад)
   legs: [number, number][];        // [x, z] — урд зүүн, урд баруун, хойд зүүн, хойд баруун
   legTop: number;                  // хөлийн дээд үзүүрийн өндөр
@@ -65,13 +66,14 @@ function sheepDef(): SpeciesDef {
   return {
     parts: [
       { geo: body, frame: 'body', color: 'body' },
-      { geo: tail, frame: 'body', color: 'body', scale: (a) => 0.65 + 0.9 * a.condition },
+      { geo: tail, frame: 'tail', color: 'body', scale: (a) => 0.65 + 0.9 * a.condition },
       { geo: merge([boxGeo(0.3, 0.32, 0.42, 0, 0.03, 0.17), boxGeo(0.34, 0.08, 0.1, 0, 0.13, 0.05)]), frame: 'head', color: 0x3a2a20 },
       { geo: merge(horns), frame: 'head', color: 0xcdbf9e, only: (a) => a.sex === 'm' && a.age >= 1 },
       { geo: helperMark(0.24, 0.38, 1.17, -0.08), frame: 'body', color: paletteHex('bluePattern'), only: (a) => a.ownerId !== undefined },
       { geo: legGeo(0.11, 0.5), frame: 'leg', color: LEG_DARK },
     ],
     headPivot: [0, 0.95, 0.55],
+    tailPivot: [0, 0.68, -0.72],
     grazeHead: 0.85,
     legs: [[-0.2, 0.38], [0.2, 0.38], [-0.2, -0.38], [0.2, -0.38]],
     legTop: 0.5,
@@ -93,11 +95,13 @@ function goatDef(): SpeciesDef {
       { geo: merge([boxGeo(0.42, 0.48, 0.95, 0, 0.8, 0), boxGeo(0.07, 0.2, 0.07, 0, 1.04, -0.5, -0.6)]), frame: 'body', color: 'body' },
       { geo: merge([boxGeo(0.24, 0.28, 0.4, 0, 0.08, 0.16), boxGeo(0.08, 0.16, 0.08, 0, -0.1, 0.34)]), frame: 'head', color: 'body' },
       { geo: boxGeo(0.12, 0.18, 0.1, 0, -0.2, 0.34), frame: 'head', color: LEG_DARK },
+      { geo: boxGeo(0.08, 0.38, 0.08, 0, 1.05, -0.5, -0.35), frame: 'tail', color: LEG_DARK },
       { geo: merge(horns), frame: 'head', color: 0x8a7a60, only: (a) => a.age >= 0.5, scale: (a) => (a.sex === 'm' ? 1.3 : 0.85) },
       { geo: helperMark(0.28, 0.48, 1.0, -0.05), frame: 'body', color: paletteHex('bluePattern'), only: (a) => a.ownerId !== undefined },
       { geo: legGeo(0.09, 0.56), frame: 'leg', color: LEG_DARK },
     ],
     headPivot: [0, 1.0, 0.42],
+    tailPivot: [0, 1.05, -0.5],
     grazeHead: 0.9,
     legs: [[-0.14, 0.33], [0.14, 0.33], [-0.14, -0.33], [0.14, -0.33]],
     legTop: 0.56,
@@ -116,7 +120,8 @@ function cowDef(): SpeciesDef {
   }
   return {
     parts: [
-      { geo: merge([boxGeo(0.9, 0.85, 1.75, 0, 1.08, 0), boxGeo(0.08, 0.75, 0.08, 0, 1.0, -0.92, 0.2)]), frame: 'body', color: 'body' },
+      { geo: boxGeo(0.9, 0.85, 1.75, 0, 1.08, 0), frame: 'body', color: 'body' },
+      { geo: boxGeo(0.08, 0.75, 0.08, 0, 1.0, -0.92, 0.2), frame: 'tail', color: LEG_DARK },
       { geo: merge([boxGeo(0.46, 0.48, 0.6, 0, -0.05, 0.25)]), frame: 'head', color: 'body' },
       { geo: boxGeo(0.3, 0.28, 0.12, 0, -0.08, 0.57), frame: 'head', color: 0xf2ece2 },
       { geo: merge(horns), frame: 'head', color: 0xe8dcc0, only: (a) => a.age >= 1, scale: (a) => (a.sex === 'm' ? 1.3 : 0.9) },
@@ -125,6 +130,7 @@ function cowDef(): SpeciesDef {
       { geo: legGeo(0.17, 0.66), frame: 'leg', color: 0x2a201a },
     ],
     headPivot: [0, 1.32, 0.85],
+    tailPivot: [0, 1.0, -0.92],
     grazeHead: 0.75,
     legs: [[-0.3, 0.62], [0.3, 0.62], [-0.3, -0.62], [0.3, -0.62]],
     legTop: 0.66,
@@ -137,13 +143,14 @@ function horseDef(): SpeciesDef {
   return {
     parts: [
       { geo: boxGeo(0.6, 0.7, 1.5, 0, 1.3, 0), frame: 'body', color: 'body' },
-      { geo: boxGeo(0.14, 0.8, 0.14, 0, 1.15, -0.85, 0.35), frame: 'body', color: 0x2a1c12 },
+      { geo: boxGeo(0.14, 0.8, 0.14, 0, 1.15, -0.85, 0.35), frame: 'tail', color: 0x2a1c12 },
       { geo: merge([boxGeo(0.32, 0.8, 0.36, 0, 0.28, 0.14, 0.55), boxGeo(0.3, 0.32, 0.62, 0, 0.6, 0.52)]), frame: 'head', color: 'body' },
       { geo: boxGeo(0.08, 0.55, 0.4, 0, 0.42, 0.02, 0.55), frame: 'head', color: 0x2a1c12 },
       { geo: helperMark(0.3, 0.62, 1.65, -0.05), frame: 'body', color: paletteHex('bluePattern'), only: (a) => a.ownerId !== undefined },
       { geo: legGeo(0.14, 0.95), frame: 'leg', color: 'body' },
     ],
     headPivot: [0, 1.48, 0.58],
+    tailPivot: [0, 1.15, -0.85],
     grazeHead: 1.05,
     legs: [[-0.2, 0.58], [0.2, 0.58], [-0.2, -0.58], [0.2, -0.58]],
     legTop: 0.95,
@@ -179,6 +186,8 @@ export class AnimalsView {
   private mHead = new THREE.Matrix4();
   private mTmp = new THREE.Matrix4();
   private mRot = new THREE.Matrix4();
+  private mScale = new THREE.Matrix4();
+  private mPivot = new THREE.Matrix4();
   private q = new THREE.Quaternion();
   private p = new THREE.Vector3();
   private s = new THREE.Vector3();
@@ -224,7 +233,7 @@ export class AnimalsView {
    * stepSec — нэг sim алхам бодитоор хэдэн секунд (хурдаас хамаарна; 0 = зогссон)
    */
   update(state: GameState, heightAt: (x: number, z: number) => number, alpha: number, dt: number, stepSec: number): void {
-    this.frameNo++;
+    if (dt > 0) this.frameNo++;
     const counts = new Map<THREE.InstancedMesh, number>();
     const animals = this.cfg.animals;
 
@@ -256,7 +265,10 @@ export class AnimalsView {
 
       // Толгой: бэлчиж байхад доош, хэвтэж хивэх үед бага зэрэг
       const grazing = a.mode === 'graze' && speed < 1.5;
-      const headTarget = grazing ? def.grazeHead + Math.sin(this.frameNo * 0.05 + a.id) * 0.08 : a.mode === 'rest' || a.mode === 'sleep' ? 0.15 : 0;
+      const drinking = a.mode === 'drink';
+      const headTarget = grazing ? def.grazeHead + Math.sin(this.frameNo * 0.05 + a.id) * 0.08 :
+        drinking ? def.grazeHead * 0.72 + Math.sin(this.frameNo * 0.16 + a.id) * 0.035 :
+          a.mode === 'rest' || a.mode === 'sleep' ? 0.15 : 0;
       v.head += (headTarget - v.head) * Math.min(1, dt * 3);
 
       // Хэмжээ: насаар (жингийн шоо язгуур), таргаар өргөн
@@ -265,13 +277,18 @@ export class AnimalsView {
       const fat = 0.85 + 0.3 * a.condition;
       const resting = a.mode === 'rest' || a.mode === 'sleep';
       const y = heightAt(x, z) + (resting ? -def.legTop * 0.55 * sc : Math.abs(Math.sin(v.phase)) * 0.04 * walk);
+      const breathing = resting ? Math.sin(this.frameNo * 0.045 + a.id) * 0.006 : 0;
 
       this.p.set(x, y, z);
       this.q.setFromAxisAngle(this.yAxis, v.h);
-      this.s.set(sc * fat, sc, sc);
+      this.s.set(sc * fat * (1 + breathing), sc * (1 - breathing), sc * fat * (1 + breathing));
       this.mBase.compose(this.p, this.q, this.s);
       this.mRot.makeRotationX(v.head);
-      this.mHead.makeTranslation(def.headPivot[0], def.headPivot[1], def.headPivot[2]).multiply(this.mRot);
+      const headSize = clamp(1.22 - sc * 0.22, 1, 1.22);
+      this.mHead.makeTranslation(def.headPivot[0], def.headPivot[1], def.headPivot[2])
+        .multiply(this.mRot)
+        .multiply(this.mScale.makeScale(headSize, headSize, headSize))
+        .multiply(this.mTmp.makeTranslation(-def.headPivot[0], -def.headPivot[1], -def.headPivot[2]));
       this.mHead.premultiply(this.mBase);
 
       let bodyCol = def.palette[(a.id * 7 + 3) % def.palette.length] ?? def.palette[0]!;
@@ -280,7 +297,19 @@ export class AnimalsView {
         const mesh = sm.meshes[pi]!;
         let i = counts.get(mesh) ?? 0;
         this.c.setHex(part.color === 'body' ? bodyCol : part.color);
-        if (part.frame === 'leg') {
+        if (part.frame === 'tail') {
+          const [tx, ty, tz] = def.tailPivot;
+          const flick = Math.sin(v.phase * 0.9 + a.id * 0.73) * (resting ? 0.07 : 0.15);
+          const tailScale = part.scale?.(a) ?? 1;
+          this.mTmp.makeTranslation(tx, ty, tz)
+            .multiply(this.mRot.makeRotationX(flick))
+            .multiply(this.mScale.makeScale(tailScale, tailScale, tailScale))
+            .multiply(this.mPivot.makeTranslation(-tx, -ty, -tz))
+            .premultiply(this.mBase);
+          mesh.setMatrixAt(i, this.mTmp);
+          mesh.setColorAt(i, this.c);
+          i++;
+        } else if (part.frame === 'leg') {
           def.legs.forEach(([lx, lz], li) => {
             const sw = resting ? -1.35 : li === 0 || li === 3 ? swing : -swing;
             this.mTmp.makeTranslation(lx, def.legTop, lz).multiply(this.mRot.makeRotationX(sw));

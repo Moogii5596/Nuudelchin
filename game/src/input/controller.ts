@@ -16,9 +16,9 @@ export interface ControllerHooks {
   /** Командын үр дүн (мэдэгдэл, бичиг) */
   onAction: (kind: ActionKind, res: CommandResult) => void;
   onSpeed: (idx: number) => void;
-  onToggle: (what: 'heatmap' | 'help' | 'cheat' | 'storage' | 'trade' | 'dogs' | 'camps' | 'zones' | 'helpers') => void;
+  onToggle: (what: 'heatmap' | 'help' | 'cheat' | 'storage' | 'trade' | 'dogs' | 'camps' | 'zones' | 'helpers' | 'photo') => void;
   /** Цонх нээлттэй үед удирдлага ажиллахгүй */
-  blocked: () => boolean;
+  blocked: (code?: string) => boolean;
   /** Одоогийн төлөв (E товчны үйлдлийг сонгоход) */
   state: () => GameState;
 }
@@ -41,7 +41,7 @@ export class PlayerController {
   constructor(private cfg: GameConfig, private hooks: ControllerHooks) {
     window.addEventListener('keydown', (e) => {
       if (e.target instanceof HTMLInputElement) return;
-      if (this.hooks.blocked()) return;
+      if (this.hooks.blocked(e.code)) return;
       this.keys.add(e.code);
       if (e.repeat) return;
       if (e.code === 'Space' || e.code === 'Tab' || e.code === 'F1' || e.code === 'Slash') e.preventDefault();
@@ -56,7 +56,7 @@ export class PlayerController {
    * Нэг удаагийн үйлдэл (товчны код). Гар болон утасны товчнууд (input/touch.ts) хоёулаа үүгээр дуудна.
    */
   press(code: string): void {
-    if (this.hooks.blocked()) return;
+    if (this.hooks.blocked(code)) return;
     switch (code) {
       case 'Space':
         this.shout();
@@ -94,6 +94,9 @@ export class PlayerController {
         break;
       case 'KeyG':
         this.hooks.onToggle('heatmap');
+        break;
+      case 'KeyP':
+        this.hooks.onToggle('photo');
         break;
       case 'Backquote':
         this.hooks.onToggle('cheat');   // туршилтын цэс
