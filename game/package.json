@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "balance": "tsx ../tools/balance_sim/run.ts"
+    "balance": "tsx ../tools/balance_sim/run.ts",
+    "codemap": "tsx ../tools/codemap.ts"
   },
   "dependencies": {
     "three": "^0.187.0"

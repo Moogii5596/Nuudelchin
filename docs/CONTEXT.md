@@ -14,7 +14,7 @@ tags: [context, map, onboarding]
 - **MVP «Зуслан»:** 1 сум, 4 бууц (Голын бэл `river`, Уулын ар `northSlope`, Уулын өвөр `valley`, Уулын энгэр `southSlope`) + сумын төв; 4 улирал (1 жил = 50 өдөр, зунаас эхэлнэ); шөнөтэй (06:00→06:00).
 - Мал (хонь, ямаа, үхэр, адуу) бэлчиж таргална, сүү/ноос газарт унана → цуглуулж, боловсруулж, Худалдаачинд зарна; туслах малчин хөлсөлнө; чоно, нохой; бууц сэлгэнэ; газрын зураг дээр тэрэг/машин жолооно.
 - Том замын тэмдэг: гэр + 40 хонин толгой («гэр оронтой болсон» мөч, M6).
-- **Одоогийн үе шат:** V0–V5 дүрслэл → [[V]]. Дараа нь [[M6]] (хадгалалт), [[M7]] (туршилт). Код: M0–M5.5, B ✅, 125 тест.
+- **Одоогийн үе шат:** → `PROGRESS.md` (1 мөр). Үе шатны төлөвлөгөө: `docs/plan/` ([[V]], [[M6]], [[M7]]).
 
 ## 2. Стек ба командууд
 TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `game/` дотроос:
@@ -43,8 +43,8 @@ TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `gam
 | `systems/production.ts` · `storage.ts` · `processing.ts` | Газрын бүтээгдэхүүн муудах · агуулах · тогоо/сепаратор/эсгий |
 | `systems/night.ts` | Хотлох, унтах, өглөөний сүү/ноос |
 | `systems/herder.ts` · `dogs.ts` | Малчин, морь, «Хөөе», уурга · нохой ба командууд |
-| `systems/wolves.ts` | Үүр, өлсгөлөн, үржил, дайралт, хамгаалалтын бүс, нохойн тулаан (644 мөр) |
-| `systems/helpers.ts` | Туслах малчин: хөлслөх, цалин, үүрэг (малчин/адуучин/жолооч/хүүхэд), отор (882 мөр) |
+| `systems/wolves.ts` | Үүр, өлсгөлөн, үржил, дайралт, хамгаалалтын бүс, нохойн тулаан |
+| `systems/helpers.ts` | Туслах малчин: хөлслөх, цалин, үүрэг (малчин/адуучин/жолооч/хүүхэд), отор |
 | `systems/seasons.ts` · `camps.ts` | Улирал, цас, өвс, хүйтэн, боодол өвс · бууц сэлгэх |
 | `systems/travel.ts` · `trip.ts` | Газрын зураг, тээвэр, ачаа, арилжаа · Худалдаачин, үнэ, тээврийн туслах |
 | `systems/cheats.ts` | ` цэсийн туршилтын үйлдлүүд |
@@ -52,12 +52,12 @@ TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `gam
 | Файл | Үүрэг |
 |---|---|
 | `scene.ts` | `GameView`: үндсэн дүр зураг, гэрэл, тэнгэр, улирал, бүх view-г холбоно |
-| `terrain.ts` | Бууцны газар, ус, мод, чулуу, өвс, бэлчээрийн өнгө (1378 мөр — мужаар нээ) |
+| `terrain.ts` | Бууцны газар, ус, мод, чулуу, өвс, бэлчээрийн өнгө (том — мужаар нээ) |
 | `animals.ts` · `characters.ts` · `staff.ts` | Мал (InstancedMesh) · малчин, морь, чоно, нохой · туслахууд, айлын гэр |
 | `items.ts` · `vehicles.ts` · `zones.ts` | Газрын бүтээгдэхүүн · тэрэг/машин · хамгаалалтын бүс |
 | `sumcenter.ts` · `worldmap.ts` | Сумын төв 3D (Худалдаачин, Цайны газар) · газрын зураг (дээрээс харсан) |
 | `camera.ts` · `style.ts` · `util.ts` | Дагах камер · `data/visuals.json`-ийн шалгалт, `visualStyle` · туслах |
-| `ui/panels.ts` · `ui/names.ts` | Бүх цонх: агуулах, тайлан, Худалдаачин, нүүх, нохой, туслах (1011 мөр) · нэрс, форматлагч |
+| `ui/panels.ts` · `ui/names.ts` | Бүх цонх: агуулах, тайлан, Худалдаачин, нүүх, нохой, туслах · нэрс, форматлагч |
 ### Бусад
 | Файл | Үүрэг |
 |---|---|
@@ -65,29 +65,10 @@ TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `gam
 | `input/controller.ts` · `touch.ts` | Гар/хулгана → Command · утасны джойстик, товчнууд |
 | `device.ts` · `pwa.ts` | Чанар `low/mid/high`, мэдрэгч илрүүлэх · PWA суулгах, service worker |
 | `i18n/i18n.ts`, `mn.json`, `en.json` | Текстийн түлхүүр; `en.json` бүрэн биш (M6.7) |
-`game/tests/` (19 тестийн файл + `helpers.ts` дундын, 125 тест): нэрээр — animals, breeding, clock, config, dogs, grazing, herder, herds, night, pasture, products, rng, seasons, sim, wolves; `staff.test.ts` = туслахууд, `trip.test.ts` = тээвэр/арилжаа, `style.test.ts` = visuals.json, `playthrough.test.ts` = бүтэн тоглолт. `camps`, `cheats`, `processing`, `production` системд тусдаа тест байхгүй (playthrough/sim/products-оор дам). `tools/balance_sim/run.ts`: стратеги Идэвхтэй, Дунд, Залхуу, Үлддэг, Менежер × олон seed, тайлан `last_report.md`. Бусад: `game/index.html`, `vite.config.ts`, `sw-template.js` (PWA), `public/` (дүрс).
+`game/tests/` (20 тестийн файл + `helpers.ts` дундын): нэрээр — animals, breeding, clock, config, dogs, grazing, herder, herds, night, pasture, products, rng, seasons, sim, wolves; `staff.test.ts` = туслахууд, `trip.test.ts` = тээвэр/арилжаа, `style.test.ts` = visuals.json, `playthrough.test.ts` = бүтэн тоглолт, `docs.test.ts` = баримт/CODEMAP/холбоосын нийцэл. `camps`, `cheats`, `processing`, `production` системд тусдаа тест байхгүй (playthrough/sim/products-оор дам). `tools/balance_sim/run.ts`: стратеги Идэвхтэй, Дунд, Залхуу, Үлддэг, Менежер × олон seed, тайлан `last_report.md`. Бусад: `game/index.html`, `vite.config.ts`, `sw-template.js` (PWA), `public/` (дүрс).
 
 ## 4. `data/*.json` → аль файл хэрэглэдэг
-`sim/config.ts` бүгдийг ачаална (`visuals.json` — `render/style.ts`). Доор `cfg.<түлхүүр>`-ийг шууд ашигладаг файлууд (грепээр шалгасан); шинэчлэхдээ `grep -rln "cfg\.<түлхүүр>\b" game/src`.
-| JSON | sim/ | render/, input/, main |
-|---|---|---|
-| `time` | animals, grazing, helpers, herds, night, production, seasons, sim, wolves | main, panels |
-| `seasons` | helpers, seasons, travel, trip | main, panels |
-| `animals` | animals, breeding, grazing, helpers, herds, seasons, sim, travel, trip, wolves | animals, names, panels |
-| `pasture` | grazing, helpers, herds, pasture, seasons, sim | terrain, panels |
-| `products` | commands, helpers, night, production, storage, travel, trip | controller, main, items, panels |
-| `processing` | processing, trip | — |
-| `storage` | storage, trip | panels |
-| `economy` | breeding, sim, trip | panels |
-| `vehicles` | camps, commands, helpers, travel, trip | controller, touch, main, panels |
-| `worldmap` | autotrip, camps, helpers, travel | main, sumcenter, panels, worldmap |
-| `helpers` | helpers, trip | panels |
-| `wolves` | cheats, dogs, grazing, wolves | panels |
-| `dogs` | cheats, dogs, sim, trip | panels |
-| `camps` | autotrip, camps, cheats, commands, dogs, grazing, helpers, herds, night, pasture, seasons, travel, trip, wolves | controller, main, scene, terrain, panels, vehicles |
-| `start` | — | — |
-| `player` | commands, herder, herds, travel | controller, main |
-| `visuals` | — | `render/style.ts` → animals, scene, sumcenter, terrain, worldmap |
+`sim/config.ts` бүгдийг ачаална (`loadConfig`, `validateConfig`); `visuals.json` → `render/style.ts` (`visualStyle`) → animals, scene, sumcenter, terrain, worldmap. Түлхүүрийг хэн ашигладгийг хүснэгтээр биш грепээр ол (хуучирдаггүй): `grep -rln 'cfg\.camps' game/src`, `grep -rn 'cfg\.camps\.' game/src/sim/systems/wolves.ts`. JSON түлхүүр: `time seasons animals pasture products processing storage economy vehicles worldmap helpers wolves dogs camps start player visuals`.
 
 ## 5. Архитектурын дүрэм ([[architecture]])
 - **sim/render салгах:** `sim/` Three.js, DOM, `window` импортлохгүй. `render/` зөвхөн GameState уншина, логик бичихгүй.
@@ -104,3 +85,11 @@ TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `gam
 
 ## 7. Нээлттэй асуултууд
 Бүгд [[decisions]] §13–15-д (🙋 түр утгууд, баримтын зөрүү). Гараар шалгах зүйлс → [[playtest]]. Тоон түр утгууд [[mvp-spec]] §5.1, §6.3, §8.
+
+## 8. Баримтын хэсгийн индекс (мөрийн муж)
+Кодын функц/классын мөр болон бусад баримтын `##` мужийг `grep -n '<түлхүүр>' docs/CODEMAP.md`-ээр ол. Доорх блок автомат:
+<!-- codemap:start -->
+_Автомат (`cd game && npm run codemap`), гараар бүү засаарай. Хэсгийн мөрийн муж: `sed -n 'a,bp' <файл>`._
+- `docs/mvp-spec.md`: §0 Хэрэглэгчийн шийдвэрийн түүх 17–22 · §1 Хүрээ 23–43 · §2 Цаг 44–62 · §3 Эхлэл 63–78 · §4 Бүтээгдэхүүн: мал үлдээнэ, ма… 79–127 · §5 Үнэ, тээвэр ба сумын төв 128–179 · §6 Туслах малчид 180–222 · §7 Бэлчээр, бууц сэлгэх, доройтол 223–264 · §8 Чоно 265–294 · §9 Төллөлт ба нас 295–310 · §10 Тоглоомын зорилго ба замын тэ… 311–348 · §11 Прототипоос хасагдах, өөрчлөг… 349–371 · §12 Хөгжүүлэлтийн явц 372–377 · §13 Нээлттэй шийдвэрүүд 378–382 · Эх сурвалж 383–386
+- `docs/visuals-plan.md`: §1 Зорилго 19–31 · §2 Зарчим 32–40 · §3 Хэв маяг 41–96 · §4 Одоо байгаа зүйл 97–109 · §5 Үе шатууд 110–215 · §6 Чанарын түвшин 216–233 · §7 Хэмжилт 234–257 · §8 Хойшлогдох 258–261 · §9 Шийдвэрүүд 262–274 · §10–11 Хэрэгжүүлэлтийн тэмдэглэл ба … 275–277
+<!-- codemap:end -->
