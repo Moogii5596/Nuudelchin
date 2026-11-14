@@ -11,10 +11,11 @@ import { makeHerder, makeHorse } from './characters';
 import { makeVehicleModel } from './vehicles';
 import { seasonLook } from '../sim/systems/seasons';
 import { t } from '../i18n/i18n';
+import { paletteHex, visualStyle } from './style';
 
 const U = 6;   // 1 км = 6 нэгж
 
-function textSprite(text: string, color = '#fff8e8', bg = 'rgba(30,24,16,0.72)'): THREE.Sprite {
+function textSprite(text: string, color = visualStyle.palette.mapInk, bg = 'rgba(239,232,218,0.88)'): THREE.Sprite {
   const cv = document.createElement('canvas');
   const ctx = cv.getContext('2d')!;
   ctx.font = 'bold 40px system-ui, sans-serif';
@@ -61,7 +62,7 @@ export class WorldMapView {
   constructor(private cfg: GameConfig) {
     const wm = cfg.worldmap;
     const b = wm.bounds;
-    this.scene.background = new THREE.Color(0x9cc8e8);
+    this.scene.background = new THREE.Color(visualStyle.palette.mapPaper);
     this.hemi = new THREE.HemisphereLight(0xeaf2ff, 0x6b5a3a, 1.2);
     this.sun = new THREE.DirectionalLight(0xfff1d6, 1.4);
     this.sun.position.set(60, 120, 40);
@@ -74,7 +75,10 @@ export class WorldMapView {
     geo.translate(((b.minX + b.maxX) / 2) * U, 0, ((b.minZ + b.maxZ) / 2) * U);
     const pos = geo.attributes.position as THREE.BufferAttribute;
     const col: number[] = [];
-    const steppe = new THREE.Color(0x9fb466), meadow = new THREE.Color(0x6f9a4a), hill = new THREE.Color(0xa8946a), c = new THREE.Color();
+    const paper = new THREE.Color(visualStyle.palette.mapPaper);
+    const steppe = paper.clone().lerp(new THREE.Color(0xb4a77e), 0.38);
+    const meadow = new THREE.Color(visualStyle.palette.summerGrass).lerp(paper, 0.5);
+    const hill = new THREE.Color(visualStyle.palette.rock).lerp(paper, 0.4), c = new THREE.Color();
     const riverD = (x: number, z: number): number => {
       let best = Infinity;
       for (let i = 1; i < wm.river.length; i++) best = Math.min(best, segDist(x, z, wm.river[i - 1]!, wm.river[i]!));
@@ -118,7 +122,7 @@ export class WorldMapView {
     const rg = new THREE.BufferGeometry();
     rg.setAttribute('position', new THREE.Float32BufferAttribute(rp, 3));
     rg.setIndex(ri);
-    this.scene.add(new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ color: 0x3f7fc0, side: THREE.DoubleSide })));
+    this.scene.add(new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ color: paletteHex('mapWater'), side: THREE.DoubleSide })));
 
     // Ой
     const rng = new VisualRng(4242);
@@ -308,7 +312,7 @@ export class WorldMapView {
     this.camera.position.copy(this.camPos);
     this.camera.lookAt(m.x * U, y, m.z * U);
     // Өдөр, шөнө
-    const bg = new THREE.Color(0x1a2440).lerp(new THREE.Color(0x9cc8e8), daylight);
+    const bg = new THREE.Color(0x343546).lerp(new THREE.Color(visualStyle.palette.mapPaper), daylight);
     (this.scene.background as THREE.Color).copy(bg);
     this.hemi.intensity = 0.55 + 0.65 * daylight;
     this.sun.intensity = 0.4 + 1.0 * daylight;
@@ -319,7 +323,7 @@ export class WorldMapView {
     const l = this.cfg.worldmap.locations[id];
     if (!l) return;
     if (old) this.scene.remove(old);
-    const sp = textSprite(text, id === this.homeId || text.startsWith('🏠') ? '#ffe9a8' : '#fff8e8');
+    const sp = textSprite(text, id === this.homeId || text.startsWith('🏠') ? visualStyle.palette.gerOrange : visualStyle.palette.mapInk);
     sp.position.set(l.x * U, this.heightAt(l.x, l.z) + 12, l.z * U);
     this.labels.set(id, sp);
     this.scene.add(sp);

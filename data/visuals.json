@@ -1,0 +1,46 @@
+{
+  "_doc": "Дүрслэлийн палитр, өдрийн гэрэл ба улирлын агаар мандал. render/style.ts шалгаж ачаална.",
+  "palette": {
+    "summerGrass": "#7FA650",
+    "dryGrass": "#B9A86A",
+    "autumnGrass": "#C9A24E",
+    "dirt": "#A88A62",
+    "rock": "#8C8478",
+    "distantMountain": "#9DB3C8",
+    "felt": "#EFE8DA",
+    "gerOrange": "#D9622B",
+    "bluePattern": "#2E5E9E",
+    "snow": "#F2F5F8",
+    "snowShadow": "#B8C8E0",
+    "larchSummer": "#4E6B3A",
+    "larchAutumn": "#D8A93A",
+    "larchSpring": "#7A9954",
+    "larchWinter": "#806F5B",
+    "moonlight": "#6F86B8",
+    "firelight": "#FFB35C",
+    "mapPaper": "#D7CAA9",
+    "mapInk": "#5D4A35",
+    "mapWater": "#5C8790"
+  },
+  "timeOfDay": [
+    { "minute": 0, "skyTop": "#101a38", "skyHorizon": "#36405a", "ground": "#302d3b", "sun": "#91a4dd", "sunIntensity": 0.08, "hemiIntensity": 0.28, "fogDistance": 125, "exposure": 0.72 },
+    { "minute": 300, "skyTop": "#182548", "skyHorizon": "#ed9e83", "ground": "#57453f", "sun": "#f0a77e", "sunIntensity": 0.3, "hemiIntensity": 0.42, "fogDistance": 135, "exposure": 0.84 },
+    { "minute": 420, "skyTop": "#4b8ac1", "skyHorizon": "#f4d0a0", "ground": "#76654a", "sun": "#ffd49a", "sunIntensity": 1.15, "hemiIntensity": 0.82, "fogDistance": 220, "exposure": 1.04 },
+    { "minute": 720, "skyTop": "#4f9be0", "skyHorizon": "#cfe6f5", "ground": "#74805c", "sun": "#fff2d6", "sunIntensity": 1.65, "hemiIntensity": 1.08, "fogDistance": 300, "exposure": 1.08 },
+    { "minute": 1020, "skyTop": "#e69c70", "skyHorizon": "#f8d3ad", "ground": "#80614d", "sun": "#ffca8b", "sunIntensity": 1.05, "hemiIntensity": 0.84, "fogDistance": 230, "exposure": 1.02 },
+    { "minute": 1170, "skyTop": "#9d6380", "skyHorizon": "#f0a176", "ground": "#55404d", "sun": "#ff9d68", "sunIntensity": 0.48, "hemiIntensity": 0.52, "fogDistance": 155, "exposure": 0.88 },
+    { "minute": 1260, "skyTop": "#243156", "skyHorizon": "#6c5a78", "ground": "#303246", "sun": "#9b9ec8", "sunIntensity": 0.16, "hemiIntensity": 0.32, "fogDistance": 125, "exposure": 0.74 },
+    { "minute": 1440, "skyTop": "#101a38", "skyHorizon": "#36405a", "ground": "#302d3b", "sun": "#91a4dd", "sunIntensity": 0.08, "hemiIntensity": 0.28, "fogDistance": 125, "exposure": 0.72 }
+  ],
+  "seasons": {
+    "summer": { "skyTint": "#ffffff", "fogScale": 1, "exposureScale": 1, "sunScale": 1 },
+    "autumn": { "skyTint": "#f2d6b3", "fogScale": 0.92, "exposureScale": 0.98, "sunScale": 0.96 },
+    "winter": { "skyTint": "#c9d8ed", "fogScale": 0.7, "exposureScale": 0.9, "sunScale": 0.76 },
+    "spring": { "skyTint": "#d9e8df", "fogScale": 0.8, "exposureScale": 0.96, "sunScale": 0.9 }
+  },
+  "quality": {
+    "low": { "grassTufts": 3000, "grassRadius": 80, "animalAnimationDistance": 40 },
+    "mid": { "grassTufts": 10000, "grassRadius": 105, "animalAnimationDistance": 70 },
+    "high": { "grassTufts": 25000, "grassRadius": 130, "animalAnimationDistance": 120 }
+  }
+}

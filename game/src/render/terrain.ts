@@ -5,31 +5,33 @@
  * GameState-ийг зөвхөн уншина.
  */
 import * as THREE from 'three';
-import type { CampConfig, GameConfig } from '../sim/config';
+import type { CampConfig, GameConfig, Season } from '../sim/config';
 import type { GameState } from '../sim/state';
 import { heightAt, riverZ, waterDistance, waterLevel, smoothstep } from '../sim/terrain';
 import { cellIndex, type GrassGrid } from '../sim/systems/pasture';
-import { seasonLook } from '../sim/systems/seasons';
+import { seasonLook, seasonOf } from '../sim/systems/seasons';
 import type { Den } from '../sim/systems/wolves';
 import { VisualRng, angDiff, batchStatic, clamp, mat, meshBox, strSeed } from './util';
+import { quality as activeQuality, type Quality } from '../device';
+import { paletteHex, visualStyle } from './style';
 
 /** Бэлчээрийн төрлийн «бүрэн өвстэй» өнгө */
 const TYPE_LUSH: Record<string, number> = {
   camp: 0x8a7a4e,
   steppe: 0x8f9a52,
-  meadow: 0x4f9a3a,
+  meadow: paletteHex('summerGrass'),
   southSlope: 0x93954f,
   foothill: 0x5f9440,
-  northSlope: 0x3a7a36,
+  northSlope: paletteHex('larchSummer'),
 };
-const BARE = new THREE.Color(0x9c8458);     // идэгдсэн, нүцгэн газар
-const DRY = new THREE.Color(0xb59d5c);      // доройтсон бэлчээрийн шаргал
-const ROCK = new THREE.Color(0x8d8778);
-const SNOW = new THREE.Color(0xe4eaef);
-const DIRT = new THREE.Color(0x8a6f4a);
-const BANK = new THREE.Color(0x4c8a3a);
-const STRAW = new THREE.Color(0xc2a866);   // намрын шаргал, өвлийн хатсан өвс (M5.5)
-const SNOW_GROUND = new THREE.Color(0xeef2f6);
+const BARE = new THREE.Color(visualStyle.palette.dryGrass);
+const DRY = new THREE.Color(visualStyle.palette.autumnGrass);
+const ROCK = new THREE.Color(visualStyle.palette.rock);
+const SNOW = new THREE.Color(visualStyle.palette.snow);
+const DIRT = new THREE.Color(visualStyle.palette.dirt);
+const BANK = new THREE.Color(visualStyle.palette.summerGrass);
+const STRAW = new THREE.Color(visualStyle.palette.autumnGrass);
+const SNOW_GROUND = new THREE.Color(visualStyle.palette.snow);
 /** Ойтой бэлчээрт модны доор цас нимгэн (seasons.json → forestTypeMult-тай адил санаа) */
 const SNOW_TYPE_MULT: Record<string, number> = { northSlope: 0.55 };
 
@@ -50,6 +52,22 @@ export class TerrainView {
   private vFixed!: Uint8Array;          // 1 = бэлчээрээс хамаарахгүй (хад, бууцны төв)
   // Өвсний бут
   private tufts: THREE.InstancedMesh | null = null;
+  private tuftMaterial: THREE.MeshLambertMaterial | null = null;
+  private windUniform: { value: number } | null = null;
+  private windTime = 0;
+  private quality: Quality = activeQuality;
+  private tuftSeed = 0;
+  private smoke: THREE.Points | null = null;
+  private smokePositions: Float32Array | null = null;
+  private smokeTime = 0;
+  private currentSeason: Season | null = null;
+  private larchMaterials: [THREE.MeshLambertMaterial, THREE.MeshLambertMaterial] = [
+    new THREE.MeshLambertMaterial({ color: paletteHex('larchSummer'), flatShading: true }),
+    new THREE.MeshLambertMaterial({ color: paletteHex('larchSummer'), flatShading: true }),
+  ];
+  private waterUniform: { value: number } | null = null;
+  private waterTime = 0;
+  private waterMaterial: THREE.MeshLambertMaterial | null = null;
   private tuftCell!: Int32Array;
   private tuftPos!: Float32Array;       // x, y, z, scale, rotY
   private tuftLush!: Float32Array;      // RGB
@@ -68,6 +86,7 @@ export class TerrainView {
 
   /** Бууц солигдох эсвэл гэр авахад дахин барина */
   sync(state: GameState): boolean {
+    this.updateSeason(state);
     if (state.campId !== this.campId) {
       this.build(state);
       return true;
@@ -77,14 +96,24 @@ export class TerrainView {
     return false;
   }
 
+  private updateSeason(state: GameState): void {
+    const season = seasonOf(this.cfg, state.time.day);
+    if (season === this.currentSeason) return;
+    this.currentSeason = season;
+    const color = paletteHex(season === 'autumn' ? 'larchAutumn' : season === 'winter' ? 'larchWinter' : season === 'spring' ? 'larchSpring' : 'larchSummer');
+    this.larchMaterials[0].color.setHex(color);
+    this.larchMaterials[1].color.setHex(color).multiplyScalar(0.82);
+  }
+
   private build(state: GameState): void {
     this.dispose();
     this.campId = state.campId;
+    this.tuftSeed = strSeed(state.campId) ^ state.seed ^ 0x4d4f4e47;
     this.camp = this.cfg.camps.camps[state.campId]!;
     const rng = new VisualRng(strSeed(state.campId) ^ state.seed);
     this.buildGround(state.grass, rng);
     this.buildWater();
-    this.buildTufts(state.grass, rng);
+    this.buildTufts(state.grass, new VisualRng(this.tuftSeed));
     // Хөдөлгөөнгүй чимэглэлийг материалаар нь нэгтгэж draw call-ийг цөөлнө
     const decor = new THREE.Group();
     this.buildDecor(rng, decor);
@@ -98,6 +127,13 @@ export class TerrainView {
   }
 
   dispose(): void {
+    if (this.tufts) {
+      this.tufts.removeFromParent();
+      this.tufts.geometry.dispose();
+      this.tuftMaterial?.dispose();
+    }
+    this.clearSmoke();
+    this.waterMaterial?.dispose();
     this.group.traverse((o) => {
       if (o instanceof THREE.Mesh || o instanceof THREE.InstancedMesh || o instanceof THREE.Line) o.geometry.dispose();
     });
@@ -105,6 +141,55 @@ export class TerrainView {
     this.homeGroup = null;
     this.hayGroup = null;
     this.tufts = null;
+    this.tuftMaterial = null;
+    this.windUniform = null;
+    this.smoke = null;
+    this.smokePositions = null;
+    this.waterUniform = null;
+    this.waterMaterial = null;
+  }
+
+  private clearSmoke(): void {
+    if (!this.smoke) return;
+    this.smoke.geometry.dispose();
+    const material = this.smoke.material;
+    if (Array.isArray(material)) material.forEach((m) => m.dispose());
+    else material.dispose();
+    this.smoke = null;
+    this.smokePositions = null;
+  }
+
+  setQuality(quality: Quality, state: GameState, heatmap: boolean): void {
+    if (this.quality === quality || !this.ground) return;
+    this.quality = quality;
+    if (this.tufts) {
+      this.group.remove(this.tufts);
+      this.tufts.geometry.dispose();
+      this.tuftMaterial?.dispose();
+    }
+    this.buildTufts(state.grass, new VisualRng(this.tuftSeed));
+    this.updateGrass(state, heatmap);
+  }
+
+  updateVisualTime(dt: number, minute: number): void {
+    this.windTime += Math.max(0, dt);
+    if (this.windUniform) this.windUniform.value = this.windTime;
+    this.waterTime += Math.max(0, dt);
+    if (this.waterUniform) this.waterUniform.value = this.waterTime;
+    if (!this.smoke || !this.smokePositions) return;
+    this.smokeTime += Math.max(0, dt);
+    const cooking = (minute >= 300 && minute <= 510) || (minute >= 1020 && minute <= 1200);
+    this.smoke.visible = cooking;
+    if (!cooking) return;
+    const positions = this.smoke.geometry.attributes.position as THREE.BufferAttribute;
+    const values = positions.array as Float32Array;
+    for (let i = 0; i < this.smokePositions.length / 3; i++) {
+      const phase = (this.smokeTime * 0.55 + i * 0.17) % 2.4;
+      values[i * 3] = Math.sin(this.smokeTime * 0.45 + i * 1.7) * (0.08 + phase * 0.045);
+      values[i * 3 + 1] = 4.55 + phase;
+      values[i * 3 + 2] = Math.cos(this.smokeTime * 0.4 + i * 1.3) * (0.08 + phase * 0.045);
+    }
+    positions.needsUpdate = true;
   }
 
   // ---------- газар ----------
@@ -172,6 +257,19 @@ export class TerrainView {
     const w = this.camp.waterShape;
     const level = waterLevel(this.camp);
     const m = new THREE.MeshLambertMaterial({ color: 0x4f8fbf, transparent: true, opacity: 0.86 });
+    this.waterMaterial = m;
+    m.onBeforeCompile = (shader) => {
+      this.waterUniform = { value: this.waterTime };
+      shader.uniforms.uWaterTime = this.waterUniform;
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nuniform float uWaterTime;')
+        .replace(
+          '#include <begin_vertex>',
+          `#include <begin_vertex>
+          transformed.y += sin(position.x * 0.11 + position.z * 0.07 + uWaterTime * 1.4) * 0.035;`,
+        );
+    };
+    m.customProgramCacheKey = () => 'nuudel-water-wave-v1';
     if (w.kind === 'lineZ') {
       const width = w.width ?? 13;
       const g = new THREE.PlaneGeometry(400, width, 160, 1);
@@ -193,10 +291,29 @@ export class TerrainView {
 
   // ---------- өвсний бут ----------
   private buildTufts(grid: GrassGrid, rng: VisualRng): void {
-    const N = 6000;
+    const { grassTufts: N, grassRadius } = visualStyle.quality[this.quality];
     const geo = new THREE.ConeGeometry(0.14, 0.55, 3);
     geo.translate(0, 0.25, 0);
-    const mesh = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({ color: 0xffffff }), N);
+    const material = new THREE.MeshLambertMaterial({ color: 0xffffff });
+    material.onBeforeCompile = (shader) => {
+      this.windUniform = { value: this.windTime };
+      shader.uniforms.uWindTime = this.windUniform;
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nuniform float uWindTime;')
+        .replace(
+          '#include <begin_vertex>',
+          `#include <begin_vertex>
+          float windPhase = uWindTime + position.x * 2.4 + position.z * 1.7;
+          #ifdef USE_INSTANCING
+            windPhase += instanceMatrix[3].x * 0.05 + instanceMatrix[3].z * 0.04;
+          #endif
+          transformed.x += sin(windPhase) * 0.08 * position.y;
+          transformed.z += cos(windPhase * 0.8) * 0.035 * position.y;`,
+        );
+    };
+    material.customProgramCacheKey = () => 'nuudel-grass-wind-v1';
+    const mesh = new THREE.InstancedMesh(geo, material, N);
+    this.tuftMaterial = material;
     this.tuftCell = new Int32Array(N);
     this.tuftPos = new Float32Array(N * 5);
     this.tuftLush = new Float32Array(N * 3);
@@ -204,7 +321,7 @@ export class TerrainView {
     const c = new THREE.Color();
     let k = 0;
     for (let tries = 0; k < N && tries < N * 4; tries++) {
-      const r = Math.sqrt(rng.next()) * 150, a = rng.range(0, Math.PI * 2);
+      const r = Math.sqrt(rng.next()) * grassRadius, a = rng.range(0, Math.PI * 2);
       const x = Math.cos(a) * r, z = Math.sin(a) * r;
       if (r < 9 || waterDistance(this.camp.waterShape, x, z) < 6.5 || Math.hypot(x - pen.x, z - pen.z) < pen.r + 1) continue;
       const y = this.heightAt(x, z);
@@ -368,11 +485,11 @@ export class TerrainView {
       const tr = new THREE.Mesh(trunk, mat(0x5b3b22));
       tr.position.y = 0.7;
       t.add(tr);
-      const c1 = new THREE.Mesh(cone1, mat(0x2f5a3a));
+      const c1 = new THREE.Mesh(cone1, this.larchMaterials[0]);
       c1.position.y = 2.4;
       c1.castShadow = true;
       t.add(c1);
-      const c2 = new THREE.Mesh(cone2, mat(0x356544));
+      const c2 = new THREE.Mesh(cone2, this.larchMaterials[1]);
       c2.position.y = 3.7;
       c2.castShadow = true;
       t.add(c2);
@@ -439,7 +556,7 @@ export class TerrainView {
       out.add(m);
     }
     // Алсын уулс
-    const peakMat = new THREE.MeshLambertMaterial({ color: 0x7b8f9c, flatShading: true });
+    const peakMat = new THREE.MeshLambertMaterial({ color: paletteHex('distantMountain'), flatShading: true });
     for (let i = 0; i < 46; i++) {
       const a = (i / 46) * Math.PI * 2 + rng.range(-0.05, 0.05), r = rng.range(195, 250);
       let h = rng.range(25, 60);
@@ -450,7 +567,7 @@ export class TerrainView {
       p.rotation.y = rng.range(0, 3);
       out.add(p);
       if (h > 45) {
-        const cap = new THREE.Mesh(new THREE.ConeGeometry(radius * 0.28, h * 0.28, 5), mat(0xf2f5f8));
+        const cap = new THREE.Mesh(new THREE.ConeGeometry(radius * 0.28, h * 0.28, 5), mat(paletteHex('snow')));
         cap.position.y = h / 2 - h * 0.14 + 0.3;
         p.add(cap);
       }
@@ -654,28 +771,46 @@ export class TerrainView {
   /** Майхан эсвэл гэр (бууцны төвд) */
   private buildHome(kind: string): void {
     if (this.homeGroup) this.group.remove(this.homeGroup);
+    this.clearSmoke();
     this.homeKind = kind;
     const g = new THREE.Group();
     if (kind === 'ger') {
-      const wall = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 3.55, 2.1, 18), mat(0xf2efe6));
+      const wall = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 3.55, 2.1, 18), mat(paletteHex('felt')));
       wall.position.y = 1.05;
       wall.castShadow = wall.receiveShadow = true;
       g.add(wall);
-      for (const [y, r] of [[1.85, 3.53], [0.25, 3.57]] as const) {
-        const band = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.2, 18), mat(0x8a3b1a));
+      for (const [y, r] of [[1.85, 3.53], [1.05, 3.56], [0.25, 3.57]] as const) {
+        const band = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.12, 18), mat(paletteHex('bluePattern')));
         band.position.y = y;
         g.add(band);
       }
-      const roof = new THREE.Mesh(new THREE.ConeGeometry(3.8, 1.45, 18), mat(0xe8e1cf));
+      const roof = new THREE.Mesh(new THREE.ConeGeometry(3.8, 1.45, 18), mat(paletteHex('felt')));
       roof.position.y = 2.82;
       roof.castShadow = true;
       g.add(roof);
       const toono = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.6, 0.28, 12), mat(0xb5651d));
       toono.position.y = 3.5;
       g.add(toono);
-      meshBox(1.0, 1.55, 0.15, 0xd2691e, 0, 0.8, 3.5, g);
-      meshBox(0.12, 1.6, 0.18, 0x1f3b73, -0.55, 0.8, 3.5, g);
-      meshBox(0.12, 1.6, 0.18, 0x1f3b73, 0.55, 0.8, 3.5, g);
+      const chimney = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 0.9, 8), mat(0x4b4036));
+      chimney.position.y = 4.05;
+      chimney.castShadow = true;
+      g.add(chimney);
+      meshBox(1.0, 1.55, 0.15, paletteHex('gerOrange'), 0, 0.8, 3.5, g);
+      for (const x of [-0.55, -0.28, 0, 0.28, 0.55]) meshBox(0.08, 1.6, 0.18, paletteHex('bluePattern'), x, 0.8, 3.5, g);
+      for (const y of [0.36, 0.8, 1.24]) meshBox(1.0, 0.07, 0.2, paletteHex('bluePattern'), 0, y, 3.53, g);
+      const smokeCount = 28;
+      const smokeGeo = new THREE.BufferGeometry();
+      this.smokePositions = new Float32Array(smokeCount * 3);
+      for (let i = 0; i < smokeCount; i++) {
+        this.smokePositions[i * 3] = Math.sin(i * 2.1) * 0.12;
+        this.smokePositions[i * 3 + 1] = 4.55 + (i % 12) * 0.18;
+        this.smokePositions[i * 3 + 2] = Math.cos(i * 1.7) * 0.12;
+      }
+      smokeGeo.setAttribute('position', new THREE.BufferAttribute(this.smokePositions, 3));
+      this.smoke = new THREE.Points(smokeGeo, new THREE.PointsMaterial({ color: 0xe7e2d8, size: 0.75, transparent: true, opacity: 0.26, depthWrite: false }));
+      this.smoke.frustumCulled = false;
+      this.smoke.visible = false;
+      g.add(this.smoke);
     } else {
       const sh = new THREE.Shape();
       sh.moveTo(-1.6, 0);

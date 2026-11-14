@@ -10,6 +10,9 @@
 import { loadConfig, SPECIES } from './sim/config';
 import { createInitialState } from './sim/state';
 import { Sim } from './sim/sim';
+import { Rng } from './sim/rng';
+import { buildGrid } from './sim/systems/pasture';
+import { spawnWolves } from './sim/systems/wolves';
 import { formatTime, isNight, realSecondsPerMinute } from './sim/clock';
 import { averageBiomass } from './sim/systems/pasture';
 import * as storage from './sim/systems/storage';
@@ -44,13 +47,71 @@ function toast(msg: string, kind: '' | 'good' | 'bad' = ''): void {
 function start(): void {
   const cfg = loadConfig();
   const qs = new URLSearchParams(location.search);
-  const seed = Number(qs.get('seed')) || 20261113;
+  const shotParam = qs.get('shot');
+  const shot = shotParam === null ? null : Number(shotParam);
+  if (shotParam !== null && (!Number.isInteger(shot) || shot! < 1 || shot! > 7)) {
+    throw new Error('?shot нь 1–7 бүхэл тоо байх ёстой');
+  }
+  const captureMode = shot !== null;
+  const seed = captureMode ? 20261113 : Number(qs.get('seed')) || 20261113;
   const state = createInitialState(cfg, seed);
+  if (shot !== null) {
+    const presets = {
+      1: { camp: 'river', season: 'summer', minute: 600, yaw: 0.6, pitch: 0.42, dist: 58 },
+      2: { camp: 'river', season: 'summer', minute: 1170, yaw: 0.8, pitch: 0.38, dist: 58 },
+      3: { camp: 'northSlope', season: 'spring', minute: 420, yaw: 0.5, pitch: 0.42, dist: 64 },
+      4: { camp: 'southSlope', season: 'winter', minute: 720, yaw: 0.6, pitch: 0.38, dist: 60 },
+      5: { camp: 'river', season: 'autumn', minute: 1380, yaw: 0.45, pitch: 0.36, dist: 58 },
+      6: { camp: 'river', season: 'autumn', minute: 840, yaw: 0.2, pitch: 0.44, dist: 56 },
+      7: { camp: 'river', season: 'summer', minute: 600, yaw: 0, pitch: 0.95, dist: 70 },
+    } as const;
+    const preset = presets[shot as keyof typeof presets];
+    const seasonIndex = cfg.seasons.order.indexOf(preset.season);
+    state.time.day = 1 + cfg.seasons.order.slice(0, seasonIndex).reduce((sum, season) => sum + cfg.seasons.days[season], 0);
+    state.time.minute = preset.minute;
+    state.home = 'ger';
+    state.campId = preset.camp;
+    state.grass = buildGrid(cfg, preset.camp, 0, new Rng(seed));
+    state.wolves = spawnWolves(cfg, seed, preset.camp);
+    state.camps[preset.camp]!.snow = preset.season === 'winter' ? 22 : preset.season === 'spring' ? 5 : 0;
+    if (shot === 6) {
+      const shop = cfg.worldmap.sum3d.shop;
+      state.player.place = 'sum';
+      state.player.away = true;
+      state.player.x = shop.x;
+      state.player.z = shop.z - 10;
+    } else if (shot === 7) {
+      const home = cfg.worldmap.locations[preset.camp]!;
+      state.player.place = 'map';
+      state.player.away = true;
+      state.map = { x: home.x, z: home.z, tx: home.x, tz: home.z, dest: null };
+    } else {
+      state.player.place = 'camp';
+      state.player.away = false;
+    }
+    state.player.heading = preset.yaw;
+  }
   const sim = new Sim(cfg, state);
   const herd = Number(qs.get('herd')) || 0;
   if (herd > state.animals.length) sim.command({ type: 'debugAddAnimals', n: herd - state.animals.length });
 
   const view = new GameView(document.getElementById('app')!, cfg, state);
+  if (captureMode) {
+    const preset = ({
+      1: { yaw: 0.6, pitch: 0.42, dist: 58 },
+      2: { yaw: 0.8, pitch: 0.38, dist: 58 },
+      3: { yaw: 0.5, pitch: 0.42, dist: 64 },
+      4: { yaw: 0.6, pitch: 0.38, dist: 60 },
+      5: { yaw: 0.45, pitch: 0.36, dist: 58 },
+      6: { yaw: 0.2, pitch: 0.44, dist: 56 },
+      7: { yaw: 0, pitch: 0.95, dist: 70 },
+    } as const)[shot as 1 | 2 | 3 | 4 | 5 | 6 | 7]!;
+    view.cam.yaw = preset.yaw;
+    view.cam.pitch = preset.pitch;
+    view.cam.dist = preset.dist;
+    view.renderer.domElement.style.pointerEvents = 'none';
+    for (const id of ['hud', 'perf', 'help', 'prompt', 'toasts']) document.getElementById(id)!.style.display = 'none';
+  }
   if (qs.get('heatmap') === '1') view.toggleHeatmap(state);
   const hud = document.getElementById('hud')!;
   const perf = document.getElementById('perf')!;
@@ -120,10 +181,10 @@ function start(): void {
     },
   });
   // Утасны удирдлага (мэдрэгч дэлгэц)
-  const touchUI = isTouch ? new TouchUI(cfg, controller, { speedIdx: () => speedIdx, speeds: cfg.time.speeds }) : null;
+  const touchUI = isTouch && !captureMode ? new TouchUI(cfg, controller, { speedIdx: () => speedIdx, speeds: cfg.time.speeds }) : null;
   let hudCompact = isTouch;
-  if (isTouch) {
-    if (new URLSearchParams(location.search).get('perf') !== '1') perf.style.display = 'none';
+  if (isTouch && !captureMode) {
+    if (qs.get('perf') !== '1' && !qs.has('stats')) perf.style.display = 'none';
     document.getElementById('toasts')!.appendChild(prompt);
     hud.addEventListener('click', () => {
       hudCompact = !hudCompact;
@@ -142,7 +203,7 @@ function start(): void {
       if (b.dataset.h === 'q') {
         q = QUALITIES[(QUALITIES.indexOf(q) + 1) % QUALITIES.length]!;
         setQuality(q);
-        view.applyQuality(QUALITY_SPEC[q]);
+        view.applyQuality(QUALITY_SPEC[q], q, state);
         renderHelp();
         return;
       }
@@ -213,7 +274,7 @@ function start(): void {
     const dt = Math.min(rawDt, 0.1);
     last = now;
     worstMs = Math.max(worstMs, rawDt * 1000);
-    const paused = panels.isOpen || !!touchUI?.paused;
+    const paused = captureMode || panels.isOpen || !!touchUI?.paused;
 
     // Газрын зураг дээр Shift — цаг хурдасна (M4.6)
     const fast = state.player.place === 'map' && !state.move && (controller.isDown('ShiftLeft') || controller.isDown('ShiftRight'));
@@ -312,7 +373,9 @@ function start(): void {
           `<small>▾ дэлгэрэнгүй</small>`
         : touchKeys(full) + (isTouch ? '<br><small>▴ хураах</small>' : '');
       touchUI?.update(state, panels.isOpen || help.style.display === 'block');
-      perf.textContent = `${fps.toFixed(0)} FPS · max ${worstShown.toFixed(0)} ms · ${view.drawCalls} draw · ${state.animals.length} мал`;
+      perf.textContent = qs.has('stats')
+        ? `${fps.toFixed(0)} FPS · max ${worstShown.toFixed(0)} ms\n${view.drawCalls} draw · ${view.triangleCount.toLocaleString()} tris\n${state.animals.length} мал · ${view.renderer.info.memory.geometries} geo · ${view.renderer.info.memory.textures} tex`
+        : `${fps.toFixed(0)} FPS · max ${worstShown.toFixed(0)} ms · ${view.drawCalls} draw · ${state.animals.length} мал`;
     }
     requestAnimationFrame(frame);
   };
