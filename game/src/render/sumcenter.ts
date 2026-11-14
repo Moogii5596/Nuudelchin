@@ -28,11 +28,9 @@ function label(text: string, bg: string, fg: string, w = 4.2, h = 1): THREE.Mesh
   return m;
 }
 
-/** Нэг давхар байшин: хана, налуу дээвэр, цонх, хаалга */
-function house(g: THREE.Group, x: number, z: number, w: number, d: number, wall: number, roof: number, rotY: number): THREE.Group {
+/** Нэг давхар байшингийн дахин ашиглах загвар */
+function houseModel(w: number, d: number, wall: number, roof: number): THREE.Group {
   const h = new THREE.Group();
-  h.position.set(x, sumHeightAt(x, z), z);
-  h.rotation.y = rotY;
   const body = new THREE.Mesh(new THREE.BoxGeometry(w, 2.8, d), mat(wall));
   body.position.y = 1.4;
   body.castShadow = true;
@@ -56,27 +54,150 @@ function house(g: THREE.Group, x: number, z: number, w: number, d: number, wall:
   const door = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.9, 0.06), mat(0x6b4a2e));
   door.position.set(0, 0.95, d / 2 + 0.03);
   h.add(door);
+  return h;
+}
+
+/** Нэг давхар байшин: хана, налуу дээвэр, цонх, хаалга */
+function house(g: THREE.Group, x: number, z: number, w: number, d: number, wall: number, roof: number, rotY: number): THREE.Group {
+  const h = houseModel(w, d, wall, roof);
+  h.position.set(x, sumHeightAt(x, z), z);
+  h.rotation.y = rotY;
   g.add(h);
   return h;
 }
 
-/** Хашаа (банзан) ба доторх гэр */
-function yardWithGer(g: THREE.Group, x: number, z: number, s: number, rng: VisualRng): void {
-  const y = sumHeightAt(x, z);
-  const fence = mat(0x8a6a42);
-  for (const [dx, dz, w, d] of [[0, -s, s * 2, 0.15], [0, s, s * 2, 0.15], [-s, 0, 0.15, s * 2], [s, 0, 0.15, s * 2]] as const) {
-    const f = new THREE.Mesh(new THREE.BoxGeometry(w, 1.6, d), fence);
-    f.position.set(x + dx, y + 0.8, z + dz);
-    f.castShadow = true;
-    g.add(f);
+function terrainFence(
+  group: THREE.Group,
+  width: number,
+  depth: number,
+  angle: number,
+  material: THREE.Material,
+  gateWidth = 3.4,
+  height = 1.25,
+): void {
+  const rootX = group.position.x, rootY = group.position.y, rootZ = group.position.z;
+  const c = Math.cos(angle), s = Math.sin(angle);
+  const world = (x: number, z: number): [number, number] => [rootX + x * c - z * s, rootZ + x * s + z * c];
+  const posts = new Set<string>();
+  const segment = (ax: number, az: number, bx: number, bz: number): void => {
+    const dx = bx - ax, dz = bz - az, length = Math.hypot(dx, dz);
+    const pieces = Math.ceil(length / 2.5);
+    for (let i = 0; i < pieces; i++) {
+      const t0 = i / pieces, t1 = (i + 1) / pieces;
+      const x0 = ax + dx * t0, z0 = az + dz * t0;
+      const x1 = ax + dx * t1, z1 = az + dz * t1;
+      const [wx0, wz0] = world(x0, z0), [wx1, wz1] = world(x1, z1);
+      const y0 = sumHeightAt(wx0, wz0), y1 = sumHeightAt(wx1, wz1);
+      const span = length / pieces;
+      const fence = new THREE.Mesh(new THREE.BoxGeometry(span, height, 0.16), material);
+      fence.position.set((x0 + x1) / 2, (y0 + y1) / 2 - rootY + height / 2, (z0 + z1) / 2);
+      fence.rotation.y = -Math.atan2(z1 - z0, x1 - x0);
+      fence.castShadow = true;
+      group.add(fence);
+      post(x0, z0);
+    }
+    post(bx, bz);
+  };
+  const post = (x: number, z: number): void => {
+    const key = `${x},${z}`;
+    if (posts.has(key)) return;
+    posts.add(key);
+    const [wx, wz] = world(x, z);
+    const fencePost = new THREE.Mesh(new THREE.BoxGeometry(0.22, height + 0.18, 0.22), material);
+    fencePost.position.set(x, sumHeightAt(wx, wz) - rootY + (height + 0.18) / 2, z);
+    group.add(fencePost);
+  };
+
+  segment(-width / 2, -depth / 2, width / 2, -depth / 2);
+  segment(-width / 2, -depth / 2, -width / 2, depth / 2);
+  segment(width / 2, -depth / 2, width / 2, depth / 2);
+  segment(-width / 2, depth / 2, -gateWidth / 2, depth / 2);
+  segment(gateWidth / 2, depth / 2, width / 2, depth / 2);
+  for (const x of [-width / 2, width / 2]) {
+    for (const z of [-depth / 2, depth / 2]) post(x, z);
   }
-  const gx = x + rng.range(-s * 0.3, s * 0.3), gz = z + rng.range(-s * 0.3, s * 0.3);
-  const wall = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.4, 1.6, 14), mat(0xece6d6));
-  wall.position.set(gx, sumHeightAt(gx, gz) + 0.8, gz);
-  const roof = new THREE.Mesh(new THREE.ConeGeometry(2.6, 1.1, 14), mat(0xdcd4c0));
-  roof.position.set(gx, sumHeightAt(gx, gz) + 2.15, gz);
-  wall.castShadow = roof.castShadow = true;
-  g.add(wall, roof);
+  post(-gateWidth / 2, depth / 2);
+  post(gateWidth / 2, depth / 2);
+}
+
+function residentialPlot(g: THREE.Group, x: number, z: number, angle: number, rng: VisualRng): void {
+  const width = rng.range(18, 22), depth = rng.range(15, 19);
+  const plot = new THREE.Group();
+  plot.position.set(x, sumHeightAt(x, z), z);
+  plot.rotation.y = angle;
+
+  const ground = new THREE.Mesh(new THREE.BoxGeometry(width - 0.8, 0.06, depth - 0.8), mat(0x9b8669));
+  ground.position.y = 0.04;
+  plot.add(ground);
+
+  const fence = mat(0x796044);
+  terrainFence(plot, width, depth, angle, fence);
+
+  const roofs = [0x9c4337, 0x426b86, 0x74804d, 0x8c704e];
+  const walls = [0xe8dfce, 0xd8cbb4, 0xe9e5d9, 0xcfc4b0];
+  const homeX = rng.range(-2.2, 2.2), homeZ = -2.5;
+  let homeRoofY = 4.1, homeWidth = 7;
+  if (rng.next() < 0.58) {
+    homeWidth = rng.range(6, 8.2);
+    const home = houseModel(homeWidth, rng.range(5, 6.8), walls[Math.floor(rng.next() * walls.length)]!, roofs[Math.floor(rng.next() * roofs.length)]!);
+    home.position.set(homeX, 0.08, homeZ);
+    plot.add(home);
+  } else {
+    homeRoofY = 2.65;
+    homeWidth = 4.5;
+    const ger = new THREE.Group();
+    const wall = new THREE.Mesh(new THREE.CylinderGeometry(2.15, 2.15, 1.45, 12), mat(0xe4ddcc));
+    wall.position.y = 0.8;
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(2.4, 1.05, 12), mat(0xb7aa91));
+    roof.position.y = 2.05;
+    ger.add(wall, roof);
+    ger.position.set(homeX, 0.08, homeZ);
+    plot.add(ger);
+  }
+
+  if (rng.next() < 0.78) {
+    const shedWidth = rng.range(3.2, 4.5), shedDepth = rng.range(3, 4);
+    const shed = houseModel(shedWidth, shedDepth, 0x9a8b73, roofs[Math.floor(rng.next() * roofs.length)]!);
+    const shedX = homeX >= 0 ? -width / 2 + shedWidth / 2 + 0.7 : width / 2 - shedWidth / 2 - 0.7;
+    shed.position.set(shedX, 0.08, depth / 2 - shedDepth / 2 - 0.7);
+    shed.scale.y = 0.72;
+    plot.add(shed);
+  }
+
+  const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.42, 1.15, 8), mat(0x71818a));
+  tank.position.set(homeX >= 0 ? -width / 2 + 1 : width / 2 - 1, 0.64, -depth / 2 + 1.2);
+  plot.add(tank);
+
+  const poleX = 2.1, poleZ = depth / 2 - 0.8;
+  const poleWorldX = x + poleX * Math.cos(angle) - poleZ * Math.sin(angle);
+  const poleWorldZ = z + poleX * Math.sin(angle) + poleZ * Math.cos(angle);
+  const poleBaseY = sumHeightAt(poleWorldX, poleWorldZ) - plot.position.y;
+  const servicePole = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.11, 5.5, 5), mat(paletteHex('woodDark')));
+  servicePole.position.set(poleX, poleBaseY + 2.75, poleZ);
+  const serviceArm = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.11, 0.11), mat(paletteHex('wood')));
+  serviceArm.position.set(poleX, poleBaseY + 5.3, poleZ);
+  plot.add(servicePole, serviceArm);
+  const meter = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.48, 0.2), mat(0x59666a));
+  meter.position.set(homeX + homeWidth / 2 + 0.12, 1.35, homeZ);
+  plot.add(meter);
+  const wireGroundX = x + poleX * Math.cos(angle) - (depth / 2 + 3.5) * Math.sin(angle);
+  const wireGroundZ = z + poleX * Math.sin(angle) + (depth / 2 + 3.5) * Math.cos(angle);
+  const wire = new THREE.Mesh(
+    new THREE.TubeGeometry(
+      new THREE.CatmullRomCurve3([
+        new THREE.Vector3(poleX, sumHeightAt(wireGroundX, wireGroundZ) - plot.position.y + 7, depth / 2 + 3.5),
+        new THREE.Vector3(poleX, poleBaseY + 5.4, poleZ),
+        new THREE.Vector3(homeX + homeWidth / 2, homeRoofY, homeZ),
+      ]),
+      12,
+      0.022,
+      4,
+      false,
+    ),
+    mat(0x302a22),
+  );
+  plot.add(wire);
+  g.add(plot);
 }
 
 function resident(g: THREE.Group, x: number, z: number, deel: number, hat: number, heading: number): void {
@@ -131,7 +252,8 @@ export class SumCenterView {
 
     const st = new THREE.Group();
     const rng = new VisualRng(777);
-    // Гол гудамж: газрын зургаас орж ирэх замаас төв рүү
+    const roadMaterial = new THREE.MeshLambertMaterial({ color: 0x8c7a62, side: THREE.DoubleSide });
+    // Сумын зам, хашааны тэнхлэгийг бага зэрэг ташуулж байрлуулна.
     const e = cfg.worldmap.sum3d.entry;
     const road = (ax: number, az: number, bx: number, bz: number, w: number): void => {
       const L = Math.hypot(bx - ax, bz - az), n = Math.ceil(L / 3);
@@ -149,38 +271,180 @@ export class SumCenterView {
       g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3));
       g.setIndex(idx);
       g.computeVertexNormals();
-      const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ color: 0x8c7a62, side: THREE.DoubleSide }));
+      const m = new THREE.Mesh(g, roadMaterial);
       m.receiveShadow = true;
-      this.group.add(m);
+      st.add(m);
     };
-    road(e.x * 1.15, e.z * 1.15, 0, 0, 3);
-    road(-90, 0, 90, 0, 2.6);
-    road(0, -70, 0, 70, 2.6);
+    const gridAngle = 0.18, cos = Math.cos(gridAngle), sin = Math.sin(gridAngle);
+    const local = (u: number, v: number): [number, number] => [u * cos - v * sin, u * sin + v * cos];
+    const roadLocal = (a: [number, number], b: [number, number], width: number): void => {
+      const [ax, az] = local(a[0], a[1]), [bx, bz] = local(b[0], b[1]);
+      road(ax, az, bx, bz, width);
+    };
+    const powerMaterial = mat(0x302a22);
+    const addPole = (u: number, v: number, yaw: number): void => {
+      const [x, z] = local(u, v), y = sumHeightAt(x, z);
+      const mast = new THREE.Group();
+      mast.position.set(x, y, z);
+      mast.rotation.y = yaw;
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 7, 5), mat(paletteHex('woodDark')));
+      pole.position.y = 3.5;
+      const crossbar = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.12, 0.12), mat(paletteHex('wood')));
+      crossbar.position.y = 6.7;
+      mast.add(pole, crossbar);
+      st.add(mast);
+    };
+    const addStreetLamp = (u: number, v: number, yaw: number): void => {
+      const [x, z] = local(u, v), y = sumHeightAt(x, z);
+      const mast = new THREE.Group();
+      mast.position.set(x, y, z);
+      mast.rotation.y = yaw;
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.17, 7, 6), mat(paletteHex('woodDark')));
+      pole.position.y = 3.5;
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.12, 0.16), mat(paletteHex('wood')));
+      arm.position.set(0.55, 6.4, 0);
+      const shade = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.16, 0.38), mat(0x4b463d));
+      shade.position.set(1.1, 6.25, 0);
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.16, 6, 5), mat(0xe2c783));
+      bulb.position.set(1.1, 6.08, 0);
+      mast.add(pole, arm, shade, bulb);
+      st.add(mast);
+    };
+    const addStreetWire = (points: [number, number][], poleYaw: number): void => {
+      const segmentLengths = points.slice(1).map(([u, v], i) => Math.hypot(u - points[i]![0], v - points[i]![1]));
+      const totalLength = segmentLengths.reduce((sum, length) => sum + length, 0);
+      const clearance = 9;
+      let travelled = 0;
+      let run: THREE.Vector3[] = [];
+      let lastLocal: [number, number] | undefined;
+      let needsStartSupport = false;
+      const addRun = (supportEnds: boolean): void => {
+        if (run.length > 1) {
+          st.add(new THREE.Mesh(
+            new THREE.TubeGeometry(new THREE.CatmullRomCurve3(run), Math.max(12, run.length * 2), 0.022, 4, false),
+            powerMaterial,
+          ));
+          if (supportEnds && lastLocal) addPole(lastLocal[0], lastLocal[1], poleYaw);
+        }
+        run = [];
+        lastLocal = undefined;
+        needsStartSupport = supportEnds;
+      };
+      for (let i = 1; i < points.length; i++) {
+        const [au, av] = points[i - 1]!, [bu, bv] = points[i]!;
+        const length = segmentLengths[i - 1]!;
+        const steps = Math.max(1, Math.ceil(length / 3));
+        for (let j = 0; j <= steps; j++) {
+          if (i > 1 && j === 0) continue;
+          const t = j / steps, u = au + (bu - au) * t, v = av + (bv - av) * t;
+          const [x, z] = local(u, v);
+          const distance = travelled + length * t;
+          const sag = Math.sin((distance / totalLength) * Math.PI) * 0.9;
+          if (distanceToArterial(x, z) < clearance) {
+            addRun(true);
+            continue;
+          }
+          if (run.length === 0 && needsStartSupport) {
+            addPole(u, v, poleYaw);
+            needsStartSupport = false;
+          }
+          run.push(new THREE.Vector3(x, sumHeightAt(x, z) + 7.1 - sag, z));
+          lastLocal = [u, v];
+        }
+        travelled += length;
+      }
+      addRun(false);
+    };
 
-    // Байшингууд гудамжны дагуу (Худалдаачны талбайг чөлөөтэй үлдээнэ)
-    const roofs = [0xb03a2e, 0x2f7a4a, 0x2a5f9e, 0xc0782a, 0x7a3a8a];
-    const walls = [0xefe8d8, 0xe6dcc6, 0xf2efe6, 0xd8cdb4];
+    // Гол зам төвөөр нэвтэрч, орцны чиглэлтэй нийлэн хотын зах руу үргэлжилнэ.
+    const arterial: [number, number][] = [[e.x, e.z], [140, -3], [82, -8], [20, -14], [-55, -22], [-125, -36]];
+    const distanceToArterial = (x: number, z: number): number => {
+      let closest = Infinity;
+      for (let i = 1; i < arterial.length; i++) {
+        const [ax, az] = arterial[i - 1]!, [bx, bz] = arterial[i]!;
+        const dx = bx - ax, dz = bz - az;
+        const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz)));
+        closest = Math.min(closest, Math.hypot(x - (ax + dx * t), z - (az + dz * t)));
+      }
+      return closest;
+    };
+    for (let i = 1; i < arterial.length; i++) road(arterial[i - 1]![0], arterial[i - 1]![1], arterial[i]![0], arterial[i]![1], 5.2);
+
+    // Хорооллын хөндлөн гудамжууд. Төвийн худалдааны талбайг гол замд нээлттэй үлдээнэ.
+    for (let u = -108; u <= 132; u += 24) roadLocal([u, -88], [u, 88], 1.55);
+    for (const v of [-84, -60, -36, 36, 60, 84]) roadLocal([-120, v], [132, v], 1.55);
+    for (let u = -108; u <= 132; u += 24) {
+      addStreetLamp(u, 0, gridAngle);
+      addPole(u, -72, gridAngle);
+      addPole(u, 72, gridAngle);
+      addStreetWire([[-88, 0], [-72, 0], [-36, 0], [0, 0], [36, 0], [72, 0], [88, 0]].map(([v]) => [u, v] as [number, number]), gridAngle);
+    }
+    for (const v of [-84, -60, -36, 36, 60, 84]) {
+      addStreetLamp(0, v, gridAngle + Math.PI / 2);
+      for (const u of [-108, -60, -12, 36, 84, 132]) addPole(u, v, gridAngle + Math.PI / 2);
+      addStreetWire([[-120, v], [-108, v], [-60, v], [-12, v], [36, v], [84, v], [132, v]].map(([u]) => [u, v] as [number, number]), gridAngle + Math.PI / 2);
+    }
+    addStreetLamp(80, -8, gridAngle);
+
     const shop = cfg.worldmap.sum3d.shop;
     const tea = cfg.worldmap.sum3d.teahouse;
-    const spots: [number, number, number][] = [];
-    for (let i = -4; i <= 4; i++) {
-      if (i === 0) continue;
-      spots.push([i * 18, -11, 0], [i * 18, 11, Math.PI]);
-      spots.push([-11, i * 15, Math.PI / 2], [11, i * 15, -Math.PI / 2]);
+    const shopPlot = { x: shop.x, z: shop.z - 4 }, teaPlot = { x: tea.x, z: tea.z - 4 };
+    const school = local(66, 48);
+    const bank = local(20, 36);
+    for (const u of [-96, -72, -48, -24, 0, 24, 48, 72, 96, 120]) {
+      for (const v of [-72, -48, 24, 48, 72]) {
+        if ((Math.abs(u) >= 96 || Math.abs(v) >= 72) && rng.next() < 0.45) continue;
+        const [x, z] = local(u, v);
+        if (Math.hypot(x - shopPlot.x, z - shopPlot.z) < 22 || Math.hypot(x - teaPlot.x, z - teaPlot.z) < 22) continue;
+        if (Math.hypot(x - school[0], z - school[1]) < 52) continue;
+        if (Math.hypot(x - bank[0], z - bank[1]) < 17) continue;
+        residentialPlot(st, x, z, gridAngle, rng);
+      }
     }
-    for (const [x, z, r] of spots) {
-      if (Math.hypot(x - shop.x, z - shop.z) < 16) continue;
-      if (Math.hypot(x - tea.x, z - tea.z) < 16) continue;
-      if (Math.hypot(x, z) < 12) continue;
-      house(st, x + rng.range(-1.5, 1.5), z + rng.range(-1, 1), rng.range(6, 9), rng.range(5, 7), walls[Math.floor(rng.next() * walls.length)]!, roofs[Math.floor(rng.next() * roofs.length)]!, r);
+
+    const bankGroup = new THREE.Group();
+    bankGroup.position.set(bank[0], sumHeightAt(bank[0], bank[1]), bank[1]);
+    bankGroup.rotation.y = gridAngle;
+    const bankPad = new THREE.Mesh(new THREE.BoxGeometry(15, 0.08, 12), mat(0xa08c70));
+    bankPad.position.y = 0.06;
+    bankGroup.add(bankPad);
+    const bankHouse = houseModel(9, 6, 0xe7e2d7, 0x426b86);
+    bankHouse.position.y = 0.1;
+    bankGroup.add(bankHouse);
+    const bankSign = label('БАНК', '#426b86', '#f4ead6', 3.2, 0.8);
+    bankSign.position.set(0, 3.8, 3.2);
+    bankGroup.add(bankSign);
+    st.add(bankGroup);
+
+    // Сургууль, цэцэрлэг, захиргаа, цагдаа нэг хашаанд байрлана.
+    const schoolGroup = new THREE.Group();
+    schoolGroup.position.set(school[0], sumHeightAt(school[0], school[1]), school[1]);
+    schoolGroup.rotation.y = gridAngle;
+    terrainFence(schoolGroup, 72, 60, gridAngle, mat(0x796044), 6, 1.4);
+    const campusBuildings = [
+      { title: 'СУРГУУЛЬ', x: -19, z: -13, w: 16, d: 8, roof: 0x526d82 },
+      { title: 'ЦЭЦЭРЛЭГ', x: 2, z: -13, w: 11, d: 7, roof: 0x74804d },
+      { title: 'ЗАХИРГАА', x: -19, z: 12, w: 11, d: 7, roof: 0x8c704e },
+      { title: 'ЦАГДАА', x: 2, z: 12, w: 10, d: 7, roof: 0x426b86 },
+    ] as const;
+    for (const building of campusBuildings) {
+      const buildingModel = houseModel(building.w, building.d, 0xe5dfcf, building.roof);
+      const worldX = school[0] + building.x * cos - building.z * sin;
+      const worldZ = school[1] + building.x * sin + building.z * cos;
+      buildingModel.position.set(building.x, sumHeightAt(worldX, worldZ) - schoolGroup.position.y + 0.08, building.z);
+      schoolGroup.add(buildingModel);
+      const sign = label(building.title, '#526d82', '#f4ead6', 5.4, 0.8);
+      sign.position.set(building.x, buildingModel.position.y + 3.55, building.z + building.d / 2 + 0.1);
+      schoolGroup.add(sign);
     }
-    // Гэр хорооллын хашаанууд
-    for (let k = 0; k < 14; k++) {
-      const a = rng.range(0, Math.PI * 2), r = rng.range(48, 85);
-      const x = Math.cos(a) * r, z = Math.sin(a) * r;
-      if (Math.abs(x) < 8 || Math.abs(z) < 8) continue;
-      yardWithGer(st, x, z, rng.range(6, 8), rng);
-    }
+    const fieldX = 25, fieldZ = 0;
+    const fieldWorldX = school[0] + fieldX * cos - fieldZ * sin;
+    const fieldWorldZ = school[1] + fieldX * sin + fieldZ * cos;
+    const field = new THREE.Mesh(new THREE.BoxGeometry(14, 0.1, 16), mat(0x75875b));
+    field.position.set(fieldX, sumHeightAt(fieldWorldX, fieldWorldZ) - schoolGroup.position.y + 0.06, fieldZ);
+    schoolGroup.add(field);
+    st.add(schoolGroup);
+
     // Шатахуун түгээх газар
     const fx = 34, fz = 14;
     const canopy = new THREE.Mesh(new THREE.BoxGeometry(8, 0.3, 5), mat(0xd23a2a));
@@ -202,24 +466,6 @@ export class SumCenterView {
       t.position.set(x, sumHeightAt(x, z) + 2.4, z);
       t.castShadow = true;
       st.add(t);
-    }
-    const poleXs = [-100, -50, 0, 50, 100];
-    const poleZ = 92;
-    for (const x of poleXs) {
-      const y = sumHeightAt(x, poleZ);
-      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.16, 7, 5), mat(paletteHex('woodDark')));
-      pole.position.set(x, y + 3.5, poleZ);
-      const crossbar = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.12, 0.12), mat(paletteHex('wood')));
-      crossbar.position.set(x, y + 6.7, poleZ);
-      st.add(pole, crossbar);
-    }
-    for (const offset of [-0.45, 0.45]) {
-      const wirePoints = poleXs.map((x) => new THREE.Vector3(x, sumHeightAt(x, poleZ) + 6.8, poleZ + offset));
-      const wire = new THREE.Mesh(
-        new THREE.TubeGeometry(new THREE.CatmullRomCurve3(wirePoints), 48, 0.025, 4, false),
-        mat(paletteHex('woodDark')),
-      );
-      st.add(wire);
     }
     resident(st, shop.x + 10, shop.z + 7, 0x2f5d9b, 0x8a3a2a, 0.2);
     resident(st, tea.x - 9, tea.z + 6, 0x7b4b2b, 0x3d5d3d, -0.5);
