@@ -17,8 +17,15 @@ export class FollowCamera {
   mapMode = false;
   mapYaw = 0;
   mapPitch = 0.95;
-  private ptr: { x: number; y: number; sx: number; sy: number; id: number; drag: boolean; button: number } | null = null;
+  private ptr: { x: number; y: number; sx: number; sy: number; id: number; drag: boolean; button: number; touch: boolean } | null = null;
   private lastTap = 0;
+  /** Утас: дэлгэцэн дээрх хуруунууд (хоёр хуруугаар чимхэж томруулна) */
+  private touches = new Map<number, { x: number; y: number }>();
+  private pinch: number | null = null;
+  private span(): number {
+    const [a, b] = [...this.touches.values()];
+    return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0;
+  }
 
   constructor(dom: HTMLElement, aspect: number) {
     this.camera = new THREE.PerspectiveCamera(55, aspect, 0.3, 900);
@@ -26,16 +33,37 @@ export class FollowCamera {
     dom.addEventListener('pointerdown', (e) => {
       dom.focus();
       if (e.button === 1) e.preventDefault();   // дунд товчны автомат гүйлгэлтгүй
-      this.ptr = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, id: e.pointerId, drag: false, button: e.button };
       dom.setPointerCapture(e.pointerId);
+      const touch = e.pointerType === 'touch';
+      if (touch) {
+        this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (this.touches.size === 2) {
+          // Хоёр дахь хуруу: чимхэх эхэллээ — эхний хурууны дарах үйлдлийг цуцална
+          this.pinch = this.span();
+          if (this.ptr) this.ptr.drag = true;
+          return;
+        }
+        if (this.touches.size > 2) return;
+      }
+      this.ptr = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, id: e.pointerId, drag: false, button: e.button, touch };
     });
     dom.addEventListener('pointermove', (e) => {
+      if (this.touches.has(e.pointerId)) {
+        this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (this.pinch !== null && this.touches.size >= 2) {
+          const s = this.span();
+          if (s > 0 && this.pinch > 0) this.dist = clamp(this.dist * (this.pinch / s), 6, 70);
+          this.pinch = s;
+          return;
+        }
+      }
       const p = this.ptr;
       if (!p || e.pointerId !== p.id) return;
-      if (!p.drag && Math.hypot(e.clientX - p.sx, e.clientY - p.sy) > 7) p.drag = true;
+      if (!p.drag && Math.hypot(e.clientX - p.sx, e.clientY - p.sy) > (p.touch ? 12 : 7)) p.drag = true;
       if (p.drag) {
         if (this.mapMode) {
-          if (p.button === 2) this.mapYaw -= (e.clientX - p.x) * 0.006;
+          // Утсанд нэг хуруугаар чирэхэд газрын зургийг эргүүлнэ
+          if (p.button === 2 || p.touch) this.mapYaw -= (e.clientX - p.x) * 0.006;
           else if (p.button === 1) this.mapPitch = clamp(this.mapPitch + (e.clientY - p.y) * 0.004, 0.3, 1.45);
         } else {
           this.yaw -= (e.clientX - p.x) * 0.006;
@@ -45,7 +73,16 @@ export class FollowCamera {
       p.x = e.clientX;
       p.y = e.clientY;
     });
+    const lift = (e: PointerEvent): void => {
+      this.touches.delete(e.pointerId);
+      if (this.touches.size < 2) this.pinch = null;
+    };
+    dom.addEventListener('pointercancel', (e) => {
+      lift(e);
+      if (this.ptr?.id === e.pointerId) this.ptr = null;
+    });
     dom.addEventListener('pointerup', (e) => {
+      lift(e);
       const p = this.ptr;
       if (!p || e.pointerId !== p.id) return;
       this.ptr = null;

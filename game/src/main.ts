@@ -3,6 +3,8 @@
  * Симуляц тогтмол алхамтай (1 алхам = 1 тоглоомын минут), дүрслэл кадр бүр (~60 FPS)
  * хоёр алхмын хооронд зөөлрүүлнэ (architecture.md §3.2). Цонх нээлттэй үед тоглоом зогсоно.
  *
+ * Утас (мэдрэгч дэлгэц) автоматаар танигдана: input/touch.ts, device.ts. ?mobile=1 — компьютер дээр утасны горим.
+ *
  * URL параметр (туршилт): ?seed=123 · ?herd=300 (нийт малын тоо) · ?speed=3 (1/2/3) · ?heatmap=1 · ?report=0 (өдрийн тайлангүй)
  */
 import { loadConfig, SPECIES } from './sim/config';
@@ -22,14 +24,19 @@ import { Panels } from './render/ui/panels';
 import { PRODUCT_EMOJI, SEASON_EMOJI, SEASON_NAME, fmtMinutes, fmtMoney, fmtNum } from './render/ui/names';
 import { PlayerController } from './input/controller';
 import { t } from './i18n/i18n';
+import { TouchUI } from './input/touch';
+import { isTouch, touchKeys, quality, QUALITIES, QUALITY_NAME, QUALITY_SPEC, setQuality } from './device';
 
 function toast(msg: string, kind: '' | 'good' | 'bad' = ''): void {
+  if (isTouch) msg = touchKeys(msg.replace('хулганаар', 'хуруугаар'));
   const box = document.getElementById('toasts')!;
   const d = document.createElement('div');
   d.className = 'toast ' + kind;
   d.textContent = msg;
-  box.appendChild(d);
-  while (box.children.length > 4) box.firstChild?.remove();
+  const pr = document.getElementById('prompt');
+  if (pr && pr.parentElement === box) box.insertBefore(d, pr);   // утас: зааврын мөр хамгийн доор
+  else box.appendChild(d);
+  while (box.querySelectorAll('.toast').length > (isTouch ? 3 : 4)) box.querySelector('.toast')?.remove();
   setTimeout(() => d.remove(), kind === 'bad' ? 5000 : 3500);
 }
 
@@ -48,7 +55,7 @@ function start(): void {
   const perf = document.getElementById('perf')!;
   const help = document.getElementById('help')!;
   const prompt = document.getElementById('prompt')!;
-  help.innerHTML = `<h3>${t('help.title')}</h3>${t('help.body')}`;
+  help.innerHTML = `<h3>${t('help.title')}</h3>${isTouch ? t('help.touch') + '\n\n' + touchKeys(t('help.body')) : t('help.body')}`;
   document.title = t('app.title');
 
   const panels = new Panels(cfg, state, { dispatch: (cmd) => sim.command(cmd), toast, toggleZones: () => view.zones.toggle() });
@@ -111,6 +118,37 @@ function start(): void {
       else help.style.display = help.style.display === 'block' ? 'none' : 'block';
     },
   });
+  // Утасны удирдлага (мэдрэгч дэлгэц)
+  const touchUI = isTouch ? new TouchUI(cfg, controller, { speedIdx: () => speedIdx, speeds: cfg.time.speeds }) : null;
+  let hudCompact = isTouch;
+  if (isTouch) {
+    if (new URLSearchParams(location.search).get('perf') !== '1') perf.style.display = 'none';
+    document.getElementById('toasts')!.appendChild(prompt);
+    hud.addEventListener('click', () => {
+      hudCompact = !hudCompact;
+      hudT = 0;
+    });
+    // Тусламжийн цонх: графикийн чанар, туршилтын цэс, хаах
+    let q = quality;
+    const helpBody = help.innerHTML;
+    const renderHelp = (): void => {
+      help.innerHTML = '<span class="hclose" data-h="close">✕</span>' + helpBody + `<p class="hbtns"><button class="btn" data-h="q">⚙ График: ${QUALITY_NAME[q]}</button> <button class="btn" data-h="cheat">🛠 Туршилтын цэс</button> <button class="btn gold" data-h="close">✕ Хаах</button></p>`;
+    };
+    renderHelp();
+    help.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest('[data-h]') as HTMLElement | null;
+      if (!b) return;
+      if (b.dataset.h === 'q') {
+        q = QUALITIES[(QUALITIES.indexOf(q) + 1) % QUALITIES.length]!;
+        setQuality(q);
+        view.applyQuality(QUALITY_SPEC[q]);
+        renderHelp();
+        return;
+      }
+      help.style.display = 'none';
+      if (b.dataset.h === 'cheat') controller.press('Backquote');
+    });
+  }
   view.cam.onClick = (nx, ny, dbl) => {
     if (panels.isOpen) return;
     if (state.player.place === 'map') {
@@ -160,6 +198,11 @@ function start(): void {
       else if (!p.mounted && horse && Math.hypot(horse.x - p.x, horse.z - p.z) <= cfg.player.mountRange) html = '<kbd>F</kbd> морь унах';
       else if (p.mounted && Math.hypot(p.x, p.z) > cfg.player.worldRadius - 25) html = 'Цааш давхивал (эсвэл <kbd>Tab</kbd>) газрын зураг руу гарна (сумын төв, өөр бууц)';
     }
+    if (isTouch && !panels.isOpen) {
+      if (p.place === 'map') html = 'Очих газраа дарна · ☝️ эргүүлэх · ✌️ томруулах · <kbd>⏩</kbd> цаг хурдасгах';
+      else if (p.driving) html = '🕹 дээш — явах, доош — тоормос, хажуу — эргэх · <kbd>🚚</kbd> буух · захын хязгаар руу явбал эсвэл <kbd>🗺</kbd> — газрын зураг';
+      html = touchKeys(html);
+    }
     prompt.innerHTML = html;
     prompt.style.display = html ? 'block' : 'none';
   };
@@ -169,7 +212,7 @@ function start(): void {
     const dt = Math.min(rawDt, 0.1);
     last = now;
     worstMs = Math.max(worstMs, rawDt * 1000);
-    const paused = panels.isOpen;
+    const paused = panels.isOpen || !!touchUI?.paused;
 
     // Газрын зураг дээр Shift — цаг хурдасна (M4.6)
     const fast = state.player.place === 'map' && !state.move && (controller.isDown('ShiftLeft') || controller.isDown('ShiftRight'));
@@ -245,8 +288,10 @@ function start(): void {
       const cs = state.camps[state.campId];
       const snowTxt = cs && cs.snow >= 0.5 ? ` · ❄ ${Math.round(cs.snow)} см (идэх ${Math.round(campAccess(cfg, cs.snow) * 100)}%)` : '';
       const hayTxt = cs && (cs.hay > 0 || sp.season === 'winter' || sp.season === 'autumn') ? ` · 🌾 ${fmtNum(Math.round((cs.hay ?? 0) * 10) / 10)}` : '';
-      hud.innerHTML =
-        `<b>${t('hud.day', { day: state.time.day })}</b> · ${isNight(state.time, cfg.time) ? '🌙' : '☀️'} ${formatTime(state.time)}${paused ? ' · ⏸' : ''}<br>` +
+      const head =
+        `<b>${t('hud.day', { day: state.time.day })}</b> · ${isNight(state.time, cfg.time) ? '🌙' : '☀️'} ${formatTime(state.time)}${paused ? ' · ⏸' : ''}<br>`;
+      const full =
+        head +
         `${SEASON_EMOJI[sp.season]} ${SEASON_NAME[sp.season]} ${sp.dayOf}/${sp.days} · ${yearOf(cfg, state.time.day)}-р жил${snowTxt}${hayTxt}<br>` +
         `${t('hud.money')}: <b>${fmtMoney(state.money)}</b><br>` +
         `${t('hud.animals')}: ${counts.join(' · ')}<br>` +
@@ -257,6 +302,15 @@ function start(): void {
         helpersTxt +
         alert +
         `<small>${t('hud.milestone')} · ${t('help.hint')}${view.heatmap ? ' · G: heatmap' : ''}${view.zones.visible ? ' · Z: бүс' : ''}${state.wolves.peaceful ? ' · чоно унтраасан' : ''}</small>`;
+      // Утсанд HUD хураангуй — дарвал бүтэн харагдана
+      hud.innerHTML = hudCompact
+        ? touchKeys(head) +
+          `💰 <b>${fmtMoney(state.money)}</b> · 🐑 ${state.animals.filter((a) => !a.riding).length} · ✋ ${fmtNum(carried)}/${cfg.products.carryUnits}<br>` +
+          `${touchKeys(status)}<br>` +
+          alert +
+          `<small>▾ дэлгэрэнгүй</small>`
+        : touchKeys(full) + (isTouch ? '<br><small>▴ хураах</small>' : '');
+      touchUI?.update(state, panels.isOpen || help.style.display === 'block');
       perf.textContent = `${fps.toFixed(0)} FPS · max ${worstShown.toFixed(0)} ms · ${view.drawCalls} draw · ${state.animals.length} мал`;
     }
     requestAnimationFrame(frame);

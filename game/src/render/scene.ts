@@ -17,6 +17,7 @@ import { SumCenterView } from './sumcenter';
 import { WorldMapView } from './worldmap';
 import { StaffView } from './staff';
 import { seasonLook } from '../sim/systems/seasons';
+import { Q, type QualitySpec } from '../device';
 
 /** Цасны ширхгийн дугуй бүдэг бараг (canvas) */
 function flakeTexture(): THREE.Texture {
@@ -65,10 +66,11 @@ export class GameView {
 
   constructor(container: HTMLElement, cfg: GameConfig, state: GameState) {
     this.cfg = cfg;
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Графикийн чанар (device.ts): утсанд нягтрал бага, сүүдэргүй
+    this.renderer = new THREE.WebGLRenderer({ antialias: Q.antialias, powerPreference: 'high-performance' });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.maxDpr));
     this.renderer.setSize(container.clientWidth, container.clientHeight);
-    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.enabled = Q.shadows;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.domElement.tabIndex = 0;
     container.appendChild(this.renderer.domElement);
@@ -83,8 +85,8 @@ export class GameView {
     this.homeLight = new THREE.PointLight(0xffb060, 0, 26, 1.6);
     this.scene.add(this.homeLight);
     this.sun = new THREE.DirectionalLight(0xfff1d6, 1.9);
-    this.sun.castShadow = true;
-    this.sun.shadow.mapSize.set(2048, 2048);
+    this.sun.castShadow = Q.shadows;
+    this.sun.shadow.mapSize.set(Q.shadowMap, Q.shadowMap);
     const sc = this.sun.shadow.camera;
     sc.left = -45;
     sc.right = 45;
@@ -109,7 +111,7 @@ export class GameView {
     this.terrain.sync(state);
     this.terrain.updateGrass(state, this.heatmap);
     // Цас орох (M5.5): камерын эргэн тойронд унах ширхэгүүд
-    const NF = 2200;
+    const NF = Q.flakes;
     const fp = new Float32Array(NF * 3);
     this.flakeVel = new Float32Array(NF);
     for (let i = 0; i < NF; i++) {
@@ -130,6 +132,28 @@ export class GameView {
       this.map.resize(container.clientWidth / container.clientHeight);
       this.renderer.setSize(container.clientWidth, container.clientHeight);
     });
+  }
+
+  /** Графикийн чанарыг тоглолтын явцад солих (antialias дараагийн ачаалалтаас) */
+  applyQuality(q: QualitySpec): void {
+    const r = this.renderer;
+    r.setPixelRatio(Math.min(window.devicePixelRatio, q.maxDpr));
+    r.setSize(r.domElement.clientWidth, r.domElement.clientHeight, false);
+    if (r.shadowMap.enabled !== q.shadows || this.sun.shadow.mapSize.x !== q.shadowMap) {
+      r.shadowMap.enabled = q.shadows;
+      this.sun.castShadow = q.shadows;
+      this.sun.shadow.mapSize.set(q.shadowMap, q.shadowMap);
+      this.sun.shadow.map?.dispose();
+      this.sun.shadow.map = null;
+      // Сүүдэр асах/унтрахад материалуудыг дахин бэлтгэнэ
+      const mark = (o: THREE.Object3D): void => {
+        const m = (o as THREE.Mesh).material;
+        if (Array.isArray(m)) m.forEach((x) => (x.needsUpdate = true));
+        else if (m) m.needsUpdate = true;
+      };
+      this.scene.traverse(mark);
+      this.map.scene.traverse(mark);
+    }
   }
 
   /** Одоогийн 3D газрын өндөр (бууц эсвэл сумын төв) */

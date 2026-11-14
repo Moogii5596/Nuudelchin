@@ -44,81 +44,96 @@ export class PlayerController {
       if (this.hooks.blocked()) return;
       this.keys.add(e.code);
       if (e.repeat) return;
-      switch (e.code) {
-        case 'Space':
-          e.preventDefault();
-          this.shout();
-          break;
-        case 'KeyF':
-          this.hooks.onAction('mount', this.hooks.dispatch({ type: 'toggleMount' }));
-          break;
-        case 'KeyU':
-          this.hooks.onAction('uurga', this.hooks.dispatch({ type: 'toggleUurga' }));
-          break;
-        case 'KeyH':
-          this.hooks.onAction('call', this.hooks.dispatch({ type: 'callHorse' }));
-          break;
-        case 'KeyQ':
-          this.scare();
-          break;
-        case 'KeyE':
-          if (this.hooks.state().player.place === 'sum') this.hooks.onToggle('trade');
-          else this.useAction(true);
-          break;
-        case 'KeyV':
-          this.vSpeed = 0;
-          this.hooks.onAction('vehicle', this.hooks.dispatch({ type: 'toggleVehicle' }));
-          break;
-        case 'KeyB':
-          this.hooks.onToggle('storage');
-          break;
-        case 'KeyT':
-          this.hooks.onToggle('trade');
-          break;
-        case 'Digit1':
-        case 'Digit2':
-        case 'Digit3':
-          this.hooks.onSpeed(Number(e.code.slice(-1)) - 1);
-          break;
-        case 'KeyG':
-          this.hooks.onToggle('heatmap');
-          break;
-        case 'Backquote':
-          this.hooks.onToggle('cheat');   // туршилтын цэс
-          break;
-        case 'KeyK':
-          this.hooks.onToggle('dogs');
-          break;
-        case 'Tab':
-          // Газрын зураг руу шууд гарах (M4.6)
-          e.preventDefault();
-          this.vSpeed = 0;
-          this.hooks.onAction('map', this.hooks.dispatch({ type: 'quickMap' }));
-          break;
-        case 'KeyJ':
-          this.hooks.onToggle('helpers');
-          break;
-        case 'KeyM':
-          this.hooks.onToggle('camps');
-          break;
-        case 'KeyZ':
-          this.hooks.onToggle('zones');
-          break;
-        case 'KeyN':
-          // Шүгэлдэх: бүх нохой намайг дага
-          this.hooks.onAction('dog', this.hooks.dispatch({ type: 'dogOrder', dog: 'all', order: 'follow' }));
-          break;
-        case 'F1':
-        case 'Slash':
-          e.preventDefault();
-          this.hooks.onToggle('help');
-          break;
-      }
+      if (e.code === 'Space' || e.code === 'Tab' || e.code === 'F1' || e.code === 'Slash') e.preventDefault();
+      this.press(e.code);
       if (e.code.startsWith('Arrow')) e.preventDefault();
     });
     window.addEventListener('keyup', (e) => this.keys.delete(e.code));
     window.addEventListener('blur', () => this.keys.clear());
   }
+
+  /**
+   * Нэг удаагийн үйлдэл (товчны код). Гар болон утасны товчнууд (input/touch.ts) хоёулаа үүгээр дуудна.
+   */
+  press(code: string): void {
+    if (this.hooks.blocked()) return;
+    switch (code) {
+      case 'Space':
+        this.shout();
+        break;
+      case 'KeyF':
+        this.hooks.onAction('mount', this.hooks.dispatch({ type: 'toggleMount' }));
+        break;
+      case 'KeyU':
+        this.hooks.onAction('uurga', this.hooks.dispatch({ type: 'toggleUurga' }));
+        break;
+      case 'KeyH':
+        this.hooks.onAction('call', this.hooks.dispatch({ type: 'callHorse' }));
+        break;
+      case 'KeyQ':
+        this.scare();
+        break;
+      case 'KeyE':
+        if (this.hooks.state().player.place === 'sum') this.hooks.onToggle('trade');
+        else this.useAction(true);
+        break;
+      case 'KeyV':
+        this.vSpeed = 0;
+        this.hooks.onAction('vehicle', this.hooks.dispatch({ type: 'toggleVehicle' }));
+        break;
+      case 'KeyB':
+        this.hooks.onToggle('storage');
+        break;
+      case 'KeyT':
+        this.hooks.onToggle('trade');
+        break;
+      case 'Digit1':
+      case 'Digit2':
+      case 'Digit3':
+        this.hooks.onSpeed(Number(code.slice(-1)) - 1);
+        break;
+      case 'KeyG':
+        this.hooks.onToggle('heatmap');
+        break;
+      case 'Backquote':
+        this.hooks.onToggle('cheat');   // туршилтын цэс
+        break;
+      case 'KeyK':
+        this.hooks.onToggle('dogs');
+        break;
+      case 'Tab':
+        // Газрын зураг руу шууд гарах (M4.6)
+        this.vSpeed = 0;
+        this.hooks.onAction('map', this.hooks.dispatch({ type: 'quickMap' }));
+        break;
+      case 'KeyJ':
+        this.hooks.onToggle('helpers');
+        break;
+      case 'KeyM':
+        this.hooks.onToggle('camps');
+        break;
+      case 'KeyZ':
+        this.hooks.onToggle('zones');
+        break;
+      case 'KeyN':
+        // Шүгэлдэх: бүх нохой намайг дага
+        this.hooks.onAction('dog', this.hooks.dispatch({ type: 'dogOrder', dog: 'all', order: 'follow' }));
+        break;
+      case 'F1':
+      case 'Slash':
+        this.hooks.onToggle('help');
+        break;
+    }
+  }
+
+  /** Утасны товч: дарж байх хугацаанд товч дарагдсан мэт (жишээ нь газрын зураг дээр ⏩ = Shift) */
+  hold(code: string, on: boolean): void {
+    if (on) this.keys.add(code);
+    else this.keys.delete(code);
+  }
+
+  /** Утасны джойстик: x — баруун +, y — доош + (дэлгэцийн чиглэл), урт ≤ 1 */
+  stick = { x: 0, y: 0 };
 
   private shout(): void {
     if (this.shoutCd > 0) return;
@@ -202,6 +217,12 @@ export class PlayerController {
     if (k.has('KeyD') || k.has('ArrowRight')) ix += 1;
     let vx = 0, vz = 0;
     let run = k.has('ShiftLeft') || k.has('ShiftRight');
+    const sm = Math.hypot(this.stick.x, this.stick.y);
+    if (!ix && !iz && sm > 0.15) {
+      ix = this.stick.x;
+      iz = -this.stick.y;
+      run = run || sm > 0.9;   // джойстикийг захад нь хүртэл түлхвэл гүйнэ
+    }
     if (ix || iz) {
       this.target = null;
       const rx = -forward.z, rz = forward.x;   // баруун тал
@@ -257,8 +278,11 @@ export class PlayerController {
     const p = state.player;
     const spec = this.cfg.vehicles[p.driving!];
     const k = this.keys;
-    const thr = (k.has('KeyW') || k.has('ArrowUp') ? 1 : 0) - (k.has('KeyS') || k.has('ArrowDown') ? 1 : 0);
-    const steer = (k.has('KeyA') || k.has('ArrowLeft') ? 1 : 0) - (k.has('KeyD') || k.has('ArrowRight') ? 1 : 0);
+    let thr = (k.has('KeyW') || k.has('ArrowUp') ? 1 : 0) - (k.has('KeyS') || k.has('ArrowDown') ? 1 : 0);
+    let steer = (k.has('KeyA') || k.has('ArrowLeft') ? 1 : 0) - (k.has('KeyD') || k.has('ArrowRight') ? 1 : 0);
+    // Утасны джойстик: дээш — хийх, доош — тоормос/ухрах, хажуу — эргэх
+    if (!thr && Math.abs(this.stick.y) > 0.25) thr = -Math.sign(this.stick.y);
+    if (!steer && Math.abs(this.stick.x) > 0.2) steer = -this.stick.x;
     const max = spec.driveSpeed;
     const accel = spec.truck ? 5 : 3, brake = 9;
     let v = this.vSpeed;

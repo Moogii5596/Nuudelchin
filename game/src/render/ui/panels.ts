@@ -6,6 +6,7 @@
  * GameState-ийг зөвхөн уншиж, үйлдлийг Command-аар илгээнэ (architecture.md §3.1).
  * Цонх нээлттэй үед тоглоом түр зогсоно.
  */
+import { touchKeys } from '../../device';
 import type { GameConfig, Sex, Species } from '../../sim/config';
 import { SPECIES } from '../../sim/config';
 import type { Animal, BuyOrder, GameState, ProcessorKind, ProductId, VehicleId } from '../../sim/state';
@@ -97,11 +98,17 @@ export class Panels {
   private reports: DayReport[] = [];
   private arriveCamp = '';
   private muteReports = false;
+  private pressing = false;
   private hv: HelperView = { mode: 'list', helper: 0, camp: '', counts: {} };
 
   constructor(private cfg: GameConfig, private state: GameState, private hooks: UiHooks) {
     this.root = document.getElementById('modal')!;
     this.box = document.getElementById('modalBox')!;
+    // Утсанд товшиж байх үед цонхыг дахин зурвал товч «алга болж» дарагдахгүй — дарж байхад refresh хийхгүй
+    this.root.addEventListener('pointerdown', () => (this.pressing = true));
+    const up = (): void => void setTimeout(() => (this.pressing = false), 50);
+    this.root.addEventListener('pointerup', up);
+    this.root.addEventListener('pointercancel', up);
     this.root.addEventListener('click', (e) => {
       if (e.target === this.root && this.kind !== 'report') this.close();
       const el = (e.target as HTMLElement).closest('[data-act]') as HTMLElement | null;
@@ -177,6 +184,7 @@ export class Panels {
 
   /** Цонх нээлттэй үед төлөв өөрчлөгдвөл (боловсруулалтын хугацаа г.м.) */
   refresh(): void {
+    if (this.pressing) return;
     if (this.kind === 'storage' || this.kind === 'dogs' || this.kind === 'camps' || (this.kind === 'helpers' && this.hv.mode === 'list')) this.render();
   }
 
@@ -189,16 +197,18 @@ export class Panels {
 
   private render(): void {
     const scroll = this.box.scrollTop;
-    if (this.kind === 'storage') this.box.innerHTML = this.storageHtml();
-    else if (this.kind === 'cargo') this.box.innerHTML = this.cargoHtml();
-    else if (this.kind === 'shop') this.box.innerHTML = this.shopHtml();
-    else if (this.kind === 'arrive') this.box.innerHTML = this.arriveHtml();
-    else if (this.kind === 'report') this.box.innerHTML = this.reportHtml();
-    else if (this.kind === 'dogs') this.box.innerHTML = this.dogsHtml();
-    else if (this.kind === 'camps') this.box.innerHTML = this.campsHtml();
-    else if (this.kind === 'cheat') this.box.innerHTML = this.cheatHtml();
-    else if (this.kind === 'teahouse') this.box.innerHTML = this.teahouseHtml();
-    else if (this.kind === 'helpers') this.box.innerHTML = this.helpersHtml();
+    let html = '';
+    if (this.kind === 'storage') html = this.storageHtml();
+    else if (this.kind === 'cargo') html = this.cargoHtml();
+    else if (this.kind === 'shop') html = this.shopHtml();
+    else if (this.kind === 'arrive') html = this.arriveHtml();
+    else if (this.kind === 'report') html = this.reportHtml();
+    else if (this.kind === 'dogs') html = this.dogsHtml();
+    else if (this.kind === 'camps') html = this.campsHtml();
+    else if (this.kind === 'cheat') html = this.cheatHtml();
+    else if (this.kind === 'teahouse') html = this.teahouseHtml();
+    else if (this.kind === 'helpers') html = this.helpersHtml();
+    this.box.innerHTML = touchKeys(html);   // утсанд товчны нэрийг товчны дүрсээр
     this.box.scrollTop = scroll;
   }
 
