@@ -9,14 +9,14 @@ import type { GameState } from '../sim/state';
 import type { Command, CommandResult } from '../sim/commands';
 import { riverZ } from '../sim/terrain';
 
-export type ActionKind = 'shout' | 'scare' | 'call' | 'mount' | 'uurga' | 'pickup' | 'deposit' | 'dog';
+export type ActionKind = 'shout' | 'scare' | 'call' | 'mount' | 'uurga' | 'pickup' | 'deposit' | 'dog' | 'vehicle';
 
 export interface ControllerHooks {
   dispatch: (cmd: Command) => CommandResult;
   /** Командын үр дүн (мэдэгдэл, бичиг) */
   onAction: (kind: ActionKind, res: CommandResult) => void;
   onSpeed: (idx: number) => void;
-  onToggle: (what: 'heatmap' | 'help' | 'cheat' | 'storage' | 'trip' | 'dogs' | 'camps' | 'zones') => void;
+  onToggle: (what: 'heatmap' | 'help' | 'cheat' | 'storage' | 'trade' | 'dogs' | 'camps' | 'zones') => void;
   /** Цонх нээлттэй үед удирдлага ажиллахгүй */
   blocked: () => boolean;
   /** Одоогийн төлөв (E товчны үйлдлийг сонгоход) */
@@ -35,6 +35,8 @@ export class PlayerController {
   private target: { x: number; z: number; run: boolean } | null = null;
   private shoutCd = 0;
   private scareCd = 0;
+  /** Жолоодож буй тээврийн хурд (м/с, урагш +) */
+  vSpeed = 0;
 
   constructor(private cfg: GameConfig, private hooks: ControllerHooks) {
     window.addEventListener('keydown', (e) => {
@@ -60,13 +62,18 @@ export class PlayerController {
           this.scare();
           break;
         case 'KeyE':
-          this.useAction(true);
+          if (this.hooks.state().player.place === 'sum') this.hooks.onToggle('trade');
+          else this.useAction(true);
+          break;
+        case 'KeyV':
+          this.vSpeed = 0;
+          this.hooks.onAction('vehicle', this.hooks.dispatch({ type: 'toggleVehicle' }));
           break;
         case 'KeyB':
           this.hooks.onToggle('storage');
           break;
         case 'KeyT':
-          this.hooks.onToggle('trip');
+          this.hooks.onToggle('trade');
           break;
         case 'Digit1':
         case 'Digit2':
@@ -125,7 +132,7 @@ export class PlayerController {
   private useAction(manual: boolean): void {
     const st = this.hooks.state();
     const p = st.player;
-    if (p.away) return;
+    if (p.away || p.driving) return;
     const home = this.cfg.camps.home;
     const atStore = Math.hypot(p.x - home.x, p.z - home.z) <= home.storageRadius;
     if (atStore && p.carry.length) {
@@ -156,15 +163,22 @@ export class PlayerController {
     this.shoutCd = Math.max(0, this.shoutCd - dt);
     this.scareCd = Math.max(0, this.scareCd - dt);
     const p = state.player;
-    if (p.away) {
+    if (p.place === 'map' || state.move) {
       this.target = null;
       return;
     }
+    if (p.driving) {
+      this.target = null;
+      this.drive(dt, state);
+      return;
+    }
     // Алхаж явахад ойрын бүтээгдэхүүнийг автоматаар түүж, агуулахын дэргэд хийнэ
-    this.autoT -= dt;
-    if (this.autoT <= 0) {
-      this.autoT = 0.2;
-      this.useAction(false);
+    if (p.place === 'camp') {
+      this.autoT -= dt;
+      if (this.autoT <= 0) {
+        this.autoT = 0.2;
+        this.useAction(false);
+      }
     }
     const k = this.keys;
     let iz = 0, ix = 0;
@@ -199,11 +213,11 @@ export class PlayerController {
     const home = this.cfg.camps.home;
     const hr = (state.home === 'ger' ? home.gerRadius : home.tentRadius) + (p.mounted ? 0.8 : 0.3);
     const hd = Math.hypot(x - home.x, z - home.z);
-    if (hd < hr) {
+    if (p.place === 'camp' && hd < hr) {
       x = home.x + ((x - home.x) / (hd || 1)) * hr;
       z = home.z + ((z - home.z) / (hd || 1)) * hr;
     }
-    // Газрын хязгаар
+    // Газрын хязгаар. Морьтой хүрвэл газрын зураг руу гарна (sim — movePlayer)
     const R = Math.hypot(x, z);
     if (R > pl.worldRadius) {
       x *= pl.worldRadius / R;
@@ -211,7 +225,7 @@ export class PlayerController {
     }
     // Голыг явганаар гатлахгүй (мориор гатална)
     const w = this.cfg.camps.camps[state.campId]?.waterShape;
-    if (w && w.kind === 'lineZ' && !p.mounted) {
+    if (p.place === 'camp' && w && w.kind === 'lineZ' && !p.mounted) {
       const rz = riverZ(w, x);
       const b = pl.riverBlockOnFoot;
       if (Math.abs(z - rz) < b) z = rz + (p.z > rz ? b : -b);
@@ -219,5 +233,44 @@ export class PlayerController {
     const th = Math.atan2(vx, vz);
     const heading = p.heading + angDiff(th, p.heading) * Math.min(1, dt * 10);
     this.hooks.dispatch({ type: 'movePlayer', x, z, heading });
+  }
+
+  /**
+   * Тэрэг/машин жолоодох (M4.6): W/S — урагш/хойш (тоормос), A/D — эргэх. Бодит цагаар.
+   * 3D-ийн хязгаарт хүрвэл sim газрын зураг руу гаргана.
+   */
+  private drive(dt: number, state: GameState): void {
+    const p = state.player;
+    const spec = this.cfg.vehicles[p.driving!];
+    const k = this.keys;
+    const thr = (k.has('KeyW') || k.has('ArrowUp') ? 1 : 0) - (k.has('KeyS') || k.has('ArrowDown') ? 1 : 0);
+    const steer = (k.has('KeyA') || k.has('ArrowLeft') ? 1 : 0) - (k.has('KeyD') || k.has('ArrowRight') ? 1 : 0);
+    const max = spec.driveSpeed;
+    const accel = spec.truck ? 5 : 3, brake = 9;
+    let v = this.vSpeed;
+    if (thr > 0) v += (v < 0 ? brake : accel) * dt;
+    else if (thr < 0) v -= (v > 0 ? brake : accel) * dt;
+    else v -= Math.sign(v) * Math.min(Math.abs(v), 2.5 * dt);
+    v = Math.max(-3, Math.min(max, v));
+    const turn = steer * (spec.truck ? 0.9 : 1.3) * Math.min(1, Math.abs(v) / 3) * Math.sign(v);
+    let heading = p.heading + turn * dt;
+    let x = p.x + Math.sin(heading) * v * dt;
+    let z = p.z + Math.cos(heading) * v * dt;
+    // Майхан/гэрийг мөргөхгүй
+    if (p.place === 'camp') {
+      const home = this.cfg.camps.home;
+      const hr = (state.home === 'ger' ? home.gerRadius : home.tentRadius) + 2.5;
+      const hd = Math.hypot(x - home.x, z - home.z);
+      if (hd < hr) {
+        x = home.x + ((x - home.x) / (hd || 1)) * hr;
+        z = home.z + ((z - home.z) / (hd || 1)) * hr;
+        v *= 0.3;
+      }
+    }
+    if (heading > Math.PI) heading -= Math.PI * 2;
+    if (heading < -Math.PI) heading += Math.PI * 2;
+    this.vSpeed = v;
+    if (Math.abs(v) < 1e-3 && !thr) return;
+    this.hooks.dispatch({ type: 'driveVehicle', x, z, heading });
   }
 }

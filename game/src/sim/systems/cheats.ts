@@ -136,9 +136,8 @@ export function applyCheat(sim: Sim, action: CheatAction): string {
         const to = action.slice(5);
         if (!cfg.camps.camps[to]) return 'Ийм бууц алга';
         if (to === state.campId) return 'Аль хэдийн энэ бууцанд';
-        if (state.trip) return 'Тэрэг сумын төвд явсан';
+        if (state.player.place !== 'camp') return 'Гэртээ байх ёстой';
         state.move = { to, remaining: 1 };
-        state.player.away = true;
         sim.step();
         return 'Шууд нүүлээ';
       }

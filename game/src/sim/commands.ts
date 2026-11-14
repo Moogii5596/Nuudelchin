@@ -6,12 +6,12 @@
  * 3D-гүй симуляторт proximity=false: алхах хугацааг тооцохгүй (гараар тоглолтын дээд хязгаар).
  */
 import type { Species } from './config';
-import type { BuyOrder, ProcessorKind, ProductId } from './state';
+import type { BuyOrder, ProcessorKind, ProductId, VehicleId } from './state';
 import type { Sim } from './sim';
 import { driveFlock } from './systems/grazing';
 import * as storage from './systems/storage';
 import * as processing from './systems/processing';
-import { startTrip, type TripPlan } from './systems/trip';
+import { boardBest, driveVehicle, enterVehicle, exitVehicle, leaveToMap, loadCargo, mapGo, migrateHere, takeFromStorage, droveAnimals, trade, unloadCargo, type TradePlan } from './systems/travel';
 import { startMove } from './systems/camps';
 import { shout, toggleMount, toggleUurga } from './systems/herder';
 import { scareWolves } from './systems/wolves';
@@ -32,7 +32,17 @@ export type Command =
   | { type: 'deposit' }
   | { type: 'drive'; species: Species; x: number; z: number }
   | { type: 'process'; kind: ProcessorKind }
-  | { type: 'trip'; plan: TripPlan }
+  | { type: 'toggleVehicle' }         // тэрэг/машинд суух, буух (V) — M4.6
+  | { type: 'boardBest' }             // бот, туслах: хамгийн их даацтай тээвэрт шууд суух
+  | { type: 'driveVehicle'; x: number; z: number; heading: number }
+  | { type: 'leaveToMap'; dirX: number; dirZ: number }   // бот: 3D-ийн хязгаар хүртэл жолоодсонтой адил
+  | { type: 'mapGo'; x: number; z: number; dest: string | null }
+  | { type: 'migrateHere' }
+  | { type: 'loadCargo'; vehicle: VehicleId; products: Partial<Record<ProductId, number>>; animalIds: number[] }
+  | { type: 'unloadCargo'; vehicle: VehicleId }
+  | { type: 'trade'; plan: TradePlan }
+  | { type: 'droveAnimals'; animalIds: number[] }   // морьтой: мал тууж явах
+  | { type: 'takeFromStorage'; products: Partial<Record<ProductId, number>> }   // агуулахаас гартаа (зарахаар)
   | { type: 'neighborBull'; on: boolean }
   | { type: 'moveCamp'; to: string }
   | { type: 'dogOrder'; dog: number | 'all'; order: DogOrderKind; herd?: Species }   // нохойн команд (K цонх, N)
@@ -49,16 +59,34 @@ export function nearHome(cfg: { camps: { home: { x: number; z: number; storageRa
   return Math.hypot(p.x - h.x, p.z - h.z) <= h.storageRadius * 2;
 }
 
+const CAMP_ONLY = new Set<Command['type']>(['shout', 'callHorse', 'scareWolves', 'pickup', 'deposit', 'drive', 'process', 'moveCamp', 'dogOrder', 'loadCargo', 'unloadCargo', 'takeFromStorage', 'droveAnimals']);
+/** Тэрэг/машин жолоодож байхад хийхгүй ажлууд */
+const NOT_DRIVING = new Set<Command['type']>(['toggleMount', 'callHorse', 'pickup', 'deposit', 'drive', 'process', 'moveCamp', 'dogOrder', 'takeFromStorage']);
+
 const ok = (msg?: string): CommandResult => ({ ok: true, msg });
 const fail = (msg: string): CommandResult => ({ ok: false, msg });
 
 export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandResult {
   const { cfg, state } = sim;
   const p = state.player;
-  if (p.away && cmd.type !== 'neighborBull' && cmd.type !== 'debugAddAnimals' && cmd.type !== 'cheat') return fail('Малчин завгүй (сумын төвд эсвэл нүүж байна)');
+  // Зөвхөн гэрийн бууцанд, явганаар/мориор хийх ажлууд
+  if (CAMP_ONLY.has(cmd.type) && p.away) return fail('Малчин завгүй (гэрээсээ хол эсвэл нүүж байна)');
+  if (NOT_DRIVING.has(cmd.type) && p.driving) return fail('Тэрэг/машинаас буу (V)');
+  if (cmd.type === 'toggleMount' && p.place === 'map') return fail('Газрын зураг дээр байна');
+  if (state.move && cmd.type !== 'neighborBull' && cmd.type !== 'debugAddAnimals' && cmd.type !== 'cheat') return fail('Нүүж байна');
 
   switch (cmd.type) {
     case 'movePlayer': {
+      if (p.driving || p.place === 'map') return fail('Жолоодож байна');
+      // Морьтой 3D-ийн хязгаарт хүрвэл газрын зураг руу гарна (M4.6)
+      const R = Math.hypot(cmd.x, cmd.z);
+      if (p.mounted && R >= cfg.player.worldRadius - 0.05) {
+        const err = leaveToMap(cfg, state, cmd.x, cmd.z);
+        if (!err) {
+          sim.emitTravel({ type: 'leftToMap' });
+          return ok();
+        }
+      }
       p.x = cmd.x;
       p.z = cmd.z;
       if (cmd.heading !== undefined) p.heading = cmd.heading;
@@ -152,10 +180,54 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
       return ok();
     }
 
-    case 'trip': {
-      if (proximity && !nearHome(cfg, p)) return fail('Тэрэг майхны дэргэд байна — тийшээ оч');
-      const err = startTrip(cfg, state, cmd.plan);
+    case 'toggleVehicle': {
+      if (p.driving) {
+        const err = exitVehicle(cfg, state);
+        return err ? fail(err) : ok('Тэрэг/машинаас буулаа');
+      }
+      const err = enterVehicle(cfg, state);
+      return err ? fail(err) : ok(`${cfg.vehicles[p.driving!].emoji} ${cfg.vehicles[p.driving!].name}-д суулаа — WASD жолоодох, газрын хязгаарт хүрвэл газрын зураг`);
+    }
+    case 'boardBest':
+      return boardBest(cfg, state) ? ok() : fail('Тээвэр алга');
+    case 'driveVehicle': {
+      const ev = driveVehicle(cfg, state, cmd.x, cmd.z, cmd.heading);
+      if (ev) sim.emitTravel(ev);
+      return ok();
+    }
+    case 'leaveToMap': {
+      const err = leaveToMap(cfg, state, cmd.dirX, cmd.dirZ);
+      if (!err) sim.emitTravel({ type: 'leftToMap' });
       return err ? fail(err) : ok();
+    }
+    case 'mapGo': {
+      const err = mapGo(cfg, state, cmd.x, cmd.z, cmd.dest);
+      return err ? fail(err) : ok();
+    }
+    case 'migrateHere': {
+      const err = migrateHere(cfg, state);
+      if (!err) sim.refreshQuality();
+      return err ? fail(err) : ok('Гэр бүл, сүрэг тань энэ бууц руу нүүж байна');
+    }
+    case 'loadCargo': {
+      const err = loadCargo(cfg, state, cmd.vehicle, cmd.products, cmd.animalIds, proximity);
+      return err ? fail(err) : ok('Ачлаа');
+    }
+    case 'unloadCargo': {
+      const err = unloadCargo(cfg, state, sim.random, cmd.vehicle, proximity);
+      return err ? fail(err) : ok('Буулгалаа');
+    }
+    case 'droveAnimals': {
+      const err = droveAnimals(state, cmd.animalIds);
+      return err ? fail(err) : ok('Мал араасаа тууж явна');
+    }
+    case 'takeFromStorage': {
+      const err = takeFromStorage(cfg, state, cmd.products, proximity);
+      return err ? fail(err) : ok('Гартаа авлаа');
+    }
+    case 'trade': {
+      const err = trade(cfg, state, sim.random, cmd.plan, proximity);
+      return err ? fail(err) : ok('Арилжаа хийлээ');
     }
 
     case 'neighborBull':

@@ -1,18 +1,77 @@
 {
-  "_doc": "Эхлэл. mvp-spec.md §3.",
+  "_doc": "Эхлэл. mvp-spec.md §3. M4.6 (хэрэглэгчийн шийдвэр 2026-11-14): морин тэрэг эхлэлд байхгүй — Худалдаачнаас худалдаж авна. Тоглогч морьтойгоо газрын зураг руу гарч, гартаа барьсан бүтээгдэхүүнээ сумын төвд зарна.",
   "camp": "river",
   "home": "tent",
-  "vehicles": ["horseCart"],
+  "vehicles": [],
   "storageLevel": 0,
   "animals": [
-    { "species": "horse", "sex": "m", "age": 6, "riding": true },
-    { "species": "cow", "sex": "f", "age": 5, "lactating": true },
-    { "species": "cow", "sex": "f", "age": 6, "lactating": true },
-    { "species": "sheep", "sex": "m", "age": 4 },
-    { "species": "sheep", "sex": "f", "age": 1 }, { "species": "sheep", "sex": "f", "age": 2 },
-    { "species": "sheep", "sex": "f", "age": 2 }, { "species": "sheep", "sex": "f", "age": 3 },
-    { "species": "sheep", "sex": "f", "age": 4 }, { "species": "sheep", "sex": "f", "age": 5 },
-    { "species": "sheep", "sex": "f", "age": 5 }, { "species": "sheep", "sex": "f", "age": 6 },
-    { "species": "sheep", "sex": "f", "age": 7 }
+    {
+      "species": "horse",
+      "sex": "m",
+      "age": 6,
+      "riding": true
+    },
+    {
+      "species": "cow",
+      "sex": "f",
+      "age": 5,
+      "lactating": true
+    },
+    {
+      "species": "cow",
+      "sex": "f",
+      "age": 6,
+      "lactating": true
+    },
+    {
+      "species": "sheep",
+      "sex": "m",
+      "age": 4
+    },
+    {
+      "species": "sheep",
+      "sex": "f",
+      "age": 1
+    },
+    {
+      "species": "sheep",
+      "sex": "f",
+      "age": 2
+    },
+    {
+      "species": "sheep",
+      "sex": "f",
+      "age": 2
+    },
+    {
+      "species": "sheep",
+      "sex": "f",
+      "age": 3
+    },
+    {
+      "species": "sheep",
+      "sex": "f",
+      "age": 4
+    },
+    {
+      "species": "sheep",
+      "sex": "f",
+      "age": 5
+    },
+    {
+      "species": "sheep",
+      "sex": "f",
+      "age": 5
+    },
+    {
+      "species": "sheep",
+      "sex": "f",
+      "age": 6
+    },
+    {
+      "species": "sheep",
+      "sex": "f",
+      "age": 7
+    }
   ]
 }

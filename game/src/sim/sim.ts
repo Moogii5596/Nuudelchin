@@ -16,7 +16,7 @@ import { groundAgingStep } from './systems/production';
 import { eveningStep, morning, sleepAll } from './systems/night';
 import { processingStep } from './systems/processing';
 import * as storage from './systems/storage';
-import { tripStep } from './systems/trip';
+import { mapStep, syncAway, type TravelEvent } from './systems/travel';
 import { moveStep } from './systems/camps';
 import { herderStep } from './systems/herder';
 import { wolvesStep, nightRaid, endRaid, type WolfEvent } from './systems/wolves';
@@ -40,7 +40,7 @@ export interface DayReport extends DayStats {
   goalReached: boolean;
 }
 
-export type SimEvent = ClockEvent | WolfEvent | { type: 'dayReport'; report: DayReport };
+export type SimEvent = ClockEvent | WolfEvent | TravelEvent | { type: 'dayReport'; report: DayReport };
 
 export class Sim {
   readonly cfg: GameConfig;
@@ -73,7 +73,14 @@ export class Sim {
   }
 
   command(cmd: Command, proximity = true): CommandResult {
-    return applyCommand(this, cmd, proximity);
+    const r = applyCommand(this, cmd, proximity);
+    syncAway(this.state);
+    return r;
+  }
+
+  /** Командаас гарсан үйл явдлыг (газрын зураг руу гарсан г.м.) сонсогчдод дамжуулна */
+  emitTravel(ev: TravelEvent): void {
+    this.emit(ev);
   }
 
   /** Нэг тоглоомын минут */
@@ -94,11 +101,13 @@ export class Sim {
     for (const ev of wolvesStep(cfg, state)) this.emit(ev);
     groundAgingStep(cfg, state);
     processingStep(cfg, state);
-    tripStep(cfg, state, rng);
+    for (const ev of mapStep(cfg, state, rng)) this.emit(ev);
     if (moveStep(cfg, state, rng)) {
       this.refreshQuality();
       this.centers = new Map();
+      this.emit({ type: 'arrived', place: 'camp' });
     }
+    syncAway(state);
 
     const events = tick(state.time, cfg.time);
     for (const ev of events) {

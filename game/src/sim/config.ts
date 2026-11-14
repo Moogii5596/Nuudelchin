@@ -16,6 +16,7 @@ import campsJson from '../../../data/camps.json';
 import startJson from '../../../data/start.json';
 import playerJson from '../../../data/player.json';
 import dogsJson from '../../../data/dogs.json';
+import worldmapJson from '../../../data/worldmap.json';
 
 export type Species = 'sheep' | 'goat' | 'cow' | 'horse';
 export type Sex = 'm' | 'f';
@@ -154,6 +155,7 @@ export interface CampConfig {
   wolfLevel: string;
   rings: [number, string][];
   waterShape: WaterShape;
+  road: [number, number][];   // сумын төв рүү гарах зам (M4.6)
   terrain: TerrainConfig;
 }
 
@@ -166,6 +168,23 @@ export interface HomeConfig {
   cowYard: { x: number; z: number; r: number };   // үхэр шөнө хэвтэх газар (M4.5)
   tentRadius: number;
   gerRadius: number;
+}
+
+/** Газрын зураг (data/worldmap.json, км) — M4.6 */
+export interface WorldLocation {
+  kind: 'camp' | 'sum';
+  x: number;
+  z: number;
+}
+export interface WorldMapConfig {
+  locations: Record<string, WorldLocation>;
+  arriveRadiusKm: number;
+  exitOffsetKm: number;
+  bounds: { minX: number; maxX: number; minZ: number; maxZ: number };
+  river: [number, number][];
+  mountains: [number, number, number][];
+  forests: [number, number, number][];
+  sum3d: { shop: { x: number; z: number; r: number }; entry: { x: number; z: number }; parking: { x: number; z: number } };
 }
 
 export interface StartAnimal {
@@ -190,6 +209,7 @@ export interface GameConfig {
   camps: { camps: Record<string, CampConfig>; move: Record<string, number | string>; home: HomeConfig };
   player: typeof playerJson;
   dogs: typeof dogsJson;
+  worldmap: WorldMapConfig;
   start: { camp: string; home: string; vehicles: string[]; storageLevel: number; animals: StartAnimal[] };
 }
 
@@ -209,6 +229,7 @@ export function loadConfig(): GameConfig {
     start: startJson as unknown as GameConfig['start'],
     player: playerJson,
     dogs: dogsJson,
+    worldmap: worldmapJson as unknown as WorldMapConfig,
   };
   const errors = validateConfig(cfg);
   if (errors.length) {
@@ -261,6 +282,11 @@ export function validateConfig(cfg: GameConfig): string[] {
   if (!(cfg.dogs.speed.run > cfg.wolves.speed.flee)) e.push('dogs.speed.run > wolves.speed.flee байх ёстой (нохой чоныг гүйцнэ)');
   if (!(cfg.dogs.names.length >= cfg.dogs.maxDogs)) e.push('dogs.names: maxDogs-оос цөөнгүй нэр');
   if (!cfg.camps.camps[cfg.start.camp]) e.push(`start.camp: "${cfg.start.camp}" бууц алга`);
+  for (const [id, c] of Object.entries(cfg.camps.camps)) {
+    if (!cfg.worldmap.locations[id]) e.push(`worldmap.locations.${id}: бууцны байрлал алга`);
+    if (!Array.isArray(c.road) || c.road.length < 2) e.push(`camps.${id}.road: 2+ цэг хэрэгтэй`);
+  }
+  if (!Object.values(cfg.worldmap.locations).some((l) => l.kind === 'sum')) e.push('worldmap: сумын төв алга');
   if (!cfg.storage.levels[cfg.start.storageLevel]) e.push('start.storageLevel: агуулахын түвшин алга');
   for (const a of cfg.start.animals) if (!cfg.animals.species[a.species]) e.push(`start.animals: "${a.species}" алга`);
   return e;

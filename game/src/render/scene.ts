@@ -12,6 +12,9 @@ import { FollowCamera } from './camera';
 import { ItemsView } from './items';
 import { ZonesView } from './zones';
 import { VehiclesView } from './vehicles';
+import { angDiff } from './util';
+import { SumCenterView } from './sumcenter';
+import { WorldMapView } from './worldmap';
 
 /** Бэлчээрийн өнгийг хэр олон удаа шинэчлэх (бодит секунд) */
 const GRASS_REFRESH_SEC = 0.4;
@@ -26,13 +29,15 @@ export class GameView {
   readonly items: ItemsView;
   readonly zones: ZonesView;
   readonly vehicles: VehiclesView;
+  readonly sum: SumCenterView;
+  readonly map: WorldMapView;
+  private daylight = 1;
   heatmap = false;
   private sun: THREE.DirectionalLight;
   private hemi: THREE.HemisphereLight;
   private homeLight: THREE.PointLight;
   private skyCol = new THREE.Color();
   private homePos: { x: number; z: number };
-  private camPos: { x: number; z: number } | null = null;
   private grassT = 0;
   private ray = new THREE.Raycaster();
   private ndc = new THREE.Vector2();
@@ -75,17 +80,23 @@ export class GameView {
     this.items = new ItemsView(cfg);
     this.zones = new ZonesView(cfg);
     this.vehicles = new VehiclesView(cfg);
-    this.scene.add(this.terrain.group, this.animals.group, this.characters.group, this.items.group, this.zones.group, this.vehicles.group);
+    this.sum = new SumCenterView(cfg);
+    this.map = new WorldMapView(cfg);
+    this.map.resize(container.clientWidth / container.clientHeight);
+    this.scene.add(this.terrain.group, this.animals.group, this.characters.group, this.items.group, this.zones.group, this.vehicles.group, this.sum.group);
     this.terrain.sync(state);
     this.terrain.updateGrass(state, this.heatmap);
 
     window.addEventListener('resize', () => {
       this.cam.resize(container.clientWidth / container.clientHeight);
+      this.map.resize(container.clientWidth / container.clientHeight);
       this.renderer.setSize(container.clientWidth, container.clientHeight);
     });
   }
 
-  heightAt = (x: number, z: number): number => this.terrain.heightAt(x, z);
+  /** Одоогийн 3D газрын өндөр (бууц эсвэл сумын төв) */
+  private place: 'camp' | 'sum' | 'map' = 'camp';
+  heightAt = (x: number, z: number): number => (this.place === 'sum' ? this.sum.heightAt(x, z) : this.terrain.heightAt(x, z));
 
   /** Sim алхмын өмнө (interpolation) */
   snapshot(state: GameState): void {
@@ -96,7 +107,7 @@ export class GameView {
   pickGround(ndcX: number, ndcY: number): { x: number; z: number } | null {
     this.ndc.set(ndcX, ndcY);
     this.ray.setFromCamera(this.ndc, this.cam.camera);
-    const hit = this.ray.intersectObject(this.terrain.ground, false)[0];
+    const hit = this.ray.intersectObject(this.place === 'sum' ? this.sum.ground : this.terrain.ground, false)[0];
     return hit ? { x: hit.point.x, z: hit.point.z } : null;
   }
 
@@ -107,35 +118,43 @@ export class GameView {
 
   /** Нэг кадр. alpha — sim алхам хоорондын хувь, stepSec — нэг алхмын бодит секунд (0 = зогссон) */
   frame(state: GameState, alpha: number, dt: number, stepSec: number): void {
-    if (this.terrain.sync(state)) {
-      this.animals.reset();
-      this.grassT = 0;
-    }
-    this.grassT -= dt;
-    if (this.grassT <= 0) {
-      this.grassT = GRASS_REFRESH_SEC;
-      this.terrain.updateGrass(state, this.heatmap);
-    }
-    this.animals.update(state, this.heightAt, alpha, dt, stepSec);
-    this.characters.update(state, this.heightAt, dt);
-    this.items.update(state, this.heightAt, dt);
-    this.zones.update(state, this.heightAt);
-    this.vehicles.update(state, this.heightAt, dt, alpha);
-    if (state.trip) this.characters.seatHerder(this.vehicles.seatOf(state));
-    this.applyDaylight(state.time.minute);
-
     const p = state.player;
-    // Аялалд камер машиныг жигд дагана (малчны sim байрлал алхам бүрт үсэрдэг), газрын зургаас гарвал хот руу эргэнэ
-    const focus = this.vehicles.cameraFocus(state);
-    const goal = focus ?? { x: p.x, z: p.z };
-    if (!this.camPos || !focus) this.camPos = { x: goal.x, z: goal.z };
-    else {
-      const k = Math.hypot(goal.x - this.camPos.x, goal.z - this.camPos.z) > 40 ? Math.min(1, dt * 2.5) : 1;
-      this.camPos.x += (goal.x - this.camPos.x) * k;
-      this.camPos.z += (goal.z - this.camPos.z) * k;
+    this.place = p.place;
+    this.applyDaylight(state.time.minute);
+    // Газрын зураг: өөрийн scene, камертай (M4.6)
+    if (p.place === 'map') {
+      this.map.zoom = Math.min(2.2, Math.max(0.45, this.cam.dist / 18));   // хулганы дугуйгаар томруулах
+      this.map.update(state, dt, this.daylight);
+      this.renderer.render(this.map.scene, this.map.camera);
+      return;
     }
-    const cx = this.camPos.x, cz = this.camPos.z;
-    const ty = this.heightAt(cx, cz) + (p.mounted && !focus ? 2.4 : 1.6);
+    const camp = p.place === 'camp';
+    this.terrain.group.visible = this.animals.group.visible = this.items.group.visible = this.zones.group.visible = camp;
+    this.sum.group.visible = !camp;
+    this.homeLight.visible = camp;
+    if (camp) {
+      if (this.terrain.sync(state)) {
+        this.animals.reset();
+        this.grassT = 0;
+      }
+      this.grassT -= dt;
+      if (this.grassT <= 0) {
+        this.grassT = GRASS_REFRESH_SEC;
+        this.terrain.updateGrass(state, this.heatmap);
+      }
+      this.animals.update(state, this.heightAt, alpha, dt, stepSec);
+      this.items.update(state, this.heightAt, dt);
+      this.zones.update(state, this.heightAt);
+    }
+    this.characters.update(state, this.heightAt, dt);
+    this.vehicles.update(state, this.heightAt, dt);
+    if (p.driving) this.characters.seatHerder(this.vehicles.seatOf(state));
+
+    // Жолоодож байхад камер аажмаар тээврийн ард эргэнэ
+    if (p.driving) this.cam.yaw += angDiff(p.heading + Math.PI, this.cam.yaw) * Math.min(1, dt * 1.5);
+    // Малчныг (жолоодож байвал тээврийг) дагана — байрлал кадр бүр бодит цагаар шинэчлэгддэг тул жигд
+    const cx = p.x, cz = p.z;
+    const ty = this.heightAt(cx, cz) + (p.mounted || p.driving ? 2.4 : 1.6);
     this.cam.update(cx, cz, ty, this.heightAt);
     // Сүүдрийн хайрцаг малчныг дагана
     this.sun.position.set(cx + 60, 95, cz + 35);
@@ -151,6 +170,7 @@ export class GameView {
     const m = ((minute % 1440) + 1440) % 1440;
     const ramp = (a: number, b: number, x: number): number => Math.min(1, Math.max(0, (x - a) / (b - a)));
     const day = m < 720 ? ramp(320, 420, m) : 1 - ramp(1230, 1310, m);   // 0 = шөнө, 1 = өдөр
+    this.daylight = day;
     const dusk = Math.max(0, 1 - Math.abs(day - 0.5) * 2) * (m > 900 || m < 500 ? 1 : 0);  // үүр, бүрэнхий
     const DAY = 0x8cc4f0, NIGHT = 0x0b1430, DUSK = 0xe89a6a;
     this.skyCol.set(NIGHT).lerp(new THREE.Color(DAY), day).lerp(new THREE.Color(DUSK), dusk * 0.55);

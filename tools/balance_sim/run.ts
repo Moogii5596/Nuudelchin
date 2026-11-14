@@ -18,6 +18,7 @@ import { herdSheepUnits } from '../../game/src/sim/systems/animals';
 import { absBiomass, typeIdOf, typeQualities } from '../../game/src/sim/systems/pasture';
 import * as storage from '../../game/src/sim/systems/storage';
 import { bestTruck, orderPrice } from '../../game/src/sim/systems/trip';
+import { AutoTrip } from '../../game/src/sim/autotrip';
 import { realSecondsPerDay } from '../../game/src/sim/clock';
 import { findHerds } from '../../game/src/sim/systems/herds';
 
@@ -84,8 +85,9 @@ function processAll(sim: Sim): void {
 /** Илүүдэл эр мал (үржлийн 1 эрээс бусад, 0.75+ настай) — тэргэнд багтах хэмжээгээр */
 function surplusMales(sim: Sim): number[] {
   const { cfg, state } = sim;
-  const v = bestTruck(cfg, state) ?? 'horseCart';
-  const slots = cfg.vehicles[v].sheepSlots;
+  // Тээвэргүй бол морьтой тууж очно (удаан) — 3-аас илүүг авч явахгүй
+  const v = bestTruck(cfg, state) ?? (state.vehicles.includes('horseCart') ? 'horseCart' : null);
+  const slots = v ? cfg.vehicles[v].sheepSlots : 3;
   const rams = state.animals
     .filter((a) => a.species === 'sheep' && a.sex === 'm' && !a.riding)
     .sort((a, b) => b.age - a.age);
@@ -93,11 +95,15 @@ function surplusMales(sim: Sim): number[] {
   return rams.filter((a) => a !== keep && a.age >= 0.75).slice(0, slots).map((a) => a.id);
 }
 
+/** Явж буй автомат аялал (M4.6: газрын зургаар сумын төвийн Худалдаачин руу). run() алхам бүрийн дараа tick хийнэ */
+let pendingTrip: AutoTrip | null = null;
+
 function tripIfUseful(sim: Sim, buy: BuyOrder[], minUnits: number, sellAnimalIds: number[] = []): void {
   const { cfg, state } = sim;
-  if (state.trip || state.player.away) return;
-  const v = bestTruck(cfg, state) ?? 'horseCart';
-  const cap = cfg.vehicles[v].capacity;
+  if (pendingTrip || state.player.away) return;
+  // Тээвэргүй бол морьтой — гартаа carryUnits хүртэл
+  const v = bestTruck(cfg, state) ?? (state.vehicles.includes('horseCart') ? 'horseCart' : null);
+  const cap = v ? cfg.vehicles[v].capacity : cfg.products.carryUnits;
   const sell: Partial<Record<ProductId, number>> = {};
   let units = 0;
   for (const p of SELL_ORDER) {
@@ -109,8 +115,8 @@ function tripIfUseful(sim: Sim, buy: BuyOrder[], minUnits: number, sellAnimalIds
       units += n;
     }
   }
-  if (units < minUnits && buy.length === 0 && sellAnimalIds.length === 0) return;
-  sim.command({ type: 'trip', plan: { vehicle: v, sell, buy, sellAnimalIds } }, false);
+  if (units < Math.min(minUnits, cap) && buy.length === 0 && sellAnimalIds.length === 0) return;
+  pendingTrip = new AutoTrip({ sell, sellAnimalIds, buy });
 }
 
 /** Бууцны төвөөс 150 м дотор хамгийн сайн бэлчээрийн цэг (чанар^1.5 × өвс). Чонын нутгаас (улаан тойрог) зайдуу */
@@ -142,7 +148,7 @@ function bestSpot(cfg: GameConfig, sim: Sim, minCm: number): { x: number; z: num
 /** Одоогийн бууц threshold-оос их доройтсон бол хамгийн бага доройтолтой бууц руу нүүнэ */
 function rotateCamp(sim: Sim, threshold: number): boolean {
   const { state } = sim;
-  if (state.trip || state.move || state.player.away) return false;
+  if (pendingTrip || state.move || state.player.away) return false;
   if ((state.camps[state.campId]?.degrade ?? 0) < threshold) return false;
   const best = Object.entries(state.camps).filter(([id]) => id !== state.campId).sort((a, b) => a[1].degrade - b[1].degrade)[0];
   if (!best) return false;
@@ -165,6 +171,8 @@ function buyPlan(sim: Sim, reserve: number, maxSU: number, dogs = 0): BuyOrder[]
     return false;
   };
   if (state.home !== 'ger' && su >= cfg.economy.goalSheepUnits) tryBuy({ kind: 'ger' }, 0);
+  // M4.6: эхлэлд тээвэргүй — морин тэрэг эхэнд авна (их ачаа, мал зөөнө)
+  if (!state.vehicles.length) tryBuy({ kind: 'vehicle', id: 'horseCart' }, reserve / 2);
   if (!state.processors.some((p) => p.kind === 'pot')) tryBuy({ kind: 'processor', id: 'pot' }, reserve);
   if (state.storageLevel === 0 && storage.used(state) > 14) tryBuy({ kind: 'storage' }, reserve);
   if (state.dogs.length < dogs && state.processors.length) tryBuy({ kind: 'dog' }, reserve);
@@ -251,10 +259,12 @@ function run(cfg: GameConfig, strat: Strategy, seed: number): RunResult {
     }
   });
   const [h0, h1] = strat.escortHours ?? [99, 99];
+  pendingTrip = null;
   while (sim.state.time.day <= DAYS) {
     const hour = sim.state.time.minute / 60;
     if (sim.state.step % 10 === 0 && hour >= h0 && hour < h1 && !sim.state.player.away) escort(sim);
     sim.step();
+    if (pendingTrip && pendingTrip.tick(sim)) pendingTrip = null;
   }
   return { goalDay: sim.state.goalReachedDay, reports, wolfKills, killsBySp };
 }

@@ -6,7 +6,7 @@
  * URL параметр (туршилт): ?seed=123 · ?herd=300 (нийт малын тоо) · ?speed=3 (1/2/3) · ?heatmap=1 · ?report=0 (өдрийн тайлангүй)
  */
 import { loadConfig, SPECIES } from './sim/config';
-import { createInitialState, type TripState } from './sim/state';
+import { createInitialState } from './sim/state';
 import { Sim } from './sim/sim';
 import { formatTime, isNight, realSecondsPerMinute } from './sim/clock';
 import { averageBiomass } from './sim/systems/pasture';
@@ -14,6 +14,7 @@ import * as storage from './sim/systems/storage';
 import { ridingHorse } from './sim/systems/herder';
 import { huntingWolves } from './sim/systems/wolves';
 import { DOG_ORDER_NAME } from './sim/systems/dogs';
+import { nearestVehicle, partySpeedKmPerMin } from './sim/systems/travel';
 import { GameView } from './render/scene';
 import { Panels } from './render/ui/panels';
 import { PRODUCT_EMOJI, fmtMinutes, fmtMoney, fmtNum } from './render/ui/names';
@@ -62,6 +63,9 @@ function start(): void {
       }
     } else if (e.type === 'wolfKill') toast(`🐺 Чоно ${t('species.' + e.species).toLowerCase()} барьж авлаа`, 'bad');
     else if (e.type === 'wolfGiveUp') toast('Чоно ангаа орхилоо', 'good');
+    else if (e.type === 'leftToMap') toast('🗺 Газрын зураг — очих газраа хулганаар дарна (явж байхдаа сольж болно)', 'good');
+    else if (e.type === 'arrived') toast(e.place === 'sum' ? '🏘 Сумын төвд ирлээ — Худалдаачны дэлгүүрт оч (шар тойрог, E)' : '🏠 Гэртээ ирлээ', 'good');
+    else if (e.type === 'arriveCamp') panels.showArrive(e.campId);
     else if (e.type === 'wolfRaid') toast(`🌙 Шөнө ${e.n > 1 ? e.n + ' чоно' : 'чоно'} хот руу дөхөж байна — хотоос гадуур хоносон мал аюултай`, 'bad');
     else if (e.type === 'hour' && e.hour === Math.ceil(Math.min(...Object.values(cfg.time.homeMinute)) / 60)) toast('🌇 Орой боллоо — мал хотондоо харьж байна', '');
   });
@@ -82,7 +86,7 @@ function start(): void {
     onToggle: (what) => {
       if (what === 'heatmap') view.toggleHeatmap(state);
       else if (what === 'storage') panels.open('storage');
-      else if (what === 'trip') panels.open('trip');
+      else if (what === 'trade') panels.open(state.player.place === 'sum' ? 'shop' : 'cargo');
       else if (what === 'dogs') panels.open('dogs');
       else if (what === 'camps') panels.open('camps');
       else if (what === 'cheat') panels.open('cheat');
@@ -92,6 +96,15 @@ function start(): void {
   });
   view.cam.onClick = (nx, ny, dbl) => {
     if (panels.isOpen) return;
+    if (state.player.place === 'map') {
+      const g = view.map.pick(nx, ny);
+      if (g) {
+        const r = sim.command({ type: 'mapGo', x: g.x, z: g.z, dest: g.dest });
+        if (!r.ok && r.msg) toast(r.msg, 'bad');
+      }
+      return;
+    }
+    if (state.player.driving) return;
     const g = view.pickGround(nx, ny);
     if (g) controller.moveTo(g.x, g.z, dbl);
   };
@@ -104,26 +117,19 @@ function start(): void {
   let hudT = 0;
   let grassAvg = averageBiomass(state.grass, 120);
   let grassT = 0;
-  let lastTrip: TripState | null = null;
   // FPS хэмжилт
   let fpsFrames = 0, fpsT = 0, fps = 0, worstMs = 0, worstShown = 0;
-
-  /** Аялал дуусахад үр дүнг мэдэгдэнэ */
-  const watchTrip = (): void => {
-    if (state.trip) lastTrip = state.trip;
-    else if (lastTrip) {
-      const tr = lastTrip;
-      lastTrip = null;
-      const missed = tr.buy.length - tr.bought.length;
-      toast(`🏘 Сумын төвөөс ирлээ: орлого +${fmtMoney(tr.income)}${tr.bought.length ? ` · авсан ${tr.bought.length}` : ''}`, 'good');
-      if (missed > 0) toast(`Мөнгө хүрэлцээгүй тул ${missed} зүйл авч чадсангүй`, 'bad');
-    }
-  };
 
   const updatePrompt = (): void => {
     const p = state.player;
     let html = '';
-    if (!p.away && !panels.isOpen) {
+    if (!panels.isOpen && p.place === 'map') html = 'Газрын зураг: очих газраа хулганаар дарна (сумын төв, бууц)';
+    else if (!panels.isOpen && p.driving) html = '<kbd>W</kbd><kbd>S</kbd> явах/тоормос · <kbd>A</kbd><kbd>D</kbd> эргэх · <kbd>V</kbd> буух' + (p.place === 'camp' && Math.hypot(p.x - cfg.camps.home.x, p.z - cfg.camps.home.z) < cfg.vehicles.road.loadRange ? ' · <kbd>T</kbd> ачих/буулгах' : '') + ' · захын хязгаар руу явбал газрын зураг';
+    else if (!panels.isOpen && p.place === 'sum') {
+      const sh = cfg.worldmap.sum3d.shop;
+      const nearV = nearestVehicle(cfg, state, cfg.vehicles.road.enterRange);
+      html = Math.hypot(p.x - sh.x, p.z - sh.z) <= sh.r ? '<kbd>E</kbd> Худалдаачин' : nearV ? '<kbd>V</kbd> тэрэг/машиндаа суух' : p.mounted ? 'Худалдаачны дэлгүүр — шар тойрог. Буцахдаа захын хязгаар руу давхи' : 'Худалдаачны дэлгүүр — шар тойрог';
+    } else if (!p.away && !panels.isOpen) {
       const home = cfg.camps.home;
       const dHome = Math.hypot(p.x - home.x, p.z - home.z);
       const carried = p.carry.reduce((s, c) => s + c.amount, 0);
@@ -131,8 +137,10 @@ function start(): void {
       const horse = ridingHorse(state);
       if (carried >= cfg.products.carryUnits - 1e-9 && dHome > home.storageRadius) html = 'Гар дүүрсэн — майхны дэргэдэх агуулах руу авчир';
       else if (nearItems) html = `<kbd>E</kbd> түүх (${nearItems})`;
-      else if (dHome <= home.storageRadius * 2) html = `<kbd>B</kbd> агуулах, боловсруулах · <kbd>T</kbd> сумын төв рүү явах · <kbd>M</kbd> нүүх`;
+      else if (dHome <= home.storageRadius * 2) html = `<kbd>B</kbd> агуулах, боловсруулах · <kbd>T</kbd> сумын төвд зарах ачаа · <kbd>M</kbd> нүүх`;
+      else if (!p.mounted && nearestVehicle(cfg, state, cfg.vehicles.road.enterRange)) html = '<kbd>V</kbd> тэрэг/машиндаа суух';
       else if (!p.mounted && horse && Math.hypot(horse.x - p.x, horse.z - p.z) <= cfg.player.mountRange) html = '<kbd>F</kbd> морь унах';
+      else if (p.mounted && Math.hypot(p.x, p.z) > cfg.player.worldRadius - 25) html = 'Цааш давхивал газрын зураг руу гарна (сумын төв, өөр бууц)';
     }
     prompt.innerHTML = html;
     prompt.style.display = html ? 'block' : 'none';
@@ -157,7 +165,6 @@ function start(): void {
         steps++;
       }
       if (steps >= 60) acc = 0;
-      watchTrip();
     }
     const spm = secPerMinuteNow();
     view.frame(state, Math.min(1, acc / spm), paused ? 0 : dt, paused ? 0 : spm / speed);
@@ -191,10 +198,15 @@ function start(): void {
       const carryTxt = p.carry.length ? p.carry.map((c) => `${PRODUCT_EMOJI[c.product]}${fmtNum(c.amount)}`).join(' ') : '—';
       const onGround = state.items.length;
       let status = (p.mounted ? t('hud.mounted') : t('hud.onFoot')) + ' · ' + (p.holdingUurga ? t('hud.uurga') : t('hud.noUurga'));
-      if (state.trip) {
-        const tr = state.trip;
-        status = `${cfg.vehicles[tr.vehicle].emoji} ${tr.arrived ? 'Сумын төвөөс буцаж байна' : 'Сумын төв рүү явж байна'} · ${fmtMinutes(tr.total - tr.elapsed)}`;
-      } else if (state.move) status = `🏕 ${t('camp.' + state.move.to)} руу нүүж байна · ${fmtMinutes(state.move.remaining)}`;
+      const how = p.driving ? `${cfg.vehicles[p.driving].emoji} ${cfg.vehicles[p.driving].name}` : p.mounted ? '🐎 Морьтой' : '🚶 Явганаар';
+      if (p.place === 'map' && !state.move) {
+        const m = state.map;
+        const d = Math.hypot(m.tx - m.x, m.tz - m.z);
+        const where = m.dest ? (cfg.worldmap.locations[m.dest]?.kind === 'sum' ? 'Сумын төв' : t('camp.' + m.dest)) : 'зураг дээрх цэг';
+        status = d > 0.01 ? `🗺 ${how} → ${where} · ${d.toFixed(1)} км · ~${fmtMinutes(Math.round(d / partySpeedKmPerMin(cfg, state)))}${p.drove.length ? ` · 🐑 ${p.drove.length} мал тууж явна` : ''}` : `🗺 ${how} · газрын зураг дээр зогсож байна`;
+      } else if (p.place === 'sum') status = `🏘 Сумын төв · ${how}`;
+      else if (p.driving) status = how;
+      else if (state.move) status = `🏕 ${t('camp.' + state.move.to)} руу нүүж байна · ${fmtMinutes(state.move.remaining)}`;
       const hunts = huntingWolves(state);
       let alert = '';
       if (hunts.length) {

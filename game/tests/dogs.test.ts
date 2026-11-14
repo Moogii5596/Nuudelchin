@@ -1,3 +1,4 @@
+import { AutoTrip } from '../src/sim/autotrip';
 import { describe, expect, it } from 'vitest';
 import { cfg, newSim, steps } from './helpers';
 
@@ -94,9 +95,8 @@ describe('Нохой (M4, хэрэглэгчийн дүрэм: командуу�
   it('сумын төвөөс нохой авч, өдөр бүр хоолны зардал гарна', () => {
     const sim = newSim(42);
     sim.state.money = 2_000_000;
-    const r = sim.command({ type: 'trip', plan: { vehicle: 'horseCart', sell: {}, buy: [{ kind: 'dog' }] } });
-    expect(r.ok).toBe(true);
-    steps(sim, Math.round(cfg.vehicles.horseCart.oneWayHours * 120) + 1);
+    const t = AutoTrip.run(sim, { sell: {}, sellAnimalIds: [], buy: [{ kind: 'dog' }] });
+    expect(t.phase).toBe('done');
     expect(sim.state.dogs).toHaveLength(1);
     let food = 0;
     sim.on((e) => {

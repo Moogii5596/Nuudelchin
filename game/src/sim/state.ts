@@ -8,8 +8,9 @@ import { Rng } from './rng';
 import { buildGrid, type GrassGrid } from './systems/pasture';
 import { spawnWolves, type WolfState } from './systems/wolves';
 import type { Dog } from './systems/dogs';
+import { initFleetVehicle } from './systems/travel';
 
-export const SAVE_VERSION = 7;   // 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих · 6: нохой, чонын дайралт, сүргийн нүүдэл (M4) · 7: шөнө, хотлох, өглөөний бүтээгдэхүүн, Портер/Амжиргаа, шөнийн чоно (M4.5)
+export const SAVE_VERSION = 8;   // 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих · 6: нохой, чонын дайралт, сүргийн нүүдэл (M4) · 7: шөнө, хотлох, өглөөний бүтээгдэхүүн, Портер/Амжиргаа, шөнийн чоно (M4.5) · 8: газрын зураг, тээвэр жолоодох, ачаа, Худалдаачин (M4.6)
 
 export type ProductId = 'milk' | 'tarag' | 'aaruul' | 'urum' | 'wool' | 'felt' | 'cashmere';
 export const PRODUCTS: readonly ProductId[] = ['milk', 'tarag', 'aaruul', 'urum', 'wool', 'felt', 'cashmere'];
@@ -79,15 +80,28 @@ export type BuyOrder =
   | { kind: 'vehicle'; id: VehicleId }
   | { kind: 'dog' };
 
-export interface TripState {
-  vehicle: VehicleId;
-  elapsed: number;       // минут
-  total: number;
-  arrived: boolean;      // сумын төвд хүрсэн эсэх
-  cargo: Partial<Record<ProductId, number>>;
-  buy: BuyOrder[];
-  income: number;
-  bought: BuyOrder[];    // амжилттай худалдан авсан, буцахад хүргэгдэнэ
+/** Тоглогч хаана байна: camp = гэрийн бууцны 3D, sum = сумын төвийн 3D, map = газрын зураг (M4.6) */
+export type Place = 'camp' | 'sum' | 'map';
+
+/** Тээвэр бүрийн байрлал ба ачаа (M4.6) */
+export interface FleetVehicle {
+  id: VehicleId;
+  place: Place;
+  x: number;             // 3D байрлал (place-ийн координатаар, м)
+  z: number;
+  heading: number;
+  cargo: Partial<Record<ProductId, number>>;   // ачсан бүтээгдэхүүн
+  animals: Animal[];     // ачсан мал (зарах эсвэл худалдаж авсан)
+  orders: BuyOrder[];    // худалдаж авсан бараа — хотод буулгахад хүргэгдэнэ
+}
+
+/** Газрын зураг дээрх тоглогчийн байрлал (км) ба очих газар */
+export interface MapState {
+  x: number;
+  z: number;
+  tx: number;
+  tz: number;
+  dest: string | null;   // worldmap.locations-ийн түлхүүр, эсвэл null (зураг дээрх цэг)
 }
 
 export interface CampState {
@@ -114,7 +128,11 @@ export interface PlayerState {
   horseCalled: boolean;  // морь дуудсан (давхиж ирж байна)
   holdingUurga: boolean; // шилбүүр/богино уурга барьсан — зөвхөн энэ үед мал малчнаас айна (prototype-rules.md §4)
   carry: { product: ProductId; amount: number; age: number }[];
-  away: boolean;         // сумын төв рүү явсан
+  away: boolean;         // гэрийн бууцнаас гадуур (сумын төв, газрын зураг) эсвэл нүүж байна — sim тооцно
+  place: Place;          // M4.6
+  driving: VehicleId | null;   // жолоодож буй тээвэр
+  drove: Animal[];       // морьтой үед Худалдаачнаас авч араасаа тууж яваа мал (M4.6)
+  orders: BuyOrder[];    // морьтой үед авсан бараа — гэртээ ирэхэд хүргэгдэнэ
 }
 
 export interface GameState {
@@ -135,7 +153,8 @@ export interface GameState {
   storage: Batch[];
   processors: ProcessorState[];
   vehicles: VehicleId[];
-  trip: TripState | null;
+  fleet: FleetVehicle[];
+  map: MapState;
   move: { to: string; remaining: number } | null;   // бууц сэлгэж байгаа
   neighborBull: boolean;
   player: PlayerState;
@@ -200,7 +219,7 @@ export function createInitialState(cfg: GameConfig, seed: number): GameState {
   const camps: Record<string, CampState> = {};
   for (const id of Object.keys(cfg.camps.camps)) camps[id] = { degrade: 0, daysSpent: 0 };
   const grass = buildGrid(cfg, cfg.start.camp, 0, rng);
-  return {
+  const st: GameState = {
     version: SAVE_VERSION,
     seed,
     rngState: rng.state,
@@ -217,14 +236,19 @@ export function createInitialState(cfg: GameConfig, seed: number): GameState {
     storageLevel: cfg.start.storageLevel,
     storage: [],
     processors: [],
-    vehicles: cfg.start.vehicles as VehicleId[],
-    trip: null,
+    vehicles: [...cfg.start.vehicles] as VehicleId[],
+    fleet: [],
+    map: { x: 0, z: 0, tx: 0, tz: 0, dest: null },
     move: null,
     neighborBull: false,
-    player: { x: 2, z: 6, heading: 0, mounted: false, horseCalled: false, holdingUurga: false, carry: [], away: false },
+    player: { x: 2, z: 6, heading: 0, mounted: false, horseCalled: false, holdingUurga: false, carry: [], away: false, place: 'camp', driving: null, drove: [], orders: [] },
     wolves: spawnWolves(cfg, seed, cfg.start.camp),
     dogs: [],
     today: emptyDayStats(),
     goalReachedDay: null,
   };
+  const loc = cfg.worldmap.locations[cfg.start.camp];
+  if (loc) st.map = { x: loc.x, z: loc.z, tx: loc.x, tz: loc.z, dest: null };
+  for (const v of st.vehicles) initFleetVehicle(cfg, st, v);
+  return st;
 }

@@ -1,5 +1,6 @@
 /**
- * Цонхнууд (M3): агуулах ба боловсруулалт (B), сумын төв (T), өдрийн тайлан (20:00).
+ * Цонхнууд (M3): агуулах ба боловсруулалт (B), өдрийн тайлан (20:00).
+ * M4.6: ачаа (T, хотонд — гартаа авах, тээвэрт ачих/буулгах), Худалдаачин (E/T, сумын төвд), өөр бууцанд ирэх.
  * M4: нохойн команд (K), бууц сэлгэх (M), туршилтын цэс (`).
  * GameState-ийг зөвхөн уншиж, үйлдлийг Command-аар илгээнэ (architecture.md §3.1).
  * Цонх нээлттэй үед тоглоом түр зогсоно.
@@ -13,8 +14,8 @@ import type { DayReport } from '../../sim/sim';
 import * as storage from '../../sim/systems/storage';
 import { recipe } from '../../sim/systems/processing';
 import { animalSlots, bestTruck, orderPrice, productPrice } from '../../sim/systems/trip';
+import { animalRoom, atLoadingSpot, cargoSlots, cargoUnits, partySpeedKmPerMin, sellableAnimals, sellableAtShop } from '../../sim/systems/travel';
 import { salePrice } from '../../sim/systems/animals';
-import { realSecondsPerMinute } from '../../sim/clock';
 import { DOG_ORDER_NAME, type DogOrderKind } from '../../sim/systems/dogs';
 import { flockKey } from '../../sim/systems/herds';
 import { moveHours } from '../../sim/systems/camps';
@@ -25,7 +26,7 @@ import {
 } from './names';
 import { t } from '../../i18n/i18n';
 
-type Kind = 'storage' | 'trip' | 'report' | 'dogs' | 'camps' | 'cheat';
+type Kind = 'storage' | 'cargo' | 'shop' | 'arrive' | 'report' | 'dogs' | 'camps' | 'cheat';
 
 const HERD_NAME: Record<string, string> = { sheep: '🐑 Хонь ямаа', cow: '🐄 Үхэр', horse: '🐎 Адуу' };
 
@@ -57,8 +58,9 @@ const ANIMAL_CATALOG: { key: string; species: Species; sex: Sex; age: number; no
 ];
 
 interface Draft {
-  vehicle: VehicleId;
-  sell: Partial<Record<ProductId, number>>;
+  vehicle: VehicleId | null;    // ачих тээвэр (null = гартаа/морьтой)
+  take: Partial<Record<ProductId, number>>;   // агуулахаас гартаа
+  sell: Partial<Record<ProductId, number>>;   // ачих (хотонд) эсвэл зарах (сумын төвд)
   sellGroups: Record<string, number>;
   buyAnimals: Record<string, number>;
   buyItems: Set<string>;
@@ -78,6 +80,7 @@ export class Panels {
   private draft: Draft | null = null;
   private report: DayReport | null = null;
   private reports: DayReport[] = [];
+  private arriveCamp = '';
 
   constructor(private cfg: GameConfig, private state: GameState, private hooks: UiHooks) {
     this.root = document.getElementById('modal')!;
@@ -94,7 +97,7 @@ export class Panels {
         this.close();
       } else if (
         (e.code === 'KeyB' && this.kind === 'storage') ||
-        (e.code === 'KeyT' && this.kind === 'trip') ||
+        (e.code === 'KeyT' && (this.kind === 'cargo' || this.kind === 'shop')) ||
         (e.code === 'KeyK' && this.kind === 'dogs') ||
         (e.code === 'KeyM' && this.kind === 'camps') ||
         (e.code === 'Backquote' && this.kind === 'cheat')
@@ -108,22 +111,16 @@ export class Panels {
 
   open(kind: Kind): void {
     if (this.kind === 'report' && kind !== 'report') return; // тайланг эхлээд хаана
-    if (kind === 'trip') {
-      if (this.state.trip) {
-        this.hooks.toast('Тэрэг сумын төв рүү явсан байна', 'bad');
+    if (kind === 'cargo' || kind === 'shop') {
+      const st = this.state;
+      if (kind === 'shop' && st.player.place !== 'sum') return;
+      if (kind === 'cargo' && (st.player.place !== 'camp' || st.move)) {
+        this.hooks.toast('Ачаа хотондоо ачна', 'bad');
         return;
       }
-      if (this.state.player.away) {
-        this.hooks.toast('Малчин завгүй байна', 'bad');
-        return;
-      }
-      this.draft = {
-        vehicle: bestTruck(this.cfg, this.state) ?? 'horseCart',
-        sell: {},
-        sellGroups: {},
-        buyAnimals: {},
-        buyItems: new Set(),
-      };
+      const here = st.fleet.filter((f) => f.place === st.player.place);
+      const v = st.player.driving ?? here.sort((a, b) => this.cfg.vehicles[b.id].capacity - this.cfg.vehicles[a.id].capacity)[0]?.id ?? null;
+      this.draft = { vehicle: v, take: {}, sell: {}, sellGroups: {}, buyAnimals: {}, buyItems: new Set() };
     }
     this.kind = kind;
     this.root.style.display = 'flex';
@@ -159,10 +156,19 @@ export class Panels {
     if (this.kind === 'storage' || this.kind === 'dogs' || this.kind === 'camps') this.render();
   }
 
+  /** Газрын зураг дээр өөр бууцанд ирлээ */
+  showArrive(campId: string): void {
+    if (this.kind && this.kind !== 'report') this.close();
+    this.arriveCamp = campId;
+    if (this.kind !== 'report') this.open('arrive');
+  }
+
   private render(): void {
     const scroll = this.box.scrollTop;
     if (this.kind === 'storage') this.box.innerHTML = this.storageHtml();
-    else if (this.kind === 'trip') this.box.innerHTML = this.tripHtml();
+    else if (this.kind === 'cargo') this.box.innerHTML = this.cargoHtml();
+    else if (this.kind === 'shop') this.box.innerHTML = this.shopHtml();
+    else if (this.kind === 'arrive') this.box.innerHTML = this.arriveHtml();
     else if (this.kind === 'report') this.box.innerHTML = this.reportHtml();
     else if (this.kind === 'dogs') this.box.innerHTML = this.dogsHtml();
     else if (this.kind === 'camps') this.box.innerHTML = this.campsHtml();
@@ -216,9 +222,9 @@ export class Panels {
   }
 
   // ======================= сумын төв =======================
-  private animalGroups(): { key: string; label: string; list: Animal[] }[] {
+  private animalGroups(src: Animal[] = this.state.animals): { key: string; label: string; list: Animal[] }[] {
     const groups = new Map<string, { key: string; label: string; list: Animal[] }>();
-    for (const a of this.state.animals) {
+    for (const a of src) {
       if (a.riding) continue;
       const label = stageName(this.cfg, a.species, a.sex, a.age);
       const key = `${a.species}|${a.sex}|${label}`;
@@ -244,109 +250,202 @@ export class Panels {
     if (next) out.push({ key: 'storage', label: state.storageLevel === 0 ? 'Модон амбаар' : 'Том агуулах', note: `Багтаамж ${next.capacity} нэгж`, order: { kind: 'storage' } });
     if (state.home !== 'ger') out.push({ key: 'ger', label: 'Гэр (4 ханатай)', note: 'Зорилго: гэр + 40 хонин толгой', order: { kind: 'ger' } });
     if (state.dogs.length < cfg.dogs.maxDogs) out.push({ key: 'dog', label: 'Нохой (банхар)', note: `10 м хамгаалалтын бүс, ойртсон чоныг хөөнө · хоол өдөрт ${fmtMoney(cfg.dogs.foodPerDay)} · K — команд`, order: { kind: 'dog' } });
-    for (const id of ['porter', 'amjirgaa'] as const) {
+    for (const id of ['horseCart', 'porter', 'amjirgaa'] as const) {
       if (state.vehicles.includes(id)) continue;
       const v = cfg.vehicles[id];
-      out.push({ key: id, label: `${v.emoji} ${v.name} (ачааны машин)`, note: `${v.capacity} нэгж, ${v.sheepSlots} хонь / ${v.cowSlots} үхэр, нэг тийш ${Math.round(v.oneWayHours * 60)} мин, ${v.fuelPer100km} л/100 км`, order: { kind: 'vehicle', id } });
+      const kmh = Math.round(cfg.vehicles.sumCenterKm / v.oneWayHours);
+      out.push({ key: id, label: `${v.emoji} ${v.name}${v.truck ? ' (ачааны машин)' : ''}`, note: `${v.capacity} нэгж, ${v.sheepSlots} хонь / ${v.cowSlots} үхэр, ${kmh} км/ц${v.fuelPer100km ? `, ${v.fuelPer100km} л/100 км` : ''} · гэрт тань хүргэнэ`, order: { kind: 'vehicle', id } });
     }
     return out;
   }
 
-  private planFromDraft(): { sell: Partial<Record<ProductId, number>>; sellIds: number[]; buy: BuyOrder[] } {
-    const d = this.draft!;
-    const sellIds: number[] = [];
-    for (const g of this.animalGroups()) {
-      const n = d.sellGroups[g.key] ?? 0;
-      // Тухайн бүлгийн хамгийн хөгшнөөс нь
-      g.list.slice().sort((a, b) => b.age - a.age).slice(0, n).forEach((a) => sellIds.push(a.id));
-    }
-    const buy: BuyOrder[] = [];
-    for (const c of ANIMAL_CATALOG) for (let i = 0; i < (d.buyAnimals[c.key] ?? 0); i++) buy.push({ kind: 'animal', species: c.species, sex: c.sex, age: c.age });
-    for (const it of this.buyItems()) if (d.buyItems.has(it.key)) buy.push(it.order);
-    const sell: Partial<Record<ProductId, number>> = {};
-    for (const [p, n] of Object.entries(d.sell)) if ((n ?? 0) > 0) sell[p as ProductId] = n;
-    return { sell, sellIds, buy };
-  }
-
-  private tripHtml(): string {
+  private vehicleButtons(): string {
     const { cfg, state } = this;
     const d = this.draft!;
-    const v = cfg.vehicles[d.vehicle];
-    const plan = this.planFromDraft();
-    const units = Object.values(plan.sell).reduce((s, n) => s + (n ?? 0), 0);
-    const sellSlots = plan.sellIds.reduce((s, id) => s + animalSlots(cfg, d.vehicle, state.animals.find((a) => a.id === id)?.species ?? 'sheep'), 0);
-    const buySlots = plan.buy.reduce((s, o) => s + (o.kind === 'animal' ? animalSlots(cfg, d.vehicle, o.species) : 0), 0);
-    const income = Object.entries(plan.sell).reduce((s, [p, n]) => s + (n ?? 0) * productPrice(cfg, p as ProductId), 0)
-      + plan.sellIds.reduce((s, id) => {
-        const a = state.animals.find((x) => x.id === id);
-        return s + (a ? salePrice(a, cfg.animals) : 0);
-      }, 0);
-    const cost = plan.buy.reduce((s, o) => s + orderPrice(cfg, state, o), 0);
-    const fuel = ((cfg.vehicles.sumCenterKm * 2 * v.fuelPer100km) / 100) * cfg.vehicles.fuelPricePerL;
-    const after = state.money + income - cost - fuel;
-    const tripMin = Math.round(v.oneWayHours * 2 * 60);
-    const realSec = tripMin * realSecondsPerMinute(cfg.time, state.time.minute);
+    const here = state.fleet.filter((f) => f.place === state.player.place);
+    const btn = (id: VehicleId | null, label: string) => `<button class="btn ${id === d.vehicle ? 'gold' : ''}" data-act="veh:${id ?? ''}">${label}</button>`;
+    return here.map((f) => btn(f.id, `${cfg.vehicles[f.id].emoji} ${cfg.vehicles[f.id].name}`)).join(' ');
+  }
 
-    const vehicles = state.vehicles.map((id) => `<button class="btn ${id === d.vehicle ? 'gold' : ''}" data-act="veh:${id}">${cfg.vehicles[id].emoji} ${cfg.vehicles[id].name} (${cfg.vehicles[id].capacity})</button>`).join(' ');
+  private cargoList(): string {
+    const { cfg, state } = this;
+    const d = this.draft!;
+    const f = d.vehicle ? state.fleet.find((x) => x.id === d.vehicle) : null;
+    if (!f) return '';
+    const v = cfg.vehicles[f.id];
+    const prod = Object.entries(f.cargo).map(([p, n]) => `${PRODUCT_EMOJI[p as ProductId]} ${fmtNum(n ?? 0)} ${unitOf(p)}`).join(' · ');
+    const an = this.animalGroups(f.animals).map((g) => `${g.label} ${g.list.length}`).join(' · ');
+    const ord = f.orders.length ? `${f.orders.length} бараа` : '';
+    const parts = [prod, an, ord].filter(Boolean).join(' · ');
+    return `<p>Ачаа: <b>${fmtNum(cargoUnits(f))}/${v.capacity}</b> нэгж · мал ${fmtNum(cargoSlots(cfg, f))}/${v.sheepSlots} байр${parts ? ` — ${parts}` : ' — хоосон'}</p>`;
+  }
 
-    const prodRows = PRODUCTS.map((p) => {
-      const have = storage.count(state, p);
+  // ======================= ачаа (хотонд, T) =======================
+  private cargoHtml(): string {
+    const { cfg, state } = this;
+    const d = this.draft!;
+    const p = state.player;
+    const carried = p.carry.reduce((s, c) => s + c.amount, 0);
+    const room = Math.max(0, cfg.products.carryUnits - carried);
+    const takeUnits = Object.values(d.take).reduce((s, n) => s + (n ?? 0), 0);
+    const nearStore = Math.hypot(p.x - cfg.camps.home.x, p.z - cfg.camps.home.z) <= cfg.camps.home.storageRadius * 2;
+    const takeRows = PRODUCTS.map((pr) => {
+      const have = storage.count(state, pr);
       if (have <= 1e-9) return '';
-      const n = d.sell[p] ?? 0;
-      return `<tr><td>${PRODUCT_EMOJI[p]} ${productName(p)} <span class="muted">(${fmtNum(have)} ${unitOf(p)})</span></td><td class="num">${fmtMoney(productPrice(cfg, p))}</td>
-        <td class="ctl"><button class="btn sm" data-act="sell-:${p}">−</button><b>${fmtNum(n)}</b><button class="btn sm" data-act="sell+:${p}">+</button><button class="btn sm" data-act="sellAll:${p}">бүгд</button></td></tr>`;
+      const n = d.take[pr] ?? 0;
+      return `<tr><td>${PRODUCT_EMOJI[pr]} ${productName(pr)} <span class="muted">(${fmtNum(have)} ${unitOf(pr)})</span></td><td class="num">${fmtMoney(productPrice(cfg, pr))}</td>
+        <td class="ctl"><button class="btn sm" data-act="take-:${pr}">−</button><b>${fmtNum(n)}</b><button class="btn sm" data-act="take+:${pr}">+</button><button class="btn sm" data-act="takeAll:${pr}">бүгд</button></td></tr>`;
     }).join('');
+    let html = `<h2>🧺 Сумын төв рүү ачаа бэлтгэх <span class="close" data-act="close">✕</span></h2>
+      <p class="muted">Морь унаж эсвэл тэрэг, машиндаа сууж (V) бууцны захын хязгаарт хүрэхэд газрын зураг гарна. Тэндээс сумын төв дээр дарж Худалдаачинд оч.</p>
+      <h3>✋ Гартаа авах (морьтой явахад) — гарт ${fmtNum(carried)}/${cfg.products.carryUnits}</h3>
+      <table>${takeRows || '<tr><td class="muted">Агуулах хоосон</td></tr>'}</table>
+      <p><button class="btn gold" data-act="doTake" ${takeUnits > 0 && takeUnits <= room + 1e-9 && nearStore ? '' : 'disabled'}>Гартаа авах (${fmtNum(takeUnits)})</button>
+      ${!nearStore ? ' <span class="bad">Агуулахын дэргэд оч</span>' : takeUnits > room + 1e-9 ? ` <span class="bad">Гарт ${fmtNum(room)} нэгж л багтана</span>` : ''}</p>`;
 
-    const animalRows = this.animalGroups().map((g) => {
+    // Морьтой: мал тууж явах
+    const groups = this.animalGroups();
+    if (p.mounted) {
+      const rows = groups.map((g) => {
+        const n = d.sellGroups[g.key] ?? 0;
+        return `<tr><td>${g.label} <span class="muted">(${g.list.length})</span></td><td class="num">~${fmtMoney(salePrice(g.list[0]!, cfg.animals))}</td>
+          <td class="ctl"><button class="btn sm" data-act="ag-:${g.key}">−</button><b>${n}</b><button class="btn sm" data-act="ag+:${g.key}">+</button></td></tr>`;
+      }).join('');
+      if (!d.vehicle) html += `<h3>🐎 Морьтой: мал араасаа тууж очиж зарах</h3><p class="muted">Мал тууж явбал газрын зураг дээр ${fmtNum(cfg.vehicles.riding.droveKmh)} км/ц болж удаашрна.</p>
+        <table>${rows}</table><p><button class="btn gold" data-act="doDrove">Араасаа тууж явах</button></p>`;
+    }
+    if (!state.fleet.some((f) => f.place === 'camp')) {
+      html += `<p class="muted">Тэрэг, машин алга. Морин тэрэг, Портер, Амжиргаа цагааныг Худалдаачнаас авч болно — илүү их ачаа, мал зөөнө.</p>`;
+      return html;
+    }
+    html += `<h3>🚚 Тэрэг, машинд ачих</h3><p>${this.vehicleButtons()}</p>`;
+    const f = d.vehicle ? state.fleet.find((x) => x.id === d.vehicle) : null;
+    if (!f) return html;
+    const v = cfg.vehicles[f.id];
+    const atSpot = atLoadingSpot(cfg, state, f);
+    const loadUnits = Object.values(d.sell).reduce((s, n) => s + (n ?? 0), 0);
+    const loadRows = PRODUCTS.map((pr) => {
+      const have = storage.count(state, pr);
+      if (have <= 1e-9) return '';
+      const n = d.sell[pr] ?? 0;
+      return `<tr><td>${PRODUCT_EMOJI[pr]} ${productName(pr)} <span class="muted">(${fmtNum(have)} ${unitOf(pr)})</span></td><td class="num">${fmtMoney(productPrice(cfg, pr))}</td>
+        <td class="ctl"><button class="btn sm" data-act="sell-:${pr}">−</button><b>${fmtNum(n)}</b><button class="btn sm" data-act="sell+:${pr}">+</button><button class="btn sm" data-act="sellAll:${pr}">бүгд</button></td></tr>`;
+    }).join('');
+    const animalRows = groups.map((g) => {
       const n = d.sellGroups[g.key] ?? 0;
-      const sample = g.list.slice().sort((a, b) => b.age - a.age)[0]!;
-      return `<tr><td>${g.label} <span class="muted">(${g.list.length})</span></td><td class="num">~${fmtMoney(salePrice(sample, cfg.animals))}</td>
+      return `<tr><td>${g.label} <span class="muted">(${g.list.length})</span></td><td class="num">~${fmtMoney(salePrice(g.list[0]!, cfg.animals))}</td>
         <td class="ctl"><button class="btn sm" data-act="ag-:${g.key}">−</button><b>${n}</b><button class="btn sm" data-act="ag+:${g.key}">+</button></td></tr>`;
     }).join('');
+    const loadSlots = this.selectedAnimals(groups).reduce((s, a) => s + animalSlots(cfg, f.id, a.species), 0);
+    const errs: string[] = [];
+    if (cargoUnits(f) + loadUnits > v.capacity + 1e-9) errs.push(`Ачаа багтахгүй (${v.capacity} нэгж)`);
+    if (cargoSlots(cfg, f) + loadSlots > v.sheepSlots + 1e-9) errs.push(`Мал багтахгүй (${v.sheepSlots} хонь эсвэл ${v.cowSlots} үхэр)`);
+    if (!atSpot) errs.push('Тээврээ майхны дэргэд авчир');
+    html += this.cargoList() + `
+      <table><tr><th>Агуулахаас ачих</th><th class="num">Үнэ</th><th></th></tr>${loadRows || '<tr><td class="muted">Агуулах хоосон</td></tr>'}</table>
+      <table><tr><th>Зарахаар ачих мал</th><th class="num">~Үнэ</th><th></th></tr>${animalRows}</table>
+      ${errs.length ? `<p class="bad">${errs.join(' · ')}</p>` : ''}
+      <p><button class="btn gold" data-act="doLoad" ${errs.length || (!loadUnits && !loadSlots) ? 'disabled' : ''}>Ачих</button>
+      <button class="btn" data-act="doUnload" ${atSpot && (cargoUnits(f) || f.animals.length || f.orders.length) ? '' : 'disabled'}>Бүгдийг буулгах</button></p>`;
+    return html;
+  }
 
+  private selectedAnimals(groups: { key: string; list: Animal[] }[]): Animal[] {
+    const d = this.draft!;
+    const out: Animal[] = [];
+    for (const g of groups) out.push(...g.list.slice().sort((a, b) => b.age - a.age).slice(0, d.sellGroups[g.key] ?? 0));
+    return out;
+  }
+
+  // ======================= Худалдаачин (сумын төвд, E/T) =======================
+  private shopHtml(): string {
+    const { cfg, state } = this;
+    const d = this.draft!;
+    const p = state.player;
+    const near = Math.hypot(p.x - cfg.worldmap.sum3d.shop.x, p.z - cfg.worldmap.sum3d.shop.z) <= cfg.worldmap.sum3d.shop.r;
+    const have = sellableAtShop(state);
+    const sellRows = PRODUCTS.map((pr) => {
+      const n0 = have[pr] ?? 0;
+      if (n0 <= 1e-9) return '';
+      const n = d.sell[pr] ?? 0;
+      return `<tr><td>${PRODUCT_EMOJI[pr]} ${productName(pr)} <span class="muted">(${fmtNum(n0)} ${unitOf(pr)})</span></td><td class="num">${fmtMoney(productPrice(cfg, pr))}</td>
+        <td class="ctl"><button class="btn sm" data-act="sell-:${pr}">−</button><b>${fmtNum(n)}</b><button class="btn sm" data-act="sell+:${pr}">+</button><button class="btn sm" data-act="sellAll:${pr}">бүгд</button></td></tr>`;
+    }).join('');
+    const groups = this.animalGroups(sellableAnimals(state));
+    const animalRows = groups.map((g) => {
+      const n = d.sellGroups[g.key] ?? 0;
+      return `<tr><td>${g.label} <span class="muted">(${g.list.length})</span></td><td class="num">~${fmtMoney(salePrice(g.list[0]!, cfg.animals))}</td>
+        <td class="ctl"><button class="btn sm" data-act="ag-:${g.key}">−</button><b>${n}</b><button class="btn sm" data-act="ag+:${g.key}">+</button></td></tr>`;
+    }).join('');
     const buyAnimalRows = ANIMAL_CATALOG.map((c) => {
       const n = d.buyAnimals[c.key] ?? 0;
       const price = orderPrice(cfg, state, { kind: 'animal', species: c.species, sex: c.sex, age: c.age });
       return `<tr><td>${speciesEmoji(c.species)} ${stageName(cfg, c.species, c.sex, c.age)} <span class="muted">${c.note}</span></td><td class="num">${fmtMoney(price)}</td>
         <td class="ctl"><button class="btn sm" data-act="ba-:${c.key}">−</button><b>${n}</b><button class="btn sm" data-act="ba+:${c.key}">+</button></td></tr>`;
     }).join('');
-
     const itemRows = this.buyItems().map((it) => {
       const on = d.buyItems.has(it.key);
       return `<tr><td>${it.label} <span class="muted">${it.note}</span></td><td class="num">${fmtMoney(orderPrice(cfg, state, it.order))}</td>
         <td class="ctl"><button class="btn sm ${on ? 'gold' : ''}" data-act="bi:${it.key}">${on ? '✓ Авна' : 'Авах'}</button></td></tr>`;
     }).join('');
+    const plan = this.shopPlan();
+    const income = Object.entries(plan.sell).reduce((s, [k, n]) => s + (n ?? 0) * productPrice(cfg, k as ProductId), 0)
+      + sellableAnimals(state).filter((a) => plan.sellAnimalIds.includes(a.id)).reduce((s, a) => s + salePrice(a, cfg.animals), 0);
+    const cost = plan.buy.reduce((s, o) => s + orderPrice(cfg, state, o), 0);
+    const after = state.money + income - cost;
+    const f = p.driving ? state.fleet.find((x) => x.id === p.driving) : null;
+    const buySlots = plan.buy.reduce((s, o) => s + (o.kind === 'animal' ? (f ? animalSlots(cfg, f.id, o.species) : 1) : 0), 0);
+    const freed = f ? sellableAnimals(state).filter((a) => plan.sellAnimalIds.includes(a.id)).reduce((s, a) => s + animalSlots(cfg, f.id, a.species), 0) : 0;
+    const roomOk = buySlots <= animalRoom(cfg, state) + freed + 1e-9;
+    const how = f ? `${cfg.vehicles[f.id].emoji} ${cfg.vehicles[f.id].name}` : '🐎 Морьтой';
+    const animalNote = f ? `Авсан мал тэвшинд ачигдана (${cfg.vehicles[f.id].sheepSlots} хонь эсвэл ${cfg.vehicles[f.id].cowSlots} үхэр)` : `Морьтой бол авсан малаа араасаа тууж харина — газрын зураг дээр ${fmtNum(cfg.vehicles.riding.droveKmh)} км/ц`;
+    const empty = !Object.keys(plan.sell).length && !plan.sellAnimalIds.length && !plan.buy.length;
+    return `<h2>🏪 Худалдаачин <span class="close" data-act="close">✕</span></h2>
+      <p>${how} · Мөнгө: <b>${fmtMoney(state.money)}</b>${f ? ' · ' : ''}${this.cargoList().replace(/^<p>|<\/p>$/g, '')}</p>
+      <table><tr><th>Зарах</th><th class="num">Үнэ</th><th></th></tr>${sellRows || '<tr><td class="muted">Зарах бүтээгдэхүүн алга — хотондоо гартаа эсвэл тэргэндээ ачиж ир (T)</td></tr>'}</table>
+      ${groups.length ? `<table><tr><th>Мал зарах</th><th class="num">~Үнэ</th><th></th></tr>${animalRows}</table>` : ''}
+      <table><tr><th>Мал авах</th><th class="num">Үнэ</th><th></th></tr>${buyAnimalRows}</table>
+      <p class="muted">${animalNote}</p>
+      <table><tr><th>Бараа авах</th><th class="num">Үнэ</th><th></th></tr>${itemRows}</table>
+      <table><tr class="total"><td>Орлого</td><td class="num">+${fmtMoney(income)}</td></tr><tr class="total"><td>Зардал</td><td class="num">−${fmtMoney(cost)}</td></tr>
+      <tr class="total"><td><b>Дараа нь</b></td><td class="num"><b class="${after < 0 ? 'bad' : ''}">${fmtMoney(after)}</b></td></tr></table>
+      ${!roomOk ? '<p class="bad">Авах мал тэвшинд багтахгүй</p>' : ''}${after < 0 ? '<p class="bad">Мөнгө хүрэхгүй — хүрэлцэхгүй бараа авагдахгүй</p>' : ''}
+      ${!near ? '<p class="bad">Худалдаачны дэлгүүрийн дэргэд (шар тойрог) оч</p>' : ''}
+      <p><button class="btn gold" data-act="doTrade" ${empty || !near ? 'disabled' : ''}>Арилжаа хийх</button>
+      <label class="muted"><input type="checkbox" data-act="bull" ${state.neighborBull ? 'checked' : ''}> Хөршийн бух тавиулах (үнээ бүрт ${fmtMoney(cfg.economy.neighborBullFee)})</label></p>`;
+  }
 
-    const errs: string[] = [];
-    if (units > v.capacity + 1e-9) errs.push(`Ачаа багтахгүй: ${fmtNum(units)}/${v.capacity}`);
-    if (sellSlots > v.sheepSlots + 1e-9) errs.push(`Зарах мал багтахгүй (${v.sheepSlots} хонь эсвэл ${v.cowSlots} үхэр)`);
-    if (buySlots > v.sheepSlots + 1e-9) errs.push(`Авах мал багтахгүй (${v.sheepSlots} хонь эсвэл ${v.cowSlots} үхэр)`);
-    const warn = after < 0 ? `<p class="bad">Мөнгө хүрэхгүй: зарсны дараа ${fmtMoney(state.money + income - fuel)} байна. Хүрэлцэхгүй бараа авагдахгүй.</p>` : '';
-    const empty = !units && !plan.sellIds.length && !plan.buy.length;
-    const near = Math.hypot(state.player.x - cfg.camps.home.x, state.player.z - cfg.camps.home.z) <= cfg.camps.home.storageRadius * 2;
+  private shopPlan(): { sell: Partial<Record<ProductId, number>>; sellAnimalIds: number[]; buy: BuyOrder[] } {
+    const d = this.draft!;
+    const sell: Partial<Record<ProductId, number>> = {};
+    for (const [k, n] of Object.entries(d.sell)) if ((n ?? 0) > 0) sell[k as ProductId] = n;
+    const sellAnimalIds = this.selectedAnimals(this.animalGroups(sellableAnimals(this.state))).map((a) => a.id);
+    const buy: BuyOrder[] = [];
+    for (const c of ANIMAL_CATALOG) for (let i = 0; i < (d.buyAnimals[c.key] ?? 0); i++) buy.push({ kind: 'animal', species: c.species, sex: c.sex, age: c.age });
+    for (const it of this.buyItems()) if (d.buyItems.has(it.key)) buy.push(it.order);
+    return { sell, sellAnimalIds, buy };
+  }
 
-    return `
-      <h2>🏘 Сумын төв рүү явах <span class="close" data-act="close">✕</span></h2>
-      <p>${vehicles}</p>
-      <p class="muted">Хоёр тийш ${fmtMinutes(tripMin)} (1× хурдаар ~${Math.round(realSec)} сек). Энэ хугацаанд малчин явна: сүрэг хараа хяналтгүй, газарт унасан сүү исэлж, тараг болно.${fuel ? ` Бензин ${fmtMoney(fuel)}.` : ''}</p>
-      <h3>Зарах бүтээгдэхүүн <span class="muted">${fmtNum(units)} / ${v.capacity} нэгж</span></h3>
-      <div class="bar"><div style="width:${Math.min(100, (units / v.capacity) * 100)}%"></div></div>
-      <table>${prodRows || '<tr><td class="muted">Агуулахад зарах бүтээгдэхүүн алга.</td></tr>'}</table>
-      <h3>Мал зарах <span class="muted">${fmtNum(sellSlots)} / ${v.sheepSlots} байр</span></h3>
-      <table>${animalRows}</table>
-      <h3>Мал авах <span class="muted">${fmtNum(buySlots)} / ${v.sheepSlots} байр</span></h3>
-      <table>${buyAnimalRows}</table>
-      <h3>Бараа авах</h3>
-      <table>${itemRows || '<tr><td class="muted">Бүгдийг авсан байна.</td></tr>'}</table>
-      <p><label><input type="checkbox" data-act="bull" ${state.neighborBull ? 'checked' : ''}> Хөршийн бух тавиулах (бухгүй бол үнээ бүрт ${fmtMoney(cfg.economy.neighborBullFee)}, тугалах үед)</label></p>
-      <div class="sum">
-        <div>Орлого: <b class="good">+${fmtMoney(income)}</b></div>
-        <div>Зардал: <b class="bad">${fmtMoney(-(cost + fuel))}</b></div>
-        <div>Дараа нь мөнгө: <b>${fmtMoney(after)}</b></div>
-      </div>
-      ${errs.map((e) => `<p class="bad">${e}</p>`).join('')}${warn}
-      ${near ? '' : '<p class="bad">Тэрэг майхны дэргэд байна — тийшээ оч.</p>'}
-      <p><button class="btn gold big" data-act="go" ${errs.length || empty || !near ? 'disabled' : ''}>Явах</button> <button class="btn" data-act="close">Болих</button></p>`;
+  // ======================= өөр бууцанд ирэх (газрын зураг) =======================
+  private arriveHtml(): string {
+    const { cfg, state } = this;
+    const id = this.arriveCamp;
+    const c = cfg.camps.camps[id];
+    const cs = state.camps[id];
+    if (!c || !cs) return '';
+    const deg = cfg.pasture.degradation;
+    const types = [...new Set(c.rings.map(([, ty]) => ty).filter((ty) => ty !== 'camp'))].map((ty) => PASTURE_NAME[ty] ?? ty).join(', ');
+    const hours = moveHours(cfg, state, false);
+    const kmh = partySpeedKmPerMin(cfg, state) * 60;
+    return `<h2>🏕 ${t('camp.' + id)} <span class="close" data-act="close">✕</span></h2>
+      <table>
+      <tr><td>Бэлчээр</td><td>${types}</td></tr>
+      <tr><td>Ус</td><td>${WATER_NAME[c.water] ?? c.water}</td></tr>
+      <tr><td>Чоно</td><td>${WOLF_LEVEL_NAME[c.wolfLevel] ?? c.wolfLevel}</td></tr>
+      <tr><td>Доройтол</td><td>${Math.round(cs.degrade * 100)}% · өвс ургах хурд ${Math.round((1 - deg.growthPenalty * cs.degrade) * 100)}%</td></tr>
+      </table>
+      <p>Энд нүүвэл гэр бүл, сүрэг тань араас нүүж ирнэ: ~${fmtMinutes(Math.round(hours * 60))}. Тэр хооронд гэрийн бууцанд газарт үлдсэн бүтээгдэхүүн хаягдана.</p>
+      <p><button class="btn gold" data-act="migrate">🏕 Энд нүүх</button> <button class="btn" data-act="close">Үргэлжлүүлэх (газрын зураг, ${Math.round(kmh)} км/ц)</button></p>`;
   }
 
   // ======================= өдрийн тайлан =======================
@@ -442,7 +541,7 @@ export class Panels {
     const su = herdSheepUnits(state, cfg.animals);
     const gainPerDay = deg.gainPerDayAtCapacity * (su / deg.campCapacitySheepUnits);
     const near = Math.hypot(state.player.x - cfg.camps.home.x, state.player.z - cfg.camps.home.z) <= cfg.camps.home.storageRadius * 2;
-    const busy = Boolean(state.trip || state.move || state.player.away);
+    const busy = Boolean(state.move || state.player.away || state.player.driving);
     const rows = Object.entries(cfg.camps.camps).map(([id, c]) => {
       const cs = state.camps[id]!;
       const here = id === state.campId;
@@ -499,18 +598,88 @@ export class Panels {
         break;
       }
       case 'veh':
-        if (d) d.vehicle = arg as VehicleId;
+        if (d) {
+          d.vehicle = (arg || null) as VehicleId | null;
+          d.sell = {};
+          d.sellGroups = {};
+        }
         break;
+      case 'take+':
+      case 'take-':
+      case 'takeAll': {
+        if (!d) break;
+        const p = arg as ProductId;
+        const have = storage.count(state, p);
+        const cur = d.take[p] ?? 0;
+        const step = p === 'cashmere' ? 0.1 : p === 'wool' ? 0.5 : 1;
+        const carried = state.player.carry.reduce((s2, c) => s2 + c.amount, 0);
+        const others = Object.entries(d.take).reduce((s2, [k, n]) => s2 + (k === p ? 0 : n ?? 0), 0);
+        const room = Math.max(0, cfg.products.carryUnits - carried - others);
+        let n = cmd === 'takeAll' ? Math.min(have, room) : cmd === 'take+' ? Math.min(have, room, cur + step) : Math.max(0, cur - step);
+        n = Math.round(n * 10) / 10;
+        d.take[p] = n;
+        break;
+      }
+      case 'doTake': {
+        if (!d) break;
+        const r = this.hooks.dispatch({ type: 'takeFromStorage', products: d.take });
+        this.hooks.toast(r.msg ?? '', r.ok ? 'good' : 'bad');
+        d.take = {};
+        break;
+      }
+      case 'doDrove': {
+        if (!d) break;
+        const ids = this.selectedAnimals(this.animalGroups()).map((a2) => a2.id);
+        const r = this.hooks.dispatch({ type: 'droveAnimals', animalIds: ids });
+        this.hooks.toast(r.msg ?? '', r.ok ? 'good' : 'bad');
+        d.sellGroups = {};
+        break;
+      }
+      case 'doLoad': {
+        if (!d || !d.vehicle) break;
+        const ids = this.selectedAnimals(this.animalGroups()).map((a2) => a2.id);
+        const r = this.hooks.dispatch({ type: 'loadCargo', vehicle: d.vehicle, products: d.sell, animalIds: ids });
+        this.hooks.toast(r.msg ?? '', r.ok ? 'good' : 'bad');
+        if (r.ok) {
+          d.sell = {};
+          d.sellGroups = {};
+        }
+        break;
+      }
+      case 'doUnload': {
+        if (!d || !d.vehicle) break;
+        const r = this.hooks.dispatch({ type: 'unloadCargo', vehicle: d.vehicle });
+        this.hooks.toast(r.msg ?? '', r.ok ? 'good' : 'bad');
+        break;
+      }
+      case 'doTrade': {
+        if (!d) break;
+        const r = this.hooks.dispatch({ type: 'trade', plan: this.shopPlan() });
+        this.hooks.toast(r.msg ?? '', r.ok ? 'good' : 'bad');
+        this.draft = { vehicle: d.vehicle, take: {}, sell: {}, sellGroups: {}, buyAnimals: {}, buyItems: new Set() };
+        break;
+      }
+      case 'migrate': {
+        const r = this.hooks.dispatch({ type: 'migrateHere' });
+        this.hooks.toast(r.msg ?? '', r.ok ? 'good' : 'bad');
+        if (r.ok) {
+          this.close();
+          return;
+        }
+        break;
+      }
       case 'sell+':
       case 'sell-':
       case 'sellAll': {
         if (!d) break;
         const p = arg as ProductId;
-        const have = storage.count(state, p);
+        const shop = this.kind === 'shop';
+        const have = shop ? sellableAtShop(state)[p] ?? 0 : storage.count(state, p);
         const cur = d.sell[p] ?? 0;
         const step = p === 'cashmere' ? 0.1 : p === 'wool' ? 0.5 : 1;
         const units = Object.entries(d.sell).reduce((s, [k, n]) => s + (k === p ? 0 : n ?? 0), 0);
-        const room = Math.max(0, cfg.vehicles[d.vehicle].capacity - units);
+        const f = d.vehicle ? state.fleet.find((x) => x.id === d.vehicle) : null;
+        const room = shop ? Infinity : f ? Math.max(0, cfg.vehicles[f.id].capacity - cargoUnits(f) - units) : 0;
         let n = cmd === 'sellAll' ? Math.min(have, room) : cmd === 'sell+' ? Math.min(have, cur + step) : Math.max(0, cur - step);
         n = Math.round(n * 10) / 10;
         d.sell[p] = n;
@@ -519,7 +688,7 @@ export class Panels {
       case 'ag+':
       case 'ag-': {
         if (!d) break;
-        const g = this.animalGroups().find((x) => x.key === arg);
+        const g = this.animalGroups(this.kind === 'shop' ? sellableAnimals(state) : state.animals).find((x) => x.key === arg);
         const cur = d.sellGroups[arg] ?? 0;
         d.sellGroups[arg] = cmd === 'ag+' ? Math.min(g?.list.length ?? 0, cur + 1) : Math.max(0, cur - 1);
         break;
@@ -570,18 +739,6 @@ export class Panels {
       case 'bull': {
         const on = !state.neighborBull;
         this.hooks.dispatch({ type: 'neighborBull', on });
-        break;
-      }
-      case 'go': {
-        if (!d) break;
-        const plan = this.planFromDraft();
-        const r = this.hooks.dispatch({ type: 'trip', plan: { vehicle: d.vehicle, sell: plan.sell, sellAnimalIds: plan.sellIds, buy: plan.buy } });
-        if (r.ok) {
-          this.hooks.toast(`${cfg.vehicles[d.vehicle].emoji} ${cfg.vehicles[d.vehicle].name} сумын төв рүү явлаа`, 'good');
-          this.close();
-          return;
-        }
-        this.hooks.toast(r.msg ?? 'Явж чадсангүй', 'bad');
         break;
       }
     }

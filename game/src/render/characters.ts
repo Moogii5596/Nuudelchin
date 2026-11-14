@@ -10,13 +10,13 @@ import type { Wolf } from '../sim/systems/wolves';
 import type { Dog } from '../sim/systems/dogs';
 import { angDiff, limb, meshBox, mat } from './util';
 
-interface Rig {
+export interface Rig {
   root: THREE.Group;
   legs: THREE.Group[];
   arms: THREE.Group[];
 }
 
-function makeHerder(): Rig {
+export function makeHerder(): Rig {
   const g = new THREE.Group();
   // Нуруун дээрх уут (гарт барьсан бүтээгдэхүүн)
   const sack = meshBox(0.5, 0.6, 0.3, 0xb89a6a, 0, 1.35, -0.38, g);
@@ -51,7 +51,7 @@ function makeHerder(): Rig {
   return { root: g, legs, arms };
 }
 
-function makeHorse(color: number): Rig {
+export function makeHorse(color: number): Rig {
   const g = new THREE.Group();
   const dk = 0x2a1c12;
   meshBox(0.6, 0.7, 1.5, color, 0, 1.3, 0, g);
@@ -150,6 +150,8 @@ function makeBubble(text: string): THREE.Sprite {
 
 export class CharactersView {
   readonly group = new THREE.Group();
+  /** Чоно, нохой — зөвхөн гэрийн бууцанд харагдана (M4.6) */
+  private campGroup = new THREE.Group();
   private herder = makeHerder();
   private horse = makeHorse(0x7a4a26);
   private wolves = new Map<number, { rig: Rig; x: number; z: number; h: number; phase: number }>();
@@ -163,7 +165,7 @@ export class CharactersView {
   private actionT = 0;   // гараа өргөх хугацаа
 
   constructor() {
-    this.group.add(this.herder.root, this.horse.root);
+    this.group.add(this.herder.root, this.horse.root, this.campGroup);
     this.bubbles = {
       shout: { sprite: makeBubble('Хөөе!'), t: 0 },
       scare: { sprite: makeBubble('Хуу-хай!'), t: 0 },
@@ -205,8 +207,11 @@ export class CharactersView {
     const speed = dt > 0 ? Math.min(moved / dt, 30) : 0;
     this.lastPlayer = { x: p.x, z: p.z };
     const y = heightAt(p.x, p.z);
-    this.herder.root.visible = !p.away;
-    this.horse.root.visible = !p.away && Boolean(ridingHorse(state));
+    // M4.6: сумын төвд малчин (морьтой бол морь) харагдана, газрын зураг дээр 3D-д юу ч үгүй
+    const shown = p.place !== 'map' && !state.move;
+    this.herder.root.visible = shown;
+    this.horse.root.visible = shown && Boolean(ridingHorse(state)) && (p.place === 'camp' || p.mounted);
+    this.campGroup.visible = p.place === 'camp';
     this.actionT = Math.max(0, this.actionT - dt);
     const H = this.herder;
     if (p.mounted) {
@@ -265,7 +270,7 @@ export class CharactersView {
     // ---- бичиг ----
     for (const b of Object.values(this.bubbles)) {
       b.t = Math.max(0, b.t - dt);
-      b.sprite.visible = b.t > 0 && !p.away;
+      b.sprite.visible = b.t > 0 && p.place !== 'map';
       b.sprite.position.set(p.x, y + (p.mounted ? 4.2 : 3.1) + (1.2 - b.t) * 0.3, p.z);
     }
 
@@ -281,7 +286,7 @@ export class CharactersView {
       if (!v) {
         v = { rig: makeDog(), x: d.x, z: d.z, h: d.heading, phase: 0, bark: makeBubble('Хав хав!') };
         v.bark.scale.set(1.8, 0.7, 1);
-        this.group.add(v.rig.root, v.bark);
+        this.campGroup.add(v.rig.root, v.bark);
         this.dogs.set(d.id, v);
       }
       // Нүүх үед шууд шинэ байрлал руу
@@ -304,7 +309,7 @@ export class CharactersView {
       v.bark.position.set(v.x, y + 1.9 + Math.sin(v.phase * 2) * 0.05, v.z);
     }
     for (const [id, v] of this.dogs) if (!alive.has(id)) {
-      this.group.remove(v.rig.root, v.bark);
+      this.campGroup.remove(v.rig.root, v.bark);
       this.dogs.delete(id);
     }
   }
@@ -312,7 +317,7 @@ export class CharactersView {
   private updateWolves(state: GameState, heightAt: (x: number, z: number) => number, dt: number): void {
     const ws = state.wolves;
     if (ws.campId !== this.wolfCamp) {
-      for (const w of this.wolves.values()) this.group.remove(w.rig.root);
+      for (const w of this.wolves.values()) this.campGroup.remove(w.rig.root);
       this.wolves.clear();
       this.wolfCamp = ws.campId;
     }
@@ -322,7 +327,7 @@ export class CharactersView {
       let v = this.wolves.get(w.id);
       if (!v) {
         v = { rig: makeWolf(), x: w.x, z: w.z, h: w.heading, phase: 0 };
-        this.group.add(v.rig.root);
+        this.campGroup.add(v.rig.root);
         this.wolves.set(w.id, v);
       }
       const k = Math.min(1, dt * (w.mode === 'flee' || w.mode === 'hunt' ? 10 : 5));

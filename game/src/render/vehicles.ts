@@ -1,14 +1,12 @@
 /**
- * Тээвэр (M4.5, хэрэглэгчийн дүрэм 2026-11-14): морин тэрэг, Портер, Амжиргаа цагаан.
- * Эзэмшиж буй тээвэр майхны дэргэдэх зогсоолдоо харагдана. Сумын төв рүү явахад
- * зогсоолоосоо замаар явж бууцны захын толгойг давж алга болно, буцахдаа мөн замаар ирнэ (sim/systems/trip.ts → tripPose).
- * Сумын төвийн шороон зам ч энд зурагдана.
+ * Тээвэр (M4.5–M4.6, хэрэглэгчийн дүрэм 2026-11-14): морин тэрэг, Портер, Амжиргаа цагаан.
+ * Тээвэр бүр state.fleet-д байрлалтай (зогсоол, эсвэл тоглогч орхисон газар). Тоглогч жолоодоход
+ * байрлал кадр бүр шинэчлэгдэнэ (input/controller.ts). Гэрийн бууцны шороон зам (camps.json → road) энд зурагдана.
  */
 import * as THREE from 'three';
 import type { GameConfig } from '../sim/config';
-import { VEHICLES, type GameState, type VehicleId } from '../sim/state';
-import { parkingSpot, tripPose } from '../sim/systems/trip';
-import { angDiff, mat, meshBox } from './util';
+import type { GameState, VehicleId } from '../sim/state';
+import { mat, meshBox } from './util';
 
 interface VehicleRig {
   root: THREE.Group;
@@ -96,10 +94,15 @@ function makeTruck(cab: number, len: number, bedColor: number): VehicleRig {
   return { root: g, wheels, legs: [], seat: new THREE.Vector3(0, 1.3, fz) };
 }
 
+/** Газрын зураг дээрх дүрсэнд: тээврийн загвар */
+export function makeVehicleModel(id: VehicleId): THREE.Group {
+  return (id === 'horseCart' ? makeCart() : id === 'porter' ? makeTruck(0x2f62b8, 3.2, 0x8a8f96) : makeTruck(0xf2f2ee, 2.0, 0xc8c8c4)).root;
+}
+
 export class VehiclesView {
   readonly group = new THREE.Group();
   private rigs = new Map<VehicleId, VehicleRig>();
-  private pos = new Map<VehicleId, { x: number; z: number; h: number; init: boolean; phase: number }>();
+  private pos = new Map<VehicleId, { x: number; z: number; phase: number }>();
   private road: THREE.Mesh | null = null;
   private roadCamp = '';
 
@@ -115,19 +118,23 @@ export class VehiclesView {
     return r;
   }
 
-  /** Шороон зам: газрын гадаргууг дагасан тууз */
-  private buildRoad(heightAt: (x: number, z: number) => number): void {
+  /** Гэрийн бууцны шороон зам: газрын гадаргууг дагасан тууз (camps.json → road) */
+  private buildRoad(campId: string, heightAt: (x: number, z: number) => number): void {
     if (this.road) this.group.remove(this.road);
-    const r = this.cfg.vehicles.road;
+    const road = this.cfg.camps.camps[campId]?.road ?? [];
     const pts: { x: number; z: number }[] = [];
-    // Зогсоолуудаас замын эхлэл хүртэл, тэндээс захын толгод хүртэл
-    const steps = Math.ceil(r.length / 2);
-    for (let i = 0; i <= steps; i++) pts.push({ x: r.start.x + r.dir.x * (i * r.length) / steps, z: r.start.z + r.dir.z * (i * r.length) / steps });
+    for (let i = 1; i < road.length; i++) {
+      const [ax, az] = road[i - 1]!, [bx, bz] = road[i]!;
+      const n = Math.ceil(Math.hypot(bx - ax, bz - az) / 2);
+      for (let k = i === 1 ? 0 : 1; k <= n; k++) pts.push({ x: ax + ((bx - ax) * k) / n, z: az + ((bz - az) * k) / n });
+    }
     const w = 1.6;
-    const nx = -r.dir.z, nz = r.dir.x;
     const pos: number[] = [];
     const idx: number[] = [];
     pts.forEach((p, i) => {
+      const q = pts[Math.min(i + 1, pts.length - 1)]!, o = pts[Math.max(0, i - 1)]!;
+      const dx = q.x - o.x, dz = q.z - o.z, l = Math.hypot(dx, dz) || 1;
+      const nx = -dz / l, nz = dx / l;
       for (const s of [-1, 1]) {
         const x = p.x + nx * w * s, z = p.z + nz * w * s;
         pos.push(x, heightAt(x, z) + 0.12, z);
@@ -141,81 +148,51 @@ export class VehiclesView {
     geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
     geo.setIndex(idx);
     geo.computeVertexNormals();
-    const m = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: 0x9a8566, polygonOffset: true, polygonOffsetFactor: -2 }));
+    const m = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: 0x9a8566, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2 }));
     m.receiveShadow = true;
     this.road = m;
     this.group.add(m);
   }
 
-  /** Аялалд явж буй тээврийн малчин суух цэг (дэлхийн координат), харагдахгүй бол null */
+  /** Жолоодож буй тээвэрт малчин суух цэг (тэрэг) — машинд кабин дотор тул null биш ч inCab */
   seatOf(state: GameState): { x: number; y: number; z: number; h: number; inCab: boolean } | null {
-    const t = state.trip;
-    if (!t) return null;
-    const p = this.pos.get(t.vehicle);
-    const r = this.rigs.get(t.vehicle);
-    if (!p || !r || !r.root.visible) return null;
+    const id = state.player.driving;
+    if (!id) return null;
+    const r = this.rigs.get(id);
+    if (!r || !r.root.visible) return null;
     const v = r.seat.clone().applyMatrix4(r.root.matrixWorld);
-    return { x: v.x, y: v.y, z: v.z, h: p.h, inCab: t.vehicle !== 'horseCart' };
+    return { x: v.x, y: v.y, z: v.z, h: r.root.rotation.y, inCab: id !== 'horseCart' };
   }
 
-  /**
-   * Камер юуг дагах вэ (аялалд): машин харагдаж байвал түүнийг, газрын зургаас гадуур бол хотыг.
-   * Аялалгүй бол null (малчныг дагана).
-   */
-  cameraFocus(state: GameState): { x: number; z: number } | null {
-    const t = state.trip;
-    if (!t) return null;
-    const p = this.pos.get(t.vehicle);
-    const r = this.rigs.get(t.vehicle);
-    if (p && r?.root.visible) return { x: p.x, z: p.z };
-    return { x: this.cfg.camps.home.x + 6, z: this.cfg.camps.home.z };
-  }
-
-  /** alpha — sim алхам хоорондын хувь (0–1): аялж буй тээврийг алхам хооронд жигд зөөлрүүлнэ */
-  update(state: GameState, heightAt: (x: number, z: number) => number, dt: number, alpha = 1): void {
-    if (this.roadCamp !== state.campId) {
+  update(state: GameState, heightAt: (x: number, z: number) => number, dt: number): void {
+    const place = state.player.place;
+    if (this.road) this.road.visible = place === 'camp';
+    if (place === 'camp' && this.roadCamp !== state.campId) {
       this.roadCamp = state.campId;
-      this.buildRoad(heightAt);
+      this.buildRoad(state.campId, heightAt);
     }
-    for (const id of VEHICLES) {
-      const owned = state.vehicles.includes(id);
-      if (!owned) {
-        const r = this.rigs.get(id);
-        if (r) r.root.visible = false;
-        continue;
-      }
-      const r = this.rig(id);
-      let tx: number, tz: number, th: number, visible = true;
-      const trip = state.trip?.vehicle === id ? state.trip : null;
-      if (trip) {
-        // Өмнөх алхмаас одоогийн алхам хүртэл (мал шиг) — үсрэлтгүй
-        const pose = tripPose(this.cfg, { vehicle: id, total: trip.total, elapsed: Math.max(0, trip.elapsed - 1 + alpha) });
-        tx = pose.x;
-        tz = pose.z;
-        th = pose.heading;
-        visible = pose.visible;
-      } else {
-        const p = parkingSpot(this.cfg, id);
-        tx = p.x;
-        tz = p.z;
-        th = p.heading;
-      }
-      let s = this.pos.get(id);
-      if (!s || !s.init || !r.root.visible) s = { x: tx, z: tz, h: th, init: true, phase: s?.phase ?? 0 };
-      const moved = Math.hypot(tx - s.x, tz - s.z);
-      s.x = tx;
-      s.z = tz;
-      s.h += angDiff(th, s.h) * Math.min(1, dt * 4);
-      if (moved < 5) s.phase += moved;
-      this.pos.set(id, s);
+    for (const [id, r] of this.rigs) if (!state.fleet.some((f) => f.id === id)) r.root.visible = false;
+    for (const f of state.fleet) {
+      const r = this.rig(f.id);
+      const visible = f.place === place && place !== 'map' && !state.move;
       r.root.visible = visible;
+      if (!visible) continue;
+      let s = this.pos.get(f.id);
+      if (!s) {
+        s = { x: f.x, z: f.z, phase: 0 };
+        this.pos.set(f.id, s);
+      }
+      const moved = Math.hypot(f.x - s.x, f.z - s.z);
+      s.x = f.x;
+      s.z = f.z;
+      if (moved < 5) s.phase += moved;
       r.root.position.set(s.x, heightAt(s.x, s.z), s.z);
-      r.root.rotation.y = s.h;
+      r.root.rotation.y = f.heading;
       // Налууг дагаж бага зэрэг хазайна
-      const ahead = heightAt(s.x + Math.sin(s.h) * 2, s.z + Math.cos(s.h) * 2) - heightAt(s.x - Math.sin(s.h) * 2, s.z - Math.cos(s.h) * 2);
+      const h = f.heading;
+      const ahead = heightAt(s.x + Math.sin(h) * 2, s.z + Math.cos(h) * 2) - heightAt(s.x - Math.sin(h) * 2, s.z - Math.cos(h) * 2);
       r.root.rotation.x = -Math.atan2(ahead, 4);
       for (const w of r.wheels) w.rotation.x = s.phase * 1.6;
-      // Тэрэгний морины хөл: хурдаар савлана
       const speed = dt > 0 ? moved / dt : 0;
       const sw = speed > 0.3 ? Math.sin(s.phase * 1.8) * 0.6 : 0;
       r.legs.forEach((l, i) => (l.rotation.x = i === 0 || i === 3 ? sw : -sw));
@@ -223,4 +200,3 @@ export class VehiclesView {
     }
   }
 }
-

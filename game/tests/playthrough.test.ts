@@ -1,7 +1,8 @@
 /**
  * M3-ын гарах шалгуур: «тоглогч 10 өдөр гараар тоглож, бүтээгдэхүүнээ цуглуулж, боловсруулж, зарж, ашигтай ажиллана».
  * Гар тоглолтыг дуурайсан бот: 1× хурдаар морьтой давхиж (бодит хурд), ойрын бүтээгдэхүүнийг түүж,
- * майхны дэргэд агуулахад хийж, тогоо авсны дараа ааруул хийж, тэргээр сумын төвд зарна.
+ * майхны дэргэд агуулахад хийж, тогоо авсны дараа ааруул хийж, тэргээр газрын зургаар сумын төв очиж
+ * Худалдаачинд зарна (M4.6, AutoTrip — 3D доторх жолоодлогыг алгасна).
  * Бүх үйлдэл Command-аар, proximity=true (малчин тухайн газарт очих ёстой).
  */
 import { describe, expect, it } from 'vitest';
@@ -11,6 +12,7 @@ import type { ProductId } from '../src/sim/state';
 import * as storage from '../src/sim/systems/storage';
 import { ridingHorse } from '../src/sim/systems/herder';
 import { realSecondsPerMinute } from '../src/sim/clock';
+import { AutoTrip } from '../src/sim/autotrip';
 
 const STEP_SEC = realSecondsPerMinute(cfg.time); // 1× хурдаар нэг алхам бодитоор
 
@@ -47,8 +49,14 @@ function playDays(sim: Sim, days: number): Totals {
   });
   const home = cfg.camps.home;
   const end = st.time.day + days;
+  let trip: AutoTrip | null = null;
   while (st.time.day < end) {
     const p = st.player;
+    if (trip) {
+      if (trip.tick(sim)) trip = null;
+      sim.step();
+      continue;
+    }
     if (!p.away) {
       // Морь унах
       if (!p.mounted) {
@@ -77,9 +85,8 @@ function playDays(sim: Sim, days: number): Totals {
         const hour = st.time.minute / 60;
         const wantPot = !st.processors.length && st.money + units * 4000 > cfg.processing.pot.price + 60_000;
         if ((units >= 14 || (wantPot && units >= 4)) && hour >= 9 && hour <= 16) {
-          const r = sim.command({ type: 'trip', plan: { vehicle: 'horseCart', sell: sellable, buy: wantPot ? [{ kind: 'processor', id: 'pot' }] : [] } });
-          if (r.ok) tot.trips++;
-          sim.step();
+          trip = new AutoTrip({ sell: sellable, sellAnimalIds: [], buy: wantPot ? [{ kind: 'processor', id: 'pot' }] : [] });
+          tot.trips++;
           continue;
         }
       }

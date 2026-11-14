@@ -9,7 +9,8 @@ import type { GameState } from '../state';
 import { buildGrid } from './pasture';
 import { spawnWolves } from './wolves';
 import { relocateDogs } from './dogs';
-import { bestTruck } from './trip';
+import { bestTruck, parkingSpot } from './trip';
+import { syncAway } from './travel';
 
 export function moveHours(cfg: GameConfig, state: GameState, byTruck: boolean): number {
   const m = cfg.camps.move;
@@ -18,10 +19,15 @@ export function moveHours(cfg: GameConfig, state: GameState, byTruck: boolean): 
   return ger ? Number(m.cartHoursGer) : Number(m.cartHoursTent);
 }
 
-export function startMove(cfg: GameConfig, state: GameState, to: string): string | null {
+/**
+ * Нүүх эхлүүлэх. fromMap = газрын зураг дээр тэр бууцанд ирээд «Энд нүүх» (M4.6): гэр бүл, сүрэг араас нүүж ирнэ.
+ */
+export function startMove(cfg: GameConfig, state: GameState, to: string, fromMap = false): string | null {
   if (!cfg.camps.camps[to]) return 'Ийм бууц алга';
   if (to === state.campId) return 'Аль хэдийн энэ бууцанд байна';
-  if (state.trip || state.move || state.player.away) return 'Малчин завгүй';
+  if (state.move) return 'Нүүж байна';
+  if (!fromMap && (state.player.away || state.player.driving)) return 'Малчин завгүй';
+  if (fromMap && state.player.place !== 'map') return 'Газрын зураг дээр биш байна';
   const truck = bestTruck(cfg, state);
   const byTruck = truck !== null;
   if (truck) {
@@ -32,7 +38,7 @@ export function startMove(cfg: GameConfig, state: GameState, to: string): string
     state.today.expenses.fuel = (state.today.expenses.fuel ?? 0) + cost;
   }
   state.move = { to, remaining: Math.round(moveHours(cfg, state, byTruck) * 60) };
-  state.player.away = true;
+  syncAway(state);
   return null;
 }
 
@@ -58,13 +64,25 @@ export function moveStep(cfg: GameConfig, state: GameState, rng: Rng): boolean {
   }
   state.player.x = home.x + 2;
   state.player.z = home.z + 6;
-  state.player.away = false;
+  state.player.place = 'camp';
+  state.player.driving = null;
   state.player.mounted = false;
   state.player.horseCalled = false;
+  // Бүх тээвэр (ачаатайгаа) шинэ бууцны зогсоолд
+  for (const f of state.fleet) {
+    const pk = parkingSpot(cfg, f.id);
+    f.place = 'camp';
+    f.x = pk.x;
+    f.z = pk.z;
+    f.heading = pk.heading;
+  }
+  const loc = cfg.worldmap.locations[mv.to];
+  if (loc) state.map = { x: loc.x, z: loc.z, tx: loc.x, tz: loc.z, dest: null };
   const peaceful = state.wolves.peaceful;
   state.wolves = spawnWolves(cfg, state.seed, mv.to);
   state.wolves.peaceful = peaceful;
   relocateDogs(cfg, state);
   state.move = null;
+  syncAway(state);
   return true;
 }
