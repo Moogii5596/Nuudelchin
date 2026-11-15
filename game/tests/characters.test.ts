@@ -57,7 +57,7 @@ describe('Дүрийн тохиргоо (data/characters.json, V4.5 R3)', () => 
 
   it('буруу утгыг замтай нь барина', () => {
     const cases: Array<[(j: Record<string, unknown>) => void, RegExp]> = [
-      [(j) => { (preset(j).skin as Record<string, unknown>).base = 'red'; }, /presets\.man\.skin\.base/],
+      [(j) => { ((j.skins as Record<string, Record<string, unknown>>).medium!).base = 'red'; }, /skins.medium.base/],
       [(j) => { (preset(j).bodies as Record<string, Record<string, unknown>>).winter!.skirt = 3; }, /bodies\.winter\.skirt/],
       [(j) => { delete (preset(j).hats as Record<string, unknown>).fox; }, /hats\.fox/],
       [(j) => { (preset(j).boots as Record<string, unknown>).lace = '#ffffff'; }, /boots\.lace.*үл мэдэгдэх/],
@@ -128,5 +128,175 @@ describe('Дүрийн сан (render/character, V4.5 R1–R2)', () => {
     expect(parts.length).toBeLessThanOrEqual(12);
     expect(parts.filter((p) => p.castShadow).length).toBeLessThanOrEqual(3);
     expect(lab.makeCrowdParts({ ...look, hat: 'none' })).not.toBe(parts);
+  });
+});
+
+describe('Ялгаатай төрх (V4.5 R4)', () => {
+  beforeAll(loadLab);
+  const SEASONS = ['summer', 'autumn', 'winter', 'spring'] as const;
+  const vertices = (root: THREE.Object3D): number => {
+    let n = 0;
+    root.traverse((o) => { if ((o as THREE.Mesh).isMesh && !(o as THREE.InstancedMesh).isInstancedMesh) n += (o as THREE.Mesh).geometry.attributes.position!.count; });
+    return n;
+  };
+  /** сүүдэргүй draw call + сүүдэр тусгах харагдах mesh */
+  const callsWithShadow = (root: THREE.Object3D): number => {
+    let n = 0;
+    const shown = (o: THREE.Object3D): boolean => { for (let q: THREE.Object3D | null = o; q; q = q.parent) if (!q.visible) return false; return true; };
+    root.traverse((o) => { if ((o as THREE.Mesh).isMesh && shown(o)) n += o.castShadow ? 2 : 1; });
+    return n;
+  };
+
+  it('preset бүр A, B хувилбартай, base-ээс зөв өвлөнө', () => {
+    const NAMES = ['woman_braids', 'woman_plait', 'boy_shorthair', 'boy_shaved', 'girl_braids', 'girl_bun', 'elder_goatee', 'elder_beard', 'granny_bun', 'granny_plait', 'teacher_glasses'];
+    for (const n of NAMES) expect(characters.presets[n], n).toBeDefined();
+    const girl = characterSpec('girl_braids'), granny = characterSpec('granny_bun');
+    expect(girl.figure.head).toBe(characterSpec('boy').figure.head);      // boy → girl
+    expect(girl.hair.style).toBe('braids');
+    expect(granny.hair.style).toBe('bun');                                  // woman-ий braids-ийг дарна
+    expect(granny.face.lashes).toBe(false);
+    expect(characterSpec('elder_beard').face.beard).toBe('full');
+    expect(characterSpec('player').figure).toEqual({ stature: 1, legs: 1, build: 1, head: 1, hunch: 0 });
+  });
+
+  it('R4-ийн буруу утгыг барина', () => {
+    const cases: Array<[(j: Record<string, unknown>) => void, RegExp]> = [
+      [(j) => { (preset(j).hair as Record<string, unknown>).style = 'mohawk'; }, /hair\.style/],
+      [(j) => { (preset(j).hair as Record<string, unknown>).strands = ['#000000']; }, /hair\.strands/],
+      [(j) => { (preset(j).figure as Record<string, unknown>).stature = 2; }, /figure\.stature/],
+      [(j) => { (preset(j).face as Record<string, unknown>).beard = 'long'; }, /face\.beard/],
+      [(j) => { ((preset(j).face as Record<string, unknown>).eyes as Record<string, unknown>).w = 0; }, /face\.eyes\.w/],
+      [(j) => { (j.detail as Record<string, Record<string, unknown>>).npc!.lod = 2; }, /detail\.npc\.lod/],
+    ];
+    for (const [mutate, re] of cases) {
+      const j = clone();
+      mutate(j);
+      expect(() => validateCharacters(j)).toThrow(re);
+    }
+  });
+
+  it('бие галбир ясаар: хүүхэд намхан, толгой харьцангуй том; өвгөн бөгтөр', () => {
+    const neckAt = (name: string): THREE.Vector3 => {
+      const rig = lab.buildCharacter(characterSpec(name), { detail: 'npc' });
+      rig.root.updateMatrixWorld(true);
+      return rig.neck.getWorldPosition(new THREE.Vector3());
+    };
+    const man = neckAt('player'), boy = neckAt('boy_shorthair'), woman = neckAt('woman_braids'), elder = neckAt('elder_goatee');
+    expect(boy.y).toBeLessThan(man.y * 0.7);
+    expect(woman.y).toBeLessThan(man.y);
+    expect(woman.y).toBeGreaterThan(boy.y);
+    expect(elder.z).toBeGreaterThan(man.z + 0.05);        // хүзүү урагш
+    const kid = lab.buildCharacter(characterSpec('boy_shorthair'), { detail: 'npc' });
+    expect(kid.neck.scale.x).toBeCloseTo(characterSpec('boy_shorthair').figure.head, 5);          // толгой (нийт өндөр нь бэлхүүсэнд)
+    expect(kid.waist.scale.x).toBeCloseTo(characterSpec('boy_shorthair').figure.stature, 5);
+  });
+
+  it('үсний загвар: гэзэг, боодол нэмэлт геометртэй, халзан оройгүй', () => {
+    const base = characterSpec('woman_braids');
+    const v = (style: 'short' | 'bald' | 'bun' | 'braids' | 'braid'): number => vertices(lab.buildCharacter({ ...base, hair: { ...base.hair, style } }, { detail: 'npc' }).root);
+    const short = v('short');
+    expect(v('braids')).toBeGreaterThan(v('braid'));
+    expect(v('braid')).toBeGreaterThan(short);
+    expect(v('bun')).toBeGreaterThan(short);
+    expect(v('bald')).toBeLessThan(short);
+  });
+
+  it('npc нүүр атласаас: сэтгэл хөдлөлөөр зөвхөн UV шилжинэ, зураг хуваалцана', async () => {
+    const { atlasCount } = await import('../src/render/character/face');
+    const a = lab.buildCharacter(characterSpec('woman_braids'), { detail: 'npc' }), b = lab.buildCharacter(characterSpec('woman_braids'), { detail: 'npc' });
+    expect(a.face.material).not.toBe(b.face.material);
+    expect(a.face.material.map!.source).toBe(b.face.material.map!.source);
+    const n = atlasCount();
+    lab.buildCharacter(characterSpec('woman_braids'), { detail: 'npc' });
+    expect(atlasCount()).toBe(n);
+    const before = a.face.material.map!.offset.clone();
+    const pose = { dt: 1 / 60, speed: 0, mode: 'foot', raise: false, uurga: false, talk: false, emotion: 'angry' } as const;
+    for (let i = 0; i < 20; i++) lab.animateCharacter(a, pose);
+    expect(a.face.material.map!.offset.equals(before)).toBe(false);
+    expect(a.face.material.map!.repeat.x).toBeCloseTo(1 / 6);
+  });
+
+  it('8 npc дүр зэрэг < +200 draw call (сүүдэртэй), улирал бүрт', () => {
+    const names = ['woman_braids', 'woman_plait', 'boy_shorthair', 'boy_shaved', 'girl_braids', 'girl_bun', 'elder_goatee', 'granny_bun'];
+    const rigs = names.map((n) => lab.buildCharacter(characterSpec(n), { detail: 'npc' }));
+    for (const season of SEASONS) {
+      for (const r of rigs) lab.dressCharacter(r, season);
+      const total = rigs.reduce((s, r) => s + callsWithShadow(r.root), 0);
+      expect(total, season).toBeLessThan(200);
+    }
+    // npc нь full-ээс хөнгөн
+    const full = lab.buildCharacter(characterSpec('player')), npc = lab.buildCharacter(characterSpec('player'), { detail: 'npc' });
+    expect(vertices(npc.root)).toBeLessThan(vertices(full.root) * 0.6);
+    expect(drawCalls(npc.root)).toBeLessThan(drawCalls(full.root));
+  });
+});
+
+describe('Хүн бүр өөр (V4.5 R4 — арьс, толгой, царай, алчуур)', () => {
+  beforeAll(loadLab);
+  const ready = Object.keys(characters.presets).filter((n) => n.includes('_'));
+  const names = (root: THREE.Object3D): string[] => { const out: string[] = []; root.traverse((o) => { if (o.name.startsWith('hat:')) out.push(o.name); }); return out; };
+
+  it('арьсны палитр нэрээр; тоглогч хуучин утгаараа', () => {
+    const p = characterSpec('player');
+    expect(p.skin).toEqual({ base: 0xe0b48a, shade: 0xd6a67c, nail: 0xe6c3aa });
+    expect(p.headShape).toEqual({ width: 1, height: 1, round: 0 });
+    expect(p.face.eyes).toEqual({ shape: 'oval', w: 21, h: 31, spacing: 92, y: 0 });
+    expect(p.face.brows.color).toBeNull();
+    expect(p.wear).toBeNull();
+    expect(new Set(ready.map((n) => characterSpec(n).skin.base)).size).toBe(4);
+  });
+
+  it('бэлэн дүр бүрийн царай, толгой, үс, бүсний хослол давхцахгүй', () => {
+    const sig = (n: string): string => { const s = characterSpec(n); return JSON.stringify([s.skin, s.headShape, s.face, s.hair]); };
+    expect(new Set(ready.map(sig)).size).toBe(ready.length);
+    expect(new Set(ready.map((n) => characterSpec(n).sash.color)).size).toBeGreaterThanOrEqual(5);
+    expect(new Set(ready.map((n) => characterSpec(n).boots.shaft)).size).toBeGreaterThanOrEqual(3);
+    expect(ready.filter((n) => characterSpec(n).face.glasses).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('эмэгтэй алчууртай, охин туузтай, зөвхөн өмсдөг малгайгаа угсарна; эрэгтэйд өөрчлөлтгүй', () => {
+    const woman = lab.buildCharacter(characterSpec('woman_braids'), { detail: 'npc' });
+    expect(names(woman.root).sort()).toEqual(['hat:fox', 'hat:scarf']);
+    const shownHat = (rig: typeof woman): string[] => { const out: string[] = []; rig.root.traverse((o) => { if (o.name.startsWith('hat:') && o.visible) out.push(o.name); }); return out; };
+    lab.dressCharacter(woman, 'summer');
+    expect(shownHat(woman)).toEqual([]);                     // зун толгой нүцгэн
+    lab.dressCharacter(woman, 'autumn');
+    expect(shownHat(woman)).toEqual(['hat:scarf']);
+    const girl = lab.buildCharacter(characterSpec('girl_bun'), { detail: 'npc' });
+    lab.dressCharacter(girl, 'spring');
+    expect(shownHat(girl)).toEqual(['hat:ribbon']);
+    const granny = lab.buildCharacter(characterSpec('granny_plait'), { detail: 'npc' });
+    lab.dressCharacter(granny, 'winter');
+    expect(shownHat(granny)).toEqual(['hat:shawl']);
+    expect(names(lab.buildCharacter(characterSpec('player')).root)).toEqual(['hat:toortsog', 'hat:fox']);
+  });
+
+  it('толгойн хэлбэр: өргөн/урт толгой геометрт, малгай нь толгойд таарна', () => {
+    const headBox = (n: string): THREE.Vector3 => {
+      const rig = lab.buildCharacter(characterSpec(n));   // full: толгой нэртэй үлдэнэ
+      const head = rig.root.getObjectByName('head') as THREE.Mesh;
+      head.geometry.computeBoundingBox();
+      return head.geometry.boundingBox!.getSize(new THREE.Vector3());
+    };
+    const base = headBox('player'), wide = headBox('elder_beard'), tall = headBox('teacher_glasses');
+    expect(wide.x / wide.y).toBeGreaterThan(base.x / base.y * 1.1);
+    expect(tall.y / tall.x).toBeGreaterThan(base.y / base.x * 1.1);
+  });
+
+  it('R4 шинэ утгын алдааг барина', () => {
+    const cases: Array<[(j: Record<string, unknown>) => void, RegExp]> = [
+      [(j) => { preset(j).skin = 'green'; }, /presets\.man\.skin.*green/],
+      [(j) => { ((preset(j).face as Record<string, unknown>).eyes as Record<string, unknown>).shape = 'star'; }, /eyes\.shape/],
+      [(j) => { ((preset(j).face as Record<string, unknown>).brows as Record<string, unknown>).color = 'gray'; }, /brows\.color/],
+      [(j) => { (preset(j).face as Record<string, unknown>).moles = [[0]]; }, /moles\[0\]/],
+      [(j) => { (preset(j).headShape as Record<string, unknown>).width = 2; }, /headShape\.width/],
+      [(j) => { preset(j).wear = { summer: 'crown', autumn: 'none', winter: 'fox', spring: 'none' }; }, /wear\.summer/],
+      [(j) => { ((preset(j).hats as Record<string, unknown>).scarf as Record<string, unknown>).knot = 'side'; }, /scarf\.knot/],
+    ];
+    for (const [mutate, re] of cases) {
+      const j = clone();
+      mutate(j);
+      expect(() => validateCharacters(j)).toThrow(re);
+    }
   });
 });

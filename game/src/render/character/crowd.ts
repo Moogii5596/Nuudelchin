@@ -41,7 +41,7 @@ export function makeCrowdParts(look: CrowdLook): CrowdPart[] {
   rig.elbows.forEach((e, i) => { e.rotation.x = rig.elbowRest[i] ?? 0; });
   rig.curls.forEach((c) => c(0.35));
   rig.root.updateMatrixWorld(true);
-  const face = staticFaceMat(spec.skin.base, headSegments(makeKit(lod)));
+  const face = staticFaceMat(spec, headSegments(makeKit(lod)));
   const shown = (o: THREE.Object3D): boolean => { for (let q: THREE.Object3D | null = o; q && q !== rig.root; q = q.parent) if (!q.visible) return false; return true; };
   const byMat = new Map<THREE.Material, { geos: THREE.BufferGeometry[]; shadow: boolean }>();
   const add = (material: THREE.Material, g: THREE.BufferGeometry, shadow: boolean): void => {

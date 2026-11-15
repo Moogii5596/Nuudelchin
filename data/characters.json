@@ -1,9 +1,24 @@
 {
-  "_doc": "V4.5: хүний дүрийн төрх (docs/character-design.md §4.3). render/character/spec.ts шалгана. presets.<нэр> — дүрийн загвар; base — өөр preset-ээс өвлөнө (объект гүн нийлнэ, массив солигдоно). player — тоглогч. Өнгө #rrggbb. skin: base (арьс, нүүр), shade (хүзүү), nail (хумс). hair.color — үсний ширхэгийн суурь. legs — өмд. deel: color/hem (байхгүй бол visuals.json outfits.player — R5-д энд шилжинэ), button — товч, furTrim — өвлийн дээлийн хормой, ханцуйны үс, winterTrim (байхгүй бол outfits.collarFur), terlegLighten — зуны тэрлэгийг цайруулах (0–0.6, байхгүй бол outfits.terlegLighten). sash: color — бүс, хөвөө; fold — бүсний нугалаа. vest — өвлийн хантааз: color даавуу, lining доторлогоо, fur энгэрийн үс. boots: shaft түрий, tan зулаг, sole ул, teal хөвөө, gold алтлаг хээ, pattern түрийн оюу хээ. bodies.<terleg|deel|winter>: thickness — биеийн зузаан (0.5–1.6), skirt — хормойн урт, м (0.2–1). hats.toortsog: felt эсгий, ink хар судал; hats.fox: fur/furTint үсэн хүрээ, silk торгон орой, trim хөх эмжээр, gold, stem/knot сампин, ribbon залаа. pose.elbowRest — зүүн, баруун тохойн амрах өнцөг (рад). props: uurga, sack.",
+  "_doc": "V4.5: хүний дүрийн төрх (docs/character-design.md §4.3). render/character/spec.ts шалгана. skins.<нэр> — арьсны палитр (base арьс/нүүр, shade хүзүү, nail хумс); preset-ийн skin нь палитрын нэр эсвэл {base, shade, nail}. presets.<нэр> — дүрийн загвар; base — өөр preset-ээс өвлөнө (объект гүн нийлнэ, массив солигдоно); man, woman, boy, girl, elder, granny — суурь, бусад нь бэлэн дүр (лабораторийн эгнээнд гарна). player — тоглогч. Өнгө #rrggbb. hair: color — үс, сахлын өнгө; strands — ширхэгийн [бараан, цайвар] өнгө (буурал холилдсон = бараан суурь + цагаан ширхэг); style — short | bald (ар, хажуугийн үс) | bun (ар талын боодол) | braids (хоёр гэзэг урдуур) | braid (нэг гэзэг араар). figure (ясаар, 1/0 = өөрчлөхгүй): stature нийт өндөр (0.5–1.2), legs хөлийн урт (0.7–1.2), build цээж/мөрний өргөн (0.7–1.3), head толгойн харьцаа (0.8–1.4), hunch бөгтөр, рад (0–0.4). headShape: width/height — толгойн цилиндрийн өргөн/өндрийн харьцаа (0.8–1.2), round — дээд/доод захын бөөрөнхийлөлт (−0.5 дөрвөлжин … 1 бөөрөнхий). face (зураг 2048×1024 px, нүүрний төвөөс): eyes shape oval | dot | line (нарийн зураас) | slant (ташуу), w/h хагас өргөн/өндөр, spacing төвөөс, y (+ доош); brows shape straight | arch | slant, thickness, length (харьцаа), lift (+ доош), tilt (+ гадна үзүүр доош), color (байхгүй бол хар); mouth width хагас өргөн, y (+ доош), smile (−1 доошоо … 1 инээмсэглэл); beard none | mustache | goatee | full; wrinkles, blush, freckles 0–1; lashes — сормуус; moles — мэнгэ [[x, y], ...]; glasses — нүдний шил. wear.<summer|autumn|winter|spring> — толгойн өмсгөл (toortsog | fox | scarf | shawl | ribbon | none; байхгүй бол visuals.json outfits.seasons). legs — өмд. deel: color/hem (байхгүй бол visuals.json outfits.player — R5-д энд шилжинэ), button — товч, furTrim — өвлийн дээлийн хормой, ханцуйны үс, winterTrim (байхгүй бол outfits.collarFur), terlegLighten — зуны тэрлэгийг цайруулах (0–0.6, байхгүй бол outfits.terlegLighten). sash: color — бүс, хөвөө; fold — бүсний нугалаа. vest — өвлийн хантааз: color даавуу, lining доторлогоо, fur энгэрийн үс. boots: shaft түрий, tan зулаг, sole ул, teal хөвөө, gold алтлаг хээ, pattern түрийн хээ. bodies.<terleg|deel|winter>: thickness — биеийн зузаан (0.5–1.6), skirt — хормойн урт, м (0.2–1). hats.toortsog: felt эсгий, ink хар судал; hats.fox: fur/furTint үсэн хүрээ, silk торгон орой, trim хөх эмжээр, gold, stem/knot сампин, ribbon залаа; hats.scarf — нимгэн алчуур, hats.shawl — зузаан (өвлийн) алчуур: color, knot chin (эрүүн доогуур) | back (араар); hats.ribbon.color — охидын тууз. pose.elbowRest — зүүн, баруун тохойн амрах өнцөг (рад). props: uurga, sack. detail.npc — туслах, ойрын NPC: lod хуваалтын харьцаа, shadowParts — давхарга (бие, малгай, үлдсэн) бүрд сүүдэр тусгах хамгийн том хэсгийн тоо.",
+  "detail": { "npc": { "lod": 0.6, "shadowParts": 1 } },
+  "skins": {
+    "light": { "base": "#efc9a3", "shade": "#e2b892", "nail": "#f3d6c0" },
+    "medium": { "base": "#e0b48a", "shade": "#d6a67c", "nail": "#e6c3aa" },
+    "tan": { "base": "#c8915f", "shade": "#b98353", "nail": "#dcb08c" },
+    "ruddy": { "base": "#b5714a", "shade": "#a66540", "nail": "#cf9877" }
+  },
   "presets": {
     "man": {
-      "skin": { "base": "#e0b48a", "shade": "#d6a67c", "nail": "#e6c3aa" },
-      "hair": { "color": "#44332a" },
+      "skin": "medium",
+      "hair": { "color": "#44332a", "strands": ["#0c0806", "#84644c"], "style": "short" },
+      "figure": { "stature": 1, "legs": 1, "build": 1, "head": 1, "hunch": 0 },
+      "headShape": { "width": 1, "height": 1, "round": 0 },
+      "face": {
+        "eyes": { "shape": "oval", "w": 21, "h": 31, "spacing": 92, "y": 0 },
+        "brows": { "shape": "straight", "thickness": 13, "length": 1, "lift": 0, "tilt": 0 },
+        "mouth": { "width": 78, "y": 0, "smile": 0 },
+        "beard": "none", "wrinkles": 0, "blush": 0, "lashes": false, "freckles": 0, "moles": [], "glasses": false
+      },
       "legs": "#2b1d14",
       "deel": { "button": "#d9d4c8", "furTrim": "#eadfcd" },
       "sash": { "color": "#e0b030", "fold": "#b8891e" },
@@ -16,10 +31,211 @@
       },
       "hats": {
         "toortsog": { "felt": "#ece4d0", "ink": "#1e1a18" },
-        "fox": { "fur": "#8a7466", "furTint": "#8a6a56", "silk": "#b0302f", "trim": "#17152e", "gold": "#e0a93a", "stem": "#8f1f24", "knot": "#a3262b", "ribbon": "#9a2227" }
+        "fox": { "fur": "#8a7466", "furTint": "#8a6a56", "silk": "#b0302f", "trim": "#17152e", "gold": "#e0a93a", "stem": "#8f1f24", "knot": "#a3262b", "ribbon": "#9a2227" },
+        "scarf": { "color": "#c0392f", "knot": "chin" },
+        "shawl": { "color": "#7a4a3a", "knot": "chin" },
+        "ribbon": { "color": "#d03a3a" }
       },
       "pose": { "elbowRest": [-0.25, -0.6] },
       "props": { "uurga": "#8a6a3a", "sack": "#b89a6a" }
+    },
+    "woman": {
+      "base": "man",
+      "hair": { "color": "#1f1712", "strands": ["#050302", "#5a4636"], "style": "braids" },
+      "figure": { "stature": 0.93, "build": 0.9 },
+      "face": {
+        "eyes": { "w": 26, "h": 36, "spacing": 96 },
+        "brows": { "shape": "arch", "thickness": 9, "length": 0.9, "lift": -4 },
+        "mouth": { "width": 58, "smile": 0.15 },
+        "blush": 0.3, "lashes": true
+      },
+      "wear": { "summer": "scarf", "autumn": "scarf", "winter": "shawl", "spring": "scarf" },
+      "bodies": { "terleg": { "skirt": 0.68 }, "deel": { "skirt": 0.74 }, "winter": { "skirt": 0.78 } },
+      "pose": { "elbowRest": [-0.35, -0.45] }
+    },
+    "woman_braids": {
+      "base": "woman",
+      "skin": "light",
+      "headShape": { "width": 0.94, "height": 1.07, "round": 0.4 },
+      "face": { "eyes": { "w": 27, "h": 38 }, "mouth": { "smile": 0.3 }, "moles": [[150, 170]] },
+      "deel": { "color": "#8a2a4a", "hem": "#5e1c33" },
+      "sash": { "color": "#e07a28", "fold": "#b05a18" },
+      "hats": { "scarf": { "color": "#c8443a", "knot": "chin" }, "shawl": { "color": "#6b3a4a", "knot": "chin" } },
+      "wear": { "summer": "none", "autumn": "scarf", "winter": "fox", "spring": "scarf" }
+    },
+    "woman_plait": {
+      "base": "woman",
+      "skin": "tan",
+      "hair": { "style": "braid", "color": "#2e211a", "strands": ["#0c0806", "#6a5040"] },
+      "figure": { "build": 0.96 },
+      "headShape": { "width": 1.07, "height": 0.94, "round": 0.15 },
+      "face": {
+        "eyes": { "shape": "slant", "w": 32, "h": 22, "spacing": 100 },
+        "brows": { "shape": "straight", "thickness": 12, "tilt": -0.1 },
+        "mouth": { "width": 50, "smile": 0 },
+        "blush": 0.15, "freckles": 0.5
+      },
+      "deel": { "color": "#2a6a6a", "hem": "#1d4a4a" },
+      "sash": { "color": "#3f8a4a", "fold": "#2c6434" },
+      "hats": { "scarf": { "color": "#2f5d9b", "knot": "back" }, "shawl": { "color": "#4a5a6a", "knot": "back" } }
+    },
+    "boy": {
+      "base": "man",
+      "figure": { "stature": 0.66, "legs": 0.9, "build": 0.88, "head": 1.24 },
+      "face": {
+        "eyes": { "shape": "dot", "w": 24, "h": 24, "spacing": 86 },
+        "brows": { "thickness": 11, "length": 0.85, "lift": -6 },
+        "mouth": { "width": 56, "smile": 0.3 },
+        "blush": 0.55
+      },
+      "bodies": { "terleg": { "skirt": 0.52 }, "deel": { "skirt": 0.56 }, "winter": { "skirt": 0.6 } }
+    },
+    "boy_shorthair": {
+      "base": "boy",
+      "skin": "ruddy",
+      "hair": { "color": "#1f1712", "strands": ["#050302", "#5a4636"] },
+      "headShape": { "width": 1.08, "height": 0.95, "round": 0.3 },
+      "face": { "eyes": { "w": 26, "h": 26 }, "mouth": { "width": 62, "smile": 0.45 }, "blush": 0.6 },
+      "deel": { "color": "#b07a2a", "hem": "#7a531c" },
+      "sash": { "color": "#3a6ab0", "fold": "#284c80" }
+    },
+    "boy_shaved": {
+      "base": "boy",
+      "skin": "tan",
+      "hair": { "style": "bald" },
+      "headShape": { "width": 0.95, "height": 1.08, "round": 0.55 },
+      "face": {
+        "eyes": { "shape": "oval", "w": 24, "h": 36, "spacing": 104, "y": 10 },
+        "brows": { "shape": "arch", "thickness": 9, "lift": -12 },
+        "mouth": { "width": 40, "y": 10, "smile": 0.1 },
+        "freckles": 0.6, "blush": 0.45
+      },
+      "deel": { "color": "#3f7a3a", "hem": "#2a5527" },
+      "sash": { "color": "#b8323a", "fold": "#8a2229" },
+      "boots": { "shaft": "#3a1a16", "tan": "#a8442a", "sole": "#f0e8d6", "teal": "#e0a93a", "gold": "#e0a93a", "pattern": "#f0c050" }
+    },
+    "girl": {
+      "base": "boy",
+      "hair": { "color": "#1f1712", "strands": ["#050302", "#5a4636"], "style": "braids" },
+      "figure": { "stature": 0.64, "build": 0.84 },
+      "face": { "brows": { "shape": "arch", "thickness": 8 }, "mouth": { "width": 48 }, "blush": 0.6, "lashes": true },
+      "wear": { "summer": "ribbon", "autumn": "ribbon", "winter": "fox", "spring": "ribbon" },
+      "bodies": { "terleg": { "skirt": 0.58 }, "deel": { "skirt": 0.62 }, "winter": { "skirt": 0.64 } }
+    },
+    "girl_braids": {
+      "base": "girl",
+      "skin": "light",
+      "face": { "eyes": { "w": 28, "h": 28 }, "mouth": { "smile": 0.5 } },
+      "deel": { "color": "#c0485a", "hem": "#8a2f3e" },
+      "sash": { "color": "#e0b030", "fold": "#b8891e" },
+      "hats": { "ribbon": { "color": "#e0b030" } }
+    },
+    "girl_bun": {
+      "base": "girl",
+      "skin": "medium",
+      "hair": { "style": "bun", "color": "#2e211a", "strands": ["#0c0806", "#6a5040"] },
+      "headShape": { "width": 1.05, "height": 0.95, "round": 0.6 },
+      "face": { "eyes": { "shape": "slant", "w": 28, "h": 20, "spacing": 94 }, "brows": { "shape": "straight", "tilt": -0.12 }, "mouth": { "width": 42, "smile": 0.2 }, "freckles": 0.4 },
+      "deel": { "color": "#6a4a9a", "hem": "#4a3270" },
+      "sash": { "color": "#3f8a4a", "fold": "#2c6434" },
+      "hats": { "ribbon": { "color": "#2f8ad0" } }
+    },
+    "elder": {
+      "base": "man",
+      "skin": "ruddy",
+      "hair": { "color": "#a8a39a", "strands": ["#6e6a63", "#e4e0d8"] },
+      "figure": { "stature": 0.96, "build": 0.95, "hunch": 0.24 },
+      "face": {
+        "eyes": { "w": 22, "h": 25 },
+        "brows": { "thickness": 17, "lift": 4, "tilt": 0.12, "color": "#d8d4cc" },
+        "mouth": { "width": 64 },
+        "wrinkles": 0.8
+      },
+      "deel": { "color": "#5a4a3a", "hem": "#3e3226" },
+      "boots": { "shaft": "#1c1614", "tan": "#6b4a2e", "sole": "#e8e0cc", "teal": "#3a8a9a", "gold": "#c8a050", "pattern": "#4ab8c8" }
+    },
+    "elder_goatee": {
+      "base": "elder",
+      "hair": { "style": "bald" },
+      "figure": { "build": 0.86, "stature": 0.95 },
+      "headShape": { "width": 0.93, "height": 1.1, "round": 0.1 },
+      "face": {
+        "eyes": { "shape": "line", "w": 30, "h": 26, "spacing": 96 },
+        "brows": { "shape": "slant", "thickness": 18, "tilt": 0.18 },
+        "mouth": { "width": 52, "smile": -0.25 },
+        "beard": "goatee", "wrinkles": 1, "moles": [[-170, 120]]
+      },
+      "sash": { "color": "#3a6ab0", "fold": "#284c80" }
+    },
+    "elder_beard": {
+      "base": "elder",
+      "skin": "tan",
+      "hair": { "color": "#5a5550", "strands": ["#1a1816", "#e8e4dc"] },
+      "figure": { "build": 1.14, "stature": 1.0, "hunch": 0.14 },
+      "headShape": { "width": 1.1, "height": 0.92, "round": 0.45 },
+      "face": {
+        "eyes": { "shape": "oval", "w": 22, "h": 26, "spacing": 96 },
+        "brows": { "shape": "straight", "thickness": 20, "tilt": 0, "color": "#bdb8b0" },
+        "mouth": { "width": 70, "smile": 0.35 },
+        "beard": "full", "glasses": true
+      },
+      "bodies": { "terleg": { "thickness": 1.05 }, "deel": { "thickness": 1.1 }, "winter": { "thickness": 1.2 } },
+      "deel": { "color": "#2f4a6b", "hem": "#203448" },
+      "sash": { "color": "#e07a28", "fold": "#b05a18" }
+    },
+    "granny": {
+      "base": "woman",
+      "skin": "tan",
+      "hair": { "color": "#b5b0a8", "strands": ["#77726b", "#ebe7e0"], "style": "bun" },
+      "figure": { "stature": 0.9, "hunch": 0.26 },
+      "face": {
+        "eyes": { "shape": "line", "w": 26, "h": 24 },
+        "brows": { "thickness": 8, "tilt": 0.1, "color": "#d8d4cc" },
+        "mouth": { "width": 50, "smile": 0.4 },
+        "wrinkles": 1, "blush": 0.2, "lashes": false
+      },
+      "deel": { "color": "#4a3a5a", "hem": "#32263e" }
+    },
+    "granny_bun": {
+      "base": "granny",
+      "figure": { "stature": 0.86, "legs": 0.9, "build": 1.14 },
+      "headShape": { "width": 1.1, "height": 0.93, "round": 0.7 },
+      "face": { "moles": [[60, 230]] },
+      "bodies": { "terleg": { "thickness": 1.08 }, "deel": { "thickness": 1.14 }, "winter": { "thickness": 1.22 } },
+      "sash": { "color": "#3f8a4a", "fold": "#2c6434" },
+      "hats": { "scarf": { "color": "#e8e2d4", "knot": "back" }, "shawl": { "color": "#5a4a6a", "knot": "chin" } }
+    },
+    "granny_plait": {
+      "base": "granny",
+      "skin": "ruddy",
+      "hair": { "style": "braid", "color": "#6e6a63", "strands": ["#2a2724", "#e4e0d8"] },
+      "figure": { "build": 0.86, "hunch": 0.22 },
+      "headShape": { "width": 0.92, "height": 1.08, "round": 0.2 },
+      "face": {
+        "eyes": { "shape": "slant", "w": 24, "h": 18, "spacing": 90 },
+        "brows": { "shape": "straight", "thickness": 7 },
+        "mouth": { "width": 44, "smile": -0.2 },
+        "wrinkles": 0.8
+      },
+      "deel": { "color": "#6b4a2a", "hem": "#4a321c" },
+      "sash": { "color": "#b8323a", "fold": "#8a2229" },
+      "hats": { "scarf": { "color": "#3a7a5a", "knot": "chin" } }
+    },
+    "teacher_glasses": {
+      "base": "man",
+      "skin": "light",
+      "hair": { "color": "#0e0a08", "strands": ["#000000", "#3a2e26"] },
+      "figure": { "stature": 1.03, "build": 0.86 },
+      "headShape": { "width": 0.92, "height": 1.08, "round": 0.25 },
+      "face": {
+        "eyes": { "shape": "dot", "w": 15, "h": 15, "spacing": 94 },
+        "brows": { "shape": "arch", "thickness": 9, "lift": -8 },
+        "mouth": { "width": 52, "smile": 0.1 },
+        "beard": "mustache", "glasses": true
+      },
+      "deel": { "color": "#4a5a6a", "hem": "#34404c" },
+      "sash": { "color": "#3f8a4a", "fold": "#2c6434" },
+      "boots": { "shaft": "#1c1614", "tan": "#6b4a2e", "sole": "#e8e0cc", "teal": "#3a8a9a", "gold": "#c8a050", "pattern": "#4ab8c8" }
     }
   },
   "player": { "base": "man" }

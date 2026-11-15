@@ -80,7 +80,7 @@ export function animateCharacter(H: CharacterRig, p: CharacterPose): number {
   H.neck.rotation.y = Math.sin(t * 0.45) * 0.3 * (1 - run);
   H.neck.rotation.x = Math.sin(t * 0.3 + 1) * 0.07 * (1 - run) - lean * 0.55 * run;
   const b = Math.sin(t * mix(1.6, 5, run)) * mix(1, 1.6, run);
-  for (const body of H.bodies) body.scale.set(1 + b * 0.015, 1, 1 + b * 0.035);
+  for (const body of H.bodies) body.scale.set((1 + b * 0.015) * H.build, 1, (1 + b * 0.035) * H.build);
   arm0.position.y = arm1.position.y = H.armY + b * 0.012;
   H.neck.position.y = H.neckY + b * 0.012;
   H.waist.rotation.y = moving ? sw * 0.22 : Math.sin(t * 0.5) * 0.14;

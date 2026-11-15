@@ -5,27 +5,84 @@
  */
 import charactersJson from '../../../../data/characters.json';
 import { visualStyle, type OutfitBody, type OutfitHat } from '../style';
+import type { Season } from '../../sim/config';
 
 export interface BootPalette { shaft: number; tan: number; sole: number; teal: number; gold: number; pattern: number }
 export interface BodyForm { thickness: number; skirt: number }
 export interface ToortsogLook { felt: number; ink: number }
 export interface FoxHatLook { fur: number; furTint: number; silk: number; trim: number; gold: number; stem: number; knot: number; ribbon: number }
 
+export type HairStyle = 'short' | 'bald' | 'bun' | 'braids' | 'braid';
+export const HAIR_STYLES: readonly HairStyle[] = ['short', 'bald', 'bun', 'braids', 'braid'];
+export type Beard = 'none' | 'mustache' | 'goatee' | 'full';
+export const BEARDS: readonly Beard[] = ['none', 'mustache', 'goatee', 'full'];
+export type EyeShape = 'oval' | 'dot' | 'line' | 'slant';
+export const EYE_SHAPES: readonly EyeShape[] = ['oval', 'dot', 'line', 'slant'];
+export type BrowShape = 'straight' | 'arch' | 'slant';
+export const BROW_SHAPES: readonly BrowShape[] = ['straight', 'arch', 'slant'];
+/** Бүх малгай, толгойн өмсгөл: style.ts-ийн улирлын хоёр (toortsog, fox) + эмэгтэй, охидын (scarf, shawl, ribbon) */
+export type CharacterHat = OutfitHat | 'scarf' | 'shawl' | 'ribbon';
+export const CHARACTER_HATS: readonly CharacterHat[] = ['toortsog', 'fox', 'scarf', 'shawl', 'ribbon'];
+const SEASONS: readonly Season[] = ['summer', 'autumn', 'winter', 'spring'];
+/** Толгойн цилиндрийн хэлбэр: width/height — харьцаа, round — дээд/доод захын бөөрөнхийлөлт (0 = тоглогчийнх) */
+export interface HeadShape { width: number; height: number; round: number }
+/** Алчуур: knot — эрүүн доогуур (chin) эсвэл араар (back) зангидсан */
+export interface ScarfLook { color: number; knot: 'chin' | 'back' }
+
+/** Бие галбир — угсарсны дараа, bake-ийн өмнө ясаар (бүлгүүдээр) масштаблана; 1/0 бол өөрчлөхгүй */
+export interface Figure {
+  /** нийт өндөр (1 = насанд хүрсэн эр) */
+  stature: number;
+  /** хөлийн урт (бүх өндрөөс гадна) */
+  legs: number;
+  /** цээж, мөрний өргөн */
+  build: number;
+  /** толгойн харьцаа (хүүхэд том) */
+  head: number;
+  /** бөгтөр: цээжийг бэлхүүсээр урагш хазайлгах өнцөг, рад */
+  hunch: number;
+}
+/** Зурмал нүүрний параметр (2048×1024 зургийн координатаар) */
+export interface FaceLook {
+  /** y — босоо шилжилт (+ доош) */
+  eyes: { shape: EyeShape; w: number; h: number; spacing: number; y: number };
+  /** color — null бол бэх (хар) */
+  brows: { shape: BrowShape; thickness: number; length: number; lift: number; tilt: number; color: number | null };
+  /** y — босоо шилжилт, smile — амны булан (+ инээмсэглэл, − доошоо) */
+  mouth: { width: number; y: number; smile: number };
+  beard: Beard;
+  wrinkles: number;
+  blush: number;
+  lashes: boolean;
+  freckles: number;
+  /** мэнгэ: нүүрний төвөөс [x, y] px (2048×1024) */
+  moles: Array<[number, number]>;
+  glasses: boolean;
+}
+export interface NpcDetail { lod: number; shadowParts: number }
+
 export interface CharacterSpec {
   skin: { base: number; shade: number; nail: number };
-  hair: { color: number };
+  /** strands — ширхэгийн [бараан, цайвар] өнгө */
+  hair: { color: number; strands: [number, number]; style: HairStyle };
+  figure: Figure;
+  headShape: HeadShape;
+  face: FaceLook;
   legs: number;
   deel: { color: number; hem: number; button: number; furTrim: number; winterTrim: number; terlegLighten: number };
   sash: { color: number; fold: number };
   vest: { color: number; lining: number; fur: number };
   boots: BootPalette;
   bodies: Record<OutfitBody, BodyForm>;
-  hats: { toortsog: ToortsogLook; fox: FoxHatLook };
+  hats: { toortsog: ToortsogLook; fox: FoxHatLook; scarf: ScarfLook; shawl: ScarfLook; ribbon: { color: number } };
+  /** улирал бүрийн толгойн өмсгөл (байхгүй бол visuals.json outfits.seasons) */
+  wear: Record<Season, CharacterHat | 'none'> | null;
   pose: { elbowRest: [number, number] };
   props: { uurga: number; sack: number };
 }
 
 export interface CharactersData {
+  detail: { npc: NpcDetail };
   presets: Record<string, CharacterSpec>;
   player: CharacterSpec;
 }
@@ -63,15 +120,68 @@ function colors<K extends string>(v: unknown, path: string, keys: readonly K[], 
   return out;
 }
 
-const SPEC_KEYS = ['base', 'skin', 'hair', 'legs', 'deel', 'sash', 'vest', 'boots', 'bodies', 'hats', 'pose', 'props'] as const;
+function oneOf<T extends string>(v: unknown, path: string, values: readonly T[]): T {
+  if (typeof v !== 'string' || !values.includes(v as T)) return fail(path, `${values.join(' | ')} байх ёстой`);
+  return v as T;
+}
+function pair(v: unknown, path: string): [number, number] {
+  if (!Array.isArray(v) || v.length !== 2) return fail(path, '2 өнгөтэй массив байх ёстой');
+  return [color(v[0], `${path}[0]`), color(v[1], `${path}[1]`)];
+}
+function parseFigure(v: unknown, path: string): Figure {
+  const f = group(v, path, ['stature', 'legs', 'build', 'head', 'hunch']);
+  return {
+    stature: num(f.stature, `${path}.stature`, 0.5, 1.2), legs: num(f.legs, `${path}.legs`, 0.7, 1.2),
+    build: num(f.build, `${path}.build`, 0.7, 1.3), head: num(f.head, `${path}.head`, 0.8, 1.4), hunch: num(f.hunch, `${path}.hunch`, 0, 0.4),
+  };
+}
+const bool = (v: unknown, path: string): boolean => (typeof v === 'boolean' ? v : fail(path, 'true/false байх ёстой'));
+function parseFace(v: unknown, path: string): FaceLook {
+  const f = group(v, path, ['eyes', 'brows', 'mouth', 'beard', 'wrinkles', 'blush', 'lashes', 'freckles', 'moles', 'glasses']);
+  const e = group(f.eyes, `${path}.eyes`, ['shape', 'w', 'h', 'spacing', 'y']);
+  const b = group(f.brows, `${path}.brows`, ['shape', 'thickness', 'length', 'lift', 'tilt', 'color']);
+  const m = group(f.mouth, `${path}.mouth`, ['width', 'y', 'smile']);
+  if (!Array.isArray(f.moles)) fail(`${path}.moles`, '[[x, y], ...] массив байх ёстой');
+  const moles = (f.moles as unknown[]).map((p, i): [number, number] => {
+    if (!Array.isArray(p) || p.length !== 2) return fail(`${path}.moles[${i}]`, '[x, y] байх ёстой');
+    return [num(p[0], `${path}.moles[${i}][0]`, -400, 400), num(p[1], `${path}.moles[${i}][1]`, -500, 500)];
+  });
+  return {
+    eyes: { shape: oneOf(e.shape, `${path}.eyes.shape`, EYE_SHAPES), w: num(e.w, `${path}.eyes.w`, 10, 50), h: num(e.h, `${path}.eyes.h`, 10, 60), spacing: num(e.spacing, `${path}.eyes.spacing`, 60, 140), y: num(e.y, `${path}.eyes.y`, -60, 60) },
+    brows: {
+      shape: oneOf(b.shape, `${path}.brows.shape`, BROW_SHAPES), thickness: num(b.thickness, `${path}.brows.thickness`, 4, 30), length: num(b.length, `${path}.brows.length`, 0.5, 1.6),
+      lift: num(b.lift, `${path}.brows.lift`, -40, 40), tilt: num(b.tilt, `${path}.brows.tilt`, -0.5, 0.5), color: b.color === undefined ? null : color(b.color, `${path}.brows.color`),
+    },
+    mouth: { width: num(m.width, `${path}.mouth.width`, 30, 110), y: num(m.y, `${path}.mouth.y`, -60, 60), smile: num(m.smile, `${path}.mouth.smile`, -1, 1) },
+    beard: oneOf(f.beard, `${path}.beard`, BEARDS),
+    wrinkles: num(f.wrinkles, `${path}.wrinkles`, 0, 1), blush: num(f.blush, `${path}.blush`, 0, 1), lashes: bool(f.lashes, `${path}.lashes`),
+    freckles: num(f.freckles, `${path}.freckles`, 0, 1), moles, glasses: bool(f.glasses, `${path}.glasses`),
+  };
+}
+function parseScarf(v: unknown, path: string): ScarfLook {
+  const o = group(v, path, ['color', 'knot']);
+  return { color: color(o.color, `${path}.color`), knot: oneOf(o.knot, `${path}.knot`, ['chin', 'back'] as const) };
+}
+function parseWear(v: unknown, path: string): CharacterSpec['wear'] {
+  if (v === undefined) return null;
+  const o = group(v, path, SEASONS);
+  const out = {} as Record<Season, CharacterHat | 'none'>;
+  for (const s of SEASONS) out[s] = oneOf(o[s], `${path}.${s}`, [...CHARACTER_HATS, 'none'] as const);
+  return out;
+}
+type Skins = Record<string, CharacterSpec['skin']>;
+
+const SPEC_KEYS = ['base', 'skin', 'hair', 'figure', 'headShape', 'face', 'wear', 'legs', 'deel', 'sash', 'vest', 'boots', 'bodies', 'hats', 'pose', 'props'] as const;
 
 /** Бүрэн нийлүүлсэн (base шийдсэн) түүхий утгыг төрөлжүүлнэ */
-function parseSpec(raw: Obj, path: string): CharacterSpec {
+function parseSpec(raw: Obj, path: string, skins: Skins): CharacterSpec {
   const r = group(raw, path, SPEC_KEYS);
   const deelKeys = ['color', 'hem', 'button', 'furTrim', 'winterTrim'] as const;
   const deel = group(r.deel, `${path}.deel`, [...deelKeys, 'terlegLighten']);
   const bodies = group(r.bodies, `${path}.bodies`, OUTFIT_BODIES);
-  const hats = group(r.hats, `${path}.hats`, OUTFIT_HATS);
+  const hats = group(r.hats, `${path}.hats`, CHARACTER_HATS);
+  const hs = group(r.headShape, `${path}.headShape`, ['width', 'height', 'round']);
+  const skin = typeof r.skin === 'string' ? (skins[r.skin] ?? fail(`${path}.skin`, `"${r.skin}" skins-д алга`)) : colors(r.skin, `${path}.skin`, ['base', 'shade', 'nail']);
   const pose = group(r.pose, `${path}.pose`, ['elbowRest']);
   const rest = pose.elbowRest;
   if (!Array.isArray(rest) || rest.length !== 2) fail(`${path}.pose.elbowRest`, '2 тоотой массив байх ёстой');
@@ -82,8 +192,12 @@ function parseSpec(raw: Obj, path: string): CharacterSpec {
     parsedBodies[b] = { thickness: num(f.thickness, `${path}.bodies.${b}.thickness`, 0.5, 1.6), skirt: num(f.skirt, `${path}.bodies.${b}.skirt`, 0.2, 1) };
   }
   return {
-    skin: colors(r.skin, `${path}.skin`, ['base', 'shade', 'nail']),
-    hair: colors(r.hair, `${path}.hair`, ['color']),
+    skin,
+    hair: { ...colors(r.hair, `${path}.hair`, ['color'], ['style', 'strands']), strands: pair((r.hair as Obj).strands, `${path}.hair.strands`), style: oneOf((r.hair as Obj).style, `${path}.hair.style`, HAIR_STYLES) },
+    figure: parseFigure(r.figure, `${path}.figure`),
+    headShape: { width: num(hs.width, `${path}.headShape.width`, 0.8, 1.2), height: num(hs.height, `${path}.headShape.height`, 0.8, 1.2), round: num(hs.round, `${path}.headShape.round`, -0.5, 1) },
+    wear: parseWear(r.wear, `${path}.wear`),
+    face: parseFace(r.face, `${path}.face`),
     legs: color(r.legs, `${path}.legs`),
     deel: { ...colors(deel, `${path}.deel`, deelKeys, ['terlegLighten']), terlegLighten: num(deel.terlegLighten, `${path}.deel.terlegLighten`, 0, 0.6) },
     sash: colors(r.sash, `${path}.sash`, ['color', 'fold']),
@@ -93,6 +207,9 @@ function parseSpec(raw: Obj, path: string): CharacterSpec {
     hats: {
       toortsog: colors(hats.toortsog, `${path}.hats.toortsog`, ['felt', 'ink']),
       fox: colors(hats.fox, `${path}.hats.fox`, ['fur', 'furTint', 'silk', 'trim', 'gold', 'stem', 'knot', 'ribbon']),
+      scarf: parseScarf(hats.scarf, `${path}.hats.scarf`),
+      shawl: parseScarf(hats.shawl, `${path}.hats.shawl`),
+      ribbon: colors(hats.ribbon, `${path}.hats.ribbon`, ['color']),
     },
     pose: { elbowRest },
     props: colors(r.props, `${path}.props`, ['uurga', 'sack']),
@@ -116,7 +233,11 @@ export function visualDefaults(): Obj {
 
 /** characters.json-ийг шалгаж, preset бүрийг base-тэй нь нийлүүлнэ. Алдаатай бол зам заасан Error шиднэ */
 export function validateCharacters(json: unknown, defaults: Obj = visualDefaults()): CharactersData {
-  const root = group(json, '(root)', ['presets', 'player']);
+  const root = group(json, '(root)', ['detail', 'skins', 'presets', 'player']);
+  const skins: Skins = {};
+  for (const [k, v] of Object.entries(group(root.skins, 'skins', Object.keys(isObj(root.skins) ? root.skins : {})))) if (!k.startsWith('_')) skins[k] = colors(v, `skins.${k}`, ['base', 'shade', 'nail']);
+  const npc = group(group(root.detail, 'detail', ['npc']).npc, 'detail.npc', ['lod', 'shadowParts']);
+  const detail = { npc: { lod: num(npc.lod, 'detail.npc.lod', 0.3, 1), shadowParts: num(npc.shadowParts, 'detail.npc.shadowParts', 0, 20) } };
   const presetsRaw = group(root.presets, 'presets', Object.keys(isObj(root.presets) ? root.presets : {}));
   const resolved = new Map<string, Obj>();
   const resolve = (raw: unknown, path: string, stack: string[]): Obj => {
@@ -142,10 +263,10 @@ export function validateCharacters(json: unknown, defaults: Obj = visualDefaults
   const presets: Record<string, CharacterSpec> = {};
   for (const name of Object.keys(presetsRaw)) {
     if (name.startsWith('_')) continue;
-    presets[name] = parseSpec(resolvePreset(name, [name]), `presets.${name}`);
+    presets[name] = parseSpec(resolvePreset(name, [name]), `presets.${name}`, skins);
   }
-  const player = parseSpec(resolve(root.player, 'player', ['player']), 'player');
-  return { presets, player };
+  const player = parseSpec(resolve(root.player, 'player', ['player']), 'player', skins);
+  return { detail, presets, player };
 }
 
 export const characters: CharactersData = validateCharacters(charactersJson);

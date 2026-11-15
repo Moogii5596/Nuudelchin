@@ -10,7 +10,7 @@
       #wrap canvas { display: block; }
       #panel { position: absolute; left: 12px; bottom: 12px; right: 12px; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center;
                padding: 10px 12px; border-radius: 10px; background: rgba(20, 16, 12, 0.66); color: #f4ead6; }
-      #panel[hidden], #stats:empty { display: none; }
+      #panel[hidden], #panel label[hidden], #stats:empty { display: none; }
       #panel label { display: inline-flex; gap: 5px; align-items: center; }
       #panel select, #panel input[type="range"] { font: inherit; }
       #stats { position: absolute; top: 10px; left: 12px; padding: 6px 10px; border-radius: 8px; background: rgba(20, 16, 12, 0.6); color: #f4ead6; font: 12px ui-monospace, monospace; }
@@ -41,8 +41,10 @@
       <label><input type="checkbox" id="talk" /> Ярих</label>
       <label><input type="checkbox" id="raise" /> Гар өргөх</label>
       <label><input type="checkbox" id="uurga" /> Уурга</label>
+      <label><input type="checkbox" id="npc" /> npc нарийвчлал</label>
       <label><input type="checkbox" id="crowd" /> Олон хүн (crowd)</label>
       <label>Тогтмол зураг <select id="shots"><option value="">—</option></select></label>
+      <a href="?lineup" style="color:#e8b64c">Эгнээ A/B</a> <a href="?" style="color:#e8b64c">Нэг дүр</a>
     </div>
     <script type="module" src="/src/render/character/lab.ts"></script>
   </body>

@@ -1,12 +1,12 @@
 /**
  * Малгай (C-7): нэр бүр нэг функц (`hat:<нэр>` бүлэг, улирлаар харагдана). Шинэ малгай = энд нэг функц + `HATS`-д нэр
- * (style.ts `OutfitHat`, characters.json `hats.<нэр>`).
+ * (spec.ts `CharacterHat`, characters.json `hats.<нэр>`). Дүр зөвхөн өмсдөг малгайгаа угсарна (rig.ts, `wear`).
  */
 import * as THREE from 'three';
-import type { OutfitHat } from '../../style';
+import { headProfile, profileRadius } from './head';
 import { noOut, profile, type Kit, type Pt } from '../geom';
-import { cap, felt, fur, silk, smooth } from '../materials';
-import type { CharacterSpec } from '../spec';
+import { cap, darken, felt, fur, silk, smooth } from '../materials';
+import type { CharacterHat, CharacterSpec } from '../spec';
 
 /** Тоорцог: эсгий бөмбөгөр орой, хар судал, алхан хээтэй орой, сампин, 4 далбаа; арагш далийлгаж өмссөн. hy — толгойн өндөр */
 function toortsog(spec: CharacterSpec, kit: Kit, hy: number): THREE.Group {
@@ -29,7 +29,7 @@ function toortsog(spec: CharacterSpec, kit: Kit, hy: number): THREE.Group {
     }
     return 0;
   };
-  kit.lathe(DOME, 1, feltM, 0, hy, 0, hat, { rows: 20 });
+  kit.lathe(DOME, 1, kit.detail === 'npc' ? feltM2 : feltM, 0, hy, 0, hat, { rows: 20 });   // npc: далбаатай нэг материал (draw call)
   // Хар судлууд: доод хос, хар оройн доорх хос
   const band = (y0: number, y1: number): THREE.Mesh => noOut(kit.lathe([[domeR(y0) + 0.004, y0], [domeR(y1) + 0.004, y1]], 1, ink, 0, hy, 0, hat));
   band(0.1, 0.118); band(0.136, 0.147);
@@ -114,5 +114,75 @@ function fox(spec: CharacterSpec, kit: Kit, hy: number): THREE.Group {
   return hat;
 }
 
+/**
+ * Алчуур (R4, эмэгтэйчүүд): толгойн орой, ар, хажууг бүрхсэн бүрхүүл — нүүр ил; эрүүн доогуур (chin) эсвэл араар (back)
+ * зангидсан. thick — өвлийн зузаан алчуур (эсгий). Толгойн хэлбэрийг (headShape) дагана.
+ */
+function scarfHat(name: 'scarf' | 'shawl', thick: boolean): HatBuilder {
+  return (spec, kit, hy) => {
+    const L = spec.hats[name], { width: hw, height: hh } = spec.headShape;
+    const R = profileRadius(headProfile(spec.headShape));
+    const hat = new THREE.Group();
+    hat.name = 'hat:' + name;
+    const cloth = thick ? felt(L.color, true) : silk(L.color, true), trim = smooth(darken(L.color, 0.62));
+    const off = thick ? 0.05 : 0.032, FRONT = 2.45, TOP = 0.262;
+    const low = (d: number): number => (L.knot === 'chin' ? -0.31 : -0.36 + 0.16 * (Math.abs(d) / FRONT) ** 2);
+    const at = (d: number, y: number): THREE.Vector3 => {
+      const r = (y > TOP - 0.004 ? 0 : Math.max(R(y), y < 0 ? 0.185 : 0)) + off * (y > TOP - 0.004 ? 0.4 : 1), phi = Math.PI + d;
+      return new THREE.Vector3(r * Math.sin(phi) * hw, hy + y * hh, r * Math.cos(phi) * hw);
+    };
+    const NU = kit.q(40, 12), NV = kit.q(16, 6), pos: number[] = [], uv: number[] = [], idx: number[] = [];
+    for (let a = 0; a <= NU; a++) {
+      const d = -FRONT + (a / NU) * FRONT * 2, lo = low(d);
+      for (let b = 0; b <= NV; b++) {
+        const t = b / NV, p = at(d, lo + (TOP - lo) * Math.sin((t * Math.PI) / 2));
+        pos.push(p.x, p.y, p.z); uv.push((a / NU) * 3, t * 2);
+      }
+    }
+    for (let a = 0; a < NU; a++) for (let b = 0; b < NV; b++) {
+      const p0 = a * (NV + 1) + b, p1 = p0 + NV + 1;
+      idx.push(p0, p1, p0 + 1, p1, p1 + 1, p0 + 1);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    geo.setIndex(idx);
+    geo.computeVertexNormals();
+    const shell = new THREE.Mesh(geo, cloth);
+    shell.castShadow = true;
+    hat.add(shell);
+    // Хөвөө: нүүрний хоёр ирмэг, доод ирмэг
+    const rad = thick ? 0.016 : 0.009;
+    for (const sd of [-1, 1]) {
+      const d = sd * FRONT, lo = low(d);
+      kit.tube(Array.from({ length: 9 }, (_, k) => at(d, lo + (TOP - 0.02 - lo) * Math.sin(((k / 8) * Math.PI) / 2))), rad, trim, hat);
+    }
+    kit.tube(Array.from({ length: 21 }, (_, k) => { const d = -FRONT + (k / 20) * FRONT * 2; return at(d, low(d)); }), rad, trim, hat);
+    // Зангилаа ба хоёр үзүүр
+    const knot = L.knot === 'chin' ? new THREE.Vector3(0, hy - 0.33 * hh, 0.15 * hw) : new THREE.Vector3(0, hy - 0.2 * hh, -(0.25 + off) * hw);
+    noOut(kit.sball(thick ? 0.05 : 0.04, cloth, knot.x, knot.y, knot.z, hat)).scale.set(1.3, 0.8, 0.9);
+    for (const sx of [-1, 1]) {
+      const tail = noOut(kit.lathe([[0.004, -0.17], [0.03, -0.12], [0.028, 0]], 0.35, cloth, knot.x + sx * 0.035, knot.y - 0.01, knot.z + (L.knot === 'chin' ? 0.01 : -0.01), hat, { rows: 6 }));
+      tail.rotation.z = sx * 0.35;
+    }
+    return hat;
+  };
+}
+
+/** Охидын тууз: духны дээгүүр толгойг тойрсон тууз, хажуудаа зангидсан нум */
+function ribbon(spec: CharacterSpec, kit: Kit, hy: number): THREE.Group {
+  const { width: hw, height: hh } = spec.headShape, R = profileRadius(headProfile(spec.headShape));
+  const hat = new THREE.Group();
+  hat.name = 'hat:ribbon';
+  const m = smooth(spec.hats.ribbon.color), y0 = 0.12;
+  const band = kit.lathe([[R(y0 - 0.025) + 0.018, -0.025 * hh], [R(y0 + 0.025) + 0.018, 0.025 * hh]], 1, m, 0, hy + y0 * hh, 0, hat, { segs: 32 });
+  band.scale.x = hw; band.scale.z = hw;
+  const bx = -(R(y0) + 0.02) * hw * 0.72, bz = -(R(y0) + 0.02) * hw * 0.72, by = hy + y0 * hh;   // нум: зүүн хойд талд
+  for (const s of [-1, 1]) noOut(kit.sball(0.05, m, bx + s * 0.045, by + 0.02, bz - s * 0.045, hat)).scale.set(1, 0.6, 0.45);
+  noOut(kit.sball(0.022, m, bx, by, bz, hat));
+  return hat;
+}
+
 export type HatBuilder = (spec: CharacterSpec, kit: Kit, hy: number) => THREE.Group;
-export const HATS: Readonly<Record<OutfitHat, HatBuilder>> = { toortsog, fox };
+/** Бүртгэлийн дараалал = угсрах дараалал (тоглогчийнх toortsog, fox) */
+export const HATS: Readonly<Record<CharacterHat, HatBuilder>> = { toortsog, fox, scarf: scarfHat('scarf', false), shawl: scarfHat('shawl', true), ribbon };

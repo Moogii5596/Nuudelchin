@@ -45,7 +45,21 @@ export function buildArm(spec: CharacterSpec, kit: Kit, sx: number, bend: number
   // Алга: булан нь дугуйрсан, бугуй талдаа нарийн, хурууны уг талдаа өргөн
   kit.lathe(PALM, 1, skinM, 0, 0, 0, wrist, { capBottom: true, rows: 12 }).scale.x = 0.4;
   const fingers: Array<{ joints: THREE.Group[]; k: number }> = [];
-  FINGERS.forEach(([fz, ...lens], n) => {
+  if (kit.detail === 'npc') {
+    // Бээлий гар: 4 хуруу нэг өргөн хавтгай (3 үетэй — атгах хэвээр), хумс, үений товгоргүй
+    const joints: THREE.Group[] = [];
+    let parent: THREE.Group = wrist, y = -0.108, r = 0.0165;
+    for (const len of FINGERS[2]!.slice(1)) {
+      const jt = new THREE.Group();
+      jt.position.set(0, y, 0);
+      parent.add(jt);
+      noOut(kit.cyl(r, r * 0.9, len + r, skinM, 0, -len / 2, 0, jt)).scale.z = 3.1;
+      joints.push(jt);
+      parent = jt; y = -len; r *= 0.9;
+    }
+    noOut(kit.sball(r, skinM, 0, y, 0, parent)).scale.z = 3.1;
+    fingers.push({ joints, k: 1 });
+  } else FINGERS.forEach(([fz, ...lens], n) => {
     const joints: THREE.Group[] = [];
     let parent: THREE.Group = wrist, y = -0.108, r = 0.0155;
     for (const len of lens) {
@@ -69,7 +83,7 @@ export function buildArm(spec: CharacterSpec, kit: Kit, sx: number, bend: number
   wrist.add(thumbBase);
   noOut(kit.sball(0.021, skinM, 0, 0, 0, thumbBase));
   noOut(kit.cyl(0.021, 0.019, 0.042, skinM, 0, -0.021, 0, thumbBase));
-  noOut(kit.sball(0.027, skinM, -sx * 0.008, -0.02, -0.006, thumbBase)).scale.set(0.8, 1.35, 1);   // эрхийн булчин: алгатай нийлнэ
+  if (kit.detail === 'full') noOut(kit.sball(0.027, skinM, -sx * 0.008, -0.02, -0.006, thumbBase)).scale.set(0.8, 1.35, 1);   // эрхийн булчин: алгатай нийлнэ
   const thumb = new THREE.Group();
   thumb.position.y = -0.042;
   thumbBase.add(thumb);
@@ -81,7 +95,7 @@ export function buildArm(spec: CharacterSpec, kit: Kit, sx: number, bend: number
   noOut(kit.sball(0.017, skinM, 0, 0, 0, thumbTip));
   noOut(kit.cyl(0.0165, 0.0155, 0.022, skinM, 0, -0.011, 0, thumbTip)).scale.set(0.88, 1, 1.12);   // үзүүр рүүгээ хавтгайрна
   noOut(kit.sball(0.0158, skinM, 0, -0.023, 0, thumbTip)).scale.set(0.85, 1, 1.12);                // бөөрөнхий, өргөн үзүүр
-  noOut(kit.sball(0.0125, nailM, sx * 0.0085, -0.02, 0.004, thumbTip)).scale.set(0.35, 1.2, 1);     // хумс
+  if (kit.detail === 'full') noOut(kit.sball(0.0125, nailM, sx * 0.0085, -0.02, 0.004, thumbTip)).scale.set(0.35, 1.2, 1);     // хумс
   /**
    * c = 0 тэнийсэн … 1.3 нударга. grip = 0..1: уурганы ишийг тойруулж атгасан байрлал руу шилжинэ —
    * эрхий долоовор хурууны хажууд, бариулыг хуруунуудын эсрэг талаас хөндлөн тойрно.

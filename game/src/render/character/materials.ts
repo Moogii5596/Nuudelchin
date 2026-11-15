@@ -106,13 +106,14 @@ const furTex = (base: number): THREE.Texture => memoTex('fur' + base, () => canv
     c.beginPath(); c.moveTo(x, y); c.lineTo(x + (rnd() - 0.5) * 6, y + 5 + rnd() * 8); c.stroke();
   }
 }, 2, 2));
-/** Толгойн үсний ширхэг: суурь дээр босоо нарийн судал */
-const hairTex = (base: number): THREE.Texture => memoTex('hair' + base, () => canvasTex(256, 128, (c, w, h) => {
+/** Толгойн үсний ширхэг: суурь дээр босоо нарийн судал (strands — [бараан, цайвар]) */
+const hairTex = (base: number, strands: readonly [number, number]): THREE.Texture => memoTex(`hair${base}|${strands}`, () => canvasTex(256, 128, (c, w, h) => {
+  const rgb = (x: number): string => `${(x >> 16) & 255},${(x >> 8) & 255},${x & 255}`, dark = rgb(strands[0]), light = rgb(strands[1]);
   c.fillStyle = css(base); c.fillRect(0, 0, w, h);
   const rnd = lcg(23);
   for (let n = 0; n < 420; n++) {
     const x = rnd() * w;
-    c.strokeStyle = rnd() < 0.5 ? `rgba(12,8,6,${0.35 + rnd() * 0.4})` : `rgba(132,100,76,${0.25 + rnd() * 0.35})`;
+    c.strokeStyle = rnd() < 0.5 ? `rgba(${dark},${0.35 + rnd() * 0.4})` : `rgba(${light},${0.25 + rnd() * 0.35})`;
     c.lineWidth = 0.8 + rnd() * 1.4;
     c.beginPath(); c.moveTo(x, 0); c.bezierCurveTo(x + (rnd() - 0.5) * 8, h * 0.33, x + (rnd() - 0.5) * 8, h * 0.66, x + (rnd() - 0.5) * 6, h); c.stroke();
   }
@@ -156,7 +157,8 @@ export const sleeve = (c: number): THREE.MeshLambertMaterial => new THREE.MeshLa
 /** Нударга: өөр өнгийн хээтэй торго */
 export const cuff = (c: number): THREE.MeshLambertMaterial => memo('cuff' + c, () => new THREE.MeshLambertMaterial({ color: c, map: brocadeSleeveTex() }));
 /** Хээтэй торго (малгайн орой) */
-export const silk = (c: number): THREE.MeshLambertMaterial => memo('silk' + c, () => new THREE.MeshLambertMaterial({ color: c, map: brocadeTex() }));
+export const silk = (c: number, double = false): THREE.MeshLambertMaterial =>
+  memo(double ? 'silk2' + c : 'silk' + c, () => new THREE.MeshLambertMaterial({ color: c, map: brocadeTex(), ...(double ? { side: THREE.DoubleSide } : {}) }));
 /** Сэвсгэр үс: base — ширхэгийн суурь, tint — материалын өнгө */
 export const fur = (base: number, tint = 0xffffff, double = false): THREE.MeshLambertMaterial =>
   memo(`fur${base}|${tint}|${double}`, () => new THREE.MeshLambertMaterial({ color: tint, map: furTex(base), ...(double ? { side: THREE.DoubleSide } : {}) }));
@@ -164,7 +166,7 @@ export const fur = (base: number, tint = 0xffffff, double = false): THREE.MeshLa
 export const felt = (c: number, double = false): THREE.MeshLambertMaterial =>
   memo(`felt${c}|${double}`, () => new THREE.MeshLambertMaterial({ color: c, map: feltTex(), ...(double ? { side: THREE.DoubleSide } : {}) }));
 export const cap = (ink: number): THREE.MeshLambertMaterial => memo('cap' + ink, () => new THREE.MeshLambertMaterial({ color: 0xffffff, map: meanderTex(ink) }));
-export const hair = (c: number): THREE.MeshLambertMaterial =>
-  memo('hair' + c, () => new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide, map: hairTex(c) }));
+export const hair = (c: number, strands: readonly [number, number]): THREE.MeshLambertMaterial =>
+  memo(`hair${c}|${strands}`, () => new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide, map: hairTex(c, strands) }));
 export const bootShaft = (b: BootPalette): THREE.MeshLambertMaterial =>
   memo(`boot${b.shaft}|${b.gold}|${b.pattern}`, () => new THREE.MeshLambertMaterial({ color: 0xffffff, map: bootShaftTex(b) }));

@@ -23,8 +23,19 @@ export function flipWinding(g: THREE.BufferGeometry): void {
   }
 }
 
-/** liveMats — ажиллах үед өнгө нь өөрчлөгддөг материал (ханцуй улирлаар) — оройн өнгөнд шингээхгүй */
-export function bakeSkinned(root: THREE.Object3D, liveMats: readonly THREE.Material[] = [], k = 1.06): { bones: number; meshes: number } {
+export interface BakeOptions {
+  /** ажиллах үед өнгө нь өөрчлөгддөг материал (ханцуй улирлаар) — оройн өнгөнд шингээхгүй */
+  liveMats?: readonly THREE.Material[];
+  /** ижил нэртэй давхаргуудыг (body:deel-ийн бэлхүүсээс дээш/доош, ханцуйн үс) нэг mesh болгоно (npc) */
+  mergeByName?: boolean;
+  /** нэг өнгийн хэсгүүдийг нэг/хоёр талаас үл хамааран нэг (хоёр талт) материалд нийлүүлнэ (npc) */
+  doubleSided?: boolean;
+  /** сүүдэр тусгах хамгийн том mesh-ийн тоо (бусад нь сүүдэргүй); байхгүй бол хязгааргүй */
+  shadowParts?: number;
+}
+
+export function bakeSkinned(root: THREE.Object3D, opts: BakeOptions = {}, k = 1.06): { bones: number; meshes: number } {
+  const liveMats = opts.liveMats ?? [];
   root.updateMatrixWorld(true);
   const INK = outline();
   const layerOf = (o: THREE.Object3D): THREE.Object3D => {
@@ -54,7 +65,7 @@ export function bakeSkinned(root: THREE.Object3D, liveMats: readonly THREE.Mater
   interface Bucket { layer: THREE.Object3D; material: THREE.Material; geos: THREE.BufferGeometry[]; shadow: boolean }
   const buckets = new Map<string, Bucket>();
   const bucket = (layer: THREE.Object3D, material: THREE.Material): Bucket => {
-    const key = layer.uuid + '|' + material.uuid;
+    const key = (opts.mergeByName && layer !== root ? layer.name : layer.uuid) + '|' + material.uuid;
     let b = buckets.get(key);
     if (!b) { b = { layer, material, geos: [], shadow: false }; buckets.set(key, b); }
     return b;
@@ -89,7 +100,7 @@ export function bakeSkinned(root: THREE.Object3D, liveMats: readonly THREE.Mater
     if (mat === INK) {   // гараар хийсэн хүрээ (гутлын хүрээ)
       bucket(layer, INK).geos.push(prep(m, m.matrixWorld, false, false));
     } else if (flatColor(mat)) {
-      const bk = bucket(layer, vertexColored(mat.flatShading, mat.side));
+      const bk = bucket(layer, vertexColored(mat.flatShading, opts.doubleSided ? THREE.DoubleSide : mat.side));
       bk.geos.push(prep(m, m.matrixWorld, false, true, mat.color));
       bk.shadow ||= m.castShadow;
     } else {
@@ -104,6 +115,16 @@ export function bakeSkinned(root: THREE.Object3D, liveMats: readonly THREE.Mater
   // яс = үе мөчний бүлгүүд; урвуу матрицыг одоогийн (амрах) байрлалаас тооцно
   const skeleton = new THREE.Skeleton(bones as THREE.Bone[]);
   const identity = new THREE.Matrix4();
+  if (opts.shadowParts !== undefined) {   // сүүдрийн дамжлагын draw call хэмнэнэ: зөвхөн хамгийн том хэсгүүд
+    const size = (b: Bucket): number => b.geos.reduce((s, g) => s + g.attributes.position!.count, 0);
+    const byLayer = new Map<string, Bucket[]>();
+    for (const b of buckets.values()) {
+      if (!b.shadow || b.material === INK) continue;
+      const id = b.layer === root ? '' : b.layer.name;   // давхарга бүрд (улирлын хувцас нэг л харагдана)
+      byLayer.set(id, [...(byLayer.get(id) ?? []), b]);
+    }
+    for (const list of byLayer.values()) list.sort((a, b) => size(b) - size(a)).forEach((b, i) => { b.shadow = i < opts.shadowParts!; });
+  }
   for (const { layer, material, geos, shadow } of buckets.values()) {
     const merged = mergeGeometries(geos, false);
     if (!merged) throw new Error('bakeSkinned: mergeGeometries амжилтгүй');

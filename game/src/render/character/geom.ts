@@ -38,8 +38,12 @@ export const ring = (cx: number, cy: number, cz: number, rad: number, axis: 'x' 
 
 let fluffGeo: THREE.SphereGeometry | null = null;
 
+export type Detail = 'full' | 'npc';
+
 export interface Kit {
   readonly lod: number;
+  /** full — тоглогч; npc — туслах, ойрын NPC (бээлий гар, хоолой үс, нэгтгэсэн давхарга) */
+  readonly detail: Detail;
   /** хуваалтын тоо нарийвчлалаар: max(min, round(n × lod)) */
   q(n: number, min: number): number;
   /** Эргэлтийн бие: ctrl = [[радиус, y], ...] доороос дээш. depthK = зузаан/өргөн (зууван огтлол) */
@@ -51,19 +55,20 @@ export interface Kit {
   tube(pts: THREE.Vector3[], rad: number, material: THREE.Material, parent: THREE.Object3D, tension?: number): THREE.Mesh;
   /** Нурууны шугамын дагуу зууван огтлолуудыг холбосон бие. shape = [дээд, доод] хэлбэрийн зэрэг (2 = зууван, их — дөрвөлжин) */
   loft(st: Section[], material: THREE.Material, parent: THREE.Object3D, shape?: readonly [number, number], segs?: number): THREE.Mesh;
-  /** Сэвсгэр үс: шугамын дагуу бөмбөлгүүд (нэг InstancedMesh) */
-  fluff(points: THREE.Vector3[], r: number, material: THREE.Material, parent: THREE.Object3D, seed?: number): THREE.InstancedMesh;
+  /** Сэвсгэр үс: шугамын дагуу бөмбөлгүүд (нэг InstancedMesh); npc — нэг хоолой (bake-д нийлнэ) */
+  fluff(points: THREE.Vector3[], r: number, material: THREE.Material, parent: THREE.Object3D, seed?: number): THREE.Mesh;
 }
 
 const SEG = 24;
 
-export function makeKit(lod: number): Kit {
+export function makeKit(lod: number, detail: Detail = 'full'): Kit {
   const q = (n: number, min: number): number => Math.max(min, Math.round(n * lod));
   const place = <T extends THREE.Mesh>(m: T, x: number, y: number, z: number, parent: THREE.Object3D): T => {
     m.position.set(x, y, z); m.castShadow = true; parent.add(m); return m;
   };
   return {
     lod,
+    detail,
     q,
     lathe(ctrl, depthK, material, x, y, z, parent, opt = {}) {
       const pts = ctrl.length < 3 ? ctrl.map(([r, yy]) => new THREE.Vector2(r, yy)) : profile(ctrl, q(opt.rows ?? 10, 4));
@@ -142,6 +147,14 @@ export function makeKit(lod: number): Kit {
       return place(new THREE.Mesh(geo, material), 0, cy, cz, parent);
     },
     fluff(points, r, material, parent, seed = 3) {
+      if (detail === 'npc') {   // хоолой: зузаан нь бөмбөлгүүдийн дундаж, гадаргуу нь үсний текстур
+        const closed = points.length > 2 && points[0]!.distanceTo(points[points.length - 1]!) < r;
+        const curve = new THREE.CatmullRomCurve3(closed ? points.slice(0, -1) : points, closed);
+        const m = noOut(new THREE.Mesh(new THREE.TubeGeometry(curve, q(Math.ceil(curve.getLength() / (r * 0.6)), 8), r * 0.95, q(8, 5), closed), material));
+        m.castShadow = true;
+        parent.add(m);
+        return m;
+      }
       const rnd = (): number => (seed = (seed * 16807) % 2147483647) / 2147483647;
       const pts: THREE.Vector3[] = [];
       for (let n = 1; n < points.length; n++) {                 // алхмыг r·0.5 болгож нягтруулна
