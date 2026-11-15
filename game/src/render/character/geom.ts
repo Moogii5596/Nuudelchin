@@ -46,6 +46,8 @@ export interface Kit {
   readonly detail: Detail;
   /** хуваалтын тоо нарийвчлалаар: max(min, round(n × lod)) */
   q(n: number, min: number): number;
+  /** нарийн хоолой, хүрээний хуваалт: npc-д илүү цөөн (холоос үл ялгагдана) */
+  tq(n: number, min: number): number;
   /** Эргэлтийн бие: ctrl = [[радиус, y], ...] доороос дээш. depthK = зузаан/өргөн (зууван огтлол) */
   lathe(ctrl: readonly Pt[], depthK: number, material: THREE.Material, x: number, y: number, z: number, parent: THREE.Object3D, opt?: LatheOpt): THREE.Mesh;
   cyl(rTop: number, rBot: number, h: number, material: THREE.Material, x: number, y: number, z: number, parent: THREE.Object3D): THREE.Mesh;
@@ -70,6 +72,7 @@ export function makeKit(lod: number, detail: Detail = 'full'): Kit {
     lod,
     detail,
     q,
+    tq: (n, min) => (detail === 'npc' ? Math.max(min, Math.round(n * lod * 0.45)) : q(n, min)),
     lathe(ctrl, depthK, material, x, y, z, parent, opt = {}) {
       const pts = ctrl.length < 3 ? ctrl.map(([r, yy]) => new THREE.Vector2(r, yy)) : profile(ctrl, q(opt.rows ?? 10, 4));
       if (opt.capBottom) pts.unshift(new THREE.Vector2(0, pts[0]!.y));
@@ -102,16 +105,16 @@ export function makeKit(lod: number, detail: Detail = 'full'): Kit {
       place(new THREE.Mesh(new THREE.SphereGeometry(r, r < 0.035 ? q(8, 4) : q(16, 6), r < 0.035 ? q(6, 3) : q(12, 4)), material), x, y, z, parent),
     box: (w, h, d, color, x, y, z, parent) => place(new THREE.Mesh(new THREE.BoxGeometry(w, h, d), flat(color)), x, y, z, parent),
     tube(pts, rad, material, parent, tension = 0.5) {
-      const m = noOut(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'catmullrom', tension), q(64, 12), rad, q(6, 4)), material));
+      const m = noOut(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'catmullrom', tension), detail === 'npc' ? Math.max(6, Math.round(64 * lod * 0.45)) : q(64, 12), rad, detail === 'npc' ? 3 : q(6, 4)), material));
       parent.add(m);
       return m;
     },
     loft(st0, material, parent, shape = [2, 2], segs0 = 20) {
-      const segs = q(segs0, 8);
+      const segs = detail === 'npc' ? 6 : q(segs0, 8);
       // огтлолуудын хооронд муруйгаар нягтруулна — хошуу, өсгий талтай биш, жигд муруй болно
       const c1 = new THREE.CatmullRomCurve3(st0.map(([z, y, rx]) => new THREE.Vector3(z, y, rx)), false, 'catmullrom', 0.5);
       const c2 = new THREE.CatmullRomCurve3(st0.map(([, , , ry]) => new THREE.Vector3(ry, 0, 0)), false, 'catmullrom', 0.5);
-      const n = (st0.length - 1) * 4;
+      const n = (st0.length - 1) * (detail === 'npc' ? 1 : 4);   // npc: нягтруулалтгүй
       const st: Section[] = Array.from({ length: n + 1 }, (_, k) => {
         const a1 = c1.getPoint(k / n), a2 = c2.getPoint(k / n);
         return [a1.x, a1.y, Math.max(0.002, a1.z), Math.max(0.002, a2.x)];
@@ -150,7 +153,7 @@ export function makeKit(lod: number, detail: Detail = 'full'): Kit {
       if (detail === 'npc') {   // хоолой: зузаан нь бөмбөлгүүдийн дундаж, гадаргуу нь үсний текстур
         const closed = points.length > 2 && points[0]!.distanceTo(points[points.length - 1]!) < r;
         const curve = new THREE.CatmullRomCurve3(closed ? points.slice(0, -1) : points, closed);
-        const m = noOut(new THREE.Mesh(new THREE.TubeGeometry(curve, q(Math.ceil(curve.getLength() / (r * 0.6)), 8), r * 0.95, q(8, 5), closed), material));
+        const m = noOut(new THREE.Mesh(new THREE.TubeGeometry(curve, Math.max(6, Math.round(curve.getLength() / (r * 2.4))), r * 0.95, 4, closed), material));
         m.castShadow = true;
         parent.add(m);
         return m;

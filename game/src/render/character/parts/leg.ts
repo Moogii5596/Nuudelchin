@@ -44,18 +44,19 @@ export function buildLeg(spec: CharacterSpec, kit: Kit, x: number): { hip: THREE
     const rx = f0[2] + (f1[2] - f0[2]) * t, ry = f0[3] + (f1[3] - f0[3]) * t, yc = f0[1] + (f1[1] - f0[1]) * t;
     return [z, yc - ry * (1 - hk) + 0.002, rx + gr, ry * hk];
   });
-  noOut(kit.loft(panel(0.0035, 0.6), smooth(B.gold), knee, [6, 5]));
-  noOut(kit.loft(panel(0.005, 0.52), smooth(B.shaft), knee, [6, 5]));
+  const full = kit.detail === 'full';   // npc: зулгийн хээтэй дэвсгэр, оюу хөвөө, улны бараан ирмэггүй (гурвалжин)
+  if (full) noOut(kit.loft(panel(0.0035, 0.6), smooth(B.gold), knee, [6, 5]));
+  if (full) noOut(kit.loft(panel(0.005, 0.52), smooth(B.shaft), knee, [6, 5]));
   // Зулаг → оюу хөвөө → цагаан ул: шат шатаар бага зэрэг өргөсөж нягт давхарлана
   const WELT = FOOT.map(([z, y, rx, ry]): Section => [z * 1.012, y - ry - 0.002, rx + 0.004, 0.0045]);
   const SOLE = FOOT.map(([z, y, rx, ry]): Section => [z * 1.024, y - ry - 0.0135, rx + 0.008, 0.008]);
-  noOut(kit.loft(WELT, smooth(B.teal), knee, [6, 6]));
+  if (full) noOut(kit.loft(WELT, smooth(B.teal), knee, [6, 6]));
   noOut(kit.loft(SOLE, smooth(B.sole), knee, [6, 6]));
-  noOut(kit.loft(SOLE.map(([z, y, rx]): Section => [z * 1.002, y - 0.0055, rx + 0.0012, 0.0028]), smooth(B.shaft), knee, [6, 6]));   // улны доод бараан ирмэг
+  if (full) noOut(kit.loft(SOLE.map(([z, y, rx]): Section => [z * 1.002, y - 0.0055, rx + 0.0012, 0.0028]), smooth(B.shaft), knee, [6, 6]));   // улны доод бараан ирмэг
   // Хар хүрээ: огтлолыг жигд зузаатгаж гаргана
   const hull = FOOT.map(([z, y, rx, ry], n): Section => [z + (n < 3 ? -0.008 : n === FOOT.length - 1 ? 0.004 : 0), y - 0.008, rx + 0.012, ry + 0.012]);
-  noOut(kit.loft(hull.slice(5).map((h0, n): Section => (n === 0 ? [h0[0], h0[1], h0[2] - 0.03, h0[3] - 0.02] : h0)), INK, knee, [2, 5]));
+  if (full) noOut(kit.loft(hull.slice(5).map((h0, n): Section => (n === 0 ? [h0[0], h0[1], h0[2] - 0.03, h0[3] - 0.02] : h0)), INK, knee, [2, 5]));
   // Хоншоорын зүйдэл: зулгийн нурууг дагасан оюу хөвөө — үзүүрээс өмнө дуусна
-  kit.tube(FOOT.slice(7, 12).map(([z, y, , ry]) => new THREE.Vector3(0, y + ry - 0.001, z)), 0.0045, smooth(B.teal), knee);
+  if (full) kit.tube(FOOT.slice(7, 12).map(([z, y, , ry]) => new THREE.Vector3(0, y + ry - 0.001, z)), 0.0045, smooth(B.teal), knee);
   return { hip, knee };
 }

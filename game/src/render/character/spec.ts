@@ -71,7 +71,8 @@ export interface CharacterSpec {
   legs: number;
   deel: { color: number; hem: number; button: number; furTrim: number; winterTrim: number; terlegLighten: number };
   sash: { color: number; fold: number };
-  vest: { color: number; lining: number; fur: number };
+  /** worn — өвлийн дээлийн гадуур хантааз өмсөх эсэх (false — зөвхөн зузаан дээл) */
+  vest: { color: number; lining: number; fur: number; worn: boolean };
   boots: BootPalette;
   bodies: Record<OutfitBody, BodyForm>;
   hats: { toortsog: ToortsogLook; fox: FoxHatLook; scarf: ScarfLook; shawl: ScarfLook; ribbon: { color: number } };
@@ -201,7 +202,7 @@ function parseSpec(raw: Obj, path: string, skins: Skins): CharacterSpec {
     legs: color(r.legs, `${path}.legs`),
     deel: { ...colors(deel, `${path}.deel`, deelKeys, ['terlegLighten']), terlegLighten: num(deel.terlegLighten, `${path}.deel.terlegLighten`, 0, 0.6) },
     sash: colors(r.sash, `${path}.sash`, ['color', 'fold']),
-    vest: colors(r.vest, `${path}.vest`, ['color', 'lining', 'fur']),
+    vest: { ...colors(r.vest, `${path}.vest`, ['color', 'lining', 'fur'], ['worn']), worn: bool((r.vest as Obj).worn, `${path}.vest.worn`) },
     boots: colors(r.boots, `${path}.boots`, ['shaft', 'tan', 'sole', 'teal', 'gold', 'pattern']),
     bodies: parsedBodies,
     hats: {

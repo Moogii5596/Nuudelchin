@@ -70,7 +70,7 @@ function buildBody(spec: CharacterSpec, kit: Kit, g: THREE.Group, name: OutfitBo
       const q = onCollar(sxc * 0.043, -0.036, 0.011);
       if (sxc < 0) noOut(kit.sball(0.012, button, q.x, q.y, q.z, u));
       else {
-        const loop = noOut(new THREE.Mesh(new THREE.TorusGeometry(0.012, 0.0035, 6, 16), edgeM)); // сул унжсан гогцоо
+        const loop = noOut(new THREE.Mesh(new THREE.TorusGeometry(0.012, 0.0035, kit.q(6, 3), kit.q(16, 6)), edgeM)); // сул унжсан гогцоо
         loop.position.set(q.x - 0.004, q.y - 0.006, q.z + 0.002);
         loop.rotation.set(0.25, 0.3, 0);
         u.add(loop);
@@ -99,7 +99,8 @@ function buildBody(spec: CharacterSpec, kit: Kit, g: THREE.Group, name: OutfitBo
   };
   slitLine(-0.8, 0.009, smooth(hc));       // давхцлын зах: өмсөгчийн баруун урд
   slitLine(-0.74, 0.005, sash);
-  if (v.winter) buildVest(spec, kit, u, b, k, skirtH);
+  if (v.winter && spec.vest.worn) buildVest(spec, kit, u, b, k, skirtH);
+  else if (v.winter) winterHem(spec, kit, b, k, skirtH);   // хантаазгүй: зөвхөн хормойн үс
   g.add(b, u);
   return u;
 }
@@ -136,6 +137,11 @@ function buildVest(spec: CharacterSpec, kit: Kit, u: THREE.Group, b: THREE.Group
   kit.fluff(ring(0, 1.725, 0, 1, 'y', 40).map((p) => new THREE.Vector3(p.x * neckR * 0.86, p.y, p.z * neckR * 0.86 * VK)), 0.05, whiteFur, u, 17);
   kit.fluff(ring(0, 1.775, 0.004, 0.158, 'y', 30), 0.055, whiteFur, u, 19);
   noOut(kit.lathe([[(0.338 + PAD) * k + 0.004, 0.06], [(0.336 + PAD) * k + 0.004, 0.072]], VK, sash, 0, 0.9, 0, u, open));   // хормойн алтлаг хөвөө
+  winterHem(spec, kit, b, k, skirtH);
+}
+
+/** Өвлийн дээлийн хормойн зах — цайвар сэвсгэр үс */
+function winterHem(spec: CharacterSpec, kit: Kit, b: THREE.Group, k: number, skirtH: number): void {
   const hr = (phi: number): number => 0.405 * k * foldK(phi, 1);
   kit.fluff(Array.from({ length: 73 }, (_, q) => {
     const phi = (q / 72) * Math.PI * 2;

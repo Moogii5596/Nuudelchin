@@ -278,7 +278,7 @@ describe('Хүн бүр өөр (V4.5 R4 — арьс, толгой, царай, 
       head.geometry.computeBoundingBox();
       return head.geometry.boundingBox!.getSize(new THREE.Vector3());
     };
-    const base = headBox('player'), wide = headBox('elder_beard'), tall = headBox('teacher_glasses');
+    const base = headBox('player'), wide = headBox('elder_beard'), tall = headBox('elder_goatee');
     expect(wide.x / wide.y).toBeGreaterThan(base.x / base.y * 1.1);
     expect(tall.y / tall.x).toBeGreaterThan(base.y / base.x * 1.1);
   });
@@ -297,6 +297,29 @@ describe('Хүн бүр өөр (V4.5 R4 — арьс, толгой, царай, 
       const j = clone();
       mutate(j);
       expect(() => validateCharacters(j)).toThrow(re);
+    }
+  });
+});
+
+describe('npc гурвалжин (V4.5 R4)', () => {
+  beforeAll(loadLab);
+  it('npc нэг дүр ≤ 8 000 гурвалжин, улирал бүрт', () => {
+    const tris = (root: THREE.Object3D): number => {
+      let n = 0;
+      const shown = (o: THREE.Object3D): boolean => { for (let q: THREE.Object3D | null = o; q; q = q.parent) if (!q.visible) return false; return true; };
+      root.traverse((o) => {
+        const m = o as THREE.Mesh;
+        if (!m.isMesh || !shown(m)) return;
+        n += (m.geometry.index ? m.geometry.index.count : m.geometry.attributes.position!.count) / 3 * ((m as THREE.InstancedMesh).count ?? 1);
+      });
+      return n;
+    };
+    for (const name of Object.keys(characters.presets).filter((n) => n.includes('_'))) {
+      const rig = lab.buildCharacter(characterSpec(name), { detail: 'npc' });
+      for (const season of ['summer', 'autumn', 'winter', 'spring'] as const) {
+        lab.dressCharacter(rig, season);
+        expect(tris(rig.root), `${name} ${season}`).toBeLessThanOrEqual(8000);
+      }
     }
   });
 });

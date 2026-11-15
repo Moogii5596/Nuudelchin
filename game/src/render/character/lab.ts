@@ -204,7 +204,15 @@ function startLineup(): void {
         return [a, renderer.info.render.calls];
       };
       const solo = calls([placed[0]!]), all = calls([placed[0]!, ...npcs]);
-      out[season] = { player: solo, withNpc: all, addedNoShadow: all[0] - solo[0], added: all[1] - solo[1], npc: npcs.map((p) => p.label.textContent) };
+      // npc нэг дүрийн гурвалжин (сүүдэргүй, газаргүй): preset бүрээр
+      const tris: number[] = [];
+      for (const p of placed.slice(1)) {
+        for (const q of placed) q.rig.root.visible = q === p;
+        renderer.shadowMap.enabled = false; renderer.render(scene, camera);
+        tris.push(renderer.info.render.triangles - 24);
+      }
+      renderer.shadowMap.enabled = true;
+      out[season] = { player: solo, withNpc: all, addedNoShadow: all[0] - solo[0], added: all[1] - solo[1], npcTriangles: { min: Math.min(...tris), max: Math.max(...tris), avg: Math.round(tris.reduce((a, b) => a + b, 0) / tris.length) } };
     }
     for (const p of placed) p.rig.root.visible = true;
     $('out').textContent = JSON.stringify(out);

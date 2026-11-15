@@ -83,7 +83,11 @@ function braid(kit: Kit, pts: THREE.Vector3[], r0: number, material: THREE.Mater
   const curve = new THREE.CatmullRomCurve3(pts);
   const n = Math.max(6, Math.round(curve.getLength() / 0.045));
   const down = new THREE.Vector3(0, -1, 0), axisZ = new THREE.Vector3(0, 0, 1);
-  for (let i = 0; i <= n; i++) {
+  if (kit.detail === 'npc') {   // npc: нэг хоолой (холоос сүлжээ ялгагдахгүй, гурвалжин ~10 дахин цөөн)
+    const m = new THREE.Mesh(new THREE.TubeGeometry(curve, kit.tq(24, 6), r0 * 0.85, 5), material);
+    m.castShadow = true;
+    g.add(noOut(m));
+  } else for (let i = 0; i <= n; i++) {
     const t = i / n, p = curve.getPoint(t), side = i % 2 ? 1 : -1, r = r0 * (1 - 0.35 * t);
     const m = noOut(kit.sball(r, material, p.x + side * r * 0.3, p.y, p.z, g));
     m.scale.set(0.9, 1.5, 0.85);
