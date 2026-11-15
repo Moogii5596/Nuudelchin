@@ -14,6 +14,9 @@ import type { Den } from '../sim/systems/wolves';
 import { VisualRng, angDiff, batchStatic, clamp, mat, meshBox, strSeed } from './util';
 import { quality as activeQuality, type Quality } from '../device';
 import { paletteHex, visualStyle } from './style';
+import { GER, TENT } from './ger/config';
+import { makeGer, type GerBuilt } from './ger/ger';
+import { makeTent } from './ger/tent';
 
 const BARE = new THREE.Color(visualStyle.palette.dryGrass);
 const DRY = new THREE.Color(visualStyle.palette.autumnGrass);
@@ -145,6 +148,10 @@ export class TerrainView {
   private camp!: CampConfig;
   campId = '';
   private homeKind = '';
+  /** Гэр/майхны загвар (render/ger): өвөл/зун солигдоход дахин барина */
+  private homeBuilt: GerBuilt | null = null;
+  private homeWinter = false;
+  private smokeOrigin = new THREE.Vector3(0, 4.55, 0);
   private homeGroup: THREE.Group | null = null;
   private hayGroup: THREE.Group | null = null;
   private hayShown = -1;
@@ -207,7 +214,7 @@ export class TerrainView {
       this.build(state);
       return true;
     }
-    if (state.home !== this.homeKind) this.buildHome(state.home);
+    if (state.home !== this.homeKind || this.currentSeason === 'winter' !== this.homeWinter) this.buildHome(state.home);
     this.syncHay(state);
     return false;
   }
@@ -329,7 +336,9 @@ export class TerrainView {
     if (state.home === 'ger') this.buildHome(state.home);
   }
 
-  updateVisualTime(dt: number, minute: number, skyColor: THREE.Color, waterIce: number): void {
+  /** night: 0 — өдөр … 1 — шөнө (гэр, майхны гэрэл) */
+  updateVisualTime(dt: number, minute: number, skyColor: THREE.Color, waterIce: number, night = 0): void {
+    this.homeBuilt?.setGlow(night);
     this.windTime += Math.max(0, dt);
     if (this.grassUniforms) this.grassUniforms.uWindTime.value = this.windTime;
     this.cloudTime += Math.max(0, dt);
@@ -349,9 +358,9 @@ export class TerrainView {
     const values = positions.array as Float32Array;
     for (let i = 0; i < this.smokePositions.length / 3; i++) {
       const phase = (this.smokeTime * 0.55 + i * 0.17) % 2.4;
-      values[i * 3] = Math.sin(this.smokeTime * 0.45 + i * 1.7) * (0.08 + phase * 0.045);
-      values[i * 3 + 1] = 4.55 + phase;
-      values[i * 3 + 2] = Math.cos(this.smokeTime * 0.4 + i * 1.3) * (0.08 + phase * 0.045);
+      values[i * 3] = this.smokeOrigin.x + Math.sin(this.smokeTime * 0.45 + i * 1.7) * (0.08 + phase * 0.045);
+      values[i * 3 + 1] = this.smokeOrigin.y + phase;
+      values[i * 3 + 2] = this.smokeOrigin.z + Math.cos(this.smokeTime * 0.4 + i * 1.3) * (0.08 + phase * 0.045);
     }
     positions.needsUpdate = true;
   }
@@ -1288,60 +1297,47 @@ export class TerrainView {
     }
   }
 
-  /** Майхан эсвэл гэр (бууцны төвд) */
+  /** Майхан эсвэл гэр (бууцны төвд): render/ger — лабораторийн баталсан загвар (data/ger.json) */
   private buildHome(kind: string): void {
     this.clearSmoke();
     if (this.homeGroup) {
       this.group.remove(this.homeGroup);
       this.disposeGeometries(this.homeGroup);
     }
+    this.homeBuilt?.dispose();
+    this.homeBuilt = null;
     this.homeKind = kind;
+    this.homeWinter = this.currentSeason === 'winter';
+    const season = this.homeWinter ? 'winter' : 'summer';
     const g = new THREE.Group();
     if (kind === 'ger') {
-      const segments = visualStyle.quality[this.quality].gerSegments;
-      const wall = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 3.55, 2.1, segments), mat(paletteHex('felt')));
-      wall.position.y = 1.05;
-      wall.castShadow = wall.receiveShadow = true;
-      g.add(wall);
-      for (const [y, r] of [[1.85, 3.53], [1.05, 3.56], [0.25, 3.57]] as const) {
-        const band = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.12, segments), mat(paletteHex('bluePattern')));
-        band.position.y = y;
-        g.add(band);
-      }
-      const roof = new THREE.Mesh(new THREE.ConeGeometry(3.8, 1.45, segments), mat(paletteHex('felt')));
-      roof.position.y = 2.82;
-      roof.castShadow = true;
-      g.add(roof);
-      const toono = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.6, 0.28, segments), mat(0xb5651d));
-      toono.position.y = 3.5;
-      g.add(toono);
-      const chimney = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 0.9, 8), mat(0x4b4036));
-      chimney.position.y = 4.05;
-      chimney.castShadow = true;
-      g.add(chimney);
-      meshBox(1.0, 1.55, 0.15, paletteHex('gerOrange'), 0, 0.8, 3.5, g);
-      for (const x of [-0.55, -0.28, 0, 0.28, 0.55]) meshBox(0.08, 1.6, 0.18, paletteHex('bluePattern'), x, 0.8, 3.5, g);
-      for (const y of [0.36, 0.8, 1.24]) meshBox(1.0, 0.07, 0.2, paletteHex('bluePattern'), 0, y, 3.53, g);
+      const built = makeGer(GER.home.size, { season });
+      this.homeBuilt = built;
+      g.add(built.group);
+      // Хаалганы өмнөх сав суулга: хаалганаас хажуу тийш, ханын гадна
+      const doorZ = built.door.position.z - GER.shape.doorStandOff + 0.4;
       const milkCan = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.23, 0.52, 8), mat(paletteHex('snowShadow')));
-      milkCan.position.set(-1.35, 0.28, 4.05);
+      milkCan.position.set(-1.35, 0.28, doorZ);
       g.add(milkCan);
       const canNeck = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.14, 8), mat(paletteHex('snowShadow')));
-      canNeck.position.set(-1.35, 0.61, 4.05);
+      canNeck.position.set(-1.35, 0.61, doorZ);
       g.add(canNeck);
       const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.2, 0.2, 8), mat(paletteHex('woodDark')));
-      pot.position.set(1.25, 0.12, 4.05);
+      pot.position.set(1.25, 0.12, doorZ);
       g.add(pot);
       const potRim = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.025, 5, 10), mat(paletteHex('woodAccent')));
       potRim.rotation.x = Math.PI / 2;
-      potRim.position.set(1.25, 0.23, 4.05);
+      potRim.position.set(1.25, 0.23, doorZ);
       g.add(potRim);
+      const top = built.chimneyTop!;
+      this.smokeOrigin.set(top.x, top.y, top.z);
       const smokeCount = 28;
       const smokeGeo = new THREE.BufferGeometry();
       this.smokePositions = new Float32Array(smokeCount * 3);
       for (let i = 0; i < smokeCount; i++) {
-        this.smokePositions[i * 3] = Math.sin(i * 2.1) * 0.12;
-        this.smokePositions[i * 3 + 1] = 4.55 + (i % 12) * 0.18;
-        this.smokePositions[i * 3 + 2] = Math.cos(i * 1.7) * 0.12;
+        this.smokePositions[i * 3] = top.x + Math.sin(i * 2.1) * 0.12;
+        this.smokePositions[i * 3 + 1] = top.y + (i % 12) * 0.18;
+        this.smokePositions[i * 3 + 2] = top.z + Math.cos(i * 1.7) * 0.12;
       }
       smokeGeo.setAttribute('position', new THREE.BufferAttribute(this.smokePositions, 3));
       this.smoke = new THREE.Points(smokeGeo, new THREE.PointsMaterial({ color: 0xe7e2d8, size: 0.75, transparent: true, opacity: 0.26, depthWrite: false }));
@@ -1349,27 +1345,13 @@ export class TerrainView {
       this.smoke.visible = false;
       g.add(this.smoke);
     } else {
-      const sh = new THREE.Shape();
-      sh.moveTo(-1.6, 0);
-      sh.lineTo(1.6, 0);
-      sh.lineTo(0, 2.0);
-      sh.lineTo(-1.6, 0);
-      const tg = new THREE.ExtrudeGeometry(sh, { depth: 3.4, bevelEnabled: false });
-      tg.translate(0, 0, -1.7);
-      const tent = new THREE.Mesh(tg, mat(0xcfc29a));
-      tent.castShadow = true;
-      g.add(tent);
-      const dsh = new THREE.Shape();
-      dsh.moveTo(-0.6, 0);
-      dsh.lineTo(0.6, 0);
-      dsh.lineTo(0, 1.3);
-      dsh.lineTo(-0.6, 0);
-      const door = new THREE.Mesh(new THREE.ShapeGeometry(dsh), mat(0x3a2e22));
-      door.position.z = 1.72;
-      g.add(door);
+      const built = makeTent('start', { season });
+      this.homeBuilt = built;
+      g.add(built.group);
       // Агуулах (сав суулга) майхны хажууд
-      meshBox(0.7, 0.6, 0.5, paletteHex('woodAccent'), 2.4, 0.3, -0.8, g);
-      meshBox(0.5, 0.5, 0.5, paletteHex('wood'), 2.5, 0.25, 0.1, g);
+      const sideX = TENT.kinds.start!.W / 2 + TENT.ropeOut + 0.5;
+      meshBox(0.7, 0.6, 0.5, paletteHex('woodAccent'), sideX, 0.3, -0.8, g);
+      meshBox(0.5, 0.5, 0.5, paletteHex('wood'), sideX + 0.1, 0.25, 0.1, g);
     }
     g.position.set(0, this.heightAt(0, 0), 0);
     this.homeGroup = g;

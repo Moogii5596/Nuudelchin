@@ -1,0 +1,392 @@
+{
+ "ger": {
+  "palette": {
+   "cover": "#F8F5EE",
+   "felt": "#DDD3BE",
+   "hayavch": "#C9BB99",
+   "rope": "#7A5C3A",
+   "tono": "#D9622B",
+   "iron": "#4A4640",
+   "snow": "#F2F5F8",
+   "snowShade": "#B8C8E0",
+   "fire": "#FFB35C",
+   "interior": "#2B1F17",
+   "outline": "#1A130D"
+  },
+  "sizes": {
+   "small4": {
+    "label": "Бага 4 ханат",
+    "walls": 4,
+    "diameter": 4.4,
+    "wallH": 1.4,
+    "topH": 2.4,
+    "tonoD": 1,
+    "uni": 52,
+    "belts": 3,
+    "doorW": 0.78,
+    "doorH": 1.15
+   },
+   "big4": {
+    "label": "Том 4 ханат",
+    "walls": 4,
+    "diameter": 5,
+    "wallH": 1.45,
+    "topH": 2.35,
+    "tonoD": 1.1,
+    "uni": 60,
+    "belts": 3,
+    "doorW": 0.8,
+    "doorH": 1.2
+   },
+   "small5": {
+    "label": "Бага 5 ханат",
+    "walls": 5,
+    "diameter": 5.6,
+    "wallH": 1.5,
+    "topH": 2.5,
+    "tonoD": 1.2,
+    "uni": 72,
+    "belts": 3,
+    "doorW": 0.82,
+    "doorH": 1.25
+   },
+   "big5": {
+    "label": "Их 5 ханат",
+    "walls": 5,
+    "diameter": 6.2,
+    "wallH": 1.5,
+    "topH": 2.6,
+    "tonoD": 1.3,
+    "uni": 81,
+    "belts": 3,
+    "doorW": 0.85,
+    "doorH": 1.25
+   },
+   "w6": {
+    "label": "6 ханат",
+    "walls": 6,
+    "diameter": 7,
+    "wallH": 1.55,
+    "topH": 2.8,
+    "tonoD": 1.4,
+    "uni": 88,
+    "belts": 3,
+    "doorW": 0.88,
+    "doorH": 1.3
+   },
+   "w8": {
+    "label": "8 ханат",
+    "walls": 8,
+    "diameter": 8.6,
+    "wallH": 1.6,
+    "topH": 3.1,
+    "tonoD": 1.6,
+    "uni": 108,
+    "belts": 3,
+    "doorW": 0.92,
+    "doorH": 1.35
+   }
+  },
+  "shape": {
+   "puff": 0.05,
+   "roofPuff": 0.1,
+   "beltPinch": 0.014,
+   "eaveDrop": 0.14,
+   "shoulderIn": 0.26,
+   "shoulderUp": 0.16,
+   "hayavchH": 0.28,
+   "hayavchOut": 0.03,
+   "beltOut": 0.05,
+   "beltH": 0.045,
+   "beltAt": [
+    0.2,
+    0.5,
+    0.8
+   ],
+   "tonoRingW": 0.08,
+   "tonoRingH": 0.1,
+   "tonoRise": 0.045,
+   "tonoProud": 0.015,
+   "spokes": 8,
+   "spokeT": 0.045,
+   "urkhOut": 0.45,
+   "urkhRopeLean": 0,
+   "chimneyR": 0.055,
+   "chimneyH": 0.7,
+   "chimneyOffR": 0.31,
+   "chimneySector": -0.5,
+   "doorSill": 0.05,
+   "jambW": 0.055,
+   "lintelH": 0.055,
+   "frameOut": 0.008,
+   "leafT": 0.022,
+   "doorStandOff": 0.75,
+   "doorSwing": 1.85,
+   "knob": "#D9A93A",
+   "outlineW": 0.018
+  },
+  "winter": {
+   "extraR": 0.05,
+   "hayavchH": 0.42,
+   "hayavchOut": 0.07,
+   "puff": 0.07,
+   "roofPuff": 0.13,
+   "shoulderUp": 0.19,
+   "bankW": 0.55,
+   "bankH": 0.3,
+   "roofSnowTo": 0.55
+  },
+  "doors": [
+   {
+    "label": "Улбар шар · үүлэн хээ",
+    "base": "#E8641E",
+    "frame": "#B94A14",
+    "line": "#FFF6E0",
+    "accent": "#D8388A",
+    "motif": "cloud",
+    "stile": 0.18
+   },
+   {
+    "label": "Улбар шар · өлзий",
+    "base": "#D9622B",
+    "frame": "#A8481C",
+    "line": "#2E5E9E",
+    "accent": "#F4EEDF",
+    "motif": "ulzii"
+   },
+   {
+    "label": "Хөх · хорол",
+    "base": "#2E5E9E",
+    "frame": "#1F4577",
+    "line": "#F4EEDF",
+    "accent": "#D9622B",
+    "motif": "khorol"
+   },
+   {
+    "label": "Энгийн модон",
+    "base": "#A9783F",
+    "frame": "#7A5228",
+    "line": "#7A5228",
+    "accent": "#8A6230",
+    "motif": "plain"
+   },
+   {
+    "label": "Улаан хүрэн · нүдэн",
+    "base": "#8E2F23",
+    "frame": "#5F1F17",
+    "line": "#E2B04A",
+    "accent": "#3F7A5A",
+    "motif": "nuden"
+   }
+  ],
+  "interior": {
+   "linerGap": 0.035,
+   "latticeTile": 0.5,
+   "feltIn": "#E6DDC8",
+   "lattice": "#B5652F",
+   "uni": "#D9622B",
+   "floor": "#B98A56",
+   "wood": "#D9622B",
+   "woodDark": "#A8481C",
+   "blue": "#2E5E9E",
+   "blanket": "#2E5E9E",
+   "chestCol": "#E8702A",
+   "bedRed": "#D32A1E",
+   "gold": "#C9972E",
+   "cloth": "#F4EEDF",
+   "rug": "#9A3B2E",
+   "rugIn": "#C9A24E",
+   "iron": "#4A4640",
+   "tin": "#9AA3A8",
+   "glass": "#CFE6F5",
+   "uniW": 0.05,
+   "uniTip": 0.88,
+   "khukhuur": {
+    "postX": 0.42,
+    "height": 1.34,
+    "barY": 1.12,
+    "crease": 0.13,
+    "bag": [
+     [
+      0.11,
+      0.2,
+      0.06,
+      0.03
+     ],
+     [
+      0.14,
+      0.275,
+      0.13,
+      0.04
+     ],
+     [
+      0.22,
+      0.3,
+      0.185,
+      0.05
+     ],
+     [
+      0.36,
+      0.3,
+      0.2,
+      0.055
+     ],
+     [
+      0.52,
+      0.28,
+      0.17,
+      0.04
+     ],
+     [
+      0.68,
+      0.25,
+      0.12,
+      0.025
+     ],
+     [
+      0.82,
+      0.225,
+      0.075,
+      0.012
+     ],
+     [
+      0.93,
+      0.205,
+      0.042,
+      0.005
+     ],
+     [
+      0.99,
+      0.195,
+      0.022,
+      0
+     ]
+    ]
+   },
+   "standWood": "#C8601E",
+   "leather": "#C89B5A",
+   "paleWood": "#DDBB80",
+   "alu": "#B9BBB7",
+   "aluDark": "#4E4F4C",
+   "steel": "#8A9096",
+   "steelDark": "#5F656B",
+   "steelLight": "#B0B6BB",
+   "stoveFacing": 1.5707963267948966,
+   "stove": {
+    "w": 0.46,
+    "d": 0.5,
+    "h": 0.32,
+    "legH": 0.2,
+    "backW": 0.4,
+    "backD": 0.28,
+    "backH": 0.25,
+    "plateR": 0.19
+   },
+   "layout": {
+    "bedAt": 1.62,
+    "chestStep": 0.56,
+    "shelfAt": 0.62,
+    "khukhuurAt": 0.56,
+    "canAt": 0.93
+   },
+   "bed": {
+    "w": 0.66,
+    "l": 1.86,
+    "seatH": 0.36,
+    "railH": 0.28,
+    "endH": 0.7,
+    "endD": 0.2
+   },
+   "chest": {
+    "w": 0.84,
+    "d": 0.4,
+    "h": 0.46,
+    "baseH": 0.1
+   }
+  },
+  "atlas": {
+   "size": 512,
+   "door": [
+    259,
+    3,
+    509,
+    253
+   ],
+   "white": [
+    208,
+    48
+   ],
+   "glow": [
+    208,
+    192
+   ],
+   "felt": [
+    276,
+    492
+   ],
+   "feltRepeat": 4,
+   "feltSpan": 3.4
+  },
+  "shade": {
+   "wallBottom": 0.84,
+   "furnitureBottom": 0.84,
+   "furnitureTop": 0.9
+  },
+  "home": {
+   "size": "small4"
+  },
+  "helper": {
+   "coverColor": "#E2D9C4",
+   "belts": 2,
+   "doorMotif": "plain",
+   "size": "small4"
+  }
+ },
+ "tent": {
+  "palette": {
+   "canvas": "#F3EFE4",
+   "canvasOld": "#D9D0BB",
+   "trim": "#2E5E9E",
+   "pole": "#B5652F",
+   "rope": "#7A5C3A",
+   "stake": "#6E5A44",
+   "uurga": "#DDBB80",
+   "snow": "#F2F5F8"
+  },
+  "kinds": {
+   "start": {
+    "label": "Эхлэлийн майхан",
+    "L": 2.2,
+    "W": 2,
+    "H": 1.45,
+    "wall": 0.25,
+    "doorW": 0.7,
+    "trim": false
+   },
+   "horse": {
+    "label": "Адуучны майхан",
+    "L": 2.9,
+    "W": 2.4,
+    "H": 1.75,
+    "wall": 0.4,
+    "doorW": 0.8,
+    "trim": false,
+    "uurga": true
+   },
+   "otor": {
+    "label": "Отрын майхан",
+    "L": 2,
+    "W": 1.7,
+    "H": 1.2,
+    "wall": 0,
+    "doorW": 0.6,
+    "trim": false,
+    "old": true
+   }
+  },
+  "ropeOut": 0.65,
+  "trimW": 0.09,
+  "doorStandOff": 0.7,
+  "outlineW": 0.014
+ }
+}

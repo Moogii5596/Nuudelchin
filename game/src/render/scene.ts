@@ -11,7 +11,8 @@ import { CharactersView } from './characters';
 import { FollowCamera } from './camera';
 import { ItemsView } from './items';
 import { ZonesView } from './zones';
-import { VehiclesView } from './vehicles';
+import { VehiclesView, nightFactor } from './vehicles';
+import { roomSpec } from '../sim/systems/interior';
 import { angDiff, VisualRng } from './util';
 import { SumCenterView } from './sumcenter';
 import { WorldMapView } from './worldmap';
@@ -336,7 +337,7 @@ export class GameView {
     }
     this.characters.update(state, this.heightAt, dt);
     this.vehicles.update(state, this.heightAt, dt);
-    this.terrain.updateVisualTime(dt, state.time.minute, this.skyCol, Math.max(look.winter, look.snow * 0.8));
+    this.terrain.updateVisualTime(dt, state.time.minute, this.skyCol, Math.max(look.winter, look.snow * 0.8), nightFactor(this.daylight));
     if (p.driving) this.characters.seatHerder(this.vehicles.seatOf(state));
 
     // Жолоодож байхад камер аажмаар тээврийн ард эргэнэ
@@ -355,7 +356,7 @@ export class GameView {
   /** V6.1: барилга дотор — тусдаа дүр зураг, өөрийн гэрэл. Гаднах ертөнцийг шинэчлэхгүй */
   private frameInterior(state: GameState, dt: number): void {
     const p = state.player, ip = p.interior!;
-    const cc = this.cfg.interiors.camera;
+    const cc = { ...this.cfg.interiors.camera, ...roomSpec(this.cfg, ip.room)?.camera };   // өрөөний өөрийн камер (гэр жижиг тул ойрхон)
     if (!this.inside) {
       this.inside = true;
       this.camBefore = { dist: this.cam.dist, pitch: this.cam.pitch };

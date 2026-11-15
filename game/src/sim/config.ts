@@ -21,7 +21,9 @@ import seasonsJson from '../../../data/seasons.json';
 import sumcenterJson from '../../../data/sumcenter.json';
 import townJson from '../../../data/town.json';
 import interiorsJson from '../../../data/interiors.json';
+import gerJson from '../../../data/ger.json';
 import { validateInteriors, type InteriorsConfig } from './systems/interior';
+import type { GerSimConfig } from './systems/gerLayout';
 import { lotSlots, sumDoors, allBuildings, TRADE_ROLES, type SumLayout } from './systems/sumtown';
 
 export type Species = 'sheep' | 'goat' | 'cow' | 'horse';
@@ -260,6 +262,8 @@ export interface GameConfig {
   town: typeof townJson;
   /** V6.1: орж болдог барилгын дотор тал — data/interiors.json */
   interiors: InteriorsConfig;
+  /** Гэрийн загварын хэмжээс, тавилгын байрлал (data/ger.json — render/ger-тэй хуваалцана; хаалганы цэг, дотор саад) */
+  ger: GerSimConfig;
   start: { camp: string; home: string; vehicles: string[]; storageLevel: number; animals: StartAnimal[] };
 }
 
@@ -284,6 +288,7 @@ export function loadConfig(): GameConfig {
     sumcenter: sumcenterJson as unknown as SumLayout,
     town: townJson,
     interiors: interiorsJson as unknown as InteriorsConfig,
+    ger: gerJson.ger as unknown as GerSimConfig,
   };
   const errors = validateConfig(cfg);
   if (errors.length) {

@@ -7,7 +7,10 @@
  */
 import * as THREE from 'three';
 import type { GameConfig } from '../sim/config';
-import { roomSpec, type RoomSpec } from '../sim/systems/interior';
+import { roomGerSize, roomSpec, type RoomSpec } from '../sim/systems/interior';
+import { GER } from './ger/config';
+import { makeGer } from './ger/ger';
+import { makeGerInterior } from './ger/gerInterior';
 
 const GOLD = 0xf2c14e;
 
@@ -23,6 +26,8 @@ export class InteriorView {
   /** Малчны загвар үндсэн дүр зурагт харьяалагддаг — дотор түр шилжүүлнэ */
   private adopted: { obj: THREE.Object3D; parent: THREE.Object3D | null } | null = null;
   private t = 0;
+  /** Гэрийн загварын материал, геометрийг чөлөөлөх */
+  private disposers: (() => void)[] = [];
 
   constructor(private cfg: GameConfig) {
     this.scene.background = new THREE.Color(0x14100c);
@@ -63,6 +68,8 @@ export class InteriorView {
         else mat?.dispose();
       });
     }
+    for (const d of this.disposers) d();
+    this.disposers = [];
     if (this.lamp) this.scene.remove(this.lamp);
     this.root = this.ground = this.ring = this.lamp = null;
     this.key = '';
@@ -80,7 +87,42 @@ export class InteriorView {
 
   // ======================= Үүсгэх =======================
 
+  /**
+   * Гэр төрлийн өрөө: render/ger — гадна бүрээсийг дотроос (нэг талт: ойр тал нь харагдахгүй), дотор өнгө, тавилга.
+   * Тавилгыг нэвт алхахгүй (саад — sim/systems/gerLayout, өрөөний obstacles).
+   */
+  private buildGer(room: RoomSpec, sizeKey: string): THREE.Group {
+    const g = new THREE.Group();
+    const helper = room.gerSize === 'helper';
+    const doorVariant = helper ? Math.max(0, GER.doors.findIndex((d) => d.motif === GER.helper.doorMotif)) : 0;
+    const shell = makeGer(sizeKey, { interior: true, outline: false, doorVariant, doorOpen: 1, ...(helper ? { coverColor: GER.helper.coverColor, belts: GER.helper.belts } : {}) });
+    // Гаднах бүрээс: дотогш харсан тал л зурагдана (камер дээрээс, гаднаас харахад ойр тал, дээвэр нь харагдахгүй)
+    shell.group.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (m.name === 'ger:body') { const mat = (m.material as THREE.MeshLambertMaterial).clone(); mat.side = THREE.BackSide; m.material = mat; this.disposers.push(() => mat.dispose()); }
+    });
+    g.add(shell.group);
+    this.disposers.push(() => shell.dispose());
+    const inner = makeGerInterior(sizeKey, { outline: true });
+    g.add(inner.group);
+    this.disposers.push(() => inner.dispose());
+    // дарж явах шал (харагдахгүй)
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(room.r ?? 2.2, 24).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ visible: false }));
+    floor.name = 'ground';
+    g.add(floor);
+    this.ground = floor;
+    const topH = shell.dims.topH;
+    const lamp = new THREE.PointLight(new THREE.Color(room.light.color), room.light.intensity, (room.r ?? 2.2) * 4.5, 1.2);
+    lamp.position.set(0.35, topH * 0.62, 0.4);
+    this.scene.add(lamp);
+    this.lamp = lamp;
+    this.hemi.color.set(room.light.color).lerp(new THREE.Color(0xffffff), 0.6);
+    return g;
+  }
+
   private build(room: RoomSpec): THREE.Group {
+    const gerSize = roomGerSize(this.cfg, room);
+    if (gerSize) return this.buildGer(room, gerSize);
     const g = new THREE.Group();
     const I = this.cfg.interiors;
     const mat = (c: string, side: THREE.Side = THREE.FrontSide): THREE.MeshLambertMaterial => new THREE.MeshLambertMaterial({ color: new THREE.Color(c), side });

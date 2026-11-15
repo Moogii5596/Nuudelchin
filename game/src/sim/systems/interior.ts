@@ -1,4 +1,4 @@
-/**
+﻿/**
  * V6.1: орж болдог барилга (sim талд). Three.js, DOM-гүй.
  *
  * Зарчим: барилга дотор орсон тоглогчийн `player.x/z/place` хаалганы гадна цэгт хөдөлгөөнгүй хэвээр,
@@ -9,6 +9,7 @@
 import type { GameConfig } from '../config';
 import type { GameState, InteriorState } from '../state';
 import { allBuildings, facingOf, plotHouse, sumDoors, TRADE_ROLES, type Facing } from './sumtown';
+import { gerBlockers, gerBoxes, gerDoorOffset, gerInnerRadius, pushOutOfBox, type LayoutBox } from './gerLayout';
 
 // ======================= Тохиргооны төрөл (data/interiors.json) =======================
 
@@ -34,6 +35,16 @@ export interface RoomSpec {
   counter: [number, number] | null;
   /** V6.2-ын тавилга байрлуулах цэгүүд */
   spots: InteriorSpot[];
+  /** Гэр төрлийн өрөө: 'home' (тоглогчийн гэр) | 'helper' (туслахын гэр). r, entry, exit, obstacles нь data/ger.json-оос тооцогдоно */
+  gerSize?: 'home' | 'helper';
+  /** Өрөөний өөрийн камер (interiors.camera-г дарна; гэр жижиг тул ойрхон) */
+  camera?: { dist?: number; minDist?: number; maxDist?: number; pitch?: number };
+  /** Гарах хаалганы зай (өрөөний өөрийн; байхгүй бол interiors.exitR) */
+  exitR?: number;
+  /** Тавилгын саад (гэр: gerBoxes) — өрөөний координат */
+  obstacles?: LayoutBox[];
+  /** Мөргөлдөөнд (хананд тулсан тавилгыг хана руу сунгасан) */
+  blockers?: LayoutBox[];
 }
 export interface InteriorsConfig {
   enterR: number;
@@ -43,6 +54,8 @@ export interface InteriorsConfig {
   door: { w: number; h: number };
   campDoorOut: number;
   dwellingDoorOut: number;
+  /** Туслахын/айлын гэрийн хуучин загварын радиус (render/staff.ts — S1-д шинэ загвар холбогдтол) */
+  dwellingBaseRadius: number;
   dwellingScale: Record<string, number>;
   camera: { dist: number; minDist: number; maxDist: number; pitch: number };
   kindRoom: Record<string, string>;
@@ -105,14 +118,14 @@ export function campEnterDoors(cfg: GameConfig, state: GameState): EnterDoor[] {
   const out: EnterDoor[] = [];
   const home = cfg.camps.home;
   if (state.home === 'ger') {
-    out.push({ id: 'home', room: I.gerRooms.home ?? '', place: 'camp', x: home.x, z: home.z + home.gerRadius + I.campDoorOut, outHeading: 0, service: null });
+    out.push({ id: 'home', room: I.gerRooms.home ?? '', place: 'camp', x: home.x, z: home.z + gerDoorOffset(cfg.ger, cfg.ger.home.size), outHeading: 0, service: null });
   }
   for (const d of state.helpers.dwellings) {
     const room = I.gerRooms[d.kind];
     if (!room) continue;   // майхан, адуучний майхан орохгүй
     const len = Math.hypot(d.x, d.z) || 1;
     const ux = -d.x / len, uz = -d.z / len;   // хаалга хот руу (render/staff.ts)
-    const r = home.gerRadius * (I.dwellingScale[d.kind] ?? 1) + I.dwellingDoorOut;
+    const r = I.dwellingBaseRadius * (I.dwellingScale[d.kind] ?? 1) + I.dwellingDoorOut;
     out.push({ id: `${d.kind}|${d.x}|${d.z}`, room, place: 'camp', x: d.x + ux * r, z: d.z + uz * r, outHeading: Math.atan2(ux, uz), service: null });
   }
   return out;
@@ -146,8 +159,28 @@ export function nearEnterDoor(cfg: GameConfig, state: GameState): EnterDoor | nu
 
 // ======================= Өрөө =======================
 
+const resolved = new WeakMap<GameConfig, Map<string, RoomSpec>>();
+
+/** Өрөөний тодорхойлолт. Гэр төрлийн өрөөний хэмжээ, саад нь data/ger.json-оос тооцогдоно (кэштэй) */
 export function roomSpec(cfg: GameConfig, id: string): RoomSpec | null {
-  return cfg.interiors.rooms[id] ?? null;
+  const raw = cfg.interiors.rooms[id];
+  if (!raw) return null;
+  if (!raw.gerSize) return raw;
+  let m = resolved.get(cfg);
+  if (!m) resolved.set(cfg, (m = new Map()));
+  let r = m.get(id);
+  if (!r) {
+    const key = raw.gerSize === 'home' ? cfg.ger.home.size : cfg.ger.helper.size;
+    const Ri = gerInnerRadius(cfg.ger, key);
+    r = { ...raw, shape: 'round', r: Ri, entry: [0, Ri - 0.55], exit: [0, Ri - cfg.interiors.bodyR - 0.05], exitR: 0.9, counter: null, spots: [], obstacles: gerBoxes(cfg.ger, key), blockers: gerBlockers(cfg.ger, key) };
+    m.set(id, r);
+  }
+  return r;
+}
+
+/** Гэрийн хэмжээний түлхүүр (data/ger.json sizes) — гэр төрлийн өрөө биш бол null */
+export function roomGerSize(cfg: GameConfig, room: RoomSpec): string | null {
+  return room.gerSize ? (room.gerSize === 'home' ? cfg.ger.home.size : cfg.ger.helper.size) : null;
 }
 
 /** Тоглогч орсон өрөө (дотор биш бол null) */
@@ -160,8 +193,20 @@ export function currentRoom(cfg: GameConfig, state: GameState): RoomSpec | null 
 export function clampToRoom(cfg: GameConfig, room: RoomSpec, x: number, z: number): { x: number; z: number } {
   const b = cfg.interiors.bodyR;
   if (room.shape === 'round') {
-    const R = (room.r ?? 3) - b, l = Math.hypot(x, z);
-    return l > R ? { x: (x / l) * R, z: (z / l) * R } : { x, z };
+    const R = (room.r ?? 3) - b;
+    let px = x, pz = z;
+    const blk = room.blockers ?? room.obstacles;
+    for (let pass = 0; pass < 6; pass++) {   // ханаас, тавилгаас ээлжлэн түлхэнэ
+      const l = Math.hypot(px, pz);
+      if (l > R) { px = (px / l) * R; pz = (pz / l) * R; }
+      if (!blk) break;
+      for (const o of blk) ({ x: px, z: pz } = pushOutOfBox(o, px, pz, b));
+    }
+    if (blk) {   // тавилганаас түлхсэн цэг ханын гадна гарвал (нарийн завсар) ханын дотор талд барина
+      const hard = (room.r ?? 3) - 0.05, l = Math.hypot(px, pz);
+      if (l > hard) { px = (px / l) * hard; pz = (pz / l) * hard; }
+    }
+    return { x: px, z: pz };
   }
   const hx = (room.w ?? 6) / 2 - b, hz = (room.d ?? 6) / 2 - b;
   return { x: Math.max(-hx, Math.min(hx, x)), z: Math.max(-hz, Math.min(hz, z)) };
@@ -190,7 +235,7 @@ export function enterBuilding(cfg: GameConfig, state: GameState, doorId?: string
 /** Гарах хаалганы дэргэд байна уу */
 export function atExit(cfg: GameConfig, state: GameState): boolean {
   const it = state.player.interior, room = currentRoom(cfg, state);
-  return !!it && !!room && Math.hypot(it.x - room.exit[0], it.z - room.exit[1]) <= cfg.interiors.exitR;
+  return !!it && !!room && Math.hypot(it.x - room.exit[0], it.z - room.exit[1]) <= (room.exitR ?? cfg.interiors.exitR);
 }
 
 /** Барилгаас гарна (force — бот, тест, нүүх/газрын зураг гэх мэт өөр үйлдэл хаалганы дэргэд биш байхад). Алдаа бол тайлбар */
@@ -249,8 +294,11 @@ export function validateInteriors(cfg: GameConfig): string[] {
   if (!(I.door.w > 0 && I.door.h > 0)) e.push('interiors.door: w, h > 0');
   if (!(I.camera.minDist > 0 && I.camera.minDist <= I.camera.dist && I.camera.dist <= I.camera.maxDist)) e.push('interiors.camera: minDist ≤ dist ≤ maxDist');
   for (const [k, id] of [...Object.entries(I.kindRoom), ...Object.entries(I.idRoom), ...Object.entries(I.gerRooms)]) if (!I.rooms[id]) e.push(`interiors: "${k}" → өрөө "${id}" алга`);
-  for (const [id, r] of Object.entries(I.rooms)) {
+  for (const [id, raw] of Object.entries(I.rooms)) {
     const w = `interiors.rooms.${id}`;
+    if (raw.gerSize && !(raw.gerSize === 'home' || raw.gerSize === 'helper')) e.push(`${w}.gerSize: home | helper`);
+    if (raw.gerSize && !cfg.ger.sizes[raw.gerSize === 'home' ? cfg.ger.home.size : cfg.ger.helper.size]) { e.push(`${w}: гэрийн хэмжээ data/ger.json-д алга`); continue; }
+    const r = roomSpec(cfg, id) ?? raw;
     if (r.shape !== 'round' && r.shape !== 'box') {
       e.push(`${w}.shape: round | box`);
       continue;
@@ -283,3 +331,4 @@ export function validateInteriors(cfg: GameConfig): string[] {
   }
   return e;
 }
+

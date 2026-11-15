@@ -1,5 +1,5 @@
 ﻿{
-  "_doc": "V6.1 Орж болдог барилгын дотор тал. Өрөө бүр өөрийн координаттай (төв 0,0; хаалга нь урд (z+) ханын голд). enterR = гаднах хаалганаас E дарж орох зай (м). exitR = хаалганы дэргэд E дарж гарах зай. counterR = лангуу/тооцооны цэгээс E дарах зай. campDoorOut/dwellingDoorOut = гэрийн хаалганы цэг (гэрийн гадна талаас, м). kindRoom = сумын төвийн барилгын kind → өрөөний төрөл; idRoom = тодорхой барилгын id-д өөр өрөө (хоосон бол kindRoom). rooms.*.spots = тавилга байрлуулах цэгүүд (V6.2-т ашиглана, одоохондоо дүрслэгдэхгүй). counter = лангуу: энд E дарвал тухайн барилгын цонх (худалдаа, дуган, ЗДТГ, банк, цайны газар) нээгдэнэ — гаднах хаалганы үйлдэл дотроос ч ажиллана.",
+  "_doc": "gerSize = гэр төрлийн өрөө (render/ger makeGerInterior): r, entry, exit, саад нь data/ger.json-оос тооцогдоно (home — тоглогчийн гэр, helper — туслахын гэр); тавилга нь гэрийн загварын нэг хэсэг тул spots хоосон. dwellingBaseRadius = туслахын/айлын гэрийн хуучин загварын радиус (S1-ээр шинэ загвар холбогдтол). V6.1 Орж болдог барилгын дотор тал. Өрөө бүр өөрийн координаттай (төв 0,0; хаалга нь урд (z+) ханын голд). enterR = гаднах хаалганаас E дарж орох зай (м). exitR = хаалганы дэргэд E дарж гарах зай. counterR = лангуу/тооцооны цэгээс E дарах зай. campDoorOut/dwellingDoorOut = гэрийн хаалганы цэг (гэрийн гадна талаас, м). kindRoom = сумын төвийн барилгын kind → өрөөний төрөл; idRoom = тодорхой барилгын id-д өөр өрөө (хоосон бол kindRoom). rooms.*.spots = тавилга байрлуулах цэгүүд (V6.2-т ашиглана, одоохондоо дүрслэгдэхгүй). counter = лангуу: энд E дарвал тухайн барилгын цонх (худалдаа, дуган, ЗДТГ, банк, цайны газар) нээгдэнэ — гаднах хаалганы үйлдэл дотроос ч ажиллана.",
   "enterR": 3.2,
   "exitR": 1.8,
   "counterR": 2.0,
@@ -7,6 +7,7 @@
   "door": { "w": 1.7, "h": 2.3 },
   "campDoorOut": 1.0,
   "dwellingDoorOut": 1.0,
+  "dwellingBaseRadius": 3.9,
   "dwellingScale": { "familyGer": 1, "helperGer": 0.85 },
   "camera": { "dist": 18, "minDist": 7, "maxDist": 26, "pitch": 0.95 },
   "kindRoom": {
@@ -24,34 +25,18 @@
   "gerRooms": { "home": "ger", "familyGer": "ger", "helperGer": "helperGer" },
   "rooms": {
     "ger": {
-      "shape": "round", "r": 3.6, "h": 1.5, "roofH": 1.7,
-      "floor": "#8a6a45", "wall": "#e8dcc2", "trim": "#9c3b2a", "roof": "#f1ead8",
-      "light": { "color": "#ffcf94", "intensity": 7 },
-      "entry": [0, 2.3], "exit": [0, 3.3], "counter": null,
-      "spots": [
-        { "id": "toono", "kind": "stove", "x": 0, "z": -0.2, "rot": 0 },
-        { "id": "pillar_w", "kind": "pillar", "x": -0.95, "z": -0.2, "rot": 0 },
-        { "id": "pillar_e", "kind": "pillar", "x": 0.95, "z": -0.2, "rot": 0 },
-        { "id": "bed_w", "kind": "bed", "x": -2.4, "z": -0.9, "rot": 1.57 },
-        { "id": "bed_e", "kind": "bed", "x": 2.4, "z": -0.9, "rot": -1.57 },
-        { "id": "khoimor", "kind": "altar", "x": 0, "z": -2.9, "rot": 0 },
-        { "id": "chest_w", "kind": "chest", "x": -1.6, "z": -2.5, "rot": 0.4 },
-        { "id": "chest_e", "kind": "chest", "x": 1.6, "z": -2.5, "rot": -0.4 },
-        { "id": "table", "kind": "table", "x": 0, "z": -1.4, "rot": 0 },
-        { "id": "cupboard", "kind": "cupboard", "x": 2.0, "z": 1.6, "rot": -2.2 }
-      ]
+      "shape": "round", "gerSize": "home", "camera": { "dist": 6, "minDist": 3.5, "maxDist": 9 }, "r": 2.2, "h": 1.4, "roofH": 1.0,  
+      "floor": "#b98a56", "wall": "#e6ddc8", "trim": "#d9622b", "roof": "#e6ddc8",
+      "light": { "color": "#ffd9a8", "intensity": 9 },
+      "entry": [0, 1.6], "exit": [0, 1.9], "counter": null,
+      "spots": []
     },
     "helperGer": {
-      "shape": "round", "r": 3.0, "h": 1.4, "roofH": 1.5,
-      "floor": "#7d6040", "wall": "#e2d6bb", "trim": "#8a4a2a", "roof": "#ece3cf",
-      "light": { "color": "#ffcf94", "intensity": 6 },
-      "entry": [0, 1.8], "exit": [0, 2.7], "counter": null,
-      "spots": [
-        { "id": "toono", "kind": "stove", "x": 0, "z": -0.1, "rot": 0 },
-        { "id": "bed_w", "kind": "bed", "x": -2.0, "z": -0.6, "rot": 1.57 },
-        { "id": "bed_e", "kind": "bed", "x": 2.0, "z": -0.6, "rot": -1.57 },
-        { "id": "chest", "kind": "chest", "x": 0, "z": -2.3, "rot": 0 }
-      ]
+      "shape": "round", "gerSize": "helper", "camera": { "dist": 6, "minDist": 3.5, "maxDist": 9 }, "r": 2.2, "h": 1.4, "roofH": 1.0,  
+      "floor": "#a07a4a", "wall": "#dcd2bb", "trim": "#a8481c", "roof": "#dcd2bb",
+      "light": { "color": "#ffd9a8", "intensity": 8 },
+      "entry": [0, 1.6], "exit": [0, 1.9], "counter": null,
+      "spots": []
     },
     "house": {
       "shape": "box", "w": 8, "d": 6, "h": 2.8,

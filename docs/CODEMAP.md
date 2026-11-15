@@ -275,6 +275,64 @@ SYM game/src/render/characters.ts:231 method CharactersView.herderObject
 SYM game/src/render/characters.ts:235 method CharactersView.update
 SYM game/src/render/characters.ts:323 method CharactersView.updateDogs
 SYM game/src/render/characters.ts:373 method CharactersView.updateWolves
+FILE game/src/render/ger/atlas.ts 16.0KB 177L exports: AtlasMaps,doorAtlas,IN_RECT,interiorAtlas
+SYM game/src/render/ger/atlas.ts:5 interface AtlasMaps
+SYM game/src/render/ger/atlas.ts:7 fn hasDom
+SYM game/src/render/ger/atlas.ts:8 fn doorAtlas
+SYM game/src/render/ger/atlas.ts:110 const IN_RECT
+SYM game/src/render/ger/atlas.ts:111 fn interiorAtlas
+FILE game/src/render/ger/config.ts 9.5KB 125L exports: GerSize,DoorVariant,GerShape,GerWinter,GerPalette,TentPalette,GerInteriorColors,GerInterior,GerAtlas,GerConfig,TentKind,TentConfig,GerData,gerConfigErrors,+4
+SYM game/src/render/ger/config.ts:7 interface GerSize
+SYM game/src/render/ger/config.ts:8 interface DoorVariant
+SYM game/src/render/ger/config.ts:9 interface GerShape
+SYM game/src/render/ger/config.ts:15 interface GerWinter
+SYM game/src/render/ger/config.ts:16 interface GerPalette
+SYM game/src/render/ger/config.ts:17 interface TentPalette
+SYM game/src/render/ger/config.ts:18 interface GerInteriorColors
+SYM game/src/render/ger/config.ts:19 interface GerInterior
+SYM game/src/render/ger/config.ts:27 interface GerAtlas
+SYM game/src/render/ger/config.ts:28 interface GerConfig
+SYM game/src/render/ger/config.ts:42 interface TentKind
+SYM game/src/render/ger/config.ts:43 interface TentConfig
+SYM game/src/render/ger/config.ts:48 interface GerData
+SYM game/src/render/ger/config.ts:51 fn isObj
+SYM game/src/render/ger/config.ts:54 fn check
+SYM game/src/render/ger/config.ts:70 fn gerConfigErrors
+SYM game/src/render/ger/config.ts:110 fn validateGerData
+SYM game/src/render/ger/config.ts:117 const GER
+SYM game/src/render/ger/config.ts:118 const TENT
+SYM game/src/render/ger/config.ts:121 fn gerSize
+FILE game/src/render/ger/geo.ts 10.2KB 158L exports: V3,V2,rgb,mix,px2uv,LatheOpts,LoftRow,LoftOpts,Geo,outlineMaterial
+SYM game/src/render/ger/geo.ts:5 type V3
+SYM game/src/render/ger/geo.ts:6 type V2
+SYM game/src/render/ger/geo.ts:10 const rgb
+SYM game/src/render/ger/geo.ts:11 const mix
+SYM game/src/render/ger/geo.ts:12 const px2uv
+SYM game/src/render/ger/geo.ts:14 interface LatheOpts
+SYM game/src/render/ger/geo.ts:30 interface LoftRow
+SYM game/src/render/ger/geo.ts:31 interface LoftOpts
+SYM game/src/render/ger/geo.ts:41 class Geo
+SYM game/src/render/ger/geo.ts:49 method Geo.tri
+SYM game/src/render/ger/geo.ts:58 method Geo.quad
+SYM game/src/render/ger/geo.ts:67 method Geo.lathe
+SYM game/src/render/ger/geo.ts:97 method Geo.loft
+SYM game/src/render/ger/geo.ts:113 method Geo.obox
+SYM game/src/render/ger/geo.ts:123 method Geo.beam
+SYM game/src/render/ger/geo.ts:133 method Geo.append
+SYM game/src/render/ger/geo.ts:143 method Geo.build
+SYM game/src/render/ger/geo.ts:154 fn outlineMaterial
+FILE game/src/render/ger/ger.ts 14.9KB 165L exports: GerBuilt,GerOptions,makeGer
+SYM game/src/render/ger/ger.ts:8 interface GerBuilt
+SYM game/src/render/ger/ger.ts:20 interface GerOptions
+SYM game/src/render/ger/ger.ts:34 fn makeGer
+FILE game/src/render/ger/gerInterior.ts 18.3KB 174L exports: gerDims,GerInteriorOptions,GerInteriorBuilt,makeGerInterior
+SYM game/src/render/ger/gerInterior.ts:10 fn gerDims
+SYM game/src/render/ger/gerInterior.ts:19 interface GerInteriorOptions
+SYM game/src/render/ger/gerInterior.ts:20 interface GerInteriorBuilt
+SYM game/src/render/ger/gerInterior.ts:28 fn makeGerInterior
+FILE game/src/render/ger/tent.ts 6.1KB 79L exports: TentOptions,makeTent
+SYM game/src/render/ger/tent.ts:11 interface TentOptions
+SYM game/src/render/ger/tent.ts:13 fn makeTent
 FILE game/src/render/interior.ts 10.5KB 221L exports: InteriorView
 SYM game/src/render/interior.ts:17 class InteriorView
 SYM game/src/render/interior.ts:37 method InteriorView.active
@@ -647,6 +705,19 @@ SYM game/src/sim/systems/dogs.ts:265 fn hash01
 SYM game/src/sim/systems/dogs.ts:273 fn pickWander
 SYM game/src/sim/systems/dogs.ts:286 fn move
 SYM game/src/sim/systems/dogs.ts:297 fn relocateDogs
+FILE game/src/sim/systems/gerLayout.ts 7.4KB 121L exports: LayoutBox,GerLayoutSource,GerSimConfig,gerWallRadius,gerDoorOffset,gerOuterRadius,gerInnerRadius,placeOnWall,boxFrom,gerBoxes,gerBlockers,pushOutOfBox
+SYM game/src/sim/systems/gerLayout.ts:7 interface LayoutBox
+SYM game/src/sim/systems/gerLayout.ts:10 interface GerLayoutSource
+SYM game/src/sim/systems/gerLayout.ts:25 interface GerSimConfig
+SYM game/src/sim/systems/gerLayout.ts:31 fn gerWallRadius
+SYM game/src/sim/systems/gerLayout.ts:38 fn gerDoorOffset
+SYM game/src/sim/systems/gerLayout.ts:43 fn gerOuterRadius
+SYM game/src/sim/systems/gerLayout.ts:48 fn gerInnerRadius
+SYM game/src/sim/systems/gerLayout.ts:53 fn placeOnWall
+SYM game/src/sim/systems/gerLayout.ts:59 fn boxFrom
+SYM game/src/sim/systems/gerLayout.ts:65 fn gerBoxes
+SYM game/src/sim/systems/gerLayout.ts:95 fn gerBlockers
+SYM game/src/sim/systems/gerLayout.ts:105 fn pushOutOfBox
 FILE game/src/sim/systems/grazing.ts 9.9KB 254L exports: flockCenters,grazingStep,driveFlock
 SYM game/src/sim/systems/grazing.ts:23 fn flockCenters
 SYM game/src/sim/systems/grazing.ts:43 fn flockKey
@@ -724,29 +795,29 @@ SYM game/src/sim/systems/herds.ts:139 interface FlockCenter
 SYM game/src/sim/systems/herds.ts:149 fn cohesionCenters
 SYM game/src/sim/systems/herds.ts:172 interface HerdDecision
 SYM game/src/sim/systems/herds.ts:184 fn herdDecide
-FILE game/src/sim/systems/interior.ts 16.8KB 325L exports: InteriorSpot,RoomSpec,InteriorsConfig,InteriorService,EnterDoor,sumEnterDoors,campEnterDoors,enterDoors,nearEnterDoor,roomSpec,roomGerSize,currentRoom,clampToRoom,enterBuilding,+7
+FILE game/src/sim/systems/interior.ts 17.3KB 334L exports: InteriorSpot,RoomSpec,InteriorsConfig,InteriorService,EnterDoor,sumEnterDoors,campEnterDoors,enterDoors,nearEnterDoor,roomSpec,roomGerSize,currentRoom,clampToRoom,enterBuilding,+7
 SYM game/src/sim/systems/interior.ts:16 interface InteriorSpot
 SYM game/src/sim/systems/interior.ts:17 interface RoomSpec
-SYM game/src/sim/systems/interior.ts:47 interface InteriorsConfig
-SYM game/src/sim/systems/interior.ts:66 type InteriorService
-SYM game/src/sim/systems/interior.ts:68 interface EnterDoor
-SYM game/src/sim/systems/interior.ts:85 fn serviceOf
-SYM game/src/sim/systems/interior.ts:93 fn sumEnterDoors
-SYM game/src/sim/systems/interior.ts:114 fn campEnterDoors
-SYM game/src/sim/systems/interior.ts:133 fn enterDoors
-SYM game/src/sim/systems/interior.ts:144 fn nearEnterDoor
-SYM game/src/sim/systems/interior.ts:163 fn roomSpec
-SYM game/src/sim/systems/interior.ts:180 fn roomGerSize
-SYM game/src/sim/systems/interior.ts:185 fn currentRoom
-SYM game/src/sim/systems/interior.ts:191 fn clampToRoom
-SYM game/src/sim/systems/interior.ts:210 fn enterBuilding
-SYM game/src/sim/systems/interior.ts:228 fn atExit
-SYM game/src/sim/systems/interior.ts:234 fn exitBuilding
-SYM game/src/sim/systems/interior.ts:249 fn moveInterior
-SYM game/src/sim/systems/interior.ts:260 fn atCounter
-SYM game/src/sim/systems/interior.ts:266 fn interiorService
-SYM game/src/sim/systems/interior.ts:273 fn ensureInteriorValid
-SYM game/src/sim/systems/interior.ts:280 fn validateInteriors
+SYM game/src/sim/systems/interior.ts:49 interface InteriorsConfig
+SYM game/src/sim/systems/interior.ts:68 type InteriorService
+SYM game/src/sim/systems/interior.ts:70 interface EnterDoor
+SYM game/src/sim/systems/interior.ts:87 fn serviceOf
+SYM game/src/sim/systems/interior.ts:95 fn sumEnterDoors
+SYM game/src/sim/systems/interior.ts:116 fn campEnterDoors
+SYM game/src/sim/systems/interior.ts:135 fn enterDoors
+SYM game/src/sim/systems/interior.ts:146 fn nearEnterDoor
+SYM game/src/sim/systems/interior.ts:165 fn roomSpec
+SYM game/src/sim/systems/interior.ts:182 fn roomGerSize
+SYM game/src/sim/systems/interior.ts:187 fn currentRoom
+SYM game/src/sim/systems/interior.ts:193 fn clampToRoom
+SYM game/src/sim/systems/interior.ts:218 fn enterBuilding
+SYM game/src/sim/systems/interior.ts:236 fn atExit
+SYM game/src/sim/systems/interior.ts:242 fn exitBuilding
+SYM game/src/sim/systems/interior.ts:257 fn moveInterior
+SYM game/src/sim/systems/interior.ts:268 fn atCounter
+SYM game/src/sim/systems/interior.ts:274 fn interiorService
+SYM game/src/sim/systems/interior.ts:281 fn ensureInteriorValid
+SYM game/src/sim/systems/interior.ts:288 fn validateInteriors
 FILE game/src/sim/systems/night.ts 5.5KB 111L exports: goesHome,homeSpot,atHome,eveningStep,sleepAll,intakeFactor,dailyMilkLiters,morning
 SYM game/src/sim/systems/night.ts:17 fn goesHome
 SYM game/src/sim/systems/night.ts:22 fn homeSpot
@@ -996,7 +1067,7 @@ FILE game/tests/clock.test.ts 2.3KB 47L
 FILE game/tests/config.test.ts 1.4KB 29L
 FILE game/tests/docs.test.ts 4.0KB 76L
 FILE game/tests/dogs.test.ts 7.5KB 190L
-FILE game/tests/ger.test.ts 9.4KB 175L
+FILE game/tests/ger.test.ts 9.5KB 181L
 FILE game/tests/grazing.test.ts 2.3KB 46L
 FILE game/tests/helpers.ts 0.8KB 20L
 FILE game/tests/herder.test.ts 7.0KB 153L
@@ -1015,15 +1086,15 @@ FILE game/tests/sumtown.test.ts 4.5KB 90L
 FILE game/tests/town.test.ts 6.1KB 127L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 14.9KB 100L
+FILE docs/CONTEXT.md 16.0KB 102L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-28 ## 2. Стек ба командууд
-DOC docs/CONTEXT.md:29-74 ## 3. Файлын зураглал (`game/src/`)
-DOC docs/CONTEXT.md:75-77 ## 4. `data/*.json` → аль файл хэрэглэдэг
-DOC docs/CONTEXT.md:78-86 ## 5. Архитектурын дүрэм ([[architecture]])
-DOC docs/CONTEXT.md:87-90 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
-DOC docs/CONTEXT.md:91-93 ## 7. Нээлттэй асуултууд
-DOC docs/CONTEXT.md:94-100 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
+DOC docs/CONTEXT.md:29-76 ## 3. Файлын зураглал (`game/src/`)
+DOC docs/CONTEXT.md:77-79 ## 4. `data/*.json` → аль файл хэрэглэдэг
+DOC docs/CONTEXT.md:80-88 ## 5. Архитектурын дүрэм ([[architecture]])
+DOC docs/CONTEXT.md:89-92 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
+DOC docs/CONTEXT.md:93-95 ## 7. Нээлттэй асуултууд
+DOC docs/CONTEXT.md:96-102 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
 FILE docs/INDEX.md 13.9KB 135L
 DOC docs/INDEX.md:16-30 ## 1. Унших дараалал ба давуу эрх
 DOC docs/INDEX.md:31-106 ## 2. Баримтууд
@@ -1210,15 +1281,15 @@ FILE docs/plan/M7.md 7.6KB 31L
 DOC docs/plan/M7.md:12-22 ## Блокууд
 DOC docs/plan/M7.md:23-27 ## Асуулга (10 асуулт)
 DOC docs/plan/M7.md:28-31 ## Эрсдэл
-FILE docs/plan/V.md 28.0KB 68L
+FILE docs/plan/V.md 32.6KB 85L
 DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
-DOC docs/plan/V.md:24-62 ## Блокууд ба чеклист (2026-11-15)
-DOC docs/plan/V.md:63-68 ## Зогссон цэг
-FILE docs/plan/playtest.md 8.1KB 59L
+DOC docs/plan/V.md:24-79 ## Блокууд ба чеклист (2026-11-15)
+DOC docs/plan/V.md:80-85 ## Зогссон цэг
+FILE docs/plan/playtest.md 8.7KB 60L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
-DOC docs/plan/playtest.md:19-37 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
-DOC docs/plan/playtest.md:38-59 ## C. Мэдрэмж, үе шат бүрээр
+DOC docs/plan/playtest.md:19-38 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
+DOC docs/plan/playtest.md:39-60 ## C. Мэдрэмж, үе шат бүрээр
 FILE docs/seasons-camps.md 10.2KB 104L
 DOC docs/seasons-camps.md:17-40 ## 1. Хэрэглэгчийн шийдвэрүүд
 DOC docs/seasons-camps.md:41-54 ## 2. Улирал
