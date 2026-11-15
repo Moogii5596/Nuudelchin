@@ -321,8 +321,8 @@
     "horse": { "m": "horseman", "f": "woman_plait" },
     "drive": { "m": "driver", "f": "woman_braids" },
     "otor": { "m": "herder", "f": "housewife" },
-    "collect": { "m": "boy_shorthair", "f": "girl_braids" },
-    "child": { "m": "boy_shaved", "f": "girl_bun" }
+    "collect": { "m": "herder", "f": "housewife" },
+    "child": { "m": "boy_shorthair", "f": "girl_braids" }
   },
   "crowd": {
     "lod": 0.4,
