@@ -287,8 +287,7 @@ export class AnimalsView {
       const headSize = clamp(1.22 - sc * 0.22, 1, 1.22);
       this.mHead.makeTranslation(def.headPivot[0], def.headPivot[1], def.headPivot[2])
         .multiply(this.mRot)
-        .multiply(this.mScale.makeScale(headSize, headSize, headSize))
-        .multiply(this.mTmp.makeTranslation(-def.headPivot[0], -def.headPivot[1], -def.headPivot[2]));
+        .multiply(this.mScale.makeScale(headSize, headSize, headSize));
       this.mHead.premultiply(this.mBase);
 
       let bodyCol = def.palette[(a.id * 7 + 3) % def.palette.length] ?? def.palette[0]!;
