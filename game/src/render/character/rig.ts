@@ -49,6 +49,8 @@ export interface BuildOptions {
   detail?: Detail;
   /** нарийвчлал (хуваалтын харьцаа); байхгүй бол full = 1, npc = detail.npc.lod. Олон хүн (crowd) өөрөө өгнө */
   lod?: number;
+  /** өмсгөлөөс (wear) гадна заавал угсрах малгай (олон хүний тогтмол төрх) */
+  hats?: readonly CharacterHat[];
 }
 
 /** Толгойн төв, хүзүү, бэлхүүсний өндөр (м) — нийт өндрийг R4-т ясаар масштаблана */
@@ -89,7 +91,7 @@ export function buildCharacter(spec: CharacterSpec, opts: BuildOptions = {}): Ch
   const wear = wearOf(spec);
   const { width: hw, height: hh } = spec.headShape;
   for (const name of CHARACTER_HATS) {
-    if (!Object.values(wear).includes(name)) continue;   // зөвхөн өмсдөг малгайгаа угсарна
+    if (!Object.values(wear).includes(name) && !opts.hats?.includes(name)) continue;   // зөвхөн өмсдөг (эсвэл заасан) малгайгаа угсарна
     const hat = HATS[name](spec, kit, HY);
     if ((name === 'toortsog' || name === 'fox') && (hw !== 1 || hh !== 1)) {
       // толгойн хэлбэрт: толгойн төвөөр жигд масштаблаж, оройд нь суулгана (алчуур, тууз хэлбэрээ өөрөө дагана)

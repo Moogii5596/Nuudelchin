@@ -1,6 +1,6 @@
 {
-  "_doc": "V4.5: хүний дүрийн төрх (docs/character-design.md §4.3). render/character/spec.ts шалгана. skins.<нэр> — арьсны палитр (base арьс/нүүр, shade хүзүү, nail хумс); preset-ийн skin нь палитрын нэр эсвэл {base, shade, nail}. presets.<нэр> — дүрийн загвар; base — өөр preset-ээс өвлөнө (объект гүн нийлнэ, массив солигдоно); man, woman, boy, girl, elder, granny — суурь, бусад нь бэлэн дүр (лабораторийн эгнээнд гарна). player — тоглогч. Өнгө #rrggbb. hair: color — үс, сахлын өнгө; strands — ширхэгийн [бараан, цайвар] өнгө (буурал холилдсон = бараан суурь + цагаан ширхэг); style — short | bald (ар, хажуугийн үс) | bun (ар талын боодол) | braids (хоёр гэзэг урдуур) | braid (нэг гэзэг араар). figure (ясаар, 1/0 = өөрчлөхгүй): stature нийт өндөр (0.5–1.2), legs хөлийн урт (0.7–1.2), build цээж/мөрний өргөн (0.7–1.3), head толгойн харьцаа (0.8–1.4), hunch бөгтөр, рад (0–0.4). headShape: width/height — толгойн цилиндрийн өргөн/өндрийн харьцаа (0.8–1.2), round — дээд/доод захын бөөрөнхийлөлт (−0.5 дөрвөлжин … 1 бөөрөнхий). face (зураг 2048×1024 px, нүүрний төвөөс): eyes shape oval | dot | line (нарийн зураас) | slant (ташуу), w/h хагас өргөн/өндөр, spacing төвөөс, y (+ доош); brows shape straight | arch | slant, thickness, length (харьцаа), lift (+ доош), tilt (+ гадна үзүүр доош), color (байхгүй бол хар); mouth width хагас өргөн, y (+ доош), smile (−1 доошоо … 1 инээмсэглэл); beard none | mustache | goatee | full; wrinkles, blush, freckles 0–1; lashes — сормуус; moles — мэнгэ [[x, y], ...]; glasses — нүдний шил. wear.<summer|autumn|winter|spring> — толгойн өмсгөл (toortsog | fox | scarf | shawl | ribbon | none; байхгүй бол visuals.json outfits.seasons). legs — өмд. deel: color/hem (байхгүй бол visuals.json outfits.player — R5-д энд шилжинэ), button — товч, furTrim — өвлийн дээлийн хормой, ханцуйны үс, winterTrim (байхгүй бол outfits.collarFur), terlegLighten — зуны тэрлэгийг цайруулах (0–0.6, байхгүй бол outfits.terlegLighten). sash: color — бүс, хөвөө; fold — бүсний нугалаа. vest — өвлийн хантааз: color даавуу, lining доторлогоо, fur энгэрийн үс, worn — өмсөх эсэх (false — зөвхөн зузаан дээл). boots: shaft түрий, tan зулаг, sole ул, teal хөвөө, gold алтлаг хээ, pattern түрийн хээ. bodies.<terleg|deel|winter>: thickness — биеийн зузаан (0.5–1.6), skirt — хормойн урт, м (0.2–1). hats.toortsog: felt эсгий, ink хар судал; hats.fox: fur/furTint үсэн хүрээ, silk торгон орой, trim хөх эмжээр, gold, stem/knot сампин, ribbon залаа; hats.scarf — нимгэн алчуур, hats.shawl — зузаан (өвлийн) алчуур: color, knot chin (эрүүн доогуур) | back (араар); hats.ribbon.color — охидын тууз. pose.elbowRest — зүүн, баруун тохойн амрах өнцөг (рад). props: uurga, sack. detail.npc — туслах, ойрын NPC: lod хуваалтын харьцаа, shadowParts — давхарга (бие, малгай, үлдсэн) бүрд сүүдэр тусгах хамгийн том хэсгийн тоо.",
-  "detail": { "npc": { "lod": 0.3, "shadowParts": 1 } },
+  "_doc": "V4.5: хүний дүрийн төрх (docs/character-design.md §4.3). render/character/spec.ts шалгана. skins.<нэр> — арьсны палитр (base арьс/нүүр, shade хүзүү, nail хумс); preset-ийн skin нь палитрын нэр эсвэл {base, shade, nail}. presets.<нэр> — дүрийн загвар; base — өөр preset-ээс өвлөнө (объект гүн нийлнэ, массив солигдоно); man, woman, boy, girl, elder, granny — суурь, бусад нь бэлэн дүр (лабораторийн эгнээнд гарна). player — тоглогч. Өнгө #rrggbb. hair: color — үс, сахлын өнгө; strands — ширхэгийн [бараан, цайвар] өнгө (буурал холилдсон = бараан суурь + цагаан ширхэг); style — short | bald (ар, хажуугийн үс) | bun (ар талын боодол) | braids (хоёр гэзэг урдуур) | braid (нэг гэзэг араар). figure (ясаар, 1/0 = өөрчлөхгүй): stature нийт өндөр (0.5–1.2), legs хөлийн урт (0.7–1.2), build цээж/мөрний өргөн (0.7–1.3), head толгойн харьцаа (0.8–1.4), hunch бөгтөр, рад (0–0.4). headShape: width/height — толгойн цилиндрийн өргөн/өндрийн харьцаа (0.8–1.2), round — дээд/доод захын бөөрөнхийлөлт (−0.5 дөрвөлжин … 1 бөөрөнхий). face (зураг 2048×1024 px, нүүрний төвөөс): eyes shape oval | dot | line (нарийн зураас) | slant (ташуу), w/h хагас өргөн/өндөр, spacing төвөөс, y (+ доош); brows shape straight | arch | slant, thickness, length (харьцаа), lift (+ доош), tilt (+ гадна үзүүр доош), color (байхгүй бол хар); mouth width хагас өргөн, y (+ доош), smile (−1 доошоо … 1 инээмсэглэл); beard none | mustache | goatee | full; wrinkles, blush, freckles 0–1; lashes — сормуус; moles — мэнгэ [[x, y], ...]; glasses — нүдний шил. wear.<summer|autumn|winter|spring> — толгойн өмсгөл (toortsog | fox | scarf | shawl | ribbon | none; байхгүй бол visuals.json outfits.seasons). legs — өмд. deel: color/hem — дээл, хормой, button — товч, furTrim — өвлийн дээлийн хормой, ханцуйны үс, winterTrim — өвлийн дээлийн зах, terlegLighten — зуны тэрлэгийг цайруулах (0–0.6). sash: color — бүс, хөвөө; fold — бүсний нугалаа. vest — өвлийн хантааз: color даавуу, lining доторлогоо, fur энгэрийн үс, worn — өмсөх эсэх (false — зөвхөн зузаан дээл). boots: shaft түрий, tan зулаг, sole ул, teal хөвөө, gold алтлаг хээ, pattern түрийн хээ. bodies.<terleg|deel|winter>: thickness — биеийн зузаан (0.5–1.6), skirt — хормойн урт, м (0.2–1). hats.toortsog: felt эсгий, ink хар судал; hats.fox: fur/furTint үсэн хүрээ, silk торгон орой, trim хөх эмжээр, gold, stem/knot сампин, ribbon залаа; hats.scarf — нимгэн алчуур, hats.shawl — зузаан (өвлийн) алчуур: color, knot chin (эрүүн доогуур) | back (араар); hats.ribbon.color — охидын тууз. pose.elbowRest — зүүн, баруун тохойн амрах өнцөг (рад). props: uurga, sack. detail.npc — туслах, ойрын NPC: lod хуваалтын харьцаа, shadowParts — давхарга (бие, малгай, үлдсэн) бүрд сүүдэр тусгах хамгийн том хэсгийн тоо. roles.<herd|horse|drive|otor|collect|child>.<m|f> — туслахын preset (үүрэг × хүйс; child — хүүхэд туслах); дээлийн өнгө нь visuals.json outfits.helperRoles. crowd — сумын оршин суугчид: lod хуваалт, shadowParts — төрх бүрийн сүүдэр тусгах хэсэг, looks — [{preset, body, hat}] (төрх бүр ≈ 10 draw call; хүнд seed-ээр хуваарилна).",
+  "detail": { "npc": { "lod": 0.3, "shadowParts": 1 }},
   "skins": {
     "light": { "base": "#e6bf98", "shade": "#dab08a", "nail": "#eccbb2" },
     "medium": { "base": "#e0b48a", "shade": "#d6a67c", "nail": "#e6c3aa" },
@@ -26,7 +26,7 @@
         "glasses": false
       },
       "legs": "#2b1d14",
-      "deel": { "button": "#d9d4c8", "furTrim": "#eadfcd" },
+      "deel": { "button": "#d9d4c8", "furTrim": "#eadfcd", "color": "#2f5d9b", "hem": "#2a528a", "winterTrim": "#e6dccb", "terlegLighten": 0.22 },
       "sash": { "color": "#e0b030", "fold": "#b8891e" },
       "vest": { "color": "#8a5a36", "lining": "#e9dfcc", "fur": "#f6f2ea", "worn": true },
       "boots": { "shaft": "#241b17", "tan": "#c98a3f", "sole": "#f0e8d6", "teal": "#35b89e", "gold": "#e0a93a", "pattern": "#3fd0b2" },
@@ -86,7 +86,7 @@
       },
       "deel": { "color": "#2a6a6a", "hem": "#1d4a4a", "furTrim": "#b8b2a8", "winterTrim": "#b8b2a8" },
       "sash": { "color": "#3f8a4a", "fold": "#2c6434" },
-      "hats": { "scarf": { "color": "#2f5d9b", "knot": "back" }, "shawl": { "color": "#4a5a6a", "knot": "back" } },
+      "hats": { "scarf": { "color": "#2f5d9b", "knot": "back" }, "shawl": { "color": "#4a5a6a", "knot": "back" }},
       "vest": { "worn": false }
     },
     "boy": {
@@ -109,7 +109,7 @@
       "deel": { "color": "#b07a2a", "hem": "#7a531c" },
       "sash": { "color": "#3a6ab0", "fold": "#284c80" },
       "vest": { "color": "#34506e", "fur": "#b8b2a8" },
-      "hats": { "fox": { "silk": "#2f6a4a", "knot": "#2f6a4a", "stem": "#235238" } }
+      "hats": { "fox": { "silk": "#2f6a4a", "knot": "#2f6a4a", "stem": "#235238" }}
     },
     "boy_shaved": {
       "base": "boy",
@@ -127,7 +127,7 @@
       "sash": { "color": "#b8323a", "fold": "#8a2229" },
       "boots": { "shaft": "#3a1a16", "tan": "#a8442a", "sole": "#f0e8d6", "teal": "#e0a93a", "gold": "#e0a93a", "pattern": "#f0c050" },
       "vest": { "color": "#6a6a66", "fur": "#8a7058" },
-      "hats": { "fox": { "silk": "#b0302f" } }
+      "hats": { "fox": { "silk": "#b0302f" }}
     },
     "girl": {
       "base": "boy",
@@ -143,7 +143,7 @@
       "face": { "eyes": { "w": 28, "h": 28 }, "mouth": { "smile": 0.5 }},
       "deel": { "color": "#c0485a", "hem": "#8a2f3e" },
       "sash": { "color": "#e0b030", "fold": "#b8891e" },
-      "hats": { "ribbon": { "color": "#e0b030" }, "fox": { "silk": "#6a3a8a", "knot": "#6a3a8a", "stem": "#4e2a66" } },
+      "hats": { "ribbon": { "color": "#e0b030" }, "fox": { "silk": "#6a3a8a", "knot": "#6a3a8a", "stem": "#4e2a66" }},
       "vest": { "color": "#3e5a3a", "fur": "#f6f2ea" }
     },
     "girl_bun": {
@@ -154,7 +154,7 @@
       "face": { "eyes": { "shape": "slant", "w": 28, "h": 20, "spacing": 94 }, "brows": { "shape": "straight", "tilt": -0.12 }, "mouth": { "width": 42, "smile": 0.2 }, "freckles": 0.4 },
       "deel": { "color": "#6a4a9a", "hem": "#4a3270", "furTrim": "#f6f2ea", "winterTrim": "#f6f2ea" },
       "sash": { "color": "#3f8a4a", "fold": "#2c6434" },
-      "hats": { "ribbon": { "color": "#2f8ad0" } },
+      "hats": { "ribbon": { "color": "#2f8ad0" }},
       "vest": { "worn": false }
     },
     "elder": {
@@ -181,7 +181,7 @@
       },
       "sash": { "color": "#3a6ab0", "fold": "#284c80" },
       "vest": { "color": "#2a2420", "fur": "#8a7058" },
-      "hats": { "fox": { "silk": "#2a2420", "knot": "#3a302a", "stem": "#2a2420", "fur": "#6a5a4c", "furTint": "#5a4a3e" } }
+      "hats": { "fox": { "silk": "#2a2420", "knot": "#3a302a", "stem": "#2a2420", "fur": "#6a5a4c", "furTint": "#5a4a3e" }}
     },
     "elder_beard": {
       "base": "elder",
@@ -223,7 +223,7 @@
       "face": { "moles": [[60,230]] },
       "bodies": { "terleg": { "thickness": 1.08 }, "deel": { "thickness": 1.14 }, "winter": { "thickness": 1.22 }},
       "sash": { "color": "#3f8a4a", "fold": "#2c6434" },
-      "hats": { "scarf": { "color": "#e8e2d4", "knot": "back" }, "shawl": { "color": "#5a4a6a", "knot": "chin" } },
+      "hats": { "scarf": { "color": "#e8e2d4", "knot": "back" }, "shawl": { "color": "#5a4a6a", "knot": "chin" }},
       "vest": { "color": "#6a6a66", "fur": "#b8b2a8" }
     },
     "granny_plait": {
@@ -240,7 +240,7 @@
       },
       "deel": { "color": "#6b4a2a", "hem": "#4a321c" },
       "sash": { "color": "#b8323a", "fold": "#8a2229" },
-      "hats": { "scarf": { "color": "#3a7a5a", "knot": "back" } },
+      "hats": { "scarf": { "color": "#3a7a5a", "knot": "back" }},
       "vest": { "color": "#4a3226", "fur": "#8a7058" }
     },
     "teacher_glasses": {
@@ -260,8 +260,78 @@
       "sash": { "color": "#3f8a4a", "fold": "#2c6434" },
       "boots": { "shaft": "#1c1614", "tan": "#6b4a2e", "sole": "#e8e0cc", "teal": "#3a8a9a", "gold": "#c8a050", "pattern": "#4ab8c8" },
       "vest": { "color": "#34506e", "fur": "#b8b2a8" },
-      "hats": { "fox": { "silk": "#2f4a8a", "knot": "#2f4a8a", "stem": "#22386a", "fur": "#3a302a", "furTint": "#4a3e34" } }
+      "hats": { "fox": { "silk": "#2f4a8a", "knot": "#2f4a8a", "stem": "#22386a", "fur": "#3a302a", "furTint": "#4a3e34" }}
+    },
+    "herder": {
+      "base": "man",
+      "skin": "tan",
+      "hair": { "color": "#2e211a", "strands": ["#0c0806", "#6a5040"] },
+      "figure": { "stature": 0.98, "build": 1.06 },
+      "headShape": { "width": 1.04, "height": 0.97, "round": 0.2 },
+      "face": {
+        "eyes": { "shape": "oval", "w": 24, "h": 30, "spacing": 98 },
+        "brows": { "thickness": 15, "tilt": 0.06 },
+        "mouth": { "width": 66, "smile": 0.1 },
+        "beard": "mustache",
+        "wrinkles": 0.3
+      },
+      "sash": { "color": "#e07a28", "fold": "#b05a18" },
+      "vest": { "color": "#4a3226", "fur": "#b8b2a8" }
+    },
+    "horseman": {
+      "base": "man",
+      "skin": "ruddy",
+      "hair": { "color": "#1f1712", "strands": ["#050302", "#5a4636"] },
+      "figure": { "stature": 1.02, "build": 0.9 },
+      "headShape": { "width": 0.95, "height": 1.04, "round": 0.1 },
+      "face": { "eyes": { "shape": "slant", "w": 30, "h": 20, "spacing": 96 }, "brows": { "shape": "slant", "thickness": 14, "tilt": 0.1 }, "mouth": { "width": 58, "smile": 0.05 }},
+      "sash": { "color": "#3a6ab0", "fold": "#284c80" },
+      "vest": { "color": "#6a6a66", "fur": "#8a7058" },
+      "hats": { "fox": { "silk": "#2f4a8a", "knot": "#2f4a8a", "stem": "#22386a" }}
+    },
+    "driver": {
+      "base": "man",
+      "skin": "medium",
+      "hair": { "color": "#0e0a08", "strands": ["#000000", "#3a2e26"] },
+      "figure": { "stature": 0.97, "build": 1.12 },
+      "headShape": { "width": 1.08, "height": 0.95, "round": 0.45 },
+      "face": { "eyes": { "shape": "dot", "w": 20, "h": 20, "spacing": 100 }, "brows": { "shape": "arch", "thickness": 16 }, "mouth": { "width": 70, "smile": 0.35 }, "blush": 0.15 },
+      "bodies": { "terleg": { "thickness": 1.02 }, "deel": { "thickness": 1.08 }, "winter": { "thickness": 1.18 }},
+      "sash": { "color": "#b8323a", "fold": "#8a2229" },
+      "vest": { "worn": false },
+      "deel": { "furTrim": "#8a7058", "winterTrim": "#8a7058" },
+      "boots": { "shaft": "#1c1614", "tan": "#6b4a2e", "sole": "#e8e0cc", "teal": "#3a8a9a", "gold": "#c8a050", "pattern": "#4ab8c8" }
+    },
+    "housewife": {
+      "base": "woman",
+      "skin": "tan",
+      "hair": { "style": "bun", "color": "#2e211a", "strands": ["#0c0806", "#6a5040"] },
+      "figure": { "stature": 0.92, "build": 1.04 },
+      "headShape": { "width": 1.04, "height": 0.96, "round": 0.5 },
+      "face": { "eyes": { "shape": "oval", "w": 24, "h": 32, "spacing": 94 }, "mouth": { "width": 54, "smile": 0.35 }, "blush": 0.35, "moles": [[-140,150]] },
+      "sash": { "color": "#3f8a4a", "fold": "#2c6434" },
+      "hats": { "scarf": { "color": "#d8a23a", "knot": "back" }, "shawl": { "color": "#6b3a4a", "knot": "back" }},
+      "vest": { "color": "#3e5a3a", "fur": "#f6f2ea" },
+      "wear": { "summer": "scarf", "autumn": "scarf", "winter": "shawl", "spring": "scarf" }
     }
   },
-  "player": { "base": "man" }
+  "player": { "base": "man" },
+  "roles": {
+    "herd": { "m": "herder", "f": "housewife" },
+    "horse": { "m": "horseman", "f": "woman_plait" },
+    "drive": { "m": "driver", "f": "woman_braids" },
+    "otor": { "m": "herder", "f": "housewife" },
+    "collect": { "m": "boy_shorthair", "f": "girl_braids" },
+    "child": { "m": "boy_shaved", "f": "girl_bun" }
+  },
+  "crowd": {
+    "lod": 0.4,
+    "shadowParts": 2,
+    "looks": [
+      { "preset": "elder_goatee", "body": "deel", "hat": "toortsog" },
+      { "preset": "woman_braids", "body": "terleg", "hat": "scarf" },
+      { "preset": "teacher_glasses", "body": "deel", "hat": "none" },
+      { "preset": "granny_bun", "body": "deel", "hat": "scarf" }
+    ]
+  }
 }

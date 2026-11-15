@@ -4,7 +4,7 @@
  * Preset `base`-ээр өвлөнө: объект гүн нийлнэ, массив, энгийн утга солигдоно.
  */
 import charactersJson from '../../../../data/characters.json';
-import { visualStyle, type OutfitBody, type OutfitHat } from '../style';
+import { visualStyle, type HelperRole, type OutfitBody, type OutfitHat } from '../style';
 import type { Season } from '../../sim/config';
 
 export interface BootPalette { shaft: number; tan: number; sole: number; teal: number; gold: number; pattern: number }
@@ -82,9 +82,19 @@ export interface CharacterSpec {
   props: { uurga: number; sack: number };
 }
 
+/** Туслахын үүрэг (render/style.ts HelperRole) + хүүхэд туслах */
+export type RoleKey = 'herd' | 'horse' | 'drive' | 'otor' | 'collect' | 'child';
+export const ROLE_KEYS: readonly RoleKey[] = ['herd', 'horse', 'drive', 'otor', 'collect', 'child'];
+/** Сумын оршин суугчийн төрх: preset × бие × малгай */
+export interface CrowdLookSpec { preset: string; body: OutfitBody; hat: CharacterHat | 'none' }
+
 export interface CharactersData {
   detail: { npc: NpcDetail };
   presets: Record<string, CharacterSpec>;
+  /** бэлэн дүрүүд — өөр preset-ийн base болдоггүй (лабораторийн эгнээ, тест) */
+  ready: string[];
+  roles: Record<RoleKey, Record<'m' | 'f', string>>;
+  crowd: { lod: number; shadowParts: number; looks: CrowdLookSpec[] };
   player: CharacterSpec;
 }
 
@@ -223,18 +233,9 @@ function merge(a: Obj, b: Obj): Obj {
   return out;
 }
 
-/**
- * R5 хүртэл хуучин загвартай (characters.ts `makeHerder`) хуваалцдаг утгууд visuals.json-д үлдэнэ —
- * characters.json-д заагаагүй бол эндээс авна (давхардуулахгүй).
- */
-export function visualDefaults(): Obj {
-  const o = visualStyle.outfits;
-  return { deel: { color: o.player.deel, hem: o.player.hem, winterTrim: o.collarFur, terlegLighten: o.terlegLighten } };
-}
-
 /** characters.json-ийг шалгаж, preset бүрийг base-тэй нь нийлүүлнэ. Алдаатай бол зам заасан Error шиднэ */
-export function validateCharacters(json: unknown, defaults: Obj = visualDefaults()): CharactersData {
-  const root = group(json, '(root)', ['detail', 'skins', 'presets', 'player']);
+export function validateCharacters(json: unknown): CharactersData {
+  const root = group(json, '(root)', ['detail', 'skins', 'presets', 'player', 'roles', 'crowd']);
   const skins: Skins = {};
   for (const [k, v] of Object.entries(group(root.skins, 'skins', Object.keys(isObj(root.skins) ? root.skins : {})))) if (!k.startsWith('_')) skins[k] = colors(v, `skins.${k}`, ['base', 'shade', 'nail']);
   const npc = group(group(root.detail, 'detail', ['npc']).npc, 'detail.npc', ['lod', 'shadowParts']);
@@ -244,7 +245,7 @@ export function validateCharacters(json: unknown, defaults: Obj = visualDefaults
   const resolve = (raw: unknown, path: string, stack: string[]): Obj => {
     if (!isObj(raw)) return fail(path, 'объект байх ёстой');
     const base = raw.base;
-    let merged: Obj = defaults;
+    let merged: Obj = {};
     if (base !== undefined) {
       if (typeof base !== 'string' || !(base in presetsRaw)) return fail(`${path}.base`, `"${String(base)}" preset алга`);
       if (stack.includes(base)) return fail(`${path}.base`, `тойрог: ${[...stack, base].join(' → ')}`);
@@ -267,7 +268,25 @@ export function validateCharacters(json: unknown, defaults: Obj = visualDefaults
     presets[name] = parseSpec(resolvePreset(name, [name]), `presets.${name}`, skins);
   }
   const player = parseSpec(resolve(root.player, 'player', ['player']), 'player', skins);
-  return { detail, presets, player };
+  const known = (v: unknown, path: string): string => (typeof v === 'string' && v in presets ? v : fail(path, `"${String(v)}" preset алга`));
+  const bases = new Set(Object.values(presetsRaw).map((p) => (isObj(p) ? p.base : undefined)));
+  const ready = Object.keys(presets).filter((n) => !bases.has(n));
+  const rolesRaw = group(root.roles, 'roles', ROLE_KEYS);
+  const roles = {} as CharactersData['roles'];
+  for (const k of ROLE_KEYS) {
+    const r = group(rolesRaw[k], `roles.${k}`, ['m', 'f']);
+    roles[k] = { m: known(r.m, `roles.${k}.m`), f: known(r.f, `roles.${k}.f`) };
+  }
+  const c = group(root.crowd, 'crowd', ['lod', 'shadowParts', 'looks']);
+  if (!Array.isArray(c.looks) || c.looks.length === 0 || c.looks.length > 8) fail('crowd.looks', '1–8 төрх байх ёстой');
+  const crowd = {
+    lod: num(c.lod, 'crowd.lod', 0.2, 1), shadowParts: num(c.shadowParts, 'crowd.shadowParts', 0, 20),
+    looks: (c.looks as unknown[]).map((l, i): CrowdLookSpec => {
+      const o = group(l, `crowd.looks[${i}]`, ['preset', 'body', 'hat']);
+      return { preset: known(o.preset, `crowd.looks[${i}].preset`), body: oneOf(o.body, `crowd.looks[${i}].body`, OUTFIT_BODIES), hat: oneOf(o.hat, `crowd.looks[${i}].hat`, [...CHARACTER_HATS, 'none'] as const) };
+    }),
+  };
+  return { detail, presets, player, ready, roles, crowd };
 }
 
 export const characters: CharactersData = validateCharacters(charactersJson);
@@ -282,4 +301,13 @@ export function characterSpec(name: string): CharacterSpec {
 /** Дээл, хормойн өнгийг сольсон хуулбар (туслах, сумын оршин суугчийн өнгө) */
 export function withColors(spec: CharacterSpec, c: Pick<CharacterColors, 'deel' | 'hem'>): CharacterSpec {
   return { ...spec, deel: { ...spec.deel, color: c.deel, hem: c.hem } };
+}
+
+/**
+ * Туслахын төрх (R5): characters.json roles — үүрэг × хүйс (хүүхэд туслах — child); дээлийн өнгө нь үүргийн өнгө
+ * (visuals.json outfits.helperRoles — хэн ямар ажилтай нь холоос танигдана).
+ */
+export function helperSpec(role: HelperRole, sex: 'm' | 'f', child: boolean): CharacterSpec {
+  const deel = parseInt(visualStyle.outfits.helperRoles[role].slice(1), 16);
+  return withColors(characterSpec(characters.roles[child ? 'child' : role][sex]), { deel, hem: deel });
 }

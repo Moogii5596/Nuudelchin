@@ -14,7 +14,8 @@ import type { GameState } from '../sim/state';
 import { mat, VisualRng } from './util';
 import { visualStyle } from './style';
 import { makeDog, poseDogLying } from './characters';
-import { makeCrowdParts } from './herderModel';
+import { makeCrowdParts } from './character/crowd';
+import { characters } from './character/spec';
 import { t } from '../i18n/i18n';
 
 function label(text: string, bg: string, fg: string, w = 4.2, h = 1): THREE.Mesh {
@@ -37,17 +38,15 @@ function label(text: string, bg: string, fg: string, w = 4.2, h = 1): THREE.Mesh
 }
 
 /**
- * Оршин суугчид (хөдөлгөөнгүй): үндсэн дүрийн загварын `crowd` хэлбэр — төрх бүр хэсэг бүрээрээ нэг InstancedMesh,
- * хүн бүр өөрийн байрлал, чиглэл, өндөртэй (docs/character-design.md §4).
+ * Оршин суугчид (хөдөлгөөнгүй): render/character-ийн `crowd` хэлбэр — төрх (data/characters.json crowd.looks: preset ×
+ * бие × малгай) бүр хэсэг бүрээрээ нэг InstancedMesh, хүн бүр өөрийн байрлал, чиглэл, өндөртэй (docs/character-design.md §4).
  */
 function residents(g: THREE.Group, people: Array<{ x: number; y: number; z: number; heading: number; scale: number; look: number }>): void {
-  const R = visualStyle.sumResidents;
-  const hex = (c: string): number => parseInt(c.slice(1), 16);
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
-  R.looks.forEach((look, li) => {
+  characters.crowd.looks.forEach((look, li) => {
     const mine = people.filter((p) => p.look === li);
     if (!mine.length) return;
-    const parts = makeCrowdParts({ colors: { deel: hex(look.deel), hem: hex(look.hem), hat: hex(look.hat) }, body: look.body, hat: look.hatType });
+    const parts = makeCrowdParts(look);
     for (const part of parts) {
       const inst = new THREE.InstancedMesh(part.geometry, part.material, mine.length);
       mine.forEach((p, i) => {
@@ -153,7 +152,7 @@ export class SumCenterView {
         if (crowd.some((p) => Math.hypot(p.x - x, p.z - z) < 1)) continue;   // бие биендээ шигдэхгүй
         // ихэнх нь хаалга руу эсвэл бие бие рүүгээ хандсан — санамсаргүй ч гудамж руу нуруугаа харуулахгүй
         const heading = Math.PI + rng.range(-1.2, 1.2);
-        crowd.push({ x, y: H(x, z), z, heading, scale: rng.range(RS.stature[0], RS.stature[1]), look: Math.floor(rng.next() * RS.looks.length) });
+        crowd.push({ x, y: H(x, z), z, heading, scale: rng.range(RS.stature[0], RS.stature[1]), look: Math.floor(rng.next() * characters.crowd.looks.length) });
       }
     }
     const people = new THREE.Group();

@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { beforeAll, describe, expect, it } from 'vitest';
 import charactersJson from '../../data/characters.json';
-import { characters, characterSpec, validateCharacters, visualDefaults, withColors } from '../src/render/character/spec';
+import visualsJson from '../../data/visuals.json';
+import { characters, characterSpec, helperSpec, validateCharacters, withColors } from '../src/render/character/spec';
 
 /** Canvas-гүй орчинд (node) дүрийг угсрахад хангалттай хуурамч 2D context: бүх дуудлага өөрийгөө буцаана */
 function stubCanvas(): void {
@@ -35,9 +36,9 @@ describe('Дүрийн тохиргоо (data/characters.json, V4.5 R3)', () => 
   it('тоглогч preset-ээс өвлөж, visuals.json-ийн хуваалцсан утгаар нөхөгдөнө', () => {
     const p = characterSpec('player');
     expect(p).toEqual(characters.presets.man);
-    const d = visualDefaults() as { deel: { color: string; terlegLighten: number } };
-    expect(p.deel.color).toBe(parseInt(d.deel.color.slice(1), 16));
-    expect(p.deel.terlegLighten).toBe(d.deel.terlegLighten);
+    expect(p.deel.color).toBe(0x2f5d9b);                     // V4.4-ийн тоглогчийн өнгө (visuals.json-оос шилжсэн, R5)
+    expect(p.deel.terlegLighten).toBe(0.22);
+    expect(p.deel.winterTrim).toBe(0xe6dccb);
     expect(p.pose.elbowRest).toEqual([-0.25, -0.6]);
     expect(withColors(p, { deel: 0x123456, hem: 0x654321 }).deel).toMatchObject({ color: 0x123456, hem: 0x654321, button: p.deel.button });
     expect(() => characterSpec('ghost')).toThrow(/ghost/);
@@ -121,13 +122,43 @@ describe('Дүрийн сан (render/character, V4.5 R1–R2)', () => {
   });
 
   it('crowd: нэг төрх кэштэй, тогтмол нүүртэй, сүүдэр цөөн хэсэгт', () => {
-    const look = { colors: { deel: 0x7a3b2a, hem: 0x5a2a1a, hat: 0 }, body: 'deel' as const, hat: 'toortsog' };
+    const look = { preset: 'elder_goatee', body: 'deel' as const, hat: 'toortsog' as const };
     const parts = lab.makeCrowdParts(look);
     expect(lab.makeCrowdParts({ ...look })).toBe(parts);
     expect(parts.length).toBeGreaterThan(3);
     expect(parts.length).toBeLessThanOrEqual(12);
     expect(parts.filter((p) => p.castShadow).length).toBeLessThanOrEqual(3);
     expect(lab.makeCrowdParts({ ...look, hat: 'none' })).not.toBe(parts);
+    // эмэгтэйн алчуур өмсгөлгүй ч угсрагдана (hats)
+    const scarf = lab.makeCrowdParts({ preset: 'teacher_glasses', body: 'deel', hat: 'scarf' });
+    expect(scarf.length).toBeGreaterThan(3);
+  });
+
+  it('сумын төвийн олон хүн: draw call өмнөхөөс (4 төрх × 10 хэсэг + 2 сүүдэр) өсөхгүй (R5)', () => {
+    let calls = 0;
+    for (const look of characters.crowd.looks) {
+      const parts = lab.makeCrowdParts(look);
+      calls += parts.length + parts.filter((p) => p.castShadow).length;
+    }
+    expect(calls).toBeLessThanOrEqual(4 * 12);
+  });
+
+  it('туслах: үүрэг × хүйс → preset, дээл үүргийн өнгөөр, улирлаар хувцаслана (R5)', () => {
+    const roles = (visualsJson as { outfits: { helperRoles: Record<string, string> } }).outfits.helperRoles;
+    const herder = helperSpec('herd', 'm', false);
+    expect(herder.face).toEqual(characterSpec(characters.roles.herd.m).face);
+    expect(herder.deel.color).toBe(parseInt(roles.herd!.slice(1), 16));
+    expect(helperSpec('drive', 'm', false).deel.color).not.toBe(herder.deel.color);
+    expect(helperSpec('collect', 'f', true).figure).toEqual(characterSpec(characters.roles.child.f).figure);
+    expect(helperSpec('herd', 'f', false).wear?.autumn).toBe('scarf');      // айлын эхнэр алчууртай
+    const rig = lab.buildCharacter(helperSpec('horse', 'm', false), { detail: 'npc' });
+    const shown = (prefix: string): string[] => { const out: string[] = []; rig.root.traverse((o) => { if (o.name.startsWith(prefix) && o.visible && !out.includes(o.name)) out.push(o.name); }); return out; };
+    const seasons = (visualsJson as { outfits: { seasons: Record<string, { body: string; hat: string }> } }).outfits.seasons;
+    for (const season of ['summer', 'autumn', 'winter', 'spring'] as const) {
+      lab.dressCharacter(rig, season);
+      expect(shown('body:')).toEqual([`body:${seasons[season]!.body}`]);
+      expect(shown('hat:')).toEqual([`hat:${seasons[season]!.hat}`]);
+    }
   });
 });
 
@@ -233,7 +264,7 @@ describe('Ялгаатай төрх (V4.5 R4)', () => {
 
 describe('Хүн бүр өөр (V4.5 R4 — арьс, толгой, царай, алчуур)', () => {
   beforeAll(loadLab);
-  const ready = Object.keys(characters.presets).filter((n) => n.includes('_'));
+  const ready = characters.ready;
   const names = (root: THREE.Object3D): string[] => { const out: string[] = []; root.traverse((o) => { if (o.name.startsWith('hat:')) out.push(o.name); }); return out; };
 
   it('арьсны палитр нэрээр; тоглогч хуучин утгаараа', () => {
@@ -314,7 +345,7 @@ describe('npc гурвалжин (V4.5 R4)', () => {
       });
       return n;
     };
-    for (const name of Object.keys(characters.presets).filter((n) => n.includes('_'))) {
+    for (const name of characters.ready) {
       const rig = lab.buildCharacter(characterSpec(name), { detail: 'npc' });
       for (const season of ['summer', 'autumn', 'winter', 'spring'] as const) {
         lab.dressCharacter(rig, season);

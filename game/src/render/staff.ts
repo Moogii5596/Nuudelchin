@@ -5,12 +5,15 @@
 import * as THREE from 'three';
 import type { GameState } from '../sim/state';
 import type { Dwelling, Helper } from '../sim/systems/helpers';
-import { dressHerder, helperColors, makeHerder, makeHorse, swingLegs, type Rig } from './characters';
+import { makeHorse, swingLegs, type Rig } from './characters';
+import { animateCharacter } from './character/animate';
+import { buildCharacter, dressCharacter, type CharacterRig } from './character/rig';
+import { helperSpec } from './character/spec';
 import type { HelperRole } from './style';
 import type { Season } from '../sim/config';
 import { angDiff, mat, meshBox } from './util';
 
-/** Туслахын үүрэг → дээлийн өнгө (V4.1). Адуу хариулж буй малчин = адуучин. */
+/** Туслахын үүрэг → preset ба дээлийн өнгө (V4.1, V4.5 R5 data/characters.json roles). Адуу хариулж буй малчин = адуучин. */
 function helperRole(h: Helper): HelperRole {
   if (h.task === 'herd') return h.herd === 'horse' ? 'horse' : 'herd';
   return h.task;
@@ -47,7 +50,7 @@ function smallTent(): THREE.Group {
 }
 
 interface HelperView {
-  rig: Rig;
+  rig: CharacterRig;
   horse: Rig | null;
   root: THREE.Group;
   x: number;
@@ -67,7 +70,7 @@ export class StaffView {
   setSeason(season: Season): void {
     if (season === this.season) return;
     this.season = season;
-    for (const v of this.views.values()) dressHerder(v.rig, season);
+    for (const v of this.views.values()) dressCharacter(v.rig, season);
   }
 
   update(state: GameState, heightAt: (x: number, z: number) => number, dt: number): void {
@@ -84,17 +87,15 @@ export class StaffView {
         v = undefined;
       }
       if (!v) {
-        const rig = makeHerder(helperColors(role, h.sex));
-        dressHerder(rig, this.season);
+        const rig = buildCharacter(helperSpec(role, h.sex, h.kind === 'child'), { detail: 'npc' });
+        dressCharacter(rig, this.season);
         const root = new THREE.Group();
         let horse: Rig | null = null;
         if (h.kind === 'adult') {
           horse = makeHorse(h.id % 2 ? 0x5a3a22 : 0x9a6a3a);
           root.add(horse.root);
-          rig.root.position.y = 1.05;
-          rig.legs[0]!.rotation.set(-0.9, 0, -0.5);
-          rig.legs[1]!.rotation.set(-0.9, 0, 0.5);
-        } else rig.root.scale.setScalar(0.68);
+          rig.root.position.y = 1.05;   // эмээл дээр (поз — animateCharacter mounted)
+        }
         root.add(rig.root);
         this.group.add(root);
         v = { rig, horse, root, x: h.x, z: h.z, h: h.heading, phase: 0, role };
@@ -116,10 +117,8 @@ export class StaffView {
       v.phase += dt * sp * (v.horse ? 0.9 : 2.6);
       const sw = sp > 0.3 ? Math.sin(v.phase) * 0.7 : 0;
       if (v.horse) swingLegs(v.horse, sw);
-      else {
-        v.rig.legs[0]!.rotation.x = sw;
-        v.rig.legs[1]!.rotation.x = -sw;
-      }
+      const bob = animateCharacter(v.rig, { dt, speed: v.horse ? 0 : sp, mode: v.horse ? 'mounted' : 'foot', raise: false, uurga: false, talk: false, emotion: 'neutral' });
+      if (!v.horse) v.rig.root.position.y = bob;
       // Унтаж байхад хэвтэнэ (хүүхэд, малчин гэртээ)
       v.root.rotation.z = h.mode === 'sleep' && !v.horse ? Math.PI / 2 : 0;
       v.root.position.set(v.x, heightAt(v.x, v.z) + (h.mode === 'sleep' && !v.horse ? 0.3 : 0), v.z);

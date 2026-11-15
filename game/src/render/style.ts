@@ -70,22 +70,12 @@ export interface HerderAnimVisual {
 }
 
 /** Сумын төвийн оршин суугчид (docs/character-design.md §4 crowd) */
-export interface SumResidentLook {
-  deel: string;
-  hem: string;
-  hat: string;
-  body: OutfitBody;
-  hatType: OutfitHat | 'none';
-}
 export interface SumResidentsVisual {
   doorChance: number;
   perDoor: number;
   spread: number;
   ahead: [number, number];
   stature: [number, number];
-  lod: number;
-  shadowParts: number;
-  looks: SumResidentLook[];
 }
 
 /** V4.1: улирлын хувцас */
@@ -94,12 +84,7 @@ export type OutfitHat = 'toortsog' | 'fox';
 export type HelperRole = 'herd' | 'horse' | 'drive' | 'otor' | 'collect';
 export interface OutfitsVisual {
   seasons: Record<Season, { body: OutfitBody; hat: OutfitHat }>;
-  terlegLighten: number;
-  foxFur: string;
-  collarFur: string;
-  player: { deel: string; hem: string; hat: string };
   helperRoles: Record<HelperRole, string>;
-  helperHat: Record<'m' | 'f', string>;
 }
 
 /** V5.3: газрын зургийн цаасан төрх */
@@ -291,20 +276,9 @@ function parseSumResidents(r: Record<string, unknown>): SumResidentsVisual {
   if (!isNum(r.doorChance) || r.doorChance < 0 || r.doorChance > 1) bad('doorChance');
   if (!Number.isInteger(r.perDoor) || (r.perDoor as number) < 1 || (r.perDoor as number) > 6) bad('perDoor');
   if (!isPositive(r.spread)) bad('spread');
-  if (!isNum(r.lod) || r.lod < 0.2 || r.lod > 1) bad('lod');
-  if (!Number.isInteger(r.shadowParts) || (r.shadowParts as number) < 0) bad('shadowParts');
-  if (!Array.isArray(r.looks) || r.looks.length === 0 || r.looks.length > 8) bad('looks');
-  const bodies: OutfitBody[] = ['terleg', 'deel', 'winter'];
-  const hats: Array<OutfitHat | 'none'> = ['toortsog', 'fox', 'none'];
-  const looks = (r.looks as unknown[]).map((l, i) => {
-    if (!isRecord(l) || !isColor(l.deel) || !isColor(l.hem) || !isColor(l.hat) || !bodies.includes(l.body as OutfitBody) || !hats.includes(l.hatType as OutfitHat)) bad(`looks[${i}]`);
-    const v = l as Record<string, unknown>;
-    return { deel: v.deel as string, hem: v.hem as string, hat: v.hat as string, body: v.body as OutfitBody, hatType: v.hatType as OutfitHat | 'none' };
-  });
   return {
     doorChance: r.doorChance as number, perDoor: r.perDoor as number, spread: r.spread as number,
     ahead: range(r.ahead, 'ahead'), stature: range(r.stature, 'stature'),
-    lod: r.lod as number, shadowParts: r.shadowParts as number, looks,
   };
 }
 
@@ -322,8 +296,6 @@ function parseOutfits(o: Record<string, unknown>): OutfitsVisual {
     if (!isRecord(e) || !bodies.includes(e.body as OutfitBody) || !hats.includes(e.hat as OutfitHat)) fail(`seasons.${season}`);
     parsedSeasons[season] = { body: (e as Record<string, unknown>).body as OutfitBody, hat: (e as Record<string, unknown>).hat as OutfitHat };
   }
-  if (typeof o.terlegLighten !== 'number' || !(o.terlegLighten >= 0 && o.terlegLighten <= 0.6)) fail('terlegLighten');
-  if (!isColor(o.foxFur) || !isColor(o.collarFur)) fail('foxFur/collarFur');
   const colors = <K extends string>(v: unknown, keys: readonly K[], what: string): Record<K, string> => {
     if (!isRecord(v)) return fail(what);
     const out = {} as Record<K, string>;
@@ -336,12 +308,7 @@ function parseOutfits(o: Record<string, unknown>): OutfitsVisual {
   };
   return {
     seasons: parsedSeasons,
-    terlegLighten: o.terlegLighten as number,
-    foxFur: o.foxFur as string,
-    collarFur: o.collarFur as string,
-    player: colors(o.player, ['deel', 'hem', 'hat'] as const, 'player'),
     helperRoles: colors(o.helperRoles, ['herd', 'horse', 'drive', 'otor', 'collect'] as const, 'helperRoles'),
-    helperHat: colors(o.helperHat, ['m', 'f'] as const, 'helperHat'),
   };
 }
 

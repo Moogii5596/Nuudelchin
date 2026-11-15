@@ -8,7 +8,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { Season } from '../../sim/config';
 import { visualStyle, type HerderEmotion, type OutfitBody } from '../style';
 import { animateCharacter, type CharacterPose } from './animate';
-import { makeCrowdParts } from './crowd';
+import { makeCrowdParts, type CrowdLook } from './crowd';
 import { EMOTIONS } from './face';
 import { css, libraryStats } from './materials';
 import { buildCharacter, dressCharacter, showOutfit, type CharacterRig } from './rig';
@@ -67,7 +67,7 @@ function startLab(): void {
     rig = null; crowd = null;
     if (checked('crowd')) {
       // `crowd` нарийвчлал: хөдөлгөөнгүй, нэгтгэсэн хэсгүүд (сумын оршин суугч)
-      const parts = makeCrowdParts({ colors: colors(), body: bodySel.value as OutfitBody, hat: hatSel.value, preset: presetSel.value === 'player' ? 'man' : presetSel.value });
+      const parts = makeCrowdParts({ colors: colors(), body: bodySel.value as OutfitBody, hat: hatSel.value as CrowdLook['hat'], preset: presetSel.value === 'player' ? 'man' : presetSel.value });
       crowd = new THREE.Group();
       for (const p of parts) { const m = new THREE.Mesh(p.geometry, p.material); m.castShadow = p.castShadow; crowd.add(m); }
       scene.add(crowd);
@@ -119,7 +119,7 @@ function startLab(): void {
 }
 
 /**
- * Эгнээ (R4, `lab.html?lineup`): тоглогч (full, npc) ба бүх бэлэн preset (нэрэндээ `_`-тэй, npc) нэг эгнээнд.
+ * Эгнээ (R4, `lab.html?lineup`): тоглогч (full, npc) ба бүх бэлэн preset (characters.ready, npc) нэг эгнээнд.
  * - `&hat=none|toortsog|…` — бүгдэд нэг малгай; `&season=winter` — улирал; `&at=<дугаар>&span=<тоо>` — ойроос
  * - `&faces` — царайг ойроос 2 эгнээнд (дэлгэцийн дээд/доод хагас)
  * - `&side` — бүгд хажуу тийш харсан (бөгтөр, бие галбир)
@@ -133,7 +133,7 @@ function startLineup(): void {
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   $('wrap').appendChild(renderer.domElement);
   const { scene } = labScene();
-  const names = Object.keys(characters.presets).filter((n) => n.includes('_'));
+  const names = characters.ready;
   const gray = params.has('gray'), faces = params.has('faces');
   const look = (name: string): CharacterSpec => (gray ? withColors(characterSpec(name), { deel: 0x8a8a8a, hem: 0x6e6e6e }) : characterSpec(name));
   const GAP = 0.95, width = (names.length + 1) * GAP;

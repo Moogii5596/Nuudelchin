@@ -1,4 +1,3 @@
-import { dressHerder, helperColors, makeHerder } from '../src/render/characters';
 import { describe, expect, it } from 'vitest';
 import visualsJson from '../../data/visuals.json';
 import { validateVisualStyle } from '../src/render/style';
@@ -96,14 +95,13 @@ describe('visual style configuration', () => {
 
   it('validates sum-center resident crowd settings', () => {
     const style = validateVisualStyle(visualsJson);
-    expect(style.sumResidents.looks.length).toBeGreaterThan(0);
-    expect(style.sumResidents.lod).toBeGreaterThanOrEqual(0.2);
+    expect(style.sumResidents.perDoor).toBeGreaterThan(0);
     const bad: Record<string, unknown> = JSON.parse(JSON.stringify(visualsJson));
-    ((bad.sumResidents as Record<string, unknown>).looks as Array<Record<string, unknown>>)[0]!.hatType = 'crown';
+    (bad.sumResidents as Record<string, unknown>).perDoor = 0;
     expect(() => validateVisualStyle(bad)).toThrow(/sumResidents/);
-    const heavy: Record<string, unknown> = JSON.parse(JSON.stringify(visualsJson));
-    (heavy.sumResidents as Record<string, unknown>).lod = 3;
-    expect(() => validateVisualStyle(heavy)).toThrow(/sumResidents/);
+    const far: Record<string, unknown> = JSON.parse(JSON.stringify(visualsJson));
+    (far.sumResidents as Record<string, unknown>).doorChance = 3;
+    expect(() => validateVisualStyle(far)).toThrow(/sumResidents/);
   });
 
   it('validates dog rest pose settings (V3.2)', () => {
@@ -119,18 +117,10 @@ describe('visual style configuration', () => {
     expect(() => validateVisualStyle(deep)).toThrow(/dogRest/);
   });
 
-  it('dresses herders by season and colors helpers by role (V4.1)', () => {
+  it('validates seasonal outfits and helper role colors (V4.1; дүр хувцаслах → characters.test.ts)', () => {
     const style = validateVisualStyle(visualsJson);
     expect(style.outfits.seasons.winter.hat).toBe('fox');
-    const rig = makeHerder(helperColors('horse', 'f'));
-    const shown = (prefix: string): string[] =>
-      rig.root.children.filter((c) => c.name.startsWith(prefix) && c.visible).map((c) => c.name);
-    for (const season of ['summer', 'autumn', 'winter', 'spring'] as const) {
-      dressHerder(rig, season);
-      expect(shown('body:')).toEqual([`body:${style.outfits.seasons[season].body}`]);
-      expect(shown('hat:')).toEqual([`hat:${style.outfits.seasons[season].hat}`]);
-    }
-    expect(helperColors('drive', 'm').deel).not.toBe(helperColors('herd', 'm').deel);
+    expect(style.outfits.helperRoles.drive).not.toBe(style.outfits.helperRoles.herd);
     const bad: Record<string, unknown> = JSON.parse(JSON.stringify(visualsJson));
     ((bad.outfits as Record<string, Record<string, unknown>>).seasons!).winter = { body: 'parka', hat: 'fox' };
     expect(() => validateVisualStyle(bad)).toThrow(/outfits\.seasons\.winter/);

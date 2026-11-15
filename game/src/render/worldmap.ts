@@ -7,7 +7,10 @@ import * as THREE from 'three';
 import type { GameConfig } from '../sim/config';
 import type { GameState } from '../sim/state';
 import { mat, VisualRng } from './util';
-import { makeHerder, makeHorse } from './characters';
+import { makeHorse } from './characters';
+import { animateCharacter } from './character/animate';
+import { buildCharacter } from './character/rig';
+import { characterSpec } from './character/spec';
 import { makeVehicleModel } from './vehicles';
 import { seasonLook } from '../sim/systems/seasons';
 import { t } from '../i18n/i18n';
@@ -343,10 +346,10 @@ export class WorldMapView {
       if (key === 'horse') {
         const g = new THREE.Group();
         const h = makeHorse(0x7a4a26);
-        const r = makeHerder();
+        // тоглогч (npc нарийвчлал), морь унасан тогтмол поз
+        const r = buildCharacter(characterSpec('player'), { detail: 'npc' });
+        animateCharacter(r, { dt: 0, speed: 0, mode: 'mounted', raise: false, uurga: false, talk: false, emotion: 'neutral' });
         r.root.position.y = 1.05;
-        r.legs[0]!.rotation.set(-0.9, 0, -0.5);
-        r.legs[1]!.rotation.set(-0.9, 0, 0.5);
         g.add(h.root, r.root);
         m = g;
       } else m = makeVehicleModel(key);
