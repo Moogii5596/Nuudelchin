@@ -100,17 +100,20 @@ SYM game/src/render/characters.ts:338 method CharactersView.herderObject
 SYM game/src/render/characters.ts:342 method CharactersView.update
 SYM game/src/render/characters.ts:418 method CharactersView.updateDogs
 SYM game/src/render/characters.ts:468 method CharactersView.updateWolves
-FILE game/src/render/herderModel.ts 86.4KB 1275L exports: HerderModelColors,HerderPose,HerderRig,makeHerderModel,dressHerderModel,animateHerder
-SYM game/src/render/herderModel.ts:15 interface HerderModelColors
-SYM game/src/render/herderModel.ts:22 interface HerderPose
-SYM game/src/render/herderModel.ts:34 interface HerderRig
-SYM game/src/render/herderModel.ts:53 fn hexNum
-SYM game/src/render/herderModel.ts:55 fn init
-SYM game/src/render/herderModel.ts:1144 fn L
-SYM game/src/render/herderModel.ts:1146 fn makeHerderModel
-SYM game/src/render/herderModel.ts:1152 fn dressHerderModel
-SYM game/src/render/herderModel.ts:1157 fn sstep
-SYM game/src/render/herderModel.ts:1166 fn animateHerder
+FILE game/src/render/herderModel.ts 100.7KB 1497L exports: HerderModelColors,HerderPose,HerderRig,makeHerderModel,CrowdPart,CrowdLook,makeCrowdParts,dressHerderModel,animateHerder
+SYM game/src/render/herderModel.ts:16 interface HerderModelColors
+SYM game/src/render/herderModel.ts:23 interface HerderPose
+SYM game/src/render/herderModel.ts:35 interface HerderRig
+SYM game/src/render/herderModel.ts:54 fn hexNum
+SYM game/src/render/herderModel.ts:56 fn init
+SYM game/src/render/herderModel.ts:1267 fn L
+SYM game/src/render/herderModel.ts:1269 fn makeHerderModel
+SYM game/src/render/herderModel.ts:1275 interface CrowdPart
+SYM game/src/render/herderModel.ts:1280 interface CrowdLook
+SYM game/src/render/herderModel.ts:1293 fn makeCrowdParts
+SYM game/src/render/herderModel.ts:1374 fn dressHerderModel
+SYM game/src/render/herderModel.ts:1379 fn sstep
+SYM game/src/render/herderModel.ts:1388 fn animateHerder
 FILE game/src/render/items.ts 3.7KB 97L exports: ItemsView
 SYM game/src/render/items.ts:12 fn canGeo
 SYM game/src/render/items.ts:22 fn fiberGeo
@@ -135,7 +138,7 @@ SYM game/src/render/staff.ts:60 class StaffView
 SYM game/src/render/staff.ts:67 method StaffView.setSeason
 SYM game/src/render/staff.ts:73 method StaffView.update
 SYM game/src/render/staff.ts:134 method StaffView.syncDwellings
-FILE game/src/render/style.ts 24.6KB 595L exports: TimeVisual,SeasonVisual,GrassVisual,WaterVisual,SmokeVisual,DogRestVisual,HerderEmotion,HerderEvent,HerderAnimVisual,OutfitBody,OutfitHat,HelperRole,OutfitsVisual,MapPaperVisual,+9
+FILE game/src/render/style.ts 27.0KB 646L exports: TimeVisual,SeasonVisual,GrassVisual,WaterVisual,SmokeVisual,DogRestVisual,HerderEmotion,HerderEvent,HerderAnimVisual,SumResidentLook,SumResidentsVisual,OutfitBody,OutfitHat,HelperRole,+11
 SYM game/src/render/style.ts:5 interface TimeVisual
 SYM game/src/render/style.ts:17 interface SeasonVisual
 SYM game/src/render/style.ts:24 interface GrassVisual
@@ -145,33 +148,36 @@ SYM game/src/render/style.ts:50 interface DogRestVisual
 SYM game/src/render/style.ts:60 type HerderEmotion
 SYM game/src/render/style.ts:61 type HerderEvent
 SYM game/src/render/style.ts:62 interface HerderAnimVisual
-SYM game/src/render/style.ts:73 type OutfitBody
-SYM game/src/render/style.ts:74 type OutfitHat
-SYM game/src/render/style.ts:75 type HelperRole
-SYM game/src/render/style.ts:76 interface OutfitsVisual
-SYM game/src/render/style.ts:87 interface MapPaperVisual
-SYM game/src/render/style.ts:94 interface VehicleFxVisual
-SYM game/src/render/style.ts:105 interface CloudShadowVisual
-SYM game/src/render/style.ts:114 interface FlowersVisual
-SYM game/src/render/style.ts:121 interface MountainLayerVisual
-SYM game/src/render/style.ts:131 interface VisualPalette
-SYM game/src/render/style.ts:164 interface VisualStyle
-SYM game/src/render/style.ts:189 fn isRecord
-SYM game/src/render/style.ts:191 fn isColor
-SYM game/src/render/style.ts:192 fn isPositive
-SYM game/src/render/style.ts:195 fn parseMapPaper
-SYM game/src/render/style.ts:214 fn parseVehicleFx
-SYM game/src/render/style.ts:235 fn parseHerderAnim
-SYM game/src/render/style.ts:262 fn parseOutfits
-SYM game/src/render/style.ts:299 fn validateVisualStyle
-SYM game/src/render/style.ts:591 const visualStyle
-SYM game/src/render/style.ts:593 fn paletteHex
-FILE game/src/render/sumcenter.ts 8.7KB 188L exports: SumCenterView
-SYM game/src/render/sumcenter.ts:19 fn label
-SYM game/src/render/sumcenter.ts:39 fn resident
-SYM game/src/render/sumcenter.ts:60 class SumCenterView
-SYM game/src/render/sumcenter.ts:176 method SumCenterView.syncTown
-SYM game/src/render/sumcenter.ts:185 method SumCenterView.syncLot
+SYM game/src/render/style.ts:73 interface SumResidentLook
+SYM game/src/render/style.ts:80 interface SumResidentsVisual
+SYM game/src/render/style.ts:92 type OutfitBody
+SYM game/src/render/style.ts:93 type OutfitHat
+SYM game/src/render/style.ts:94 type HelperRole
+SYM game/src/render/style.ts:95 interface OutfitsVisual
+SYM game/src/render/style.ts:106 interface MapPaperVisual
+SYM game/src/render/style.ts:113 interface VehicleFxVisual
+SYM game/src/render/style.ts:124 interface CloudShadowVisual
+SYM game/src/render/style.ts:133 interface FlowersVisual
+SYM game/src/render/style.ts:140 interface MountainLayerVisual
+SYM game/src/render/style.ts:150 interface VisualPalette
+SYM game/src/render/style.ts:183 interface VisualStyle
+SYM game/src/render/style.ts:209 fn isRecord
+SYM game/src/render/style.ts:211 fn isColor
+SYM game/src/render/style.ts:212 fn isPositive
+SYM game/src/render/style.ts:215 fn parseMapPaper
+SYM game/src/render/style.ts:234 fn parseVehicleFx
+SYM game/src/render/style.ts:255 fn parseHerderAnim
+SYM game/src/render/style.ts:282 fn parseSumResidents
+SYM game/src/render/style.ts:311 fn parseOutfits
+SYM game/src/render/style.ts:348 fn validateVisualStyle
+SYM game/src/render/style.ts:642 const visualStyle
+SYM game/src/render/style.ts:644 fn paletteHex
+FILE game/src/render/sumcenter.ts 9.9KB 204L exports: SumCenterView
+SYM game/src/render/sumcenter.ts:20 fn label
+SYM game/src/render/sumcenter.ts:43 fn residents
+SYM game/src/render/sumcenter.ts:67 class SumCenterView
+SYM game/src/render/sumcenter.ts:192 method SumCenterView.syncTown
+SYM game/src/render/sumcenter.ts:201 method SumCenterView.syncLot
 FILE game/src/render/sumlayout.ts 37.0KB 727L exports: Rect,VehicleSlotView,HomeDoor,SumPlotView,SumCenterBuild,buildSumCenter
 SYM game/src/render/sumlayout.ts:12 interface Rect
 SYM game/src/render/sumlayout.ts:14 interface VehicleSlotView
@@ -801,7 +807,7 @@ FILE game/tests/rng.test.ts 0.8KB 26L
 FILE game/tests/seasons.test.ts 7.2KB 140L
 FILE game/tests/sim.test.ts 1.4KB 32L
 FILE game/tests/staff.test.ts 12.0KB 229L
-FILE game/tests/style.test.ts 8.8KB 163L
+FILE game/tests/style.test.ts 9.5KB 175L
 FILE game/tests/sumtown.test.ts 4.5KB 90L
 FILE game/tests/town.test.ts 6.1KB 127L
 FILE game/tests/trip.test.ts 9.2KB 173L
@@ -832,12 +838,12 @@ DOC docs/architecture.md:198-205 ## 7. Хэл
 DOC docs/architecture.md:206-216 ## 8. Тест ба тэнцвэр
 DOC docs/architecture.md:217-222 ## 9. Туршилтын цэс
 DOC docs/architecture.md:223-234 ## 10. Ажиллуулах
-FILE docs/character-design.md 11.6KB 84L
+FILE docs/character-design.md 19.9KB 157L
 DOC docs/character-design.md:13-27 ## 1. Хэрэглэгчийн баталсан шийдвэр (2026-11-15)
-DOC docs/character-design.md:28-51 ## 2. Үндсэн дүр — хэрэгжилт (V4.4, кодонд)
-DOC docs/character-design.md:52-60 ## 3. NPC-үүд одоо
-DOC docs/character-design.md:61-76 ## 4. NPC-үүдийг шинэ загварт шилжүүлэх төлөвлөгөө (V4.5)
-DOC docs/character-design.md:77-84 ## 5. Нээлттэй шийдвэр 🙋
+DOC docs/character-design.md:28-52 ## 2. Үндсэн дүр — хэрэгжилт (V4.4, кодонд)
+DOC docs/character-design.md:53-61 ## 3. NPC-үүд одоо
+DOC docs/character-design.md:62-147 ## 4. Нэг кодын сан: дүр бүрийг тохиргооноос угсрах (V4.5)
+DOC docs/character-design.md:148-157 ## 5. Нээлттэй шийдвэр 🙋
 FILE docs/competitive-analysis/farvival.md 7.5KB 78L
 DOC docs/competitive-analysis/farvival.md:16-27 ## 1. Товч мэдээлэл
 DOC docs/competitive-analysis/farvival.md:28-37 ## 2. Агуулга
@@ -1005,7 +1011,7 @@ DOC docs/plan/M7.md:12-22 ## Блокууд
 DOC docs/plan/M7.md:23-25 ## Асуулга (9 асуулт)
 DOC docs/plan/M7.md:26-28 ## Нээлттэй асуулт
 DOC docs/plan/M7.md:29-32 ## Эрсдэл
-FILE docs/plan/V.md 16.4KB 72L
+FILE docs/plan/V.md 16.5KB 72L
 DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-20 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
 DOC docs/plan/V.md:21-52 ## Блокууд ба чеклист (2026-11-15)

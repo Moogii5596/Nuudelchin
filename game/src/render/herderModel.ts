@@ -9,6 +9,7 @@
  * Canvas текстурууд эхний дуудалтад л үүснэ (тест, sim-д DOM шаардахгүй).
  */
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { visualStyle, type HerderEmotion, type OutfitBody } from './style';
 import type { Season } from '../sim/config';
 
@@ -105,6 +106,107 @@ function init() {
   /** Ink-outline: mesh бүрийн ХҮҮХЭД болгож нэмнэ — харагдах эсэх, хөдөлгөөн нь эцэг mesh-ээ дагана */
   const OUTLINE = new THREE.MeshBasicMaterial({ color: 0x1a130d, side: THREE.BackSide });
   const outlines = [];
+  /**
+   * Гүйцэтгэл (зөвхөн тоглоомд, лабораторид байхгүй): дүрийг АРАГ ЯСТАЙ нэг mesh (SkinnedMesh) болгоно.
+   * Үе мөчний бүлгүүд (Group) хэвээр үлдэж яс болно — анимацийн код тэднийг өмнөх шигээ эргүүлнэ.
+   * Mesh бүрийн оройг эцэг бүлэг (яс)-т нь 100% холбож, нэг давхарга (body:*, hat:* — улирлаар харагдах/нуугдах)
+   * доторх бүх хэсгийг материалаар нь нэгтгэнэ. Нэг өнгийн (зураггүй) материалуудыг оройн өнгө болгож нэг
+   * материалд нийлүүлнэ. Бэхэн хүрээ (outline) давхарга бүрт нэг mesh болно. Нэртэй mesh (head, hair, uurga, sack,
+   * ear …) болон InstancedMesh (үс) хэвээр үлдэнэ — код тэдгээрийг нэрээр нь удирддаг.
+   * liveMats — ажиллах үед өнгө нь өөрчлөгддөг материал (ханцуй улирлаар) — оройн өнгөнд шингээхгүй.
+   */
+  function bakeSkinned(root, liveMats = [], k = 1.06) {
+    root.updateMatrixWorld(true);
+    const LAYER = /^(body|hat):/;
+    const layerOf = (o) => { for (let q = o.parent; q && q !== root; q = q.parent) if (LAYER.test(q.name)) return q; return root; };
+    const sources = [];
+    root.traverse((o) => {
+      if (!o.isMesh || o.isInstancedMesh || o.isSkinnedMesh || o.name || o.children.length || Array.isArray(o.material)) return;
+      for (let q = o; q && q !== root; q = q.parent) if (!q.visible && !LAYER.test(q.name)) return;   // нуугдсан хэсэг (лабораторийн сонголт)
+      sources.push(o);
+    });
+    // жижиг хэсгүүд сүүдэр тусгахгүй (нэгтгэсэн mesh сүүдэр тусгах эсэхийг том хэсгүүд шийднэ)
+    for (const o of sources) { o.geometry.computeBoundingSphere(); if (o.geometry.boundingSphere.radius < 0.1) o.castShadow = false; }
+    const bones = [], boneIdx = new Map();
+    const boneOf = (o) => { let i = boneIdx.get(o.parent); if (i === undefined) { i = bones.length; bones.push(o.parent); boneIdx.set(o.parent, i); } return i; };
+    const flatColor = (m) => m.isMeshLambertMaterial && !m.map && !liveMats.includes(m) && !m.transparent && m.opacity === 1 && !m.alphaTest && m.emissive.getHex() === 0;
+    const vcMats = new Map();
+    const vcMat = (flat, side) => {
+      const key = `${flat}|${side}`;
+      if (!vcMats.has(key)) vcMats.set(key, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: flat, side }));
+      return vcMats.get(key);
+    };
+    const buckets = new Map();
+    const bucket = (layer, material) => {
+      const key = layer.uuid + '|' + material.uuid;
+      if (!buckets.has(key)) buckets.set(key, { layer, material, geos: [], shadow: false });
+      return buckets.get(key);
+    };
+    /** Геометрийг нэг хэлбэрт оруулна: индексгүй, position/normal (+uv, +color), бүх оройд нэг яс */
+    const prep = (m, matrix, wantUv, wantColor, tint) => {
+      let g = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone();
+      if (!g.attributes.normal) g.computeVertexNormals();
+      const n = g.attributes.position.count;
+      for (const name of Object.keys(g.attributes)) if (!['position', 'normal', 'uv', 'color'].includes(name)) g.deleteAttribute(name);
+      if (wantUv && !g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(n * 2), 2));
+      if (!wantUv && g.attributes.uv) g.deleteAttribute('uv');
+      if (wantColor) {
+        const src = g.attributes.color, col = new Float32Array(n * 3);
+        for (let i = 0; i < n; i++) {
+          const r = src ? src.getX(i) : 1, gg = src ? src.getY(i) : 1, b = src ? src.getZ(i) : 1;
+          col[i * 3] = r * tint.r; col[i * 3 + 1] = gg * tint.g; col[i * 3 + 2] = b * tint.b;
+        }
+        g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+      } else if (g.attributes.color) g.deleteAttribute('color');
+      g.applyMatrix4(matrix);
+      if (matrix.determinant() < 0) {   // толин тусгал хувиргалт: гурвалжны эргэлтийг буцаана (гадагш харсан тал хэвээр)
+        for (const name of Object.keys(g.attributes)) {
+          const at = g.attributes[name], sz = at.itemSize, arr = at.array;
+          for (let t = 0; t < n; t += 3) for (let c = 0; c < sz; c++) { const i1 = (t + 1) * sz + c, i2 = (t + 2) * sz + c; const v = arr[i1]; arr[i1] = arr[i2]; arr[i2] = v; }
+        }
+      }
+      const bi = boneOf(m), si = new Uint16Array(n * 4), sw = new Float32Array(n * 4);
+      for (let i = 0; i < n; i++) { si[i * 4] = bi; sw[i * 4] = 1; }
+      g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4));
+      g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw, 4));
+      return g;
+    };
+    const scaleK = new THREE.Matrix4().makeScale(k, k, k);
+    for (const m of sources) {
+      const layer = layerOf(m), mat = m.material;
+      if (mat === OUTLINE) {   // гараар хийсэн хүрээ (гутлын хүрээ)
+        const bk = bucket(layer, OUTLINE); bk.geos.push(prep(m, m.matrixWorld, false, false));
+      } else if (flatColor(mat)) {
+        const bk = bucket(layer, vcMat(mat.flatShading, mat.side));
+        bk.geos.push(prep(m, m.matrixWorld, false, true, mat.color));
+        bk.shadow ||= m.castShadow;
+      } else {
+        const bk = bucket(layer, mat);
+        bk.geos.push(prep(m, m.matrixWorld, Boolean(mat.map), Boolean(mat.vertexColors), new THREE.Color(1, 1, 1)));
+        bk.shadow ||= m.castShadow;
+      }
+      if (!m.userData.noOutline) {
+        const bk = bucket(layer, OUTLINE);
+        bk.geos.push(prep(m, m.matrixWorld.clone().multiply(scaleK), false, false));
+      }
+    }
+    for (const m of sources) m.removeFromParent();
+    const skeleton = new THREE.Skeleton(bones);   // яс = үе мөчний бүлгүүд; урвуу матрицыг одоогийн (амрах) байрлалаас тооцно
+    const identity = new THREE.Matrix4();
+    for (const { layer, material, geos, shadow } of buckets.values()) {
+      const merged = mergeGeometries(geos, false);
+      if (!merged) throw new Error('herderModel: mergeGeometries амжилтгүй');
+      const sk = new THREE.SkinnedMesh(merged, material);
+      sk.userData.noOutline = true;
+      sk.castShadow = shadow && material !== OUTLINE;
+      sk.frustumCulled = false;   // ясаар хөдөлдөг тул анхны хүрээгээр тасалбал алга болж мэднэ
+      layer.add(sk);              // давхарга нуугдахад хамт нуугдана
+      sk.updateMatrixWorld(true);
+      sk.bind(skeleton, identity);
+      if (material === OUTLINE) outlines.push(sk);
+    }
+    return { bones: bones.length, meshes: buckets.size };
+  }
   function addOutline(root, k = 1.06) {
     const targets = [];
     root.traverse((o) => { if (o.isMesh && !o.userData.noOutline) targets.push(o); });
@@ -146,10 +248,13 @@ function init() {
     const t = Math.min(1, Math.max(0, (-0.05 - y) / 0.22));
     return [x * (1 - 0.05 * t), 0.95 * (z > 0 ? z * (1 + 0.04 * t) : z * (1 - 0.1 * t))];
   }
-  const headSeg = (n) => Math.max(n, 96);   // нүүрний бүтцийг гаргахад хангалттай нягт тор
+  /** Нарийвчлал: 1 = үндсэн дүр; олон хүнд (crowd) бага — хуваалтыг үржүүлнэ (q) */
+  let LOD = 1;
+  const q = (n, min) => Math.max(min, Math.round(n * LOD));
+  const headSeg = (n) => q(Math.max(n, 40), 14);   // нүүрний бүтцийг гаргахад хангалттай нягт тор
   function headGeoFor(n) {
     const seg = headSeg(n);
-    const pts = profile(HEAD_PROFILES[HEAD_SHAPE], 56);   // доод нүүр нарийссан — унжсан хацаргүй
+    const pts = profile(HEAD_PROFILES[HEAD_SHAPE], q(28, 10));   // доод нүүр нарийссан — унжсан хацаргүй
     const geo = new THREE.LatheGeometry(pts, seg, Math.PI + Math.PI / seg);   // оёдол нь ар талд (үсний доор)
     // Нүүрний бүтэц: гадаргууг радиусын дагуу бага зэрэг түлхэж/татаж гаргана. a = урдаас хэмжсэн өнцөг (рад), y = өндөр
     const bump = (a, y, a0, sa, y0, sy) => Math.exp(-(((a - a0) / sa) ** 2) - ((y - y0) / sy) ** 2);
@@ -195,7 +300,7 @@ function init() {
     const up = profile(HEAD_PROFILES[HEAD_SHAPE], 56).filter((q) => q.y >= 0.15);
     const pts = [new THREE.Vector2(up[0].x + 0.003, up[0].y - 0.006)];
     for (const q of up) pts.push(new THREE.Vector2(q.x > 1e-4 ? q.x + 0.016 : 0, q.y + 0.016 * Math.min(1, (q.y - 0.15) / 0.09)));
-    const geo = new THREE.LatheGeometry(pts, 48);
+    const geo = new THREE.LatheGeometry(pts, q(48, 12));
     if (HEAD_SHAPE !== 'block') geo.scale(1, 1, 0.95);
     return geo;
   }
@@ -218,7 +323,7 @@ function init() {
       y += 0.11 * ss(2.0, TEMPLE, d);                                        // санчгийн урд ирмэг чамархай руу өгсөнө
       return y;
     };
-    const NU = 56, NV = 12, TOP = 0.152,   /* оройн үс 0.15-аас эхэлнэ — давхцаж гялтганахгүй */ pos = [], uv = [], idx = [];
+    const NU = q(56, 14), NV = q(12, 4), TOP = 0.152,   /* оройн үс 0.15-аас эхэлнэ — давхцаж гялтганахгүй */ pos = [], uv = [], idx = [];
     for (let a = 0; a <= NU; a++) {
       const d = -TEMPLE + (a / NU) * TEMPLE * 2, phi = Math.PI + d, lo = lowY(Math.abs(d));
       for (let b = 0; b <= NV; b++) {
@@ -270,9 +375,9 @@ function init() {
   }
   /** Эргэлтийн бие: ctrl = [[радиус, y], ...] доороос дээш. depthK = зузаан/өргөн (зууван огтлол) */
   function lathe(ctrl, depthK, material, x, y, z, parent, opt = {}) {
-    const pts = ctrl.length < 3 ? ctrl.map(([r, yy]) => new THREE.Vector2(r, yy)) : profile(ctrl, opt.rows ?? 10);
+    const pts = ctrl.length < 3 ? ctrl.map(([r, yy]) => new THREE.Vector2(r, yy)) : profile(ctrl, q(opt.rows ?? 10, 4));
     if (opt.capBottom) pts.unshift(new THREE.Vector2(0, pts[0].y));
-    const geo = new THREE.LatheGeometry(pts, opt.segs ?? SEG, opt.phiStart ?? 0, opt.phiLength ?? Math.PI * 2);
+    const geo = new THREE.LatheGeometry(pts, q(opt.segs ?? SEG, 6), opt.phiStart ?? 0, opt.phiLength ?? Math.PI * 2);
     if (opt.grad) {
       geo.computeBoundingBox();
       const y0 = geo.boundingBox.min.y, h = geo.boundingBox.max.y - y0 || 1;
@@ -298,12 +403,12 @@ function init() {
   }
   const foldK = (phi, t) => 1 + 0.045 * t * t * Math.sin(7 * phi + 1);
   function cyl(rTop, rBot, h, material, x, y, z, parent) {
-    const m = new THREE.Mesh(new THREE.CylinderGeometry(rTop, rBot, h, 16), material);
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(rTop, rBot, h, q(16, 5)), material);
     m.position.set(x, y, z); m.castShadow = true; parent.add(m);
     return m;
   }
   function sball(r, material, x, y, z, parent) {
-    const m = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 12), material);
+    const m = new THREE.Mesh(new THREE.SphereGeometry(r, r < 0.035 ? q(8, 4) : q(16, 6), r < 0.035 ? q(6, 3) : q(12, 4)), material);
     m.position.set(x, y, z); m.castShadow = true; parent.add(m);
     return m;
   }
@@ -467,7 +572,7 @@ function init() {
     surprised: { tilt: -0.05, lift: -26, eye: 1.35, smile: 0, open: 0.7 },
   };
   const faceCv = document.createElement('canvas');
-  faceCv.width = 2048; faceCv.height = 1024;
+  faceCv.width = 512; faceCv.height = 256;   // тоглоомд: 2048×1024-ийг кадр бүр GPU руу хуулах нь гацаалт үүсгэдэг тул 4 дахин жижиг (зураг 0.25-аар жижгэрнэ)
   const faceCtx = faceCv.getContext('2d');
   const faceTex = new THREE.CanvasTexture(faceCv);
   faceTex.colorSpace = THREE.SRGBColorSpace;
@@ -477,10 +582,10 @@ function init() {
   /** Нүүрийг дахин зурна — зөвхөн төлөв өөрчлөгдсөн үед (анивчих, харц, ам) */
   function paintFace(st) {
     const e = st.emo;
-    const key = [st.blink * 8, st.gaze * 6, st.mouth * 8, e.tilt * 40, e.lift, e.eye * 20, e.smile * 12, e.open * 10].map(Math.round).join('|');
+    const key = [st.blink * 4, st.gaze * 3, st.mouth * 6, e.tilt * 40, e.lift, e.eye * 20, e.smile * 12, e.open * 10].map(Math.round).join('|');
     if (key === faceKey) return;
     faceKey = key;
-    faceCtx.setTransform(1, 0, 0, 1, 0, 0);
+    faceCtx.setTransform(0.25, 0, 0, 0.25, 0, 0);
     drawFace(faceCtx, 2048, 1024, st);
     faceTex.needsUpdate = true;
   }
@@ -600,7 +705,8 @@ function init() {
     }),
   });
   /** Нурууны шугамын дагуу зууван огтлолуудыг холбосон бие (гутлын зулаг, ул). st = [[z, y, rx, ry], ...]. Геометр төвдөө байрлана */
-  function loft(st, material, parent, shape = [2, 2], segs = 20) {   // shape = [дээд, доод] хэлбэрийн зэрэг: 2 = зууван, их байх тусам дөрвөлжин
+  function loft(st, material, parent, shape = [2, 2], segs = 20) {
+    segs = q(segs, 8);   // shape = [дээд, доод] хэлбэрийн зэрэг: 2 = зууван, их байх тусам дөрвөлжин
     {   // огтлолуудын хооронд муруйгаар нягтруулна — хошуу, өсгий талтай биш, жигд муруй болно
       const c1 = new THREE.CatmullRomCurve3(st.map(([z, y, rx]) => new THREE.Vector3(z, y, rx)), false, 'catmullrom', 0.5);
       const c2 = new THREE.CatmullRomCurve3(st.map(([, , , ry]) => new THREE.Vector3(ry, 0, 0)), false, 'catmullrom', 0.5);
@@ -665,7 +771,7 @@ function init() {
   function makeHerder(colors) {
     const noOut = (m) => { m.userData.noOutline = true; return m; };
     const tube = (pts, rad, material, parent, tension = 0.5) => {
-      const m = noOut(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'catmullrom', tension), 64, rad, 6), material));
+      const m = noOut(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'catmullrom', tension), q(64, 12), rad, q(6, 4)), material));
       parent.add(m);
       return m;
     };
@@ -1063,7 +1169,7 @@ function init() {
         m.position.y = HY; m.castShadow = true;
         toortsog.add(m);
         for (const [pts, rad] of [[edge, 0.014], [inner, 0.006]]) {      // хар хөвөө + дотор талын нарийн шугам
-          const tube = noOut(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 48, rad, 6), sm(ink)));
+          const tube = noOut(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), q(48, 10), rad, q(6, 4)), sm(ink)));
           tube.position.y = HY;
           toortsog.add(tube);
         }
@@ -1118,6 +1224,7 @@ function init() {
     for (const c of [...bodies, ...arms, neck, sack]) { waist.add(c); c.position.y -= WAIST_Y; }
     g.add(waist);
 
+    bakeSkinned(g, [sleeveMat]);
     addOutline(g);
     const rig = {
       root: g, legs, arms, knees, neck, bodies, waist, armY: arms[0].position.y, neckY: neck.position.y,
@@ -1137,7 +1244,23 @@ function init() {
     });
     r.sleeveMat.color.setHex(r.sleeveColors[look.body]);
   }
-  return { makeHerder, dressHerder, paintFace, EMOTIONS, mix };
+  /** Хөдөлгөөнгүй олон хүнд (сумын оршин суугчид): энгийн царайтай тогтмол нүүрний материал — тоглогчийн амьд нүүрээс тусдаа */
+  let crowdFace = null;
+  function staticFaceMat() {
+    if (crowdFace) return crowdFace;
+    const cv = document.createElement('canvas');
+    cv.width = faceCv.width; cv.height = faceCv.height;
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(cv.width / 2048, 0, 0, cv.height / 1024, 0, 0);
+    drawFace(ctx, 2048, 1024, { blink: 0, gaze: 0, mouth: 0, emo: EMOTIONS.neutral });
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = faceTex.colorSpace; tex.wrapS = faceTex.wrapS; tex.wrapT = faceTex.wrapT;
+    tex.anisotropy = faceTex.anisotropy; tex.offset.set(1 / (2 * headSeg(HEAD_N)), 0);   // олон хүний толгойн хуваалтад тааруулна
+    crowdFace = new THREE.MeshLambertMaterial({ color: 0xffffff, map: tex });
+    return crowdFace;
+  }
+  const setLod = (v) => { LOD = v; };
+  return { makeHerder, dressHerder, paintFace, EMOTIONS, mix, staticFaceMat, faceMats, setLod };
 }
 
 let lib: ReturnType<typeof init> | null = null;
@@ -1147,6 +1270,105 @@ export function makeHerderModel(colors: HerderModelColors): HerderRig {
   const rig = L().makeHerder(colors);
   rig.anim = { phase: 0, time: 0, run: 0, blinkT: 1.5, blinkP: 1, emo: { ...L().EMOTIONS.neutral } };
   return rig;
+}
+
+export interface CrowdPart {
+  geometry: THREE.BufferGeometry;
+  material: THREE.Material;
+  castShadow: boolean;
+}
+export interface CrowdLook {
+  colors: HerderModelColors;
+  body: OutfitBody;
+  /** малгайн нэр (`toortsog`, `fox`) эсвэл `none` */
+  hat: string;
+}
+
+const crowdCache = new Map<string, CrowdPart[]>();
+/**
+ * Хөдөлгөөнгүй олон хүн (сумын оршин суугчид, docs/character-design.md §4 `crowd`): үндсэн дүрийн загварыг
+ * тайван зогсох байрлалд оруулж, ясны хувиргалтыг CPU дээр геометрт шингээгээд материалаар нэгтгэнэ.
+ * Дуудагч хэсэг бүрийг InstancedMesh болгоно — хүний тоо хэд ч байсан нэг төрх ≈ 10 draw call.
+ */
+export function makeCrowdParts(look: CrowdLook): CrowdPart[] {
+  const key = JSON.stringify(look);
+  const hit = crowdCache.get(key);
+  if (hit) return hit;
+  const lib = L();
+  lib.setLod(visualStyle.sumResidents.lod);   // хөнгөн хувилбар: хуваалт цөөн
+  let rig: HerderRig;
+  try { rig = lib.makeHerder(look.colors); } finally { lib.setLod(1); }
+  lib.setLod(visualStyle.sumResidents.lod);   // нүүрний зургийн шилжилт ч энэ хуваалтаар
+  rig.root.traverse((o: THREE.Object3D) => {
+    const [kind, id] = o.name.split(':');
+    if (kind === 'body') o.visible = id === look.body;
+    else if (kind === 'hat') o.visible = id === look.hat;
+  });
+  // тайван зогсох байрлал: тохой бага зэрэг нугарсан, хуруу сул
+  rig.elbows.forEach((e, i) => { e.rotation.x = rig.elbowRest[i] ?? 0; });
+  rig.curls.forEach((c) => c(0.35));
+  rig.root.updateMatrixWorld(true);
+  const shown = (o: THREE.Object3D): boolean => { for (let q: THREE.Object3D | null = o; q && q !== rig.root; q = q.parent) if (!q.visible) return false; return true; };
+  const byMat = new Map<THREE.Material, { geos: THREE.BufferGeometry[]; shadow: boolean }>();
+  const add = (material: THREE.Material, g: THREE.BufferGeometry, shadow: boolean): void => {
+    const e = byMat.get(material) ?? { geos: [], shadow: false };
+    e.geos.push(g); e.shadow ||= shadow;
+    byMat.set(material, e);
+  };
+  const keep = (g: THREE.BufferGeometry, material: THREE.Material): THREE.BufferGeometry => {
+    const m = material as THREE.MeshLambertMaterial;
+    for (const name of Object.keys(g.attributes)) {
+      const ok = name === 'position' || name === 'normal' || (name === 'uv' && !!m.map) || (name === 'color' && !!m.vertexColors);
+      if (!ok) g.deleteAttribute(name);
+    }
+    if (m.map && !g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position!.count * 2), 2));
+    return g;
+  };
+  const v = new THREE.Vector3(), nm = new THREE.Matrix3(), M = new THREE.Matrix4();
+  rig.root.traverse((o: THREE.Object3D) => {
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh || (mesh as THREE.InstancedMesh).isInstancedMesh || !shown(mesh) || Array.isArray(mesh.material)) return;
+    let material = mesh.material as THREE.Material;
+    if (material === lib.faceMats.smooth || material === lib.faceMats.flat) material = lib.staticFaceMat();
+    const src = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone();
+    if (!src.attributes.normal) src.computeVertexNormals();
+    const sk = mesh as THREE.SkinnedMesh;
+    if (sk.isSkinnedMesh) {
+      // хатуу холбоос (яс бүрд 100%): орой бүрийг өөрийн ясны одоогийн байрлалаар хувиргана
+      const bones = sk.skeleton.bones, inv = sk.skeleton.boneInverses;
+      const si = src.attributes.skinIndex!, pos = src.attributes.position!, nor = src.attributes.normal!;
+      const mats = bones.map((b, i) => new THREE.Matrix4().multiplyMatrices(b.matrixWorld, inv[i]!));
+      for (let i = 0; i < pos.count; i++) {
+        const bm = mats[si.getX(i)]!;
+        v.fromBufferAttribute(pos, i).applyMatrix4(bm); pos.setXYZ(i, v.x, v.y, v.z);
+        nm.getNormalMatrix(bm);
+        v.fromBufferAttribute(nor, i).applyMatrix3(nm).normalize(); nor.setXYZ(i, v.x, v.y, v.z);
+      }
+    } else {
+      M.copy(mesh.matrixWorld);
+      src.applyMatrix4(M);
+      if (M.determinant() < 0) {
+        for (const name of Object.keys(src.attributes)) {
+          const at = src.attributes[name]!, sz = at.itemSize, arr = at.array as Float32Array;
+          for (let t = 0; t < at.count; t += 3) for (let c = 0; c < sz; c++) { const a = (t + 1) * sz + c, b = (t + 2) * sz + c; const tmp = arr[a]!; arr[a] = arr[b]!; arr[b] = tmp; }
+        }
+      }
+    }
+    add(material, keep(src, material), mesh.castShadow && !(material as THREE.MeshBasicMaterial).isMeshBasicMaterial);
+  });
+  lib.setLod(1);
+  const parts: CrowdPart[] = [];
+  for (const [material, e] of byMat) {
+    const geometry = mergeGeometries(e.geos, false);
+    if (!geometry) throw new Error('makeCrowdParts: mergeGeometries амжилтгүй');
+    geometry.computeBoundingSphere();
+    parts.push({ geometry, material, castShadow: e.shadow });
+  }
+  // сүүдрийг зөвхөн хамгийн том хэсгүүд тусгана (сүүдрийн дамжлагын draw call хэмнэнэ)
+  const big = [...parts].filter((p) => p.castShadow).sort((a, b) => b.geometry.attributes.position!.count - a.geometry.attributes.position!.count);
+  parts.forEach((p) => { p.castShadow = big.indexOf(p) >= 0 && big.indexOf(p) < visualStyle.sumResidents.shadowParts; });
+  crowdCache.set(key, parts);
+  return parts;
 }
 
 export function dressHerderModel(rig: HerderRig, season: Season): void {

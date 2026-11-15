@@ -94,6 +94,18 @@ describe('visual style configuration', () => {
     expect(() => validateVisualStyle(slow)).toThrow(/herderAnim/);
   });
 
+  it('validates sum-center resident crowd settings', () => {
+    const style = validateVisualStyle(visualsJson);
+    expect(style.sumResidents.looks.length).toBeGreaterThan(0);
+    expect(style.sumResidents.lod).toBeGreaterThanOrEqual(0.2);
+    const bad: Record<string, unknown> = JSON.parse(JSON.stringify(visualsJson));
+    ((bad.sumResidents as Record<string, unknown>).looks as Array<Record<string, unknown>>)[0]!.hatType = 'crown';
+    expect(() => validateVisualStyle(bad)).toThrow(/sumResidents/);
+    const heavy: Record<string, unknown> = JSON.parse(JSON.stringify(visualsJson));
+    (heavy.sumResidents as Record<string, unknown>).lod = 3;
+    expect(() => validateVisualStyle(heavy)).toThrow(/sumResidents/);
+  });
+
   it('validates dog rest pose settings (V3.2)', () => {
     const style = validateVisualStyle(visualsJson);
     expect(style.dogRest.lieAfterSec).toBeGreaterThan(0);

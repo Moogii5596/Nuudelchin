@@ -91,6 +91,16 @@
       "call": [["happy", 1.2]]
     }
   },
+  "sumResidents": {
+    "_doc": "Сумын төвийн оршин суугчид (docs/character-design.md §4 crowd): үндсэн дүрийн загварыг хөдөлгөөнгүй олон хувь (InstancedMesh) болгож зурна. doorChance — дэлгүүр/үйлчилгээний хаалга бүрийн үүдэнд хүн байх магадлал (0–1); perDoor — нэг хаалганы үүдэнд хамгийн олондоо хэдэн хүн; spread м — хаалганаас хажуу тийш, ahead м — урагш [min, max] зай; stature — өндрийн тархалт [min, max] (1 = тоглогч); lod — загварын хуваалтын үржвэр (0.2–1; бага бол хөнгөн, 1 = тоглогчтой ижил); shadowParts — хувилбар бүрийн хэдэн том хэсэг сүүдэр тусгах; looks — гадаад төрхийн хувилбар (хувилбар бүр ≈ 10 draw call): deel/hem/hat өнгө, body (terleg|deel|winter), hatType (toortsog|fox|none).",
+    "doorChance": 0.75, "perDoor": 2, "spread": 3, "lod": 0.4, "shadowParts": 2, "ahead": [0.8, 3.2], "stature": [0.9, 1.04],
+    "looks": [
+      { "deel": "#7a3b2a", "hem": "#653022", "hat": "#a52a2a", "body": "deel", "hatType": "toortsog" },
+      { "deel": "#3d6b4a", "hem": "#33593e", "hat": "#a52a2a", "body": "terleg", "hatType": "none" },
+      { "deel": "#5b3c7c", "hem": "#4b3068", "hat": "#a52a2a", "body": "deel", "hatType": "fox" },
+      { "deel": "#8a6a3a", "hem": "#735830", "hat": "#a52a2a", "body": "deel", "hatType": "toortsog" }
+    ]
+  },
   "outfits": {
     "_doc": "V4.1: малчин, туслахын улирлын хувцас. seasons.<улирал>: body = terleg (зуны нимгэн тэрлэг, terlegLighten-ээр цайруулсан), deel (энгийн дээл), winter (зузаан дээл, үстэй зах); hat = toortsog (оройтой малгай), fox (үнэгэн малгай, чихэвчтэй). player — тоглогчийн өнгө. helperRoles — туслахын дээл үүргээрээ (herd малчин, horse адуучин, drive жолооч, otor отор, collect хүүхэд/түүгч). helperHat — хүйсээр малгайн өнгө.",
     "seasons": {

@@ -14,6 +14,7 @@ import type { GameState } from '../sim/state';
 import { mat, VisualRng } from './util';
 import { visualStyle } from './style';
 import { makeDog, poseDogLying } from './characters';
+import { makeCrowdParts } from './herderModel';
 import { t } from '../i18n/i18n';
 
 function label(text: string, bg: string, fg: string, w = 4.2, h = 1): THREE.Mesh {
@@ -35,24 +36,30 @@ function label(text: string, bg: string, fg: string, w = 4.2, h = 1): THREE.Mesh
   return new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv) }));
 }
 
-/** Оршин суугч (хөдөлгөөнгүй) */
-function resident(g: THREE.Group, x: number, y: number, z: number, deel: number, hat: number, heading: number): void {
-  const person = new THREE.Group();
-  person.position.set(x, y, z);
-  person.rotation.y = heading;
-  for (const sx of [-0.13, 0.13]) {
-    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.62, 0.16), mat(0x3a2c20));
-    leg.position.set(sx, 0.36, 0);
-    person.add(leg);
-  }
-  const coat = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.9, 0.36), mat(deel));
-  coat.position.y = 1.08;
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 7, 5), mat(0xc99a6e));
-  head.position.y = 1.72;
-  const cap = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.3, 6), mat(hat));
-  cap.position.y = 1.98;
-  person.add(coat, head, cap);
-  g.add(person);
+/**
+ * Оршин суугчид (хөдөлгөөнгүй): үндсэн дүрийн загварын `crowd` хэлбэр — төрх бүр хэсэг бүрээрээ нэг InstancedMesh,
+ * хүн бүр өөрийн байрлал, чиглэл, өндөртэй (docs/character-design.md §4).
+ */
+function residents(g: THREE.Group, people: Array<{ x: number; y: number; z: number; heading: number; scale: number; look: number }>): void {
+  const R = visualStyle.sumResidents;
+  const hex = (c: string): number => parseInt(c.slice(1), 16);
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
+  R.looks.forEach((look, li) => {
+    const mine = people.filter((p) => p.look === li);
+    if (!mine.length) return;
+    const parts = makeCrowdParts({ colors: { deel: hex(look.deel), hem: hex(look.hem), hat: hex(look.hat) }, body: look.body, hat: look.hatType });
+    for (const part of parts) {
+      const inst = new THREE.InstancedMesh(part.geometry, part.material, mine.length);
+      mine.forEach((p, i) => {
+        q.setFromAxisAngle(up, p.heading);
+        inst.setMatrixAt(i, m.compose(new THREE.Vector3(p.x, p.y, p.z), q, new THREE.Vector3(p.scale, p.scale, p.scale)));
+      });
+      inst.instanceMatrix.needsUpdate = true;
+      inst.computeBoundingSphere();
+      inst.castShadow = part.castShadow;
+      g.add(inst);
+    }
+  });
 }
 
 const FACING_YAW = { s: 0, n: Math.PI, e: Math.PI / 2, w: -Math.PI / 2 } as const;
@@ -136,13 +143,22 @@ export class SumCenterView {
 
     // Оршин суугчид: дэлгүүр, цайны газрын үүдэнд
     const rng = new VisualRng(777);
-    const deels = [0x2f5d9b, 0x7b4b2b, 0x8a3a2a, 0x3d5d3d, 0x6b3f7a], hats = [0x8a3a2a, 0x3d5d3d, 0x2b2b2b];
-    const people = new THREE.Group();
+    const RS = visualStyle.sumResidents;
+    const crowd: Array<{ x: number; y: number; z: number; heading: number; scale: number; look: number }> = [];
     for (const d of sumDoors(cfg)) {
-      if (!d.role || rng.next() < 0.35) continue;
-      const x = d.x + rng.range(-3, 3), z = d.z + rng.range(0.5, 3);
-      resident(people, x, H(x, z), z, deels[Math.floor(rng.next() * deels.length)]!, hats[Math.floor(rng.next() * hats.length)]!, rng.range(-Math.PI, Math.PI));
+      if (!d.role) continue;
+      for (let k = 0; k < RS.perDoor; k++) {
+        if (rng.next() >= RS.doorChance * (k === 0 ? 1 : 0.5)) continue;
+        const x = d.x + rng.range(-RS.spread, RS.spread), z = d.z + rng.range(RS.ahead[0], RS.ahead[1]);
+        if (crowd.some((p) => Math.hypot(p.x - x, p.z - z) < 1)) continue;   // бие биендээ шигдэхгүй
+        // ихэнх нь хаалга руу эсвэл бие бие рүүгээ хандсан — санамсаргүй ч гудамж руу нуруугаа харуулахгүй
+        const heading = Math.PI + rng.range(-1.2, 1.2);
+        crowd.push({ x, y: H(x, z), z, heading, scale: rng.range(RS.stature[0], RS.stature[1]), look: Math.floor(rng.next() * RS.looks.length) });
+      }
     }
+    const people = new THREE.Group();
+    people.userData.sumPeople = crowd.length;
+    residents(people, crowd);
     this.group.add(people);
 
     // V3.2: айлын үүдэнд хэвтэх нохой (байрлалын хэш)

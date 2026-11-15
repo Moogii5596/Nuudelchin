@@ -69,6 +69,25 @@ export interface HerderAnimVisual {
   events: Record<HerderEvent, Array<[HerderEmotion, number]>>;
 }
 
+/** Сумын төвийн оршин суугчид (docs/character-design.md §4 crowd) */
+export interface SumResidentLook {
+  deel: string;
+  hem: string;
+  hat: string;
+  body: OutfitBody;
+  hatType: OutfitHat | 'none';
+}
+export interface SumResidentsVisual {
+  doorChance: number;
+  perDoor: number;
+  spread: number;
+  ahead: [number, number];
+  stature: [number, number];
+  lod: number;
+  shadowParts: number;
+  looks: SumResidentLook[];
+}
+
 /** V4.1: улирлын хувцас */
 export type OutfitBody = 'terleg' | 'deel' | 'winter';
 export type OutfitHat = 'toortsog' | 'fox';
@@ -170,6 +189,7 @@ export interface VisualStyle {
   smoke: SmokeVisual;
   dogRest: DogRestVisual;
   herderAnim: HerderAnimVisual;
+  sumResidents: SumResidentsVisual;
   outfits: OutfitsVisual;
   vehicleFx: VehicleFxVisual;
   mapPaper: MapPaperVisual;
@@ -259,6 +279,35 @@ function parseHerderAnim(h: Record<string, unknown>): HerderAnimVisual {
   };
 }
 
+function parseSumResidents(r: Record<string, unknown>): SumResidentsVisual {
+  const bad = (what: string): never => {
+    throw new Error(`data/visuals.json: sumResidents.${what} буруу`);
+  };
+  const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+  const range = (v: unknown, what: string): [number, number] => {
+    if (!Array.isArray(v) || v.length !== 2 || !isPositive(v[0]) || !isPositive(v[1]) || v[1] < v[0]) bad(what);
+    return [(v as number[])[0]!, (v as number[])[1]!];
+  };
+  if (!isNum(r.doorChance) || r.doorChance < 0 || r.doorChance > 1) bad('doorChance');
+  if (!Number.isInteger(r.perDoor) || (r.perDoor as number) < 1 || (r.perDoor as number) > 6) bad('perDoor');
+  if (!isPositive(r.spread)) bad('spread');
+  if (!isNum(r.lod) || r.lod < 0.2 || r.lod > 1) bad('lod');
+  if (!Number.isInteger(r.shadowParts) || (r.shadowParts as number) < 0) bad('shadowParts');
+  if (!Array.isArray(r.looks) || r.looks.length === 0 || r.looks.length > 8) bad('looks');
+  const bodies: OutfitBody[] = ['terleg', 'deel', 'winter'];
+  const hats: Array<OutfitHat | 'none'> = ['toortsog', 'fox', 'none'];
+  const looks = (r.looks as unknown[]).map((l, i) => {
+    if (!isRecord(l) || !isColor(l.deel) || !isColor(l.hem) || !isColor(l.hat) || !bodies.includes(l.body as OutfitBody) || !hats.includes(l.hatType as OutfitHat)) bad(`looks[${i}]`);
+    const v = l as Record<string, unknown>;
+    return { deel: v.deel as string, hem: v.hem as string, hat: v.hat as string, body: v.body as OutfitBody, hatType: v.hatType as OutfitHat | 'none' };
+  });
+  return {
+    doorChance: r.doorChance as number, perDoor: r.perDoor as number, spread: r.spread as number,
+    ahead: range(r.ahead, 'ahead'), stature: range(r.stature, 'stature'),
+    lod: r.lod as number, shadowParts: r.shadowParts as number, looks,
+  };
+}
+
 function parseOutfits(o: Record<string, unknown>): OutfitsVisual {
   const fail = (what: string): never => {
     throw new Error(`data/visuals.json: outfits.${what} буруу`);
@@ -299,7 +348,7 @@ function parseOutfits(o: Record<string, unknown>): OutfitsVisual {
 export function validateVisualStyle(value: unknown): VisualStyle {
   if (
     !isRecord(value) || !isRecord(value.palette) || !isRecord(value.seasons) ||
-    !isRecord(value.grass) || !isRecord(value.water) || !isRecord(value.smoke) || !isRecord(value.dogRest) || !isRecord(value.herderAnim) || !isRecord(value.outfits) || !isRecord(value.vehicleFx) || !isRecord(value.mapPaper) ||
+    !isRecord(value.grass) || !isRecord(value.water) || !isRecord(value.smoke) || !isRecord(value.dogRest) || !isRecord(value.herderAnim) || !isRecord(value.sumResidents) || !isRecord(value.outfits) || !isRecord(value.vehicleFx) || !isRecord(value.mapPaper) ||
     !isRecord(value.cloudShadow) || !isRecord(value.flowers) || !isRecord(value.mountains) ||
     !isRecord(value.quality) || !Array.isArray(value.timeOfDay)
   ) {
@@ -473,6 +522,7 @@ export function validateVisualStyle(value: unknown): VisualStyle {
     throw new Error('data/visuals.json: dogRest тохиргоо буруу');
   }
   const herderAnim = parseHerderAnim(value.herderAnim as Record<string, unknown>);
+  const sumResidents = parseSumResidents(value.sumResidents as Record<string, unknown>);
   const outfits = parseOutfits(value.outfits as Record<string, unknown>);
   const vehicleFx = parseVehicleFx(value.vehicleFx as Record<string, unknown>);
   const mapPaper = parseMapPaper(value.mapPaper as Record<string, unknown>);
@@ -578,6 +628,7 @@ export function validateVisualStyle(value: unknown): VisualStyle {
     smoke,
     dogRest,
     herderAnim,
+    sumResidents,
     outfits,
     vehicleFx,
     mapPaper,
