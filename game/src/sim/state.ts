@@ -12,7 +12,7 @@ import { initFleetVehicle } from './systems/travel';
 import { newHelpersState, type HelpersState } from './systems/helpers';
 import { newTownState, type TownState } from './systems/town';
 
-export const SAVE_VERSION = 11;   // 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих · 6: нохой, чонын дайралт, сүргийн нүүдэл (M4) · 7: шөнө, хотлох, өглөөний бүтээгдэхүүн, Портер/Амжиргаа, шөнийн чоно (M4.5) · 8: газрын зураг, тээвэр жолоодох, ачаа, Худалдаачин (M4.6) · 9: туслах малчид, цайны газар, отор, туслахын мал (M5) · 10: улирал, цас, боодол өвс, 4 бууц, отрын бүтээгдэхүүн (M5.5) · 11: сумын төвийн амьдрал — байшин, нэр хүнд, зээл, хамаатан (V3.4)
+export const SAVE_VERSION = 12;   // 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих · 6: нохой, чонын дайралт, сүргийн нүүдэл (M4) · 7: шөнө, хотлох, өглөөний бүтээгдэхүүн, Портер/Амжиргаа, шөнийн чоно (M4.5) · 8: газрын зураг, тээвэр жолоодох, ачаа, Худалдаачин (M4.6) · 9: туслах малчид, цайны газар, отор, туслахын мал (M5) · 10: улирал, цас, боодол өвс, 4 бууц, отрын бүтээгдэхүүн (M5.5) · 11: сумын төвийн амьдрал — байшин, нэр хүнд, зээл, хамаатан (V3.4) · 12: орж болдог барилга — player.interior (V6.1)
 
 export type ProductId = 'milk' | 'tarag' | 'aaruul' | 'urum' | 'wool' | 'felt' | 'cashmere';
 export const PRODUCTS: readonly ProductId[] = ['milk', 'tarag', 'aaruul', 'urum', 'wool', 'felt', 'cashmere'];
@@ -90,6 +90,21 @@ export type BuyOrder =
 /** Тоглогч хаана байна: camp = гэрийн бууцны 3D, sum = сумын төвийн 3D, map = газрын зураг (M4.6) */
 export type Place = 'camp' | 'sum' | 'map';
 
+/**
+ * V6.1: барилгын дотор. `player.interior` байвал тоглогч барилга дотор — `player.x/z/place` хаалганы гадна цэгт
+ * хөдөлгөөнгүй хэвээр (худалдаа, цонхны ойролцоо шалгалт дотроос ч ажиллана), дотор байрлал энд.
+ */
+export interface InteriorState {
+  /** Хаалганы id: барилгын id, 'home' (өөрийн гэр), `<kind>|<x>|<z>` (айл, туслахын гэр), хашааны id (байшин, хамаатан) */
+  door: string;
+  /** data/interiors.json-ийн өрөөний төрөл */
+  room: string;
+  /** Өрөөний координат (м): төв 0,0, хаалга z+ талд */
+  x: number;
+  z: number;
+  heading: number;
+}
+
 /** Тээвэр бүрийн байрлал ба ачаа (M4.6) */
 export interface FleetVehicle {
   id: VehicleId;
@@ -145,6 +160,7 @@ export interface PlayerState {
   driving: VehicleId | null;   // жолоодож буй тээвэр
   drove: Animal[];       // морьтой үед Худалдаачнаас авч араасаа тууж яваа мал (M4.6)
   orders: BuyOrder[];    // морьтой үед авсан бараа — гэртээ ирэхэд хүргэгдэнэ
+  interior: InteriorState | null;   // V6.1: барилга дотор байгаа эсэх
 }
 
 export interface GameState {
@@ -256,7 +272,7 @@ export function createInitialState(cfg: GameConfig, seed: number): GameState {
     map: { x: 0, z: 0, tx: 0, tz: 0, dest: null },
     move: null,
     neighborBull: false,
-    player: { x: 2, z: 6, heading: 0, mounted: false, horseCalled: false, holdingUurga: false, carry: [], away: false, place: 'camp', driving: null, drove: [], orders: [] },
+    player: { x: 2, z: 6, heading: 0, mounted: false, horseCalled: false, holdingUurga: false, carry: [], away: false, place: 'camp', driving: null, drove: [], orders: [], interior: null },
     wolves: spawnWolves(cfg, seed, cfg.start.camp),
     dogs: [],
     helpers: newHelpersState(),
@@ -268,4 +284,15 @@ export function createInitialState(cfg: GameConfig, seed: number): GameState {
   if (loc) st.map = { x: loc.x, z: loc.z, tx: loc.x, tz: loc.z, dest: null };
   for (const v of st.vehicles) initFleetVehicle(cfg, st, v);
   return st;
+}
+
+/**
+ * Хадгалсан төлөвийг одоогийн хувилбар руу шилжүүлнэ (M6 ачаалалт ашиглана). Ирээдүйд хувилбар бүр энд нэмэгдэнэ.
+ * 12: player.interior нэмэгдсэн (хуучин хадгалалтад байхгүй → null).
+ */
+export function migrateState(raw: unknown): GameState {
+  const s = raw as GameState;
+  if (!s.player.interior) s.player.interior = null;
+  s.version = SAVE_VERSION;
+  return s;
 }

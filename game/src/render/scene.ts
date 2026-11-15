@@ -16,6 +16,7 @@ import { angDiff, VisualRng } from './util';
 import { SumCenterView } from './sumcenter';
 import { WorldMapView } from './worldmap';
 import { StaffView } from './staff';
+import { InteriorView } from './interior';
 import { seasonLook, seasonOf } from '../sim/systems/seasons';
 import { paletteHex, visualStyle, type TimeVisual } from './style';
 import { Q, quality as activeQuality, type Quality, type QualitySpec } from '../device';
@@ -45,6 +46,8 @@ export class GameView {
   readonly zones: ZonesView;
   readonly vehicles: VehiclesView;
   readonly sum: SumCenterView;
+  /** V6.1: барилгын дотор (ороход л үүсгэнэ) */
+  readonly interior: InteriorView;
   readonly map: WorldMapView;
   readonly staff = new StaffView();
   private daylight = 1;
@@ -200,6 +203,7 @@ export class GameView {
     this.zones = new ZonesView(cfg);
     this.vehicles = new VehiclesView(cfg);
     this.sum = new SumCenterView(cfg);
+    this.interior = new InteriorView(cfg);
     this.map = new WorldMapView(cfg);
     this.map.resize(container.clientWidth / container.clientHeight);
     this.scene.add(this.terrain.group, this.animals.group, this.characters.group, this.items.group, this.zones.group, this.vehicles.group, this.sum.group, this.staff.group);
@@ -257,7 +261,8 @@ export class GameView {
 
   /** Одоогийн 3D газрын өндөр (бууц эсвэл сумын төв) */
   private place: 'camp' | 'sum' | 'map' = 'camp';
-  heightAt = (x: number, z: number): number => (this.place === 'sum' ? this.sum.heightAt(x, z) : this.terrain.heightAt(x, z));
+  private inside = false;
+  heightAt = (x: number, z: number): number => (this.inside ? 0 : this.place === 'sum' ? this.sum.heightAt(x, z) : this.terrain.heightAt(x, z));
 
   /** Sim алхмын өмнө (interpolation) */
   snapshot(state: GameState): void {
@@ -269,7 +274,8 @@ export class GameView {
   pickGround(ndcX: number, ndcY: number): { x: number; z: number } | null {
     this.ndc.set(ndcX, ndcY);
     this.ray.setFromCamera(this.ndc, this.cam.camera);
-    const hit = this.ray.intersectObject(this.place === 'sum' ? this.sum.ground : this.terrain.ground, false)[0];
+    const target = this.inside ? this.interior.ground : this.place === 'sum' ? this.sum.ground : this.terrain.ground;
+    const hit = target ? this.ray.intersectObject(target, false)[0] : undefined;
     return hit ? { x: hit.point.x, z: hit.point.z } : null;
   }
 
@@ -289,6 +295,7 @@ export class GameView {
     this.characters.setSeason(season);
     this.vehicles.setAmbient(this.daylight, season);
     this.staff.setSeason(season);
+    if (this.inside && !p.interior) this.leaveInterior();
     // Газрын зураг: өөрийн scene, камертай (M4.6)
     if (p.place === 'map') {
       this.cam.mapMode = true;
@@ -300,6 +307,10 @@ export class GameView {
       return;
     }
     this.cam.mapMode = false;
+    if (p.interior) {
+      this.frameInterior(state, dt);
+      return;
+    }
     const camp = p.place === 'camp';
     this.terrain.group.visible = this.animals.group.visible = this.items.group.visible = this.zones.group.visible = this.staff.group.visible = camp;
     this.sum.group.visible = !camp;
@@ -340,6 +351,39 @@ export class GameView {
     this.updateFlakes(look.snowing && p.place === 'camp', cx, ty, cz, dt);
     this.renderer.render(this.scene, this.cam.camera);
   }
+
+  /** V6.1: барилга дотор — тусдаа дүр зураг, өөрийн гэрэл. Гаднах ертөнцийг шинэчлэхгүй */
+  private frameInterior(state: GameState, dt: number): void {
+    const p = state.player, ip = p.interior!;
+    const cc = this.cfg.interiors.camera;
+    if (!this.inside) {
+      this.inside = true;
+      this.camBefore = { dist: this.cam.dist, pitch: this.cam.pitch };
+      this.cam.dist = cc.dist;
+      this.cam.pitch = cc.pitch;
+    }
+    this.interior.show(ip.room, ip.door, this.characters.herderObject);
+    this.interior.update(dt, this.daylight);
+    this.cam.dist = Math.min(cc.maxDist, Math.max(cc.minDist, this.cam.dist));
+    this.renderer.toneMappingExposure = 1;
+    // Малчны загвар дотоод координатаар: байрлал, чиглэл нь өрөөний; бусад нь хэвээр
+    const proxy = { ...state, player: { ...p, x: ip.x, z: ip.z, heading: ip.heading, mounted: false, driving: null, place: 'sum' as const } } as GameState;
+    this.characters.update(proxy, this.heightAt, dt);
+    this.cam.update(ip.x, ip.z, 1.0, this.heightAt, dt);
+    this.renderer.render(this.interior.scene, this.cam.camera);
+  }
+
+  /** Дотроос гарсан: дүр зургийг чөлөөлж, камерыг сэргээнэ */
+  private leaveInterior(): void {
+    this.inside = false;
+    this.interior.hide();
+    if (this.camBefore) {
+      this.cam.dist = this.camBefore.dist;
+      this.cam.pitch = this.camBefore.pitch;
+      this.camBefore = null;
+    }
+  }
+  private camBefore: { dist: number; pitch: number } | null = null;
 
   /**
    * Өдөр, шөнийн гэрэл (M4.5). Зуны Монгол: нар ~05:30-д мандаж ~21:30-д жаргана.

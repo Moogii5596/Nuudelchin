@@ -81,7 +81,7 @@ export class TouchUI {
     document.body.appendChild(this.joy);
 
     // --- Үйлдлийн товчнууд ---
-    const camp = (s: GameState): boolean => s.player.place === 'camp' && !s.player.driving && !s.move;
+    const camp = (s: GameState): boolean => s.player.place === 'camp' && !s.player.driving && !s.move && !s.player.interior;
     const actBox = el('div', 'acts');
     const addAct = (icon: string, label: string, code: string, show: (s: GameState) => boolean, hold = false): void => {
       const b = el('button', 'tbtn act', `<span>${icon}</span><small>${label}</small>`);
@@ -93,9 +93,10 @@ export class TouchUI {
     addAct('📣', 'Хөөе', 'Space', camp);
     addAct('🐺', 'Үргээх', 'KeyQ', camp);
     addAct('✋', 'Түүх', 'KeyE', camp);
-    addAct('🏪', 'Худалдаа', 'KeyE', (s) => s.player.place === 'sum' && !s.player.driving);
+    addAct('🏪', 'Худалдаа', 'KeyE', (s) => s.player.place === 'sum' && !s.player.driving && !s.player.interior);
+    addAct('🚪', 'Гарах/Үйлдэл', 'KeyE', (s) => !!s.player.interior);   // V6.1: дотор E — гарах эсвэл лангуунд цонх нээх
     addAct('🪵', 'Уурга', 'KeyU', camp);
-    addAct('🐎', 'Морь', 'KeyF', (s) => (s.player.place === 'camp' || s.player.place === 'sum') && !s.player.driving && !s.move);
+    addAct('🐎', 'Морь', 'KeyF', (s) => (s.player.place === 'camp' || s.player.place === 'sum') && !s.player.driving && !s.move && !s.player.interior);
     addAct('🐴', 'Дуудах', 'KeyH', (s) => camp(s) && !s.player.mounted);
     addAct('🚚', 'Тэрэг', 'KeyV', (s) => s.player.place !== 'map' && !s.move && (!!s.player.driving || (!s.player.mounted && nearV(s))));
     addAct('🗺', 'Зураг', 'Tab', (s) => s.player.place !== 'map' && !s.move);

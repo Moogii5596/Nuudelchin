@@ -22,6 +22,7 @@ import { mapStep, syncAway, type TravelEvent } from './systems/travel';
 import { dailyOtor, helpersStep, payWages, refreshCandidates, type HelperEvent } from './systems/helpers';
 import { moveStep } from './systems/camps';
 import { herderStep } from './systems/herder';
+import { ensureInteriorValid } from './systems/interior';
 import { townDaily, townMonthly, townSeason, type TownEvent } from './systems/town';
 import { wolvesDaily, wolvesStep, nightRaid, endRaid, type WolfEvent } from './systems/wolves';
 
@@ -67,6 +68,7 @@ export class Sim {
     this.moneyAtDayStart = state.money;
     this.quality = typeQualities(cfg, state.camps[state.campId]?.degrade ?? 0, seasonOf(cfg, state.time.day));
     applyAccess(cfg, state.grass, state.camps[state.campId]?.snow ?? 0);
+    ensureInteriorValid(cfg, state);   // ачаалсан хадгалалтад орсон хаалга алга болсон байж болно (V6.1)
   }
 
   on(fn: (e: SimEvent) => void): () => void {
@@ -83,6 +85,7 @@ export class Sim {
   command(cmd: Command, proximity = true): CommandResult {
     const r = applyCommand(this, cmd, proximity);
     syncAway(this.state);
+    ensureInteriorValid(this.cfg, this.state);   // туслах халах, нүүх г.м. дараа хаалга алга болсон бол гаргана
     return r;
   }
 
@@ -117,6 +120,7 @@ export class Sim {
       this.emit({ type: 'arrived', place: 'camp' });
     }
     syncAway(state);
+    ensureInteriorValid(cfg, state);   // туслах цалингүй гарах, байшин хураагдах г.м.
 
     const events = tick(state.time, cfg.time);
     for (const ev of events) {

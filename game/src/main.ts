@@ -23,6 +23,7 @@ import { nearestVehicle, partySpeedKmPerMin } from './sim/systems/travel';
 import { nearTeahouse } from './sim/systems/helpers';
 import { nearLotSlot, nearTradeDoor, sumDoors } from './sim/systems/sumtown';
 import { nearTownDoor } from './sim/systems/town';
+import { atExit, interiorService, nearEnterDoor } from './sim/systems/interior';
 import { campAccess, seasonProgress, yearOf } from './sim/systems/seasons';
 import { GameView } from './render/scene';
 import { Panels } from './render/ui/panels';
@@ -94,6 +95,11 @@ function start(): void {
     }
     state.player.heading = preset.yaw;
   }
+  // Туршилт: ?home=ger — гэртэй эхлэх; ?door=<барилгын id> — сумын төвд тэр хаалганы дэргэд эхлэх (V6.1)
+  if (qs.get('home') === 'ger') state.home = 'ger';
+  const doorParam = qs.get('door');
+  const doorAt = doorParam ? sumDoors(cfg).find((d) => d.id === doorParam) : undefined;
+  if (doorAt) Object.assign(state.player, { place: 'sum', away: true, x: doorAt.x, z: doorAt.z + 1 });
   const sim = new Sim(cfg, state);
   const herd = Number(qs.get('herd')) || 0;
   if (herd > state.animals.length) sim.command({ type: 'debugAddAnimals', n: herd - state.animals.length });
@@ -262,14 +268,24 @@ function start(): void {
   let hudT = 0;
   let grassAvg = averageBiomass(state.grass, 120);
   let grassT = 0;
-  let previousPlace = state.player.place;
+  // Байршил (мөн орсон барилга) солигдоход дэлгэц бүдгэрнэ
+  const placeKey = (): string => state.player.place + (state.player.interior?.door ?? '');
+  let previousPlace = placeKey();
   // FPS хэмжилт
   let fpsFrames = 0, fpsT = 0, fps = 0, worstMs = 0, worstShown = 0;
+
+  /** Барилгын нэр: сумын төвийн шошго (sum3d.*) байвал тэр, үгүй бол өрөөний төрлийн нэр */
+  const interiorName = (door: string, room: string): string => (t('sum3d.' + door) !== 'sum3d.' + door ? t('sum3d.' + door) : t('interior.room.' + room));
 
   const updatePrompt = (): void => {
     const p = state.player;
     let html = '';
     if (!panels.isOpen && p.place === 'map') html = 'Газрын зураг: очих газраа зүүн товчоор дарна · баруун товч — эргүүлэх · дунд товч — хазайлгах · дугуй — томруулах · <kbd>Shift</kbd> — цаг хурдасгах';
+    else if (!panels.isOpen && p.interior) {
+      const name = interiorName(p.interior.door, p.interior.room);
+      const svc = interiorService(cfg, state);
+      html = atExit(cfg, state) ? t('interior.hint.exit') : svc ? t('interior.hint.' + svc) + t('interior.hint.walk', { name }) : t('interior.hint.walk', { name });
+    }
     else if (!panels.isOpen && p.driving) html = '<kbd>W</kbd><kbd>S</kbd> явах/тоормос · <kbd>A</kbd><kbd>D</kbd> эргэх · <kbd>V</kbd> буух' + (p.place === 'camp' && Math.hypot(p.x - cfg.camps.home.x, p.z - cfg.camps.home.z) < cfg.vehicles.road.loadRange ? ' · <kbd>T</kbd> ачих/буулгах' : '') + ' · захын хязгаар руу явбал эсвэл <kbd>Tab</kbd> — газрын зураг';
     else if (!panels.isOpen && p.place === 'sum') {
       const door = nearTradeDoor(cfg, state);
@@ -282,7 +298,8 @@ function start(): void {
       };
       const town = nearTownDoor(cfg, state);
       const townTxt = (): string => town!.role === 'house' ? (state.town.houses[town!.id] ? 'Таны хашаа байшин' : 'Зарагдах хашаа байшин') : town!.role === 'relative' ? 'Хамаатан айл' : t('sum3d.' + town!.id) + (town!.role === 'soon' ? ' — тун удахгүй' : '');
-      html = slot && !p.driving ? lotTxt() : door ? `<kbd>E</kbd> ${t('sum3d.' + door.id)}` : town ? `<kbd>E</kbd> ${townTxt()}` : nearTeahouse(cfg, state) ? '<kbd>E</kbd> Цайны газар — туслах малчин хөлслөх' : nearV ? '<kbd>V</kbd> тэрэг/машиндаа суух' : p.mounted ? where + '. Буцахдаа <kbd>Tab</kbd> эсвэл захын хязгаар руу давхи' : where + ' · <kbd>Tab</kbd> газрын зураг';
+      const enter = !p.driving && !slot ? nearEnterDoor(cfg, state) : null;
+      html = slot && !p.driving ? lotTxt() : enter ? t('interior.hint.enter', { name: interiorName(enter.id, enter.room) }) : door ? `<kbd>E</kbd> ${t('sum3d.' + door.id)}` : town ? `<kbd>E</kbd> ${townTxt()}` : nearTeahouse(cfg, state) ? '<kbd>E</kbd> Цайны газар — туслах малчин хөлслөх' : nearV ? '<kbd>V</kbd> тэрэг/машиндаа суух' : p.mounted ? where + '. Буцахдаа <kbd>Tab</kbd> эсвэл захын хязгаар руу давхи' : where + ' · <kbd>Tab</kbd> газрын зураг';
     } else if (!p.away && !panels.isOpen) {
       const home = cfg.camps.home;
       const dHome = Math.hypot(p.x - home.x, p.z - home.z);
@@ -291,6 +308,7 @@ function start(): void {
       const horse = ridingHorse(state);
       if (carried >= cfg.products.carryUnits - 1e-9 && dHome > home.storageRadius) html = 'Гар дүүрсэн — майхны дэргэдэх агуулах руу авчир';
       else if (nearItems) html = `<kbd>E</kbd> түүх (${nearItems})`;
+      else if (!carried && !p.mounted && nearEnterDoor(cfg, state)) html = t('interior.hint.enter', { name: interiorName(nearEnterDoor(cfg, state)!.id, nearEnterDoor(cfg, state)!.room) });
       else if (dHome <= home.storageRadius * 2) html = `<kbd>B</kbd> агуулах, боловсруулах · <kbd>T</kbd> сумын төвд зарах ачаа · <kbd>M</kbd> нүүх · <kbd>J</kbd> туслахууд · <kbd>Tab</kbd> газрын зураг`;
       else if (!p.mounted && nearestVehicle(cfg, state, cfg.vehicles.road.enterRange)) html = '<kbd>V</kbd> тэрэг/машиндаа суух';
       else if (!p.mounted && horse && Math.hypot(horse.x - p.x, horse.z - p.z) <= cfg.player.mountRange) html = '<kbd>F</kbd> морь унах';
@@ -327,8 +345,8 @@ function start(): void {
       }
       if (steps >= 60) acc = 0;
     }
-    if (state.player.place !== previousPlace) {
-      previousPlace = state.player.place;
+    if (placeKey() !== previousPlace) {
+      previousPlace = placeKey();
       const fade = document.getElementById('sceneFade')!;
       fade.classList.remove('play');
       void fade.offsetWidth;
@@ -372,7 +390,8 @@ function start(): void {
         const d = Math.hypot(m.tx - m.x, m.tz - m.z);
         const where = m.dest ? (cfg.worldmap.locations[m.dest]?.kind === 'sum' ? 'Сумын төв' : t('camp.' + m.dest)) : 'зураг дээрх цэг';
         status = d > 0.01 ? `🗺 ${how} → ${where} · ${d.toFixed(1)} км · ~${fmtMinutes(Math.round(d / partySpeedKmPerMin(cfg, state)))}${p.drove.length ? ` · 🐑 ${p.drove.length} мал тууж явна` : ''}` : `🗺 ${how} · газрын зураг дээр зогсож байна`;
-      } else if (p.place === 'sum') status = `🏘 Сумын төв · ${how}`;
+      } else if (p.interior) status = t('interior.status', { name: interiorName(p.interior.door, p.interior.room) });
+      else if (p.place === 'sum') status = `🏘 Сумын төв · ${how}`;
       else if (p.driving) status = how;
       else if (state.move) status = `🏕 ${t('camp.' + state.move.to)} руу нүүж байна · ${fmtMinutes(state.move.remaining)}`;
       const hunts = huntingWolves(state);

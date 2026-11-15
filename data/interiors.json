@@ -1,0 +1,178 @@
+﻿{
+  "_doc": "V6.1 Орж болдог барилгын дотор тал. Өрөө бүр өөрийн координаттай (төв 0,0; хаалга нь урд (z+) ханын голд). enterR = гаднах хаалганаас E дарж орох зай (м). exitR = хаалганы дэргэд E дарж гарах зай. counterR = лангуу/тооцооны цэгээс E дарах зай. campDoorOut/dwellingDoorOut = гэрийн хаалганы цэг (гэрийн гадна талаас, м). kindRoom = сумын төвийн барилгын kind → өрөөний төрөл; idRoom = тодорхой барилгын id-д өөр өрөө (хоосон бол kindRoom). rooms.*.spots = тавилга байрлуулах цэгүүд (V6.2-т ашиглана, одоохондоо дүрслэгдэхгүй). counter = лангуу: энд E дарвал тухайн барилгын цонх (худалдаа, дуган, ЗДТГ, банк, цайны газар) нээгдэнэ — гаднах хаалганы үйлдэл дотроос ч ажиллана.",
+  "enterR": 3.2,
+  "exitR": 1.8,
+  "counterR": 2.0,
+  "bodyR": 0.35,
+  "door": { "w": 1.7, "h": 2.3 },
+  "campDoorOut": 1.0,
+  "dwellingDoorOut": 1.0,
+  "dwellingScale": { "familyGer": 1, "helperGer": 0.85 },
+  "camera": { "dist": 18, "minDist": 7, "maxDist": 26, "pitch": 0.95 },
+  "kindRoom": {
+    "shop": "shop",
+    "school": "school",
+    "admin": "admin",
+    "bank": "bank",
+    "culture": "culture",
+    "kindergarten": "kindergarten",
+    "temple": "temple",
+    "teahouse": "teahouse",
+    "house": "house"
+  },
+  "idRoom": {},
+  "gerRooms": { "home": "ger", "familyGer": "ger", "helperGer": "helperGer" },
+  "rooms": {
+    "ger": {
+      "shape": "round", "r": 3.6, "h": 1.5, "roofH": 1.7,
+      "floor": "#8a6a45", "wall": "#e8dcc2", "trim": "#9c3b2a", "roof": "#f1ead8",
+      "light": { "color": "#ffcf94", "intensity": 7 },
+      "entry": [0, 2.3], "exit": [0, 3.3], "counter": null,
+      "spots": [
+        { "id": "toono", "kind": "stove", "x": 0, "z": -0.2, "rot": 0 },
+        { "id": "pillar_w", "kind": "pillar", "x": -0.95, "z": -0.2, "rot": 0 },
+        { "id": "pillar_e", "kind": "pillar", "x": 0.95, "z": -0.2, "rot": 0 },
+        { "id": "bed_w", "kind": "bed", "x": -2.4, "z": -0.9, "rot": 1.57 },
+        { "id": "bed_e", "kind": "bed", "x": 2.4, "z": -0.9, "rot": -1.57 },
+        { "id": "khoimor", "kind": "altar", "x": 0, "z": -2.9, "rot": 0 },
+        { "id": "chest_w", "kind": "chest", "x": -1.6, "z": -2.5, "rot": 0.4 },
+        { "id": "chest_e", "kind": "chest", "x": 1.6, "z": -2.5, "rot": -0.4 },
+        { "id": "table", "kind": "table", "x": 0, "z": -1.4, "rot": 0 },
+        { "id": "cupboard", "kind": "cupboard", "x": 2.0, "z": 1.6, "rot": -2.2 }
+      ]
+    },
+    "helperGer": {
+      "shape": "round", "r": 3.0, "h": 1.4, "roofH": 1.5,
+      "floor": "#7d6040", "wall": "#e2d6bb", "trim": "#8a4a2a", "roof": "#ece3cf",
+      "light": { "color": "#ffcf94", "intensity": 6 },
+      "entry": [0, 1.8], "exit": [0, 2.7], "counter": null,
+      "spots": [
+        { "id": "toono", "kind": "stove", "x": 0, "z": -0.1, "rot": 0 },
+        { "id": "bed_w", "kind": "bed", "x": -2.0, "z": -0.6, "rot": 1.57 },
+        { "id": "bed_e", "kind": "bed", "x": 2.0, "z": -0.6, "rot": -1.57 },
+        { "id": "chest", "kind": "chest", "x": 0, "z": -2.3, "rot": 0 }
+      ]
+    },
+    "house": {
+      "shape": "box", "w": 8, "d": 6, "h": 2.8,
+      "floor": "#a0825a", "wall": "#d9cbb0", "trim": "#7a5a3a",
+      "light": { "color": "#ffd9a8", "intensity": 8 },
+      "entry": [0, 1.9], "exit": [0, 2.8], "counter": [0, 0.3],
+      "spots": [
+        { "id": "stove", "kind": "stove", "x": -3.0, "z": -2.2, "rot": 0 },
+        { "id": "bed", "kind": "bed", "x": 3.0, "z": -2.0, "rot": 0 },
+        { "id": "table", "kind": "table", "x": 0, "z": -0.6, "rot": 0 },
+        { "id": "chest", "kind": "chest", "x": -3.2, "z": 1.0, "rot": 1.57 }
+      ]
+    },
+    "school": {
+      "shape": "box", "w": 14, "d": 10, "h": 3.2,
+      "floor": "#b9a37a", "wall": "#e7e2d0", "trim": "#5d7a4a",
+      "light": { "color": "#fff1d0", "intensity": 12 },
+      "entry": [0, 3.8], "exit": [0, 4.8], "counter": null,
+      "spots": [
+        { "id": "board", "kind": "board", "x": 0, "z": -4.6, "rot": 0 },
+        { "id": "teacher_desk", "kind": "desk", "x": 0, "z": -3.3, "rot": 0 },
+        { "id": "desk_1", "kind": "desk", "x": -3.5, "z": -0.8, "rot": 0 },
+        { "id": "desk_2", "kind": "desk", "x": 0, "z": -0.8, "rot": 0 },
+        { "id": "desk_3", "kind": "desk", "x": 3.5, "z": -0.8, "rot": 0 },
+        { "id": "desk_4", "kind": "desk", "x": -3.5, "z": 1.6, "rot": 0 },
+        { "id": "desk_5", "kind": "desk", "x": 0, "z": 1.6, "rot": 0 },
+        { "id": "desk_6", "kind": "desk", "x": 3.5, "z": 1.6, "rot": 0 }
+      ]
+    },
+    "temple": {
+      "shape": "box", "w": 10, "d": 9, "h": 4.0,
+      "floor": "#6b4a2e", "wall": "#b8402a", "trim": "#d9a93a",
+      "light": { "color": "#ffbf6a", "intensity": 9 },
+      "entry": [0, 3.3], "exit": [0, 4.2], "counter": [0, -2.4],
+      "spots": [
+        { "id": "altar", "kind": "altar", "x": 0, "z": -3.8, "rot": 0 },
+        { "id": "donation", "kind": "chest", "x": 0, "z": -2.4, "rot": 0 },
+        { "id": "seat_w1", "kind": "seat", "x": -3.0, "z": -1.0, "rot": 0 },
+        { "id": "seat_w2", "kind": "seat", "x": -3.0, "z": 0.8, "rot": 0 },
+        { "id": "seat_e1", "kind": "seat", "x": 3.0, "z": -1.0, "rot": 0 },
+        { "id": "seat_e2", "kind": "seat", "x": 3.0, "z": 0.8, "rot": 0 }
+      ]
+    },
+    "admin": {
+      "shape": "box", "w": 12, "d": 8, "h": 3.0,
+      "floor": "#a89c86", "wall": "#e4e0d4", "trim": "#2f5d8a",
+      "light": { "color": "#fff1d0", "intensity": 11 },
+      "entry": [0, 2.8], "exit": [0, 3.7], "counter": [0, -1.8],
+      "spots": [
+        { "id": "counter", "kind": "counter", "x": 0, "z": -2.6, "rot": 0 },
+        { "id": "desk_w", "kind": "desk", "x": -4.0, "z": -2.6, "rot": 0 },
+        { "id": "desk_e", "kind": "desk", "x": 4.0, "z": -2.6, "rot": 0 },
+        { "id": "bench_w", "kind": "bench", "x": -4.0, "z": 1.0, "rot": 0 },
+        { "id": "bench_e", "kind": "bench", "x": 4.0, "z": 1.0, "rot": 0 }
+      ]
+    },
+    "bank": {
+      "shape": "box", "w": 10, "d": 7, "h": 3.0,
+      "floor": "#9aa09a", "wall": "#e9e6dc", "trim": "#2a6a4a",
+      "light": { "color": "#fff1d0", "intensity": 11 },
+      "entry": [0, 2.3], "exit": [0, 3.2], "counter": [0, -1.5],
+      "spots": [
+        { "id": "counter", "kind": "counter", "x": 0, "z": -2.3, "rot": 0 },
+        { "id": "safe", "kind": "chest", "x": 3.8, "z": -2.6, "rot": 0 },
+        { "id": "bench_w", "kind": "bench", "x": -3.4, "z": 0.8, "rot": 0 },
+        { "id": "bench_e", "kind": "bench", "x": 3.4, "z": 0.8, "rot": 0 }
+      ]
+    },
+    "culture": {
+      "shape": "box", "w": 16, "d": 10, "h": 4.2,
+      "floor": "#a27a4a", "wall": "#d8c9a8", "trim": "#a8362a",
+      "light": { "color": "#ffe2b0", "intensity": 13 },
+      "entry": [0, 3.8], "exit": [0, 4.8], "counter": null,
+      "spots": [
+        { "id": "stage", "kind": "stage", "x": 0, "z": -3.6, "rot": 0 },
+        { "id": "bench_1", "kind": "bench", "x": -4.0, "z": 0.0, "rot": 0 },
+        { "id": "bench_2", "kind": "bench", "x": 0, "z": 0.0, "rot": 0 },
+        { "id": "bench_3", "kind": "bench", "x": 4.0, "z": 0.0, "rot": 0 },
+        { "id": "bench_4", "kind": "bench", "x": -4.0, "z": 2.0, "rot": 0 },
+        { "id": "bench_5", "kind": "bench", "x": 0, "z": 2.0, "rot": 0 },
+        { "id": "bench_6", "kind": "bench", "x": 4.0, "z": 2.0, "rot": 0 }
+      ]
+    },
+    "kindergarten": {
+      "shape": "box", "w": 12, "d": 8, "h": 3.0,
+      "floor": "#c9b27a", "wall": "#f0e2b8", "trim": "#d9783a",
+      "light": { "color": "#fff1d0", "intensity": 11 },
+      "entry": [0, 2.8], "exit": [0, 3.7], "counter": null,
+      "spots": [
+        { "id": "table_1", "kind": "table", "x": -3.2, "z": -1.2, "rot": 0 },
+        { "id": "table_2", "kind": "table", "x": 3.2, "z": -1.2, "rot": 0 },
+        { "id": "shelf", "kind": "shelf", "x": 0, "z": -3.6, "rot": 0 },
+        { "id": "mat", "kind": "carpet", "x": 0, "z": 0.6, "rot": 0 }
+      ]
+    },
+    "teahouse": {
+      "shape": "box", "w": 10, "d": 7, "h": 2.9,
+      "floor": "#8a6a45", "wall": "#e2cfa4", "trim": "#8a3a2a",
+      "light": { "color": "#ffcf94", "intensity": 10 },
+      "entry": [0, 2.3], "exit": [0, 3.2], "counter": [-3.0, -1.6],
+      "spots": [
+        { "id": "counter", "kind": "counter", "x": -3.0, "z": -2.5, "rot": 0 },
+        { "id": "table_1", "kind": "table", "x": 1.0, "z": -1.6, "rot": 0 },
+        { "id": "table_2", "kind": "table", "x": 3.4, "z": -1.6, "rot": 0 },
+        { "id": "table_3", "kind": "table", "x": 1.0, "z": 0.8, "rot": 0 },
+        { "id": "table_4", "kind": "table", "x": 3.4, "z": 0.8, "rot": 0 }
+      ]
+    },
+    "shop": {
+      "shape": "box", "w": 9, "d": 6, "h": 2.9,
+      "floor": "#a89c86", "wall": "#ebe5d2", "trim": "#c98a2a",
+      "light": { "color": "#fff1d0", "intensity": 10 },
+      "entry": [0, 1.9], "exit": [0, 2.8], "counter": [0, -1.0],
+      "spots": [
+        { "id": "counter", "kind": "counter", "x": 0, "z": -1.8, "rot": 0 },
+        { "id": "shelf_w", "kind": "shelf", "x": -3.8, "z": -0.6, "rot": 1.57 },
+        { "id": "shelf_e", "kind": "shelf", "x": 3.8, "z": -0.6, "rot": -1.57 },
+        { "id": "shelf_n", "kind": "shelf", "x": 0, "z": -2.6, "rot": 0 },
+        { "id": "rack_w", "kind": "rack", "x": -2.0, "z": 0.9, "rot": 0 },
+        { "id": "rack_e", "kind": "rack", "x": 2.0, "z": 0.9, "rot": 0 }
+      ]
+    }
+  }
+}

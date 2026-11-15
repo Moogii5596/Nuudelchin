@@ -20,6 +20,8 @@ import worldmapJson from '../../../data/worldmap.json';
 import seasonsJson from '../../../data/seasons.json';
 import sumcenterJson from '../../../data/sumcenter.json';
 import townJson from '../../../data/town.json';
+import interiorsJson from '../../../data/interiors.json';
+import { validateInteriors, type InteriorsConfig } from './systems/interior';
 import { lotSlots, sumDoors, allBuildings, TRADE_ROLES, type SumLayout } from './systems/sumtown';
 
 export type Species = 'sheep' | 'goat' | 'cow' | 'horse';
@@ -256,6 +258,8 @@ export interface GameConfig {
   sumcenter: SumLayout;
   /** V3.4: сумын төвийн амьдрал (байшин, хандив, зээл, хамаатан) — data/town.json */
   town: typeof townJson;
+  /** V6.1: орж болдог барилгын дотор тал — data/interiors.json */
+  interiors: InteriorsConfig;
   start: { camp: string; home: string; vehicles: string[]; storageLevel: number; animals: StartAnimal[] };
 }
 
@@ -279,6 +283,7 @@ export function loadConfig(): GameConfig {
     seasons: seasonsJson as unknown as SeasonsConfig,
     sumcenter: sumcenterJson as unknown as SumLayout,
     town: townJson,
+    interiors: interiorsJson as unknown as InteriorsConfig,
   };
   const errors = validateConfig(cfg);
   if (errors.length) {
@@ -340,6 +345,7 @@ export function validateConfig(cfg: GameConfig): string[] {
   }
   if (!Object.values(cfg.worldmap.locations).some((l) => l.kind === 'sum')) e.push('worldmap: сумын төв алга');
   e.push(...validateSumLayout(cfg));
+  e.push(...validateInteriors(cfg));
   if (!cfg.storage.levels[cfg.start.storageLevel]) e.push('start.storageLevel: агуулахын түвшин алга');
   for (const a of cfg.start.animals) if (!cfg.animals.species[a.species]) e.push(`start.animals: "${a.species}" алга`);
   return e;

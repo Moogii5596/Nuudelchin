@@ -8,9 +8,11 @@ import type { GameConfig } from '../sim/config';
 import type { GameState } from '../sim/state';
 import type { Command, CommandResult } from '../sim/commands';
 import { riverZ } from '../sim/terrain';
-import { worldLimit } from '../sim/systems/sumtown';
+import { nearLotSlot, worldLimit } from '../sim/systems/sumtown';
+import { atExit, currentRoom, interiorService, nearEnterDoor } from '../sim/systems/interior';
+import { t } from '../i18n/i18n';
 
-export type ActionKind = 'shout' | 'scare' | 'call' | 'mount' | 'uurga' | 'pickup' | 'deposit' | 'dog' | 'vehicle' | 'map';
+export type ActionKind = 'shout' | 'scare' | 'call' | 'mount' | 'uurga' | 'pickup' | 'deposit' | 'dog' | 'vehicle' | 'map' | 'interior';
 
 export interface ControllerHooks {
   dispatch: (cmd: Command) => CommandResult;
@@ -75,8 +77,7 @@ export class PlayerController {
         this.scare();
         break;
       case 'KeyE':
-        if (this.hooks.state().player.place === 'sum') this.hooks.onToggle('trade');
-        else this.useAction(true);
+        this.interact();
         break;
       case 'KeyV':
         this.vSpeed = 0;
@@ -157,6 +158,33 @@ export class PlayerController {
    * E (эсвэл автоматаар): агуулахын дэргэд гартаа юм байвал хийнэ, үгүй бол ойрын бүтээгдэхүүнийг түүнэ.
    * manual=false үед зөвхөн амжилттай бол мэдэгдэнэ.
    */
+  /**
+   * E: дотор бол — хаалганы дэргэд гарна, лангууны дэргэд цонх нээнэ. Гадна — орох хаалганы дэргэд орно (V6.1),
+   * үгүй бол сумын төвд худалдаа/цонх, бууцанд түүх/хийх.
+   */
+  private interact(): void {
+    const st = this.hooks.state();
+    const p = st.player;
+    const cfg = this.cfg;
+    if (p.interior) {
+      if (atExit(cfg, st)) this.hooks.onAction('interior', this.hooks.dispatch({ type: 'exitBuilding' }));
+      else if (interiorService(cfg, st)) this.hooks.onToggle('trade');
+      else this.hooks.onAction('interior', { ok: false, msg: t('interior.nothing') });
+      return;
+    }
+    if (p.place === 'sum') {
+      if (!p.driving && !nearLotSlot(cfg, st) && nearEnterDoor(cfg, st)) this.hooks.onAction('interior', this.hooks.dispatch({ type: 'enterBuilding' }));
+      else this.hooks.onToggle('trade');
+      return;
+    }
+    // Бууц: ачаа барьсан эсвэл ойролцоо бүтээгдэхүүн байвал түүх/хийх нь түрүүлнэ
+    if (p.place === 'camp' && !p.carry.length && !st.items.some((it) => Math.hypot(it.x - p.x, it.z - p.z) <= cfg.products.pickupRadius) && nearEnterDoor(cfg, st)) {
+      this.hooks.onAction('interior', this.hooks.dispatch({ type: 'enterBuilding' }));
+      return;
+    }
+    this.useAction(true);
+  }
+
   private useAction(manual: boolean): void {
     const st = this.hooks.state();
     const p = st.player;
@@ -205,8 +233,9 @@ export class PlayerController {
       this.drive(dt, state);
       return;
     }
+    const it = p.interior;   // V6.1: барилга дотор — өрөөний координатаар алхана
     // Алхаж явахад ойрын бүтээгдэхүүнийг автоматаар түүж, агуулахын дэргэд хийнэ
-    if (p.place === 'camp') {
+    if (p.place === 'camp' && !it) {
       this.autoT -= dt;
       if (this.autoT <= 0) {
         this.autoT = 0.2;
@@ -233,8 +262,8 @@ export class PlayerController {
       vx = forward.x * iz + rx * ix;
       vz = forward.z * iz + rz * ix;
     } else if (this.target) {
-      vx = this.target.x - p.x;
-      vz = this.target.z - p.z;
+      vx = this.target.x - (it ? it.x : p.x);
+      vz = this.target.z - (it ? it.z : p.z);
       run = run || this.target.run;
       if (Math.hypot(vx, vz) < 0.5) {
         this.target = null;
@@ -244,6 +273,15 @@ export class PlayerController {
     const l = Math.hypot(vx, vz);
     if (l === 0) return;
     const pl = this.cfg.player;
+    if (it) {
+      const room = currentRoom(this.cfg, state);
+      if (!room) return;
+      const sp = run ? pl.runSpeed : pl.walkSpeed;
+      const th0 = Math.atan2(vx, vz);
+      const heading0 = it.heading + angDiff(th0, it.heading) * Math.min(1, dt * 10);
+      this.hooks.dispatch({ type: 'moveInterior', x: it.x + (vx / l) * sp * dt, z: it.z + (vz / l) * sp * dt, heading: heading0 });
+      return;
+    }
     const speed = p.mounted ? (run ? pl.mountedRunSpeed : pl.mountedSpeed) : run ? pl.runSpeed : pl.walkSpeed;
     let x = p.x + (vx / l) * speed * dt;
     let z = p.z + (vz / l) * speed * dt;

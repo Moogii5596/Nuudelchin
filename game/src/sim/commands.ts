@@ -14,6 +14,7 @@ import * as processing from './systems/processing';
 import { buyLotVehicle, boardBest, canTravel, driveVehicle, enterVehicle, exitVehicle, leaveToMap, loadCargo, mapGo, migrateHere, takeFromStorage, droveAnimals, trade, unloadCargo, type TradePlan } from './systems/travel';
 import { startMove } from './systems/camps';
 import { worldLimit } from './systems/sumtown';
+import { enterBuilding, exitBuilding, moveInterior } from './systems/interior';
 import { buyHouse, donate, giveGift, repayBankLoan, repayZdtgLoan, setHouseMode, takeBankLoan, takeZdtgLoan, type GiftPlan, type HouseMode } from './systems/town';
 import { shout, toggleMount, toggleUurga } from './systems/herder';
 import { scareWolves } from './systems/wolves';
@@ -25,6 +26,10 @@ import { fire, hire, payWithAnimal, recallOtor, refreshCandidates, sendOtor, set
 
 export type Command =
   | { type: 'movePlayer'; x: number; z: number; heading?: number }
+  // V6.1 орж болдог барилга
+  | { type: 'enterBuilding'; door?: string }            // E: хаалганы дэргэд орно (door — бот/тест)
+  | { type: 'exitBuilding'; force?: boolean }           // E: дотор хаалганы дэргэд гарна
+  | { type: 'moveInterior'; x: number; z: number; heading?: number }   // дотор алхах (өрөөний координат)
   | { type: 'shout' }                 // «Хөөе!» (Space)
   | { type: 'toggleMount' }           // морь унах/буух (F)
   | { type: 'toggleUurga' }           // шилбүүр/уурга барих/тавих (U)
@@ -86,6 +91,9 @@ const CAMP_ONLY = new Set<Command['type']>(['payWithAnimal', 'sendOtor', 'recall
 /** Тэрэг/машин жолоодож байхад хийхгүй ажлууд */
 const NOT_DRIVING = new Set<Command['type']>(['toggleMount', 'callHorse', 'pickup', 'deposit', 'drive', 'process', 'moveCamp', 'dogOrder', 'takeFromStorage']);
 
+/** Гаднах ертөнцөд гарч хийх үйлдлүүд: барилга дотор байвал эхлээд гаргана */
+const LEAVES_BUILDING = new Set<Command['type']>(['movePlayer', 'shout', 'scareWolves', 'toggleMount', 'callHorse', 'pickup', 'deposit', 'drive', 'process', 'toggleVehicle', 'boardBest', 'driveVehicle', 'leaveToMap', 'quickMap', 'mapGo', 'migrateHere', 'moveCamp', 'loadCargo', 'unloadCargo', 'takeFromStorage', 'droveAnimals', 'buyLotVehicle']);
+
 const ok = (msg?: string): CommandResult => ({ ok: true, msg });
 const fail = (msg: string): CommandResult => ({ ok: false, msg });
 
@@ -98,7 +106,22 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
   if (cmd.type === 'toggleMount' && p.place === 'map') return fail('Газрын зураг дээр байна');
   if (state.move && cmd.type !== 'neighborBull' && cmd.type !== 'debugAddAnimals' && cmd.type !== 'cheat') return fail('Нүүж байна');
 
+  if (p.interior && LEAVES_BUILDING.has(cmd.type)) exitBuilding(cfg, state, true);
+
   switch (cmd.type) {
+    case 'enterBuilding': {
+      const err = enterBuilding(cfg, state, cmd.door);
+      return err ? fail(err) : ok();
+    }
+    case 'exitBuilding': {
+      const err = exitBuilding(cfg, state, cmd.force === true || !proximity);
+      return err ? fail(err) : ok();
+    }
+    case 'moveInterior': {
+      const err = moveInterior(cfg, state, cmd.x, cmd.z, cmd.heading);
+      return err ? fail(err) : ok();
+    }
+
     case 'movePlayer': {
       if (p.driving || p.place === 'map') return fail('Жолоодож байна');
       // Морьтой 3D-ийн хязгаарт хүрвэл газрын зураг руу гарна (M4.6)
