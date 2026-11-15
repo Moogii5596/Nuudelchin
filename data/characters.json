@@ -86,7 +86,7 @@
       },
       "deel": { "color": "#2a6a6a", "hem": "#1d4a4a", "furTrim": "#b8b2a8", "winterTrim": "#b8b2a8" },
       "sash": { "color": "#3f8a4a", "fold": "#2c6434" },
-      "hats": { "scarf": { "color": "#2f5d9b", "knot": "back" }, "shawl": { "color": "#4a5a6a", "knot": "back" }},
+      "hats": { "scarf": { "color": "#2f5d9b", "knot": "back" }, "shawl": { "color": "#4a5a6a", "knot": "chin" }},
       "vest": { "worn": false }
     },
     "boy": {
@@ -310,7 +310,7 @@
       "headShape": { "width": 1.04, "height": 0.96, "round": 0.5 },
       "face": { "eyes": { "shape": "oval", "w": 24, "h": 32, "spacing": 94 }, "mouth": { "width": 54, "smile": 0.35 }, "blush": 0.35, "moles": [[-140,150]] },
       "sash": { "color": "#3f8a4a", "fold": "#2c6434" },
-      "hats": { "scarf": { "color": "#d8a23a", "knot": "back" }, "shawl": { "color": "#6b3a4a", "knot": "back" }},
+      "hats": { "scarf": { "color": "#d8a23a", "knot": "back" }, "shawl": { "color": "#6b3a4a", "knot": "chin" }},
       "vest": { "color": "#3e5a3a", "fur": "#f6f2ea" },
       "wear": { "summer": "scarf", "autumn": "scarf", "winter": "shawl", "spring": "scarf" }
     }

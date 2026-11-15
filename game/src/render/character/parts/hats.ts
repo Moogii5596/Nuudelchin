@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { headProfile, profileRadius } from './head';
 import { noOut, profile, type Kit, type Pt } from '../geom';
-import { cap, darken, felt, fur, silk, smooth } from '../materials';
+import { cap, darken, felt, fur, lighten, silk, smooth } from '../materials';
 import type { CharacterHat, CharacterSpec } from '../spec';
 
 /** Тоорцог: эсгий бөмбөгөр орой, хар судал, алхан хээтэй орой, сампин, 4 далбаа; арагш далийлгаж өмссөн. hy — толгойн өндөр */
@@ -190,6 +190,65 @@ function scarfHat(name: 'scarf' | 'shawl', thick: boolean): HatBuilder {
   };
 }
 
+/**
+ * Өвлийн зузаан алчуур (shawl): толгойн хэлбэрийг дагасан бөөрөнхий, зөөлөн бүрхүүл — нүүрний нээлт зууван (эрүүнээс
+ * дух хүртэл), эрүүн доогуур бүтэн ороож, эрүүн доор зангидсан. Геометр толгойн төвөөс; ирмэг нь зөөлөн зузаан хоолой.
+ */
+function shawl(spec: CharacterSpec, kit: Kit, hy: number): THREE.Group {
+  const L = spec.hats.shawl, { width: hw, height: hh } = spec.headShape;
+  const R = profileRadius(headProfile(spec.headShape));
+  const hat = new THREE.Group();
+  hat.name = 'hat:shawl';
+  const cloth = felt(L.color, true), rim = smooth(lighten(L.color, 0.12));
+  // нүүрний зууван нээлт: төв YC, хагас өндөр RY, урдаас хэмжсэн хагас өнцөг A0 (хацар ил)
+  const YC = -0.03, RY = 0.215, A0 = 0.78, TOP = 0.262, LOW = -0.36, OFF = 0.045;
+  const open = (y: number): number => { const t = (y - YC) / RY; return Math.abs(t) >= 1 ? 0 : A0 * Math.sqrt(1 - t * t); };
+  const at = (d: number, y: number, extra = 0): THREE.Vector3 => {
+    // эрүүнээс доош хүзүүг тойрч зөөлөн бөөрөнхий (хүзүүнд наалдахгүй)
+    const neck = y < -0.2 ? 0.2 + 0.06 * Math.min(1, (-0.2 - y) / 0.12) : 0;
+    const r = Math.max(R(y), neck) + OFF + extra, phi = Math.PI + d;
+    return new THREE.Vector3(r * Math.sin(phi) * hw, y * hh, r * Math.cos(phi) * hw);
+  };
+  const NU = kit.q(44, 14), NV = kit.q(18, 7), pos: number[] = [], uv: number[] = [], idx: number[] = [];
+  for (let b = 0; b <= NV; b++) {
+    const t = b / NV, y = LOW + (TOP - LOW) * (1 - Math.cos((t * Math.PI) / 2));   // орой руугаа нягт
+    const span = Math.PI - open(y);
+    for (let a = 0; a <= NU; a++) {
+      const p = at(-span + (a / NU) * span * 2, y);
+      pos.push(p.x, p.y, p.z); uv.push((a / NU) * 3, t * 2);
+    }
+  }
+  for (let b = 0; b < NV; b++) for (let a = 0; a < NU; a++) {
+    const p0 = b * (NU + 1) + a, p1 = p0 + NU + 1;
+    idx.push(p0, p0 + 1, p1, p0 + 1, p1 + 1, p1);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  geo.setIndex(idx);
+  geo.computeVertexNormals();
+  const shell = new THREE.Mesh(geo, cloth);
+  shell.position.y = hy; shell.castShadow = true;
+  hat.add(shell);
+  const g = new THREE.Group();
+  g.position.y = hy;
+  hat.add(g);
+  // нүүрийг тойрсон зөөлөн зузаан ирмэг (зууван гогцоо) ба доод ирмэг
+  const ring: THREE.Vector3[] = [];
+  for (let k = 0; k <= 12; k++) { const y = YC - RY + (2 * RY * k) / 12; ring.push(at(Math.PI - open(y), y, 0.012)); }        // нэг тал: доороос дээш
+  for (let k = 12; k >= 0; k--) { const y = YC - RY + (2 * RY * k) / 12; ring.push(at(-(Math.PI - open(y)), y, 0.012)); }   // нөгөө тал: дээрээс доош
+  kit.tube(ring, 0.026, rim, g, 0.5);
+  kit.tube(Array.from({ length: 25 }, (_, k) => at(-Math.PI + (k / 24) * Math.PI * 2, LOW, 0.004)), 0.02, rim, g, 0.5);
+  // эрүүн доорх зангилаа, хоёр богино үзүүр
+  const knot = at(Math.PI, YC - RY - 0.06, 0.03);
+  noOut(kit.sball(0.05, cloth, knot.x, knot.y, knot.z, g)).scale.set(1.2, 0.85, 0.85);
+  for (const sx of [-1, 1]) {
+    const tail = noOut(kit.lathe([[0.004, -0.13], [0.03, -0.09], [0.026, 0]], 0.35, cloth, knot.x + sx * 0.035, knot.y - 0.01, knot.z + 0.01, g, { rows: 6 }));
+    tail.rotation.z = sx * 0.25;
+  }
+  return hat;
+}
+
 /** Охидын тууз: духны дээгүүр толгойг тойрсон тууз, хажуудаа зангидсан нум */
 function ribbon(spec: CharacterSpec, kit: Kit, hy: number): THREE.Group {
   const { width: hw, height: hh } = spec.headShape, R = profileRadius(headProfile(spec.headShape));
@@ -206,4 +265,4 @@ function ribbon(spec: CharacterSpec, kit: Kit, hy: number): THREE.Group {
 
 export type HatBuilder = (spec: CharacterSpec, kit: Kit, hy: number) => THREE.Group;
 /** Бүртгэлийн дараалал = угсрах дараалал (тоглогчийнх toortsog, fox) */
-export const HATS: Readonly<Record<CharacterHat, HatBuilder>> = { toortsog, fox, scarf: scarfHat('scarf', false), shawl: scarfHat('shawl', true), ribbon };
+export const HATS: Readonly<Record<CharacterHat, HatBuilder>> = { toortsog, fox, scarf: scarfHat('scarf', false), shawl, ribbon };
