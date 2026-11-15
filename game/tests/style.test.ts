@@ -79,6 +79,21 @@ describe('visual style configuration', () => {
     expect(() => validateVisualStyle(badMountains)).toThrow(/2–3 давхар/);
   });
 
+  it('validates herder animation and face reactions', () => {
+    const style = validateVisualStyle(visualsJson);
+    expect(style.herderAnim.runFull).toBeGreaterThan(style.herderAnim.runFrom);
+    for (const steps of Object.values(style.herderAnim.events)) {
+      expect(steps.length).toBeGreaterThan(0);
+      for (const [, seconds] of steps) expect(seconds).toBeGreaterThan(0);
+    }
+    const bad: Record<string, unknown> = JSON.parse(JSON.stringify(visualsJson));
+    ((bad.herderAnim as Record<string, unknown>).events as Record<string, unknown>).wolf = [['furious', 1]];
+    expect(() => validateVisualStyle(bad)).toThrow(/herderAnim/);
+    const slow: Record<string, unknown> = JSON.parse(JSON.stringify(visualsJson));
+    (slow.herderAnim as Record<string, unknown>).runFull = 1;
+    expect(() => validateVisualStyle(slow)).toThrow(/herderAnim/);
+  });
+
   it('validates dog rest pose settings (V3.2)', () => {
     const style = validateVisualStyle(visualsJson);
     expect(style.dogRest.lieAfterSec).toBeGreaterThan(0);

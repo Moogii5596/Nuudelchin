@@ -78,6 +78,19 @@
     "cookingMinutes": [[300, 510], [1020, 1200]]
   },
   "dogRest": { "_doc": "V3.2: нохой lieAfterSec секунд хөдлөхгүй бол хэвтэнэ (blendPerSec — шилжилтийн хурд); bodyDrop м доошилж, хөл урагш/хойш хэвтэнэ, headDown толгой доош, tailFlat сүүлний өнцөг. townDogChance — сумын төвийн айлын үүдэнд хэвтэх нохойн магадлал.", "lieAfterSec": 2.5, "blendPerSec": 1.6, "bodyDrop": 0.36, "headDown": 0.24, "tailFlat": -0.12, "townDogChance": 0.4 },
+  "herderAnim": {
+    "_doc": "Үндсэн дүрийн хөдөлгөөн, нүүр (docs/character-design.md). moveMin м/с-ээс хурдан бол алхана; runFrom…runFull м/с-ийн хооронд алхаанаас гүйлт рүү шилжинэ; strideWalk/strideRun — 1 м явахад алхааны мөчлөг хэдэн радиан урагшлах (их бол алхам богино, олон). events — үйл явдал бүрд нүүрний сэтгэл хөдлөлийн дараалал [сэтгэл хөдлөл, секунд] (neutral|happy|angry|sad|surprised): birth төл гарах, loss мал үхэх/чононд бариулах, wolf чоно хот руу дайрах, shout/scare/call тоглогчийн дуудлага. threat — чоно дайрч байх хугацаанд тогтох сэтгэл хөдлөл.",
+    "moveMin": 0.3, "runFrom": 4.4, "runFull": 6.0, "strideWalk": 2.4, "strideRun": 1.75,
+    "threat": "angry",
+    "events": {
+      "birth": [["surprised", 0.7], ["happy", 3]],
+      "loss": [["surprised", 0.6], ["sad", 3.5]],
+      "wolf": [["surprised", 1], ["angry", 3]],
+      "shout": [["angry", 1.2]],
+      "scare": [["angry", 1.2]],
+      "call": [["happy", 1.2]]
+    }
+  },
   "outfits": {
     "_doc": "V4.1: малчин, туслахын улирлын хувцас. seasons.<улирал>: body = terleg (зуны нимгэн тэрлэг, terlegLighten-ээр цайруулсан), deel (энгийн дээл), winter (зузаан дээл, үстэй зах); hat = toortsog (оройтой малгай), fox (үнэгэн малгай, чихэвчтэй). player — тоглогчийн өнгө. helperRoles — туслахын дээл үүргээрээ (herd малчин, horse адуучин, drive жолооч, otor отор, collect хүүхэд/түүгч). helperHat — хүйсээр малгайн өнгө.",
     "seasons": {

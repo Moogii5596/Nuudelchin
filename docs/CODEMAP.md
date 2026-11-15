@@ -58,7 +58,7 @@ SYM game/src/pwa.ts:48 const pwa
 SYM game/src/pwa.ts:77 fn landscapeFullscreen
 SYM game/src/pwa.ts:92 fn registerServiceWorker
 SYM game/src/pwa.ts:104 fn onConnectionChange
-FILE game/src/render/animals.ts 15.1KB 350L exports: AnimalsView
+FILE game/src/render/animals.ts 15.0KB 349L exports: AnimalsView
 SYM game/src/render/animals.ts:41 fn legGeo
 SYM game/src/render/animals.ts:45 fn helperMark
 SYM game/src/render/animals.ts:52 fn sheepDef
@@ -69,35 +69,48 @@ SYM game/src/render/animals.ts:179 class AnimalsView
 SYM game/src/render/animals.ts:216 method AnimalsView.setQuality
 SYM game/src/render/animals.ts:221 method AnimalsView.snapshot
 SYM game/src/render/animals.ts:235 method AnimalsView.update
-SYM game/src/render/animals.ts:347 method AnimalsView.reset
+SYM game/src/render/animals.ts:346 method AnimalsView.reset
 FILE game/src/render/camera.ts 5.9KB 140L exports: FollowCamera
 SYM game/src/render/camera.ts:10 class FollowCamera
 SYM game/src/render/camera.ts:30 method FollowCamera.span
 SYM game/src/render/camera.ts:116 method FollowCamera.update
 SYM game/src/render/camera.ts:136 method FollowCamera.resize
-FILE game/src/render/characters.ts 20.8KB 484L exports: Rig,HerderColors,playerColors,helperColors,makeHerder,dressHerder,makeHorse,makeDog,poseDogLying,swingLegs,CharactersView
-SYM game/src/render/characters.ts:15 interface Rig
-SYM game/src/render/characters.ts:23 interface HerderColors
-SYM game/src/render/characters.ts:29 fn hex
-SYM game/src/render/characters.ts:31 fn lighten
-SYM game/src/render/characters.ts:39 fn playerColors
-SYM game/src/render/characters.ts:45 fn helperColors
-SYM game/src/render/characters.ts:55 fn makeHerder
-SYM game/src/render/characters.ts:126 fn dressHerder
-SYM game/src/render/characters.ts:135 fn makeHorse
-SYM game/src/render/characters.ts:151 fn makeWolf
-SYM game/src/render/characters.ts:184 fn makeDog
-SYM game/src/render/characters.ts:212 fn poseDogLying
-SYM game/src/render/characters.ts:225 fn swingLegs
-SYM game/src/render/characters.ts:236 fn makeBubble
-SYM game/src/render/characters.ts:257 class CharactersView
-SYM game/src/render/characters.ts:284 method CharactersView.say
-SYM game/src/render/characters.ts:290 method CharactersView.seatHerder
-SYM game/src/render/characters.ts:307 method CharactersView.setSeason
-SYM game/src/render/characters.ts:313 method CharactersView.herderObject
-SYM game/src/render/characters.ts:317 method CharactersView.update
-SYM game/src/render/characters.ts:396 method CharactersView.updateDogs
-SYM game/src/render/characters.ts:446 method CharactersView.updateWolves
+FILE game/src/render/characters.ts 22.3KB 506L exports: Rig,HerderColors,playerColors,helperColors,makeHerder,dressHerder,makeHorse,makeDog,poseDogLying,swingLegs,CharactersView
+SYM game/src/render/characters.ts:16 interface Rig
+SYM game/src/render/characters.ts:24 interface HerderColors
+SYM game/src/render/characters.ts:30 fn hex
+SYM game/src/render/characters.ts:32 fn lighten
+SYM game/src/render/characters.ts:40 fn playerColors
+SYM game/src/render/characters.ts:46 fn helperColors
+SYM game/src/render/characters.ts:57 fn makeHerder
+SYM game/src/render/characters.ts:128 fn dressHerder
+SYM game/src/render/characters.ts:137 fn makeHorse
+SYM game/src/render/characters.ts:153 fn makeWolf
+SYM game/src/render/characters.ts:186 fn makeDog
+SYM game/src/render/characters.ts:214 fn poseDogLying
+SYM game/src/render/characters.ts:227 fn swingLegs
+SYM game/src/render/characters.ts:238 fn makeBubble
+SYM game/src/render/characters.ts:259 class CharactersView
+SYM game/src/render/characters.ts:289 method CharactersView.say
+SYM game/src/render/characters.ts:296 method CharactersView.react
+SYM game/src/render/characters.ts:301 method CharactersView.emotion
+SYM game/src/render/characters.ts:319 method CharactersView.seatHerder
+SYM game/src/render/characters.ts:332 method CharactersView.setSeason
+SYM game/src/render/characters.ts:338 method CharactersView.herderObject
+SYM game/src/render/characters.ts:342 method CharactersView.update
+SYM game/src/render/characters.ts:418 method CharactersView.updateDogs
+SYM game/src/render/characters.ts:468 method CharactersView.updateWolves
+FILE game/src/render/herderModel.ts 86.4KB 1275L exports: HerderModelColors,HerderPose,HerderRig,makeHerderModel,dressHerderModel,animateHerder
+SYM game/src/render/herderModel.ts:15 interface HerderModelColors
+SYM game/src/render/herderModel.ts:22 interface HerderPose
+SYM game/src/render/herderModel.ts:34 interface HerderRig
+SYM game/src/render/herderModel.ts:53 fn hexNum
+SYM game/src/render/herderModel.ts:55 fn init
+SYM game/src/render/herderModel.ts:1144 fn L
+SYM game/src/render/herderModel.ts:1146 fn makeHerderModel
+SYM game/src/render/herderModel.ts:1152 fn dressHerderModel
+SYM game/src/render/herderModel.ts:1157 fn sstep
+SYM game/src/render/herderModel.ts:1166 fn animateHerder
 FILE game/src/render/items.ts 3.7KB 97L exports: ItemsView
 SYM game/src/render/items.ts:12 fn canGeo
 SYM game/src/render/items.ts:22 fn fiberGeo
@@ -122,33 +135,37 @@ SYM game/src/render/staff.ts:60 class StaffView
 SYM game/src/render/staff.ts:67 method StaffView.setSeason
 SYM game/src/render/staff.ts:73 method StaffView.update
 SYM game/src/render/staff.ts:134 method StaffView.syncDwellings
-FILE game/src/render/style.ts 22.4KB 550L exports: TimeVisual,SeasonVisual,GrassVisual,WaterVisual,SmokeVisual,DogRestVisual,OutfitBody,OutfitHat,HelperRole,OutfitsVisual,MapPaperVisual,VehicleFxVisual,CloudShadowVisual,FlowersVisual,+6
+FILE game/src/render/style.ts 24.6KB 595L exports: TimeVisual,SeasonVisual,GrassVisual,WaterVisual,SmokeVisual,DogRestVisual,HerderEmotion,HerderEvent,HerderAnimVisual,OutfitBody,OutfitHat,HelperRole,OutfitsVisual,MapPaperVisual,+9
 SYM game/src/render/style.ts:5 interface TimeVisual
 SYM game/src/render/style.ts:17 interface SeasonVisual
 SYM game/src/render/style.ts:24 interface GrassVisual
 SYM game/src/render/style.ts:35 interface WaterVisual
 SYM game/src/render/style.ts:45 interface SmokeVisual
 SYM game/src/render/style.ts:50 interface DogRestVisual
-SYM game/src/render/style.ts:60 type OutfitBody
-SYM game/src/render/style.ts:61 type OutfitHat
-SYM game/src/render/style.ts:62 type HelperRole
-SYM game/src/render/style.ts:63 interface OutfitsVisual
-SYM game/src/render/style.ts:74 interface MapPaperVisual
-SYM game/src/render/style.ts:81 interface VehicleFxVisual
-SYM game/src/render/style.ts:92 interface CloudShadowVisual
-SYM game/src/render/style.ts:101 interface FlowersVisual
-SYM game/src/render/style.ts:108 interface MountainLayerVisual
-SYM game/src/render/style.ts:118 interface VisualPalette
-SYM game/src/render/style.ts:151 interface VisualStyle
-SYM game/src/render/style.ts:175 fn isRecord
-SYM game/src/render/style.ts:177 fn isColor
-SYM game/src/render/style.ts:178 fn isPositive
-SYM game/src/render/style.ts:181 fn parseMapPaper
-SYM game/src/render/style.ts:200 fn parseVehicleFx
-SYM game/src/render/style.ts:219 fn parseOutfits
-SYM game/src/render/style.ts:256 fn validateVisualStyle
-SYM game/src/render/style.ts:546 const visualStyle
-SYM game/src/render/style.ts:548 fn paletteHex
+SYM game/src/render/style.ts:60 type HerderEmotion
+SYM game/src/render/style.ts:61 type HerderEvent
+SYM game/src/render/style.ts:62 interface HerderAnimVisual
+SYM game/src/render/style.ts:73 type OutfitBody
+SYM game/src/render/style.ts:74 type OutfitHat
+SYM game/src/render/style.ts:75 type HelperRole
+SYM game/src/render/style.ts:76 interface OutfitsVisual
+SYM game/src/render/style.ts:87 interface MapPaperVisual
+SYM game/src/render/style.ts:94 interface VehicleFxVisual
+SYM game/src/render/style.ts:105 interface CloudShadowVisual
+SYM game/src/render/style.ts:114 interface FlowersVisual
+SYM game/src/render/style.ts:121 interface MountainLayerVisual
+SYM game/src/render/style.ts:131 interface VisualPalette
+SYM game/src/render/style.ts:164 interface VisualStyle
+SYM game/src/render/style.ts:189 fn isRecord
+SYM game/src/render/style.ts:191 fn isColor
+SYM game/src/render/style.ts:192 fn isPositive
+SYM game/src/render/style.ts:195 fn parseMapPaper
+SYM game/src/render/style.ts:214 fn parseVehicleFx
+SYM game/src/render/style.ts:235 fn parseHerderAnim
+SYM game/src/render/style.ts:262 fn parseOutfits
+SYM game/src/render/style.ts:299 fn validateVisualStyle
+SYM game/src/render/style.ts:591 const visualStyle
+SYM game/src/render/style.ts:593 fn paletteHex
 FILE game/src/render/sumcenter.ts 8.7KB 188L exports: SumCenterView
 SYM game/src/render/sumcenter.ts:19 fn label
 SYM game/src/render/sumcenter.ts:39 fn resident
@@ -784,26 +801,26 @@ FILE game/tests/rng.test.ts 0.8KB 26L
 FILE game/tests/seasons.test.ts 7.2KB 140L
 FILE game/tests/sim.test.ts 1.4KB 32L
 FILE game/tests/staff.test.ts 12.0KB 229L
-FILE game/tests/style.test.ts 7.9KB 148L
+FILE game/tests/style.test.ts 8.8KB 163L
 FILE game/tests/sumtown.test.ts 4.5KB 90L
 FILE game/tests/town.test.ts 6.1KB 127L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 13.3KB 97L
+FILE docs/CONTEXT.md 13.6KB 98L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-28 ## 2. Стек ба командууд
-DOC docs/CONTEXT.md:29-71 ## 3. Файлын зураглал (`game/src/`)
-DOC docs/CONTEXT.md:72-74 ## 4. `data/*.json` → аль файл хэрэглэдэг
-DOC docs/CONTEXT.md:75-83 ## 5. Архитектурын дүрэм ([[architecture]])
-DOC docs/CONTEXT.md:84-87 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
-DOC docs/CONTEXT.md:88-90 ## 7. Нээлттэй асуултууд
-DOC docs/CONTEXT.md:91-97 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
-FILE docs/INDEX.md 13.5KB 134L
+DOC docs/CONTEXT.md:29-72 ## 3. Файлын зураглал (`game/src/`)
+DOC docs/CONTEXT.md:73-75 ## 4. `data/*.json` → аль файл хэрэглэдэг
+DOC docs/CONTEXT.md:76-84 ## 5. Архитектурын дүрэм ([[architecture]])
+DOC docs/CONTEXT.md:85-88 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
+DOC docs/CONTEXT.md:89-91 ## 7. Нээлттэй асуултууд
+DOC docs/CONTEXT.md:92-98 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
+FILE docs/INDEX.md 13.8KB 135L
 DOC docs/INDEX.md:16-30 ## 1. Унших дараалал ба давуу эрх
-DOC docs/INDEX.md:31-105 ## 2. Баримтууд
-DOC docs/INDEX.md:106-109 ## 3. Гол тоо
-DOC docs/INDEX.md:110-128 ## 4. Нэр томьёо
-DOC docs/INDEX.md:129-134 ## 5. Баримт засах дүрэм
+DOC docs/INDEX.md:31-106 ## 2. Баримтууд
+DOC docs/INDEX.md:107-110 ## 3. Гол тоо
+DOC docs/INDEX.md:111-129 ## 4. Нэр томьёо
+DOC docs/INDEX.md:130-135 ## 5. Баримт засах дүрэм
 FILE docs/architecture.md 17.4KB 234L
 DOC docs/architecture.md:16-29 ## 1. Технологи
 DOC docs/architecture.md:30-68 ## 2. Хавтасны бүтэц
@@ -815,6 +832,12 @@ DOC docs/architecture.md:198-205 ## 7. Хэл
 DOC docs/architecture.md:206-216 ## 8. Тест ба тэнцвэр
 DOC docs/architecture.md:217-222 ## 9. Туршилтын цэс
 DOC docs/architecture.md:223-234 ## 10. Ажиллуулах
+FILE docs/character-design.md 11.6KB 84L
+DOC docs/character-design.md:13-27 ## 1. Хэрэглэгчийн баталсан шийдвэр (2026-11-15)
+DOC docs/character-design.md:28-51 ## 2. Үндсэн дүр — хэрэгжилт (V4.4, кодонд)
+DOC docs/character-design.md:52-60 ## 3. NPC-үүд одоо
+DOC docs/character-design.md:61-76 ## 4. NPC-үүдийг шинэ загварт шилжүүлэх төлөвлөгөө (V4.5)
+DOC docs/character-design.md:77-84 ## 5. Нээлттэй шийдвэр 🙋
 FILE docs/competitive-analysis/farvival.md 7.5KB 78L
 DOC docs/competitive-analysis/farvival.md:16-27 ## 1. Товч мэдээлэл
 DOC docs/competitive-analysis/farvival.md:28-37 ## 2. Агуулга
@@ -982,17 +1005,17 @@ DOC docs/plan/M7.md:12-22 ## Блокууд
 DOC docs/plan/M7.md:23-25 ## Асуулга (9 асуулт)
 DOC docs/plan/M7.md:26-28 ## Нээлттэй асуулт
 DOC docs/plan/M7.md:29-32 ## Эрсдэл
-FILE docs/plan/V.md 15.5KB 70L
+FILE docs/plan/V.md 16.4KB 72L
 DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-20 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
-DOC docs/plan/V.md:21-50 ## Блокууд ба чеклист (2026-11-15)
-DOC docs/plan/V.md:51-53 ## Нээлттэй асуулт
-DOC docs/plan/V.md:54-60 ## Зогссон цэг
-DOC docs/plan/V.md:61-70 ## Шийдвэрийн чеклист
-FILE docs/plan/playtest.md 6.8KB 55L
+DOC docs/plan/V.md:21-52 ## Блокууд ба чеклист (2026-11-15)
+DOC docs/plan/V.md:53-55 ## Нээлттэй асуулт
+DOC docs/plan/V.md:56-62 ## Зогссон цэг
+DOC docs/plan/V.md:63-72 ## Шийдвэрийн чеклист
+FILE docs/plan/playtest.md 7.4KB 56L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
-DOC docs/plan/playtest.md:19-31 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
-DOC docs/plan/playtest.md:32-55 ## C. Мэдрэмж, үе шат бүрээр
+DOC docs/plan/playtest.md:19-32 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
+DOC docs/plan/playtest.md:33-56 ## C. Мэдрэмж, үе шат бүрээр
 FILE docs/seasons-camps.md 10.2KB 104L
 DOC docs/seasons-camps.md:17-40 ## 1. Хэрэглэгчийн шийдвэрүүд
 DOC docs/seasons-camps.md:41-54 ## 2. Улирал

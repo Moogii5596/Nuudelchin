@@ -56,6 +56,19 @@ export interface DogRestVisual {
   townDogChance: number;
 }
 
+/** Үндсэн дүрийн хөдөлгөөн, нүүрний сэтгэл хөдлөл (docs/character-design.md) */
+export type HerderEmotion = 'neutral' | 'happy' | 'angry' | 'sad' | 'surprised';
+export type HerderEvent = 'birth' | 'loss' | 'wolf' | 'shout' | 'scare' | 'call';
+export interface HerderAnimVisual {
+  moveMin: number;
+  runFrom: number;
+  runFull: number;
+  strideWalk: number;
+  strideRun: number;
+  threat: HerderEmotion;
+  events: Record<HerderEvent, Array<[HerderEmotion, number]>>;
+}
+
 /** V4.1: улирлын хувцас */
 export type OutfitBody = 'terleg' | 'deel' | 'winter';
 export type OutfitHat = 'toortsog' | 'fox';
@@ -156,6 +169,7 @@ export interface VisualStyle {
   water: WaterVisual;
   smoke: SmokeVisual;
   dogRest: DogRestVisual;
+  herderAnim: HerderAnimVisual;
   outfits: OutfitsVisual;
   vehicleFx: VehicleFxVisual;
   mapPaper: MapPaperVisual;
@@ -216,6 +230,35 @@ function parseVehicleFx(v: Record<string, unknown>): VehicleFxVisual {
   return { dust: d as unknown as VehicleFxVisual['dust'], lights: l as unknown as VehicleFxVisual['lights'] };
 }
 
+const herderEmotions: HerderEmotion[] = ['neutral', 'happy', 'angry', 'sad', 'surprised'];
+const herderEvents: HerderEvent[] = ['birth', 'loss', 'wolf', 'shout', 'scare', 'call'];
+function parseHerderAnim(h: Record<string, unknown>): HerderAnimVisual {
+  const bad = (what: string): never => {
+    throw new Error(`data/visuals.json: herderAnim.${what} буруу`);
+  };
+  const isEmotion = (v: unknown): v is HerderEmotion => herderEmotions.includes(v as HerderEmotion);
+  if (!isPositive(h.moveMin)) bad('moveMin');
+  if (!isPositive(h.runFrom) || !isPositive(h.runFull) || (h.runFull as number) <= (h.runFrom as number)) bad('runFrom/runFull');
+  if (!isPositive(h.strideWalk) || !isPositive(h.strideRun)) bad('stride');
+  if (!isEmotion(h.threat)) bad('threat');
+  if (!isRecord(h.events)) bad('events');
+  const src = h.events as Record<string, unknown>;
+  const events = {} as Record<HerderEvent, Array<[HerderEmotion, number]>>;
+  for (const name of herderEvents) {
+    const steps = src[name];
+    if (!Array.isArray(steps) || steps.length === 0) bad(`events.${name}`);
+    events[name] = (steps as unknown[]).map((step) => {
+      if (!Array.isArray(step) || step.length !== 2 || !isEmotion(step[0]) || !isPositive(step[1])) bad(`events.${name}`);
+      const [emotion, seconds] = step as [HerderEmotion, number];
+      return [emotion, seconds];
+    });
+  }
+  return {
+    moveMin: h.moveMin as number, runFrom: h.runFrom as number, runFull: h.runFull as number,
+    strideWalk: h.strideWalk as number, strideRun: h.strideRun as number, threat: h.threat as HerderEmotion, events,
+  };
+}
+
 function parseOutfits(o: Record<string, unknown>): OutfitsVisual {
   const fail = (what: string): never => {
     throw new Error(`data/visuals.json: outfits.${what} буруу`);
@@ -256,7 +299,7 @@ function parseOutfits(o: Record<string, unknown>): OutfitsVisual {
 export function validateVisualStyle(value: unknown): VisualStyle {
   if (
     !isRecord(value) || !isRecord(value.palette) || !isRecord(value.seasons) ||
-    !isRecord(value.grass) || !isRecord(value.water) || !isRecord(value.smoke) || !isRecord(value.dogRest) || !isRecord(value.outfits) || !isRecord(value.vehicleFx) || !isRecord(value.mapPaper) ||
+    !isRecord(value.grass) || !isRecord(value.water) || !isRecord(value.smoke) || !isRecord(value.dogRest) || !isRecord(value.herderAnim) || !isRecord(value.outfits) || !isRecord(value.vehicleFx) || !isRecord(value.mapPaper) ||
     !isRecord(value.cloudShadow) || !isRecord(value.flowers) || !isRecord(value.mountains) ||
     !isRecord(value.quality) || !Array.isArray(value.timeOfDay)
   ) {
@@ -429,6 +472,7 @@ export function validateVisualStyle(value: unknown): VisualStyle {
   ) {
     throw new Error('data/visuals.json: dogRest тохиргоо буруу');
   }
+  const herderAnim = parseHerderAnim(value.herderAnim as Record<string, unknown>);
   const outfits = parseOutfits(value.outfits as Record<string, unknown>);
   const vehicleFx = parseVehicleFx(value.vehicleFx as Record<string, unknown>);
   const mapPaper = parseMapPaper(value.mapPaper as Record<string, unknown>);
@@ -533,6 +577,7 @@ export function validateVisualStyle(value: unknown): VisualStyle {
     water,
     smoke,
     dogRest,
+    herderAnim,
     outfits,
     vehicleFx,
     mapPaper,

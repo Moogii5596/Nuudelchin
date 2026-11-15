@@ -56,6 +56,7 @@ TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `gam
 | `scene.ts` | `GameView`: үндсэн дүр зураг, гэрэл, тэнгэр, улирал, бүх view-г холбоно |
 | `terrain.ts` | Бууцны газар, ус, мод, чулуу, өвс, бэлчээрийн өнгө (том — мужаар нээ) |
 | `animals.ts` · `characters.ts` · `staff.ts` | Мал (InstancedMesh) · малчин, морь, чоно, нохой · туслахууд, айлын гэр |
+| `herderModel.ts` | Үндсэн дүрийн загвар (цилиндр толгой, зурмал нүүр, үе мөч, дээл, гутал, малгай) ба `animateHerder` — `tools/character-lab/herder.html`-ээс хуулсан; [[character-design]] |
 | `items.ts` · `vehicles.ts` · `zones.ts` | Газрын бүтээгдэхүүн · тэрэг/машин · хамгаалалтын бүс |
 | `sumcenter.ts` · `sumlayout.ts` · `worldmap.ts` | Сумын төвийн view (шошго, тойрог, оршин суугч, нохой, худалдаанд байгаа машин) · `data/sumcenter.json`-ийг low-poly merged mesh болгох бүтээгч (V3.3 Могод сум) · газрын зураг (дээрээс харсан) |
 | `camera.ts` · `style.ts` · `util.ts` | Дагах камер · `data/visuals.json`-ийн шалгалт, `visualStyle` · туслах |

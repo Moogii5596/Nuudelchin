@@ -8,7 +8,8 @@ import type { GameState } from '../sim/state';
 import { ridingHorse } from '../sim/systems/herder';
 import type { Wolf } from '../sim/systems/wolves';
 import type { Dog } from '../sim/systems/dogs';
-import { visualStyle, type HelperRole } from './style';
+import { visualStyle, type HelperRole, type HerderEmotion, type HerderEvent } from './style';
+import { animateHerder, dressHerderModel, makeHerderModel } from './herderModel';
 import type { Season } from '../sim/config';
 import { angDiff, limb, meshBox, mat } from './util';
 
@@ -49,7 +50,8 @@ export function helperColors(role: HelperRole, sex: 'm' | 'f'): HerderColors {
 }
 
 /**
- * Малчин/туслах. Улирлын хувцасны хувилбарууд нэрлэгдсэн бүлгээр (`body:*`, `hat:*`) зэрэг үүснэ;
+ * Туслах, газрын зургийн малчин (хуучин энгийн загвар; үндсэн дүр → herderModel.ts, NPC-ийг шилжүүлэх
+ * төлөвлөгөө → docs/character-design.md). Улирлын хувцасны хувилбарууд нэрлэгдсэн бүлгээр (`body:*`, `hat:*`) зэрэг үүснэ;
  * `dressHerder` улирлаар нь харуулна (rig-ийг дахин үүсгэхгүй — камер, бусад лавлагаа хэвээр).
  */
 export function makeHerder(colors: HerderColors = playerColors()): Rig {
@@ -258,17 +260,20 @@ export class CharactersView {
   readonly group = new THREE.Group();
   /** Чоно, нохой — зөвхөн гэрийн бууцанд харагдана (M4.6) */
   private campGroup = new THREE.Group();
-  private herder = makeHerder();
+  /** Үндсэн дүр: шинэ загвар (herderModel.ts) */
+  private herder = makeHerderModel(playerColors());
   private horse = makeHorse(0x7a4a26);
   private wolves = new Map<number, { rig: Rig; x: number; z: number; h: number; phase: number }>();
   private dogs = new Map<number, { rig: Rig; x: number; z: number; h: number; phase: number; bark: THREE.Sprite; still: number; lie: number }>();
   private wolfCamp = '';
-  private hPhase = 0;
   private horsePhase = 0;
   private horsePos = { x: 0, z: 0, h: 0, init: false };
   private lastPlayer = { x: 0, z: 0 };
   private bubbles: Record<'shout' | 'scare' | 'call', { sprite: THREE.Sprite; t: number }>;
   private actionT = 0;   // гараа өргөх хугацаа
+  /** Нүүрний сэтгэл хөдлөл: үйл явдлын дараалал [сэтгэл хөдлөл, үлдсэн сек] */
+  private emoQueue: Array<[HerderEmotion, number]> = [];
+  private seen = { births: 0, losses: 0, threat: false };
 
   constructor() {
     this.group.add(this.herder.root, this.horse.root, this.campGroup);
@@ -284,6 +289,30 @@ export class CharactersView {
   say(kind: 'shout' | 'scare' | 'call'): void {
     for (const [k, b] of Object.entries(this.bubbles)) b.t = k === kind ? 1.2 : 0;
     this.actionT = 0.9;
+    this.react(kind);
+  }
+
+  /** Үйл явдалд нүүрээр хариу үзүүлнэ (data/visuals.json herderAnim.events) */
+  react(event: HerderEvent): void {
+    this.emoQueue = visualStyle.herderAnim.events[event].map(([e, sec]) => [e, sec]);
+  }
+
+  /** Өдрийн тоо (төл, хорогдол) ба чонын аюулаас сэтгэл хөдлөлийг гаргана; одоогийн сэтгэл хөдлөлийг буцаана */
+  private emotion(state: GameState, dt: number): HerderEmotion {
+    const d = state.today;
+    const losses = d.deaths + Object.values(d.wolfKills).reduce((t, n) => t + n, 0);
+    if (d.births > this.seen.births) this.react('birth');
+    if (losses > this.seen.losses) this.react('loss');
+    const threat = state.player.place === 'camp' && (state.wolves.list as Wolf[]).some((w) => w.mode === 'hunt' || w.mode === 'drag');
+    if (threat && !this.seen.threat) this.react('wolf');
+    this.seen = { births: d.births, losses, threat };
+    const step = this.emoQueue[0];
+    if (step) {
+      step[1] -= dt;
+      if (step[1] <= 0) this.emoQueue.shift();
+      return step[0];
+    }
+    return threat ? visualStyle.herderAnim.threat : 'neutral';
   }
 
   /** Аялалд малчин тэрэг дээр сууна (M4.5). seat = null бол харагдахгүй (машины кабинд эсвэл газрын зургаас гадуур) */
@@ -295,11 +324,7 @@ export class CharactersView {
     }
     H.root.visible = true;
     H.root.position.set(seat.x, seat.y - 0.75, seat.z);
-    H.root.rotation.y = seat.h;
-    H.legs[0]!.rotation.set(-1.4, 0, 0);
-    H.legs[1]!.rotation.set(-1.4, 0, 0);
-    H.arms[0]!.rotation.x = -0.9;
-    H.arms[1]!.rotation.x = -0.9;
+    H.root.rotation.y = seat.h;   // суусан поз → update() (mode 'seated')
   }
 
   private season: Season | null = null;
@@ -307,7 +332,7 @@ export class CharactersView {
   setSeason(season: Season): void {
     if (season === this.season) return;
     this.season = season;
-    dressHerder(this.herder, season);
+    dressHerderModel(this.herder, season);
   }
 
   get herderObject(): THREE.Object3D {
@@ -332,23 +357,20 @@ export class CharactersView {
       this.horsePhase += dt * speed * 0.9;
       this.horsePos = { x: p.x, z: p.z, h: p.heading, init: true };
       H.root.position.set(p.x, y + 1.05 + (speed > 0.5 ? Math.abs(Math.sin(this.horsePhase)) * 0.12 : 0), p.z);
-      H.legs[0]!.rotation.set(-0.9, 0, -0.5);
-      H.legs[1]!.rotation.set(-0.9, 0, 0.5);
-      H.arms[0]!.rotation.x = -0.6;
-      H.arms[1]!.rotation.x = -0.6;
     } else {
-      this.hPhase += dt * speed * 2.6;
-      const sw = speed > 0.3 ? Math.sin(this.hPhase) * 0.7 : 0;
       H.root.position.set(p.x, y, p.z);
-      H.legs[0]!.rotation.set(sw, 0, 0);
-      H.legs[1]!.rotation.set(-sw, 0, 0);
-      H.arms[0]!.rotation.x = -sw * 0.8;
-      H.arms[1]!.rotation.x = sw * 0.8;
     }
-    if (this.actionT > 0) {
-      H.arms[0]!.rotation.x = -2.6;
-      H.arms[1]!.rotation.x = -2.6;
-    }
+    const talking = Object.values(this.bubbles).some((b) => b.t > 0);
+    const bob = animateHerder(H, {
+      dt,
+      speed,
+      mode: p.driving ? 'seated' : p.mounted ? 'mounted' : 'foot',
+      raise: this.actionT > 0,
+      uurga: p.holdingUurga,
+      talk: talking,
+      emotion: this.emotion(state, dt),
+    });
+    if (!p.mounted) H.root.position.y += bob;
     H.root.rotation.y = p.heading;
     const uurga = H.root.getObjectByName('uurga');
     if (uurga) uurga.visible = p.holdingUurga;
