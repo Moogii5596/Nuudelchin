@@ -812,7 +812,7 @@ FILE game/tests/sumtown.test.ts 4.5KB 90L
 FILE game/tests/town.test.ts 6.1KB 127L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 13.6KB 98L
+FILE docs/CONTEXT.md 13.7KB 98L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-28 ## 2. Стек ба командууд
 DOC docs/CONTEXT.md:29-72 ## 3. Файлын зураглал (`game/src/`)
@@ -821,7 +821,7 @@ DOC docs/CONTEXT.md:76-84 ## 5. Архитектурын дүрэм ([[architect
 DOC docs/CONTEXT.md:85-88 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
 DOC docs/CONTEXT.md:89-91 ## 7. Нээлттэй асуултууд
 DOC docs/CONTEXT.md:92-98 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
-FILE docs/INDEX.md 13.8KB 135L
+FILE docs/INDEX.md 13.9KB 135L
 DOC docs/INDEX.md:16-30 ## 1. Унших дараалал ба давуу эрх
 DOC docs/INDEX.md:31-106 ## 2. Баримтууд
 DOC docs/INDEX.md:107-110 ## 3. Гол тоо
@@ -838,7 +838,7 @@ DOC docs/architecture.md:198-205 ## 7. Хэл
 DOC docs/architecture.md:206-216 ## 8. Тест ба тэнцвэр
 DOC docs/architecture.md:217-222 ## 9. Туршилтын цэс
 DOC docs/architecture.md:223-234 ## 10. Ажиллуулах
-FILE docs/character-design.md 19.9KB 157L
+FILE docs/character-design.md 20.5KB 157L
 DOC docs/character-design.md:13-27 ## 1. Хэрэглэгчийн баталсан шийдвэр (2026-11-15)
 DOC docs/character-design.md:28-52 ## 2. Үндсэн дүр — хэрэгжилт (V4.4, кодонд)
 DOC docs/character-design.md:53-61 ## 3. NPC-үүд одоо
@@ -943,7 +943,7 @@ DOC docs/competitive-analysis/stardew-valley.md:59-71 ## 5. ❌ Шүүмжилс
 DOC docs/competitive-analysis/stardew-valley.md:72-104 ## 6. Манай тоглоомд хамаарах сургамж
 DOC docs/competitive-analysis/stardew-valley.md:105-112 ## 7. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
 DOC docs/competitive-analysis/stardew-valley.md:113-125 ## Эх сурвалж
-FILE docs/competitive-analysis/summary.md 29.6KB 248L
+FILE docs/competitive-analysis/summary.md 29.7KB 248L
 DOC docs/competitive-analysis/summary.md:17-28 ## 0. Гол 7 дүгнэлт
 DOC docs/competitive-analysis/summary.md:29-46 ## 1. Судалсан тоглоомууд
 DOC docs/competitive-analysis/summary.md:47-56 ## 2. Эрэмбэлэх арга
@@ -954,11 +954,9 @@ DOC docs/competitive-analysis/summary.md:172-200 ## 6. Зах зээл, борл
 DOC docs/competitive-analysis/summary.md:201-213 ## 7. Манай ялгарах байр суурь (нэг дор)
 DOC docs/competitive-analysis/summary.md:214-242 ## 8. Шийдвэрийн асуултууд 🙋
 DOC docs/competitive-analysis/summary.md:243-248 ## Эх сурвалж
-FILE docs/decisions.md 27.0KB 172L
-DOC docs/decisions.md:16-101 ## 0. Хэрэглэгчийн шийдвэрийн түүх
-DOC docs/decisions.md:102-127 ## 13. Нээлттэй шийдвэрүүд 🙋 (бүх баримтаас нэгтгэсэн)
-DOC docs/decisions.md:128-163 ## 14. Нээлттэй шийдвэр — бусад эх сурвалжаас нэгтгэсэн (2026-11-15)
-DOC docs/decisions.md:164-172 ## 15. Баримтуудын зөрүү (2026-11-15-ны шилжүүлэлтээр илэрсэн, хэрэглэгч шийдэх)
+FILE docs/decisions.md 20.0KB 130L
+DOC docs/decisions.md:16-125 ## 0. Хэрэглэгчийн шийдвэрийн түүх
+DOC docs/decisions.md:126-130 ## 13. MVP-ийн хүрээ хаагдсан (2026-11-15)
 FILE docs/grazing-livestock.md 27.4KB 316L
 DOC docs/grazing-livestock.md:17-125 ## 1. Малын үзүүлэлтүүд
 DOC docs/grazing-livestock.md:126-146 ## 2. Үнэ = амьдын жин × кг-ын үнэ
@@ -975,22 +973,22 @@ DOC docs/helpers-m5.md:45-55 ## 3. Тэнцвэр (улиралгүй үед; 6 
 DOC docs/helpers-m5.md:56-61 ## 4. Хязгаарлалт / 🙋
 FILE docs/milestones.md 8.9KB 45L
 DOC docs/milestones.md:39-45 ## Эрсдэл
-FILE docs/mvp-spec.md 49.2KB 450L
+FILE docs/mvp-spec.md 50.8KB 460L
 DOC docs/mvp-spec.md:17-22 ## 0. Хэрэглэгчийн шийдвэрийн түүх
-DOC docs/mvp-spec.md:23-48 ## 1. Хүрээ
-DOC docs/mvp-spec.md:49-67 ## 2. Цаг (M4.5, M5.5)
-DOC docs/mvp-spec.md:68-91 ## 3. Эхлэл
-DOC docs/mvp-spec.md:92-140 ## 4. Бүтээгдэхүүн: мал үлдээнэ, малчин цуглуулна (Farm Frenzy маяг)
-DOC docs/mvp-spec.md:141-197 ## 5. Үнэ, тээвэр ба сумын төв
-DOC docs/mvp-spec.md:198-240 ## 6. Туслах малчид (M5 — [[helpers-m5]])
-DOC docs/mvp-spec.md:241-282 ## 7. Бэлчээр, бууц сэлгэх, доройтол
-DOC docs/mvp-spec.md:283-320 ## 8. Чоно (M4, M4.5, B6)
-DOC docs/mvp-spec.md:321-336 ## 9. Төллөлт ба нас (M5.5)
-DOC docs/mvp-spec.md:337-412 ## 10. Тоглоомын зорилго ба замын тэмдэгтүүд
-DOC docs/mvp-spec.md:413-435 ## 11. Прототипоос хасагдах, өөрчлөгдөх зүйл
-DOC docs/mvp-spec.md:436-441 ## 12. Хөгжүүлэлтийн явц
-DOC docs/mvp-spec.md:442-446 ## 13. Нээлттэй шийдвэрүүд 🙋
-DOC docs/mvp-spec.md:447-450 ## Эх сурвалж
+DOC docs/mvp-spec.md:23-50 ## 1. Хүрээ
+DOC docs/mvp-spec.md:51-69 ## 2. Цаг (M4.5, M5.5)
+DOC docs/mvp-spec.md:70-102 ## 3. Эхлэл
+DOC docs/mvp-spec.md:103-151 ## 4. Бүтээгдэхүүн: мал үлдээнэ, малчин цуглуулна (Farm Frenzy маяг)
+DOC docs/mvp-spec.md:152-208 ## 5. Үнэ, тээвэр ба сумын төв
+DOC docs/mvp-spec.md:209-251 ## 6. Туслах малчид (M5 — [[helpers-m5]])
+DOC docs/mvp-spec.md:252-293 ## 7. Бэлчээр, бууц сэлгэх, доройтол
+DOC docs/mvp-spec.md:294-331 ## 8. Чоно (M4, M4.5, B6)
+DOC docs/mvp-spec.md:332-347 ## 9. Төллөлт ба нас (M5.5)
+DOC docs/mvp-spec.md:348-422 ## 10. Тоглоомын зорилго ба замын тэмдэгтүүд
+DOC docs/mvp-spec.md:423-445 ## 11. Прототипоос хасагдах, өөрчлөгдөх зүйл
+DOC docs/mvp-spec.md:446-451 ## 12. Хөгжүүлэлтийн явц
+DOC docs/mvp-spec.md:452-456 ## 13. Нээлттэй шийдвэр байхгүй
+DOC docs/mvp-spec.md:457-460 ## Эх сурвалж
 FILE docs/night-transport.md 9.4KB 106L
 DOC docs/night-transport.md:18-32 ## 1. Цаг ба шөнө
 DOC docs/night-transport.md:33-44 ## 2. Хотлох (хэрэглэгчийн дүрэм)
@@ -998,30 +996,26 @@ DOC docs/night-transport.md:45-68 ## 3. Сүү, ноос хоносон газр
 DOC docs/night-transport.md:69-87 ## 4. Шөнийн чоно (хэрэглэгчийн дүрэм)
 DOC docs/night-transport.md:88-103 ## 5. Тээвэр
 DOC docs/night-transport.md:104-106 ## 6. Хэрэглэгчийн шийдвэр 🙋
-FILE docs/plan/M6.md 15.9KB 68L
+FILE docs/plan/M6.md 17.4KB 66L
 DOC docs/plan/M6.md:15-17 ## Зорилго
 DOC docs/plan/M6.md:18-34 ## MVP «дууссан» шалгуур (D1–D10 — M6 ба M7-ийн нийт)
 DOC docs/plan/M6.md:35-37 ## Одоогийн байдал
-DOC docs/plan/M6.md:38-55 ## Блокууд
-DOC docs/plan/M6.md:56-58 ## Нээлттэй асуулт
-DOC docs/plan/M6.md:59-66 ## Эрсдэл
-DOC docs/plan/M6.md:67-68 ## Хуваарь
-FILE docs/plan/M7.md 7.4KB 32L
+DOC docs/plan/M6.md:38-56 ## Блокууд
+DOC docs/plan/M6.md:57-64 ## Эрсдэл
+DOC docs/plan/M6.md:65-66 ## Хуваарь
+FILE docs/plan/M7.md 7.6KB 31L
 DOC docs/plan/M7.md:12-22 ## Блокууд
-DOC docs/plan/M7.md:23-25 ## Асуулга (9 асуулт)
-DOC docs/plan/M7.md:26-28 ## Нээлттэй асуулт
-DOC docs/plan/M7.md:29-32 ## Эрсдэл
-FILE docs/plan/V.md 16.5KB 72L
+DOC docs/plan/M7.md:23-27 ## Асуулга (10 асуулт)
+DOC docs/plan/M7.md:28-31 ## Эрсдэл
+FILE docs/plan/V.md 19.6KB 66L
 DOC docs/plan/V.md:13-15 ## Зорилго
-DOC docs/plan/V.md:16-20 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
-DOC docs/plan/V.md:21-52 ## Блокууд ба чеклист (2026-11-15)
-DOC docs/plan/V.md:53-55 ## Нээлттэй асуулт
-DOC docs/plan/V.md:56-62 ## Зогссон цэг
-DOC docs/plan/V.md:63-72 ## Шийдвэрийн чеклист
-FILE docs/plan/playtest.md 7.4KB 56L
+DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
+DOC docs/plan/V.md:24-60 ## Блокууд ба чеклист (2026-11-15)
+DOC docs/plan/V.md:61-66 ## Зогссон цэг
+FILE docs/plan/playtest.md 7.5KB 58L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
-DOC docs/plan/playtest.md:19-32 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
-DOC docs/plan/playtest.md:33-56 ## C. Мэдрэмж, үе шат бүрээр
+DOC docs/plan/playtest.md:19-36 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
+DOC docs/plan/playtest.md:37-58 ## C. Мэдрэмж, үе шат бүрээр
 FILE docs/seasons-camps.md 10.2KB 104L
 DOC docs/seasons-camps.md:17-40 ## 1. Хэрэглэгчийн шийдвэрүүд
 DOC docs/seasons-camps.md:41-54 ## 2. Улирал
@@ -1032,17 +1026,7 @@ DOC docs/seasons-camps.md:81-86 ## 6. Төллөлт
 DOC docs/seasons-camps.md:87-92 ## 7. Отор (M5-ын үргэлжлэл)
 DOC docs/seasons-camps.md:93-99 ## 8. Дүрслэл, UI
 DOC docs/seasons-camps.md:100-104 ## 9. Тэнцвэр ба 🙋
-FILE docs/terrain-review-ai.md 16.0KB 184L
-DOC docs/terrain-review-ai.md:17-22 ## 0. Товч дүгнэлт
-DOC docs/terrain-review-ai.md:23-34 ## 1. AI заавал дагах хязгаарлалт
-DOC docs/terrain-review-ai.md:35-47 ## 2. P0: Өвс яагаад гацаадаг вэ (нотолгоо)
-DOC docs/terrain-review-ai.md:48-118 ## 3. P0 засвар
-DOC docs/terrain-review-ai.md:119-154 ## 4. P1: `visuals.json` ба кодын нийцэл
-DOC docs/terrain-review-ai.md:155-162 ## 5. P2: Уншигдах байдал ба жижиг алдаа
-DOC docs/terrain-review-ai.md:163-171 ## 6. Хүлээн авах шалгуур
-DOC docs/terrain-review-ai.md:172-179 ## 7. Дараалал
-DOC docs/terrain-review-ai.md:180-184 ## 8. Хаалтын тэмдэглэл (2026-11-14)
-FILE docs/visuals-plan.md 28.3KB 277L
+FILE docs/visuals-plan.md 28.4KB 277L
 DOC docs/visuals-plan.md:19-31 ## 1. Зорилго
 DOC docs/visuals-plan.md:32-40 ## 2. Зарчим
 DOC docs/visuals-plan.md:41-96 ## 3. Хэв маяг (V0-д батлах)
@@ -1051,7 +1035,7 @@ DOC docs/visuals-plan.md:110-215 ## 5. Үе шатууд
 DOC docs/visuals-plan.md:216-233 ## 6. Чанарын түвшин
 DOC docs/visuals-plan.md:234-257 ## 7. Хэмжилт
 DOC docs/visuals-plan.md:258-261 ## 8. Хойшлогдох (V1+)
-DOC docs/visuals-plan.md:262-274 ## 9. Шийдвэрүүд 🙋
+DOC docs/visuals-plan.md:262-274 ## 9. Шийдвэрүүд
 DOC docs/visuals-plan.md:275-277 ## 10–11. Хэрэгжүүлэлтийн тэмдэглэл ба ажлын чеклист
 FILE docs/water-horses-transport.md 11.5KB 162L
 DOC docs/water-horses-transport.md:16-55 ## 1. Ус ба цангалт
