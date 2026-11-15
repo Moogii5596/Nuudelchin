@@ -354,3 +354,39 @@ describe('npc гурвалжин (V4.5 R4)', () => {
     }
   });
 });
+
+describe('Ярилцлага, NPC сэтгэл хөдлөл (V4.5 R7)', () => {
+  it('EmotionQueue: үйл явдлын дараалал дуусаад idle руу буцна', async () => {
+    const { EmotionQueue } = await import('../src/render/character/talk');
+    const q = new EmotionQueue();
+    expect(q.step(0.1)).toBe('neutral');
+    q.playEvent('sell');
+    const seq = characters.talk.events.sell;
+    expect(q.step(0.01)).toBe(seq[0]![0]);
+    let t = 0, last = '';
+    while (q.busy && t < 60) { last = q.step(0.1); t += 0.1; }
+    expect(last).toBe(seq.at(-1)![0]);
+    expect(q.step(0.1, 'happy')).toBe('happy');
+    expect(characters.talk.events.buy[0]![0]).toBe('sad');
+    expect(characters.talk.events.wolfSeen[0]![0]).toBe('surprised');
+  });
+
+  it('turnToward: богино замаар эргэнэ, хэтрэхгүй', async () => {
+    const { turnToward } = await import('../src/render/character/talk');
+    expect(turnToward(3, -3, 100, 1)).toBeCloseTo(3 + (2 * Math.PI - 6), 5);   // π-г дайрч богино зам
+    expect(Math.abs(turnToward(0, 1, 2, 0.1) - 0.2)).toBeLessThan(1e-9);
+  });
+
+  it('talk тохиргооны алдааг барина', () => {
+    const cases: Array<[(j: Record<string, unknown>) => void, RegExp]> = [
+      [(j) => { ((j.talk as Record<string, unknown>).events as Record<string, unknown>).sell = [['joy', 1]]; }, /talk\.events\.sell\[0\]\[0\]/],
+      [(j) => { (j.talk as Record<string, unknown>).partnerR = 0; }, /talk\.partnerR/],
+      [(j) => { delete ((j.talk as Record<string, unknown>).events as Record<string, unknown>).wolfSeen; }, /talk\.events\.wolfSeen/],
+    ];
+    for (const [mutate, re] of cases) {
+      const j = clone();
+      mutate(j);
+      expect(() => validateCharacters(j)).toThrow(re);
+    }
+  });
+});

@@ -7,15 +7,19 @@
 import * as THREE from 'three';
 import type { GameConfig } from '../sim/config';
 import type { VehicleId } from '../sim/state';
-import { allBuildings, facingOf, lotSlots, sumDoors, TRADE_ROLES, type SumBuildingSpec } from '../sim/systems/sumtown';
+import { allBuildings, facingOf, lotSlots, nearTradeDoor, sumDoors, TRADE_ROLES, type SumBuildingSpec } from '../sim/systems/sumtown';
 import { buildSumCenter, type SumCenterBuild } from './sumlayout';
-import { plotDoors } from '../sim/systems/town';
+import { nearTownDoor, plotDoors } from '../sim/systems/town';
+import { nearTeahouse } from '../sim/systems/helpers';
 import type { GameState } from '../sim/state';
 import { mat, VisualRng } from './util';
 import { visualStyle } from './style';
 import { makeDog, poseDogLying } from './characters';
 import { makeCrowdParts } from './character/crowd';
-import { characters } from './character/spec';
+import { characters, characterSpec } from './character/spec';
+import { animateCharacter } from './character/animate';
+import { buildCharacter, showOutfit, type CharacterRig } from './character/rig';
+import { EmotionQueue, postTalkEvent, talkBus, turnToward } from './character/talk';
 import { t } from '../i18n/i18n';
 
 function label(text: string, bg: string, fg: string, w = 4.2, h = 1): THREE.Mesh {
@@ -41,24 +45,29 @@ function label(text: string, bg: string, fg: string, w = 4.2, h = 1): THREE.Mesh
  * Оршин суугчид (хөдөлгөөнгүй): render/character-ийн `crowd` хэлбэр — төрх (data/characters.json crowd.looks: preset ×
  * бие × малгай) бүр хэсэг бүрээрээ нэг InstancedMesh, хүн бүр өөрийн байрлал, чиглэл, өндөртэй (docs/character-design.md §4).
  */
-function residents(g: THREE.Group, people: Array<{ x: number; y: number; z: number; heading: number; scale: number; look: number }>): void {
-  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
+interface Resident { x: number; y: number; z: number; heading: number; scale: number; look: number; slot: number }
+const residentMatrix = (p: Resident, hidden = false): THREE.Matrix4 => {
+  const k = hidden ? 0 : p.scale;
+  return new THREE.Matrix4().compose(new THREE.Vector3(p.x, p.y, p.z), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), p.heading), new THREE.Vector3(k, k, k));
+};
+function residents(g: THREE.Group, people: Resident[]): THREE.InstancedMesh[][] {
+  const meshes: THREE.InstancedMesh[][] = [];
   characters.crowd.looks.forEach((look, li) => {
     const mine = people.filter((p) => p.look === li);
+    meshes[li] = [];
     if (!mine.length) return;
-    const parts = makeCrowdParts(look);
-    for (const part of parts) {
+    mine.forEach((p, i) => { p.slot = i; });
+    for (const part of makeCrowdParts(look)) {
       const inst = new THREE.InstancedMesh(part.geometry, part.material, mine.length);
-      mine.forEach((p, i) => {
-        q.setFromAxisAngle(up, p.heading);
-        inst.setMatrixAt(i, m.compose(new THREE.Vector3(p.x, p.y, p.z), q, new THREE.Vector3(p.scale, p.scale, p.scale)));
-      });
+      mine.forEach((p, i) => inst.setMatrixAt(i, residentMatrix(p)));
       inst.instanceMatrix.needsUpdate = true;
       inst.computeBoundingSphere();
       inst.castShadow = part.castShadow;
       g.add(inst);
+      meshes[li]!.push(inst);
     }
   });
+  return meshes;
 }
 
 const FACING_YAW = { s: 0, n: Math.PI, e: Math.PI / 2, w: -Math.PI / 2 } as const;
@@ -70,8 +79,18 @@ export class SumCenterView {
   private lotVehicles: { id: VehicleId; mesh: THREE.Object3D }[] = [];
   /** Зарах байшингийн «ЗАРНА» / «ТАНЫХ» шошго */
   private houseSigns: { plot: string; sale: THREE.Object3D; mine: THREE.Object3D }[] = [];
+  /** R7: оршин суугчид (instanced) ба ярилцлагын үед амьд дүрээр солигдох нэг нь */
+  private readonly cfg: GameConfig;
+  private people: Resident[] = [];
+  private peopleMeshes: THREE.InstancedMesh[][] = [];
+  private liveRigs = new Map<number, CharacterRig>();
+  private live: { idx: number; rig: CharacterRig; yaw: number; emo: EmotionQueue } | null = null;
+  private talkClock = 0;
+  private talkPrev = { x: 0, z: 0 };
+  private talkMoney = NaN;
 
   constructor(cfg: GameConfig) {
+    this.cfg = cfg;
     const L = cfg.sumcenter;
     this.built = buildSumCenter(L, { seed: 7 });
     this.ground = this.built.ground;
@@ -143,7 +162,7 @@ export class SumCenterView {
     // Оршин суугчид: дэлгүүр, цайны газрын үүдэнд
     const rng = new VisualRng(777);
     const RS = visualStyle.sumResidents;
-    const crowd: Array<{ x: number; y: number; z: number; heading: number; scale: number; look: number }> = [];
+    const crowd: Resident[] = [];
     for (const d of sumDoors(cfg)) {
       if (!d.role) continue;
       for (let k = 0; k < RS.perDoor; k++) {
@@ -152,12 +171,13 @@ export class SumCenterView {
         if (crowd.some((p) => Math.hypot(p.x - x, p.z - z) < 1)) continue;   // бие биендээ шигдэхгүй
         // ихэнх нь хаалга руу эсвэл бие бие рүүгээ хандсан — санамсаргүй ч гудамж руу нуруугаа харуулахгүй
         const heading = Math.PI + rng.range(-1.2, 1.2);
-        crowd.push({ x, y: H(x, z), z, heading, scale: rng.range(RS.stature[0], RS.stature[1]), look: Math.floor(rng.next() * characters.crowd.looks.length) });
+        crowd.push({ x, y: H(x, z), z, heading, scale: rng.range(RS.stature[0], RS.stature[1]), look: Math.floor(rng.next() * characters.crowd.looks.length), slot: 0 });
       }
     }
     const people = new THREE.Group();
     people.userData.sumPeople = crowd.length;
-    residents(people, crowd);
+    this.peopleMeshes = residents(people, crowd);
+    this.people = crowd;
     this.group.add(people);
 
     // V3.2: айлын үүдэнд хэвтэх нохой (байрлалын хэш)
@@ -187,13 +207,82 @@ export class SumCenterView {
 
   heightAt = (x: number, z: number): number => this.built.heightAt(x, z);
 
-  /** V3.4: худалдаж авсан байшингийн шошго */
+  /** V3.4: худалдаж авсан байшингийн шошго (R7: сумын төвд кадр бүр дуудагддаг тул ярилцлагыг ч эндээс) */
   syncTown(state: GameState): void {
+    this.syncTalk(state);
     for (const s of this.houseSigns) {
       const own = !!state.town.houses[s.plot];
       s.sale.visible = !own;
       s.mine.visible = own;
     }
+  }
+
+  /**
+   * R7 ярилцлага: тоглогч дэлгүүр, үйлчилгээний хаалганы тойрогт (цонх нээгддэг газар) зогсож байхад хамгийн ойрын оршин
+   * суугч амьд дүр болж (instanced хувийг нууна) тоглогч руу эргэж ярина; ярилцлагын үед мөнгө өсвөл баярлах, буурвал
+   * гуниглах (character/talk.ts-ээр тоглогчид дамжина). scene.ts-д dt өгдөггүй тул цагийг өөрөө хэмжинэ.
+   */
+  private syncTalk(state: GameState): void {
+    const now = performance.now();
+    const dt = this.talkClock ? Math.min(0.1, (now - this.talkClock) / 1000) : 0;
+    this.talkClock = now;
+    const p = state.player, T = characters.talk;
+    const speed = dt > 0 ? Math.hypot(p.x - this.talkPrev.x, p.z - this.talkPrev.z) / dt : 0;
+    this.talkPrev = { x: p.x, z: p.z };
+    const trade = nearTradeDoor(this.cfg, state);
+    const atDoor = p.place === 'sum' && !p.interior && (trade !== null || nearTownDoor(this.cfg, state) !== null || nearTeahouse(this.cfg, state));
+    const active = atDoor && speed < T.stillSpeed;
+    let idx = -1;
+    if (active) {
+      let bd = T.partnerR;
+      this.people.forEach((r, i) => { const d = Math.hypot(r.x - p.x, r.z - p.z); if (d < bd) { bd = d; idx = i; } });
+    }
+    if (!active || idx !== this.live?.idx) this.releaseLive();
+    if (active && idx >= 0 && !this.live) this.takeLive(idx);
+    const r = this.live ? this.people[this.live.idx]! : null;
+    talkBus.partner = !active ? null : r ? { x: r.x, z: r.z } : trade ? { x: trade.x, z: trade.z } : null;
+    // наймаа: ярилцлагын үеэр мөнгө өөрчлөгдвөл
+    if (active && !Number.isNaN(this.talkMoney) && state.money !== this.talkMoney) {
+      const e = state.money > this.talkMoney ? 'sell' : 'buy';
+      postTalkEvent(e);
+      this.live?.emo.playEvent(e);
+    }
+    this.talkMoney = active ? state.money : NaN;
+    if (this.live && r) {
+      const L = this.live;
+      L.yaw = turnToward(L.yaw, Math.atan2(p.x - r.x, p.z - r.z), T.turnRate, dt);
+      L.rig.root.rotation.y = L.yaw;
+      L.rig.root.position.y = r.y + animateCharacter(L.rig, { dt, speed: 0, mode: 'foot', raise: false, uurga: false, talk: true, emotion: L.emo.step(dt) });
+    }
+  }
+
+  private setResidentHidden(idx: number, hidden: boolean): void {
+    const r = this.people[idx]!;
+    for (const m of this.peopleMeshes[r.look] ?? []) { m.setMatrixAt(r.slot, residentMatrix(r, hidden)); m.instanceMatrix.needsUpdate = true; }
+  }
+
+  private takeLive(idx: number): void {
+    const r = this.people[idx]!, look = characters.crowd.looks[r.look]!;
+    let rig = this.liveRigs.get(r.look);
+    if (!rig) {
+      rig = buildCharacter(characterSpec(look.preset), { detail: 'npc', hats: look.hat === 'none' ? [] : [look.hat] });
+      showOutfit(rig.root, look.body, look.hat);
+      this.liveRigs.set(r.look, rig);
+      this.group.add(rig.root);
+    }
+    rig.root.visible = true;
+    rig.root.position.set(r.x, r.y, r.z);
+    rig.root.scale.setScalar(r.scale);
+    rig.root.rotation.y = r.heading;
+    this.setResidentHidden(idx, true);
+    this.live = { idx, rig, yaw: r.heading, emo: new EmotionQueue() };
+  }
+
+  private releaseLive(): void {
+    if (!this.live) return;
+    this.live.rig.root.visible = false;
+    this.setResidentHidden(this.live.idx, false);
+    this.live = null;
   }
 
   /** Худалдаж авсан тээврийг талбайгаас нууна */

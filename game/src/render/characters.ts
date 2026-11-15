@@ -11,7 +11,8 @@ import type { Dog } from '../sim/systems/dogs';
 import { visualStyle, type HerderEmotion, type HerderEvent } from './style';
 import { animateCharacter } from './character/animate';
 import { buildCharacter, dressCharacter } from './character/rig';
-import { characterSpec } from './character/spec';
+import { characters, characterSpec } from './character/spec';
+import { talkBus, turnToward } from './character/talk';
 import type { Season } from '../sim/config';
 import { angDiff, limb, meshBox, mat } from './util';
 
@@ -163,6 +164,9 @@ export class CharactersView {
   /** Нүүрний сэтгэл хөдлөл: үйл явдлын дараалал [сэтгэл хөдлөл, үлдсэн сек] */
   private emoQueue: Array<[HerderEmotion, number]> = [];
   private seen = { births: 0, losses: 0, threat: false };
+  /** R7: ярилцлага — сүүлд уншсан үйл явдлын дугаар, тоглогчийн харах чиглэл (зөвхөн дүрслэл, sim-ийн heading өөрчлөгдөхгүй) */
+  private talkSeq = 0;
+  private faceYaw: number | null = null;
 
   constructor() {
     this.group.add(this.herder.root, this.horse.root, this.campGroup);
@@ -249,7 +253,13 @@ export class CharactersView {
     } else {
       H.root.position.set(p.x, y, p.z);
     }
-    const talking = Object.values(this.bubbles).some((b) => b.t > 0);
+    // R7: сумын төвийн хаалганы дэргэд зогсоход ярилцагч руу харж ярина (character/talk.ts — sumcenter бичнэ)
+    const partner = p.place === 'sum' && !p.mounted && !p.driving && speed < characters.talk.stillSpeed ? talkBus.partner : null;
+    if (talkBus.seq !== this.talkSeq) {
+      this.talkSeq = talkBus.seq;
+      if (talkBus.event) this.emoQueue = characters.talk.events[talkBus.event].map(([e, sec]) => [e, sec]);
+    }
+    const talking = Object.values(this.bubbles).some((b) => b.t > 0) || partner !== null;
     const bob = animateCharacter(H, {
       dt,
       speed,
@@ -260,7 +270,13 @@ export class CharactersView {
       emotion: this.emotion(state, dt),
     });
     if (!p.mounted) H.root.position.y += bob;
-    H.root.rotation.y = p.heading;
+    if (partner) {
+      this.faceYaw = turnToward(this.faceYaw ?? p.heading, Math.atan2(partner.x - p.x, partner.z - p.z), characters.talk.turnRate, dt);
+      H.root.rotation.y = this.faceYaw;
+    } else {
+      this.faceYaw = null;
+      H.root.rotation.y = p.heading;
+    }
     const uurga = H.root.getObjectByName('uurga');
     if (uurga) uurga.visible = p.holdingUurga;
     const carried = p.carry.reduce((t, c) => t + c.amount, 0);

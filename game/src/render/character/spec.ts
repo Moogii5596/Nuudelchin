@@ -4,7 +4,7 @@
  * Preset `base`-ээр өвлөнө: объект гүн нийлнэ, массив, энгийн утга солигдоно.
  */
 import charactersJson from '../../../../data/characters.json';
-import { visualStyle, type HelperRole, type OutfitBody, type OutfitHat } from '../style';
+import { visualStyle, type HelperRole, type HerderEmotion, type OutfitBody, type OutfitHat } from '../style';
 import type { Season } from '../../sim/config';
 
 export interface BootPalette { shaft: number; tan: number; sole: number; teal: number; gold: number; pattern: number }
@@ -88,6 +88,14 @@ export const ROLE_KEYS: readonly RoleKey[] = ['herd', 'horse', 'drive', 'otor', 
 /** Сумын оршин суугчийн төрх: preset × бие × малгай */
 export interface CrowdLookSpec { preset: string; body: OutfitBody; hat: CharacterHat | 'none' }
 
+export type TalkEventName = 'sell' | 'buy' | 'wolfSeen';
+export const TALK_EVENTS: readonly TalkEventName[] = ['sell', 'buy', 'wolfSeen'];
+/** Сэтгэл хөдлөлийн дараалал [[сэтгэл хөдлөл, сек], ...] */
+export type EmotionSeq = Array<[HerderEmotion, number]>;
+/** Ярилцлага, NPC-ийн сэтгэл хөдлөл (V4.5 R7) */
+export interface TalkConfig { partnerR: number; turnRate: number; stillSpeed: number; wolfSeeR: number; events: Record<TalkEventName, EmotionSeq> }
+const EMOTION_NAMES: readonly HerderEmotion[] = ['neutral', 'happy', 'angry', 'sad', 'surprised'];
+
 export interface CharactersData {
   detail: { npc: NpcDetail };
   presets: Record<string, CharacterSpec>;
@@ -95,6 +103,7 @@ export interface CharactersData {
   ready: string[];
   roles: Record<RoleKey, Record<'m' | 'f', string>>;
   crowd: { lod: number; shadowParts: number; looks: CrowdLookSpec[] };
+  talk: TalkConfig;
   player: CharacterSpec;
 }
 
@@ -235,7 +244,7 @@ function merge(a: Obj, b: Obj): Obj {
 
 /** characters.json-ийг шалгаж, preset бүрийг base-тэй нь нийлүүлнэ. Алдаатай бол зам заасан Error шиднэ */
 export function validateCharacters(json: unknown): CharactersData {
-  const root = group(json, '(root)', ['detail', 'skins', 'presets', 'player', 'roles', 'crowd']);
+  const root = group(json, '(root)', ['detail', 'skins', 'presets', 'player', 'roles', 'crowd', 'talk']);
   const skins: Skins = {};
   for (const [k, v] of Object.entries(group(root.skins, 'skins', Object.keys(isObj(root.skins) ? root.skins : {})))) if (!k.startsWith('_')) skins[k] = colors(v, `skins.${k}`, ['base', 'shade', 'nail']);
   const npc = group(group(root.detail, 'detail', ['npc']).npc, 'detail.npc', ['lod', 'shadowParts']);
@@ -286,7 +295,22 @@ export function validateCharacters(json: unknown): CharactersData {
       return { preset: known(o.preset, `crowd.looks[${i}].preset`), body: oneOf(o.body, `crowd.looks[${i}].body`, OUTFIT_BODIES), hat: oneOf(o.hat, `crowd.looks[${i}].hat`, [...CHARACTER_HATS, 'none'] as const) };
     }),
   };
-  return { detail, presets, player, ready, roles, crowd };
+  const t = group(root.talk, 'talk', ['partnerR', 'turnRate', 'stillSpeed', 'wolfSeeR', 'events']);
+  const ev = group(t.events, 'talk.events', TALK_EVENTS);
+  const events = {} as Record<TalkEventName, EmotionSeq>;
+  for (const k of TALK_EVENTS) {
+    const seq = ev[k];
+    if (!Array.isArray(seq) || seq.length === 0) fail(`talk.events.${k}`, '[[сэтгэл хөдлөл, сек], ...] байх ёстой');
+    events[k] = (seq as unknown[]).map((st, i): [HerderEmotion, number] => {
+      if (!Array.isArray(st) || st.length !== 2) return fail(`talk.events.${k}[${i}]`, '[сэтгэл хөдлөл, сек] байх ёстой');
+      return [oneOf(st[0], `talk.events.${k}[${i}][0]`, EMOTION_NAMES), num(st[1], `talk.events.${k}[${i}][1]`, 0.05, 30)];
+    });
+  }
+  const talk: TalkConfig = {
+    partnerR: num(t.partnerR, 'talk.partnerR', 1, 30), turnRate: num(t.turnRate, 'talk.turnRate', 0.5, 30),
+    stillSpeed: num(t.stillSpeed, 'talk.stillSpeed', 0, 3), wolfSeeR: num(t.wolfSeeR, 'talk.wolfSeeR', 1, 200), events,
+  };
+  return { detail, presets, player, ready, roles, crowd, talk };
 }
 
 export const characters: CharactersData = validateCharacters(charactersJson);

@@ -8,7 +8,9 @@ import type { Dwelling, Helper } from '../sim/systems/helpers';
 import { makeHorse, swingLegs, type Rig } from './characters';
 import { animateCharacter } from './character/animate';
 import { buildCharacter, dressCharacter, type CharacterRig } from './character/rig';
-import { helperSpec } from './character/spec';
+import { characters, helperSpec } from './character/spec';
+import { EmotionQueue } from './character/talk';
+import type { Wolf } from '../sim/systems/wolves';
 import type { HelperRole } from './style';
 import type { Season } from '../sim/config';
 import { angDiff, mat, meshBox } from './util';
@@ -58,6 +60,9 @@ interface HelperView {
   h: number;
   phase: number;
   role: HelperRole;
+  /** R7: сэтгэл хөдлөл (чоно харвал гайхна) */
+  emo: EmotionQueue;
+  sawWolf: boolean;
 }
 
 export class StaffView {
@@ -98,7 +103,7 @@ export class StaffView {
         }
         root.add(rig.root);
         this.group.add(root);
-        v = { rig, horse, root, x: h.x, z: h.z, h: h.heading, phase: 0, role };
+        v = { rig, horse, root, x: h.x, z: h.z, h: h.heading, phase: 0, role, emo: new EmotionQueue(), sawWolf: false };
         this.views.set(h.id, v);
       }
       const visible = h.mode !== 'away' && state.player.place === 'camp' && !state.move;
@@ -117,7 +122,12 @@ export class StaffView {
       v.phase += dt * sp * (v.horse ? 0.9 : 2.6);
       const sw = sp > 0.3 ? Math.sin(v.phase) * 0.7 : 0;
       if (v.horse) swingLegs(v.horse, sw);
-      const bob = animateCharacter(v.rig, { dt, speed: v.horse ? 0 : sp, mode: v.horse ? 'mounted' : 'foot', raise: false, uurga: false, talk: false, emotion: 'neutral' });
+      // дайрч буй чоно ойроос харвал гайхна → уурлана (data/characters.json talk.events.wolfSeen)
+      const R = characters.talk.wolfSeeR;
+      const wolf = (state.wolves.list as Wolf[]).some((w) => (w.mode === 'hunt' || w.mode === 'drag') && Math.hypot(w.x - v!.x, w.z - v!.z) < R);
+      if (wolf && !v.sawWolf) v.emo.playEvent('wolfSeen');
+      v.sawWolf = wolf;
+      const bob = animateCharacter(v.rig, { dt, speed: v.horse ? 0 : sp, mode: v.horse ? 'mounted' : 'foot', raise: false, uurga: false, talk: false, emotion: v.emo.step(dt) });
       if (!v.horse) v.rig.root.position.y = bob;
       // Унтаж байхад хэвтэнэ (хүүхэд, малчин гэртээ)
       v.root.rotation.z = h.mode === 'sleep' && !v.horse ? Math.PI / 2 : 0;
