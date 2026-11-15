@@ -466,7 +466,8 @@
         "d": 30,
         "fence": "#6E8A5C",
         "dz": 4
-      }
+      },
+      "gameRole": "zdtg"
     },
     {
       "id": "bank",
@@ -660,7 +661,8 @@
         "d": 26,
         "fence": "#D9A441",
         "dz": 2
-      }
+      },
+      "gameRole": "temple"
     },
     {
       "id": "shop_1_1",

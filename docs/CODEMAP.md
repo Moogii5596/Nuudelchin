@@ -44,9 +44,9 @@ SYM game/src/input/touch.ts:259 method TouchUI.fullscreen
 SYM game/src/input/touch.ts:272 method TouchUI.paused
 SYM game/src/input/touch.ts:276 method TouchUI.portrait
 SYM game/src/input/touch.ts:281 method TouchUI.update
-FILE game/src/main.ts 27.1KB 440L
-SYM game/src/main.ts:35 fn toast
-SYM game/src/main.ts:48 fn start
+FILE game/src/main.ts 27.6KB 444L
+SYM game/src/main.ts:36 fn toast
+SYM game/src/main.ts:49 fn start
 FILE game/src/pwa.ts 4.9KB 107L exports: isIOS,isAndroid,inAppBrowser,installed,canLockLandscape,pwa,landscapeFullscreen,registerServiceWorker,onConnectionChange
 SYM game/src/pwa.ts:17 const isIOS
 SYM game/src/pwa.ts:18 const isAndroid
@@ -103,17 +103,17 @@ SYM game/src/render/items.ts:12 fn canGeo
 SYM game/src/render/items.ts:22 fn fiberGeo
 SYM game/src/render/items.ts:37 class ItemsView
 SYM game/src/render/items.ts:64 method ItemsView.update
-FILE game/src/render/scene.ts 20.0KB 428L exports: GameView
+FILE game/src/render/scene.ts 20.0KB 431L exports: GameView
 SYM game/src/render/scene.ts:24 fn flakeTexture
 SYM game/src/render/scene.ts:37 class GameView
 SYM game/src/render/scene.ts:234 method GameView.applyQuality
 SYM game/src/render/scene.ts:263 method GameView.snapshot
 SYM game/src/render/scene.ts:276 method GameView.toggleHeatmap
 SYM game/src/render/scene.ts:282 method GameView.frame
-SYM game/src/render/scene.ts:345 method GameView.applyDaylight
-SYM game/src/render/scene.ts:405 method GameView.updateFlakes
-SYM game/src/render/scene.ts:421 method GameView.drawCalls
-SYM game/src/render/scene.ts:425 method GameView.triangleCount
+SYM game/src/render/scene.ts:348 method GameView.applyDaylight
+SYM game/src/render/scene.ts:408 method GameView.updateFlakes
+SYM game/src/render/scene.ts:424 method GameView.drawCalls
+SYM game/src/render/scene.ts:428 method GameView.triangleCount
 FILE game/src/render/staff.ts 5.7KB 153L exports: StaffView
 SYM game/src/render/staff.ts:14 fn helperRole
 SYM game/src/render/staff.ts:19 fn smallGer
@@ -149,12 +149,13 @@ SYM game/src/render/style.ts:219 fn parseOutfits
 SYM game/src/render/style.ts:256 fn validateVisualStyle
 SYM game/src/render/style.ts:546 const visualStyle
 SYM game/src/render/style.ts:548 fn paletteHex
-FILE game/src/render/sumcenter.ts 7.3KB 156L exports: SumCenterView
-SYM game/src/render/sumcenter.ts:17 fn label
-SYM game/src/render/sumcenter.ts:37 fn resident
-SYM game/src/render/sumcenter.ts:58 class SumCenterView
-SYM game/src/render/sumcenter.ts:153 method SumCenterView.syncLot
-FILE game/src/render/sumlayout.ts 37.2KB 728L exports: Rect,VehicleSlotView,HomeDoor,SumPlotView,SumCenterBuild,buildSumCenter
+FILE game/src/render/sumcenter.ts 8.7KB 188L exports: SumCenterView
+SYM game/src/render/sumcenter.ts:19 fn label
+SYM game/src/render/sumcenter.ts:39 fn resident
+SYM game/src/render/sumcenter.ts:60 class SumCenterView
+SYM game/src/render/sumcenter.ts:176 method SumCenterView.syncTown
+SYM game/src/render/sumcenter.ts:185 method SumCenterView.syncLot
+FILE game/src/render/sumlayout.ts 37.0KB 727L exports: Rect,VehicleSlotView,HomeDoor,SumPlotView,SumCenterBuild,buildSumCenter
 SYM game/src/render/sumlayout.ts:12 interface Rect
 SYM game/src/render/sumlayout.ts:14 interface VehicleSlotView
 SYM game/src/render/sumlayout.ts:16 interface HomeDoor
@@ -206,52 +207,54 @@ SYM game/src/render/terrain.ts:1205 method TerrainView.buildPostAndFire
 SYM game/src/render/terrain.ts:1229 method TerrainView.syncHay
 SYM game/src/render/terrain.ts:1255 method TerrainView.buildDens
 SYM game/src/render/terrain.ts:1292 method TerrainView.buildHome
-FILE game/src/render/ui/names.ts 4.6KB 107L exports: stageName,speciesEmoji,PRODUCT_EMOJI,productName,unitOf,expenseName,PROCESSOR_NAME,fmtMoney,fmtNum,fmtMinutes,PASTURE_NAME,SEASON_NAME,SEASON_EMOJI,CAMP_HINT,+2
+FILE game/src/render/ui/names.ts 4.7KB 111L exports: stageName,speciesEmoji,PRODUCT_EMOJI,productName,unitOf,expenseName,PROCESSOR_NAME,fmtMoney,fmtNum,fmtMinutes,PASTURE_NAME,SEASON_NAME,SEASON_EMOJI,CAMP_HINT,+2
 SYM game/src/render/ui/names.ts:22 fn stageName
 SYM game/src/render/ui/names.ts:33 fn speciesEmoji
 SYM game/src/render/ui/names.ts:37 const PRODUCT_EMOJI
 SYM game/src/render/ui/names.ts:41 fn productName
 SYM game/src/render/ui/names.ts:45 fn unitOf
-SYM game/src/render/ui/names.ts:61 fn expenseName
-SYM game/src/render/ui/names.ts:65 const PROCESSOR_NAME
-SYM game/src/render/ui/names.ts:71 fn fmtMoney
-SYM game/src/render/ui/names.ts:76 fn fmtNum
-SYM game/src/render/ui/names.ts:80 fn fmtMinutes
-SYM game/src/render/ui/names.ts:86 const PASTURE_NAME
-SYM game/src/render/ui/names.ts:96 const SEASON_NAME
-SYM game/src/render/ui/names.ts:97 const SEASON_EMOJI
-SYM game/src/render/ui/names.ts:99 const CAMP_HINT
-SYM game/src/render/ui/names.ts:106 const WATER_NAME
-SYM game/src/render/ui/names.ts:107 const WOLF_LEVEL_NAME
-FILE game/src/render/ui/panels.ts 73.4KB 1052L exports: UiHooks,Panels
-SYM game/src/render/ui/panels.ts:86 interface UiHooks
-SYM game/src/render/ui/panels.ts:93 class Panels
-SYM game/src/render/ui/panels.ts:134 method Panels.isOpen
-SYM game/src/render/ui/panels.ts:138 method Panels.open
-SYM game/src/render/ui/panels.ts:161 method Panels.close
-SYM game/src/render/ui/panels.ts:175 method Panels.showReport
-SYM game/src/render/ui/panels.ts:187 method Panels.refresh
-SYM game/src/render/ui/panels.ts:193 method Panels.showArrive
-SYM game/src/render/ui/panels.ts:199 method Panels.render
-SYM game/src/render/ui/panels.ts:218 method Panels.storageHtml
-SYM game/src/render/ui/panels.ts:280 method Panels.buyItems
-SYM game/src/render/ui/panels.ts:304 method Panels.vehicleButtons
-SYM game/src/render/ui/panels.ts:312 method Panels.cargoList
-SYM game/src/render/ui/panels.ts:326 method Panels.cargoHtml
-SYM game/src/render/ui/panels.ts:395 method Panels.selectedAnimals
-SYM game/src/render/ui/panels.ts:403 method Panels.shopHtml
-SYM game/src/render/ui/panels.ts:474 method Panels.lotHtml
-SYM game/src/render/ui/panels.ts:506 method Panels.arriveHtml
-SYM game/src/render/ui/panels.ts:547 method Panels.reportHtml
-SYM game/src/render/ui/panels.ts:593 method Panels.wolfKillsHtml
-SYM game/src/render/ui/panels.ts:600 method Panels.dogsHtml
-SYM game/src/render/ui/panels.ts:628 method Panels.campsHtml
-SYM game/src/render/ui/panels.ts:675 method Panels.cheatHtml
-SYM game/src/render/ui/panels.ts:688 method Panels.teahouseHtml
-SYM game/src/render/ui/panels.ts:711 method Panels.helpersHtml
-SYM game/src/render/ui/panels.ts:762 method Panels.otorHtml
-SYM game/src/render/ui/panels.ts:788 method Panels.payHtml
-SYM game/src/render/ui/panels.ts:808 method Panels.act
+SYM game/src/render/ui/names.ts:65 fn expenseName
+SYM game/src/render/ui/names.ts:69 const PROCESSOR_NAME
+SYM game/src/render/ui/names.ts:75 fn fmtMoney
+SYM game/src/render/ui/names.ts:80 fn fmtNum
+SYM game/src/render/ui/names.ts:84 fn fmtMinutes
+SYM game/src/render/ui/names.ts:90 const PASTURE_NAME
+SYM game/src/render/ui/names.ts:100 const SEASON_NAME
+SYM game/src/render/ui/names.ts:101 const SEASON_EMOJI
+SYM game/src/render/ui/names.ts:103 const CAMP_HINT
+SYM game/src/render/ui/names.ts:110 const WATER_NAME
+SYM game/src/render/ui/names.ts:111 const WOLF_LEVEL_NAME
+FILE game/src/render/ui/panels.ts 82.7KB 1175L exports: UiHooks,Panels
+SYM game/src/render/ui/panels.ts:87 interface UiHooks
+SYM game/src/render/ui/panels.ts:94 class Panels
+SYM game/src/render/ui/panels.ts:135 method Panels.isOpen
+SYM game/src/render/ui/panels.ts:139 method Panels.open
+SYM game/src/render/ui/panels.ts:162 method Panels.close
+SYM game/src/render/ui/panels.ts:176 method Panels.showReport
+SYM game/src/render/ui/panels.ts:188 method Panels.refresh
+SYM game/src/render/ui/panels.ts:194 method Panels.showArrive
+SYM game/src/render/ui/panels.ts:200 method Panels.render
+SYM game/src/render/ui/panels.ts:220 method Panels.storageHtml
+SYM game/src/render/ui/panels.ts:282 method Panels.buyItems
+SYM game/src/render/ui/panels.ts:306 method Panels.vehicleButtons
+SYM game/src/render/ui/panels.ts:314 method Panels.cargoList
+SYM game/src/render/ui/panels.ts:328 method Panels.cargoHtml
+SYM game/src/render/ui/panels.ts:397 method Panels.selectedAnimals
+SYM game/src/render/ui/panels.ts:405 method Panels.shopHtml
+SYM game/src/render/ui/panels.ts:476 method Panels.townCommand
+SYM game/src/render/ui/panels.ts:506 method Panels.townHtml
+SYM game/src/render/ui/panels.ts:584 method Panels.lotHtml
+SYM game/src/render/ui/panels.ts:616 method Panels.arriveHtml
+SYM game/src/render/ui/panels.ts:657 method Panels.reportHtml
+SYM game/src/render/ui/panels.ts:703 method Panels.wolfKillsHtml
+SYM game/src/render/ui/panels.ts:710 method Panels.dogsHtml
+SYM game/src/render/ui/panels.ts:738 method Panels.campsHtml
+SYM game/src/render/ui/panels.ts:785 method Panels.cheatHtml
+SYM game/src/render/ui/panels.ts:798 method Panels.teahouseHtml
+SYM game/src/render/ui/panels.ts:821 method Panels.helpersHtml
+SYM game/src/render/ui/panels.ts:872 method Panels.otorHtml
+SYM game/src/render/ui/panels.ts:898 method Panels.payHtml
+SYM game/src/render/ui/panels.ts:918 method Panels.act
 FILE game/src/render/util.ts 4.3KB 123L exports: VisualRng,strSeed,clamp,angDiff,mat,boxGeo,merge,meshBox,limb,batchStatic
 SYM game/src/render/util.ts:8 class VisualRng
 SYM game/src/render/util.ts:13 method VisualRng.next
@@ -329,37 +332,37 @@ SYM game/src/sim/clock.ts:56 fn tick
 SYM game/src/sim/clock.ts:77 fn realSecondsPerMinute
 SYM game/src/sim/clock.ts:83 fn realSecondsPerDay
 SYM game/src/sim/clock.ts:89 fn formatTime
-FILE game/src/sim/commands.ts 16.7KB 327L exports: Command,CommandResult,nearHome,applyCommand
-SYM game/src/sim/commands.ts:25 type Command
-SYM game/src/sim/commands.ts:64 interface CommandResult
-SYM game/src/sim/commands.ts:70 fn nearHome
-SYM game/src/sim/commands.ts:79 fn ok
-SYM game/src/sim/commands.ts:80 fn fail
-SYM game/src/sim/commands.ts:82 fn applyCommand
-FILE game/src/sim/config.ts 19.2KB 389L exports: Species,Sex,Season,SeasonsConfig,SPECIES,TimeConfig,SpeciesConfig,AnimalsConfig,PastureTypeConfig,GrazingConfig,HerdConfig,PastureConfig,WaterShape,TerrainConfig,+9
-SYM game/src/sim/config.ts:24 type Species
-SYM game/src/sim/config.ts:25 type Sex
-SYM game/src/sim/config.ts:26 type Season
-SYM game/src/sim/config.ts:29 interface SeasonsConfig
-SYM game/src/sim/config.ts:47 const SPECIES
-SYM game/src/sim/config.ts:49 interface TimeConfig
-SYM game/src/sim/config.ts:63 interface SpeciesConfig
-SYM game/src/sim/config.ts:78 interface AnimalsConfig
-SYM game/src/sim/config.ts:97 interface PastureTypeConfig
-SYM game/src/sim/config.ts:104 interface GrazingConfig
-SYM game/src/sim/config.ts:127 interface HerdConfig
-SYM game/src/sim/config.ts:146 interface PastureConfig
-SYM game/src/sim/config.ts:168 type WaterShape
-SYM game/src/sim/config.ts:173 interface TerrainConfig
-SYM game/src/sim/config.ts:184 interface CampConfig
-SYM game/src/sim/config.ts:194 interface HomeConfig
-SYM game/src/sim/config.ts:206 interface WorldLocation
-SYM game/src/sim/config.ts:211 interface WorldMapConfig
-SYM game/src/sim/config.ts:231 interface StartAnimal
-SYM game/src/sim/config.ts:239 interface GameConfig
-SYM game/src/sim/config.ts:259 fn loadConfig
-SYM game/src/sim/config.ts:287 fn validateConfig
-SYM game/src/sim/config.ts:346 fn validateSumLayout
+FILE game/src/sim/commands.ts 18.8KB 369L exports: Command,CommandResult,nearHome,applyCommand
+SYM game/src/sim/commands.ts:26 type Command
+SYM game/src/sim/commands.ts:74 interface CommandResult
+SYM game/src/sim/commands.ts:80 fn nearHome
+SYM game/src/sim/commands.ts:89 fn ok
+SYM game/src/sim/commands.ts:90 fn fail
+SYM game/src/sim/commands.ts:92 fn applyCommand
+FILE game/src/sim/config.ts 20.4KB 403L exports: Species,Sex,Season,SeasonsConfig,SPECIES,TimeConfig,SpeciesConfig,AnimalsConfig,PastureTypeConfig,GrazingConfig,HerdConfig,PastureConfig,WaterShape,TerrainConfig,+9
+SYM game/src/sim/config.ts:25 type Species
+SYM game/src/sim/config.ts:26 type Sex
+SYM game/src/sim/config.ts:27 type Season
+SYM game/src/sim/config.ts:30 interface SeasonsConfig
+SYM game/src/sim/config.ts:48 const SPECIES
+SYM game/src/sim/config.ts:50 interface TimeConfig
+SYM game/src/sim/config.ts:64 interface SpeciesConfig
+SYM game/src/sim/config.ts:79 interface AnimalsConfig
+SYM game/src/sim/config.ts:98 interface PastureTypeConfig
+SYM game/src/sim/config.ts:105 interface GrazingConfig
+SYM game/src/sim/config.ts:128 interface HerdConfig
+SYM game/src/sim/config.ts:147 interface PastureConfig
+SYM game/src/sim/config.ts:169 type WaterShape
+SYM game/src/sim/config.ts:174 interface TerrainConfig
+SYM game/src/sim/config.ts:185 interface CampConfig
+SYM game/src/sim/config.ts:195 interface HomeConfig
+SYM game/src/sim/config.ts:207 interface WorldLocation
+SYM game/src/sim/config.ts:212 interface WorldMapConfig
+SYM game/src/sim/config.ts:232 interface StartAnimal
+SYM game/src/sim/config.ts:240 interface GameConfig
+SYM game/src/sim/config.ts:262 fn loadConfig
+SYM game/src/sim/config.ts:291 fn validateConfig
+SYM game/src/sim/config.ts:350 fn validateSumLayout
 FILE game/src/sim/rng.ts 1.3KB 49L exports: Rng
 SYM game/src/sim/rng.ts:6 class Rng
 SYM game/src/sim/rng.ts:14 method Rng.state
@@ -369,43 +372,43 @@ SYM game/src/sim/rng.ts:32 method Rng.range
 SYM game/src/sim/rng.ts:37 method Rng.int
 SYM game/src/sim/rng.ts:41 method Rng.chance
 SYM game/src/sim/rng.ts:45 method Rng.pick
-FILE game/src/sim/sim.ts 9.9KB 229L exports: DayReport,SimEvent,Sim
-SYM game/src/sim/sim.ts:27 interface DayReport
-SYM game/src/sim/sim.ts:49 type SimEvent
-SYM game/src/sim/sim.ts:51 class Sim
-SYM game/src/sim/sim.ts:71 method Sim.on
-SYM game/src/sim/sim.ts:78 method Sim.emit
-SYM game/src/sim/sim.ts:82 method Sim.command
-SYM game/src/sim/sim.ts:89 method Sim.emitTravel
-SYM game/src/sim/sim.ts:94 method Sim.step
-SYM game/src/sim/sim.ts:148 method Sim.refreshQuality
-SYM game/src/sim/sim.ts:153 method Sim.runDays
-SYM game/src/sim/sim.ts:158 method Sim.endDay
-SYM game/src/sim/sim.ts:220 method Sim.spend
-SYM game/src/sim/sim.ts:226 method Sim.random
-FILE game/src/sim/state.ts 11.0KB 267L exports: SAVE_VERSION,ProductId,PRODUCTS,AnimalMode,Animal,GroundItem,Batch,ProcessorKind,ProcessorState,VehicleId,VEHICLES,BuyOrder,Place,FleetVehicle,+8
-SYM game/src/sim/state.ts:14 const SAVE_VERSION
-SYM game/src/sim/state.ts:16 type ProductId
-SYM game/src/sim/state.ts:17 const PRODUCTS
-SYM game/src/sim/state.ts:21 type AnimalMode
-SYM game/src/sim/state.ts:23 interface Animal
-SYM game/src/sim/state.ts:51 interface GroundItem
-SYM game/src/sim/state.ts:60 interface Batch
-SYM game/src/sim/state.ts:66 type ProcessorKind
-SYM game/src/sim/state.ts:68 interface ProcessorState
-SYM game/src/sim/state.ts:74 type VehicleId
-SYM game/src/sim/state.ts:75 const VEHICLES
-SYM game/src/sim/state.ts:77 type BuyOrder
-SYM game/src/sim/state.ts:90 type Place
-SYM game/src/sim/state.ts:93 interface FleetVehicle
-SYM game/src/sim/state.ts:105 interface MapState
-SYM game/src/sim/state.ts:113 interface CampState
-SYM game/src/sim/state.ts:121 interface DayStats
-SYM game/src/sim/state.ts:134 interface PlayerState
-SYM game/src/sim/state.ts:149 interface GameState
-SYM game/src/sim/state.ts:179 fn emptyDayStats
-SYM game/src/sim/state.ts:183 fn newAnimal
-SYM game/src/sim/state.ts:216 fn createInitialState
+FILE game/src/sim/sim.ts 10.3KB 236L exports: DayReport,SimEvent,Sim
+SYM game/src/sim/sim.ts:28 interface DayReport
+SYM game/src/sim/sim.ts:50 type SimEvent
+SYM game/src/sim/sim.ts:52 class Sim
+SYM game/src/sim/sim.ts:72 method Sim.on
+SYM game/src/sim/sim.ts:79 method Sim.emit
+SYM game/src/sim/sim.ts:83 method Sim.command
+SYM game/src/sim/sim.ts:90 method Sim.emitTravel
+SYM game/src/sim/sim.ts:95 method Sim.step
+SYM game/src/sim/sim.ts:153 method Sim.refreshQuality
+SYM game/src/sim/sim.ts:158 method Sim.runDays
+SYM game/src/sim/sim.ts:163 method Sim.endDay
+SYM game/src/sim/sim.ts:227 method Sim.spend
+SYM game/src/sim/sim.ts:233 method Sim.random
+FILE game/src/sim/state.ts 11.4KB 271L exports: SAVE_VERSION,ProductId,PRODUCTS,AnimalMode,Animal,GroundItem,Batch,ProcessorKind,ProcessorState,VehicleId,VEHICLES,BuyOrder,Place,FleetVehicle,+8
+SYM game/src/sim/state.ts:15 const SAVE_VERSION
+SYM game/src/sim/state.ts:17 type ProductId
+SYM game/src/sim/state.ts:18 const PRODUCTS
+SYM game/src/sim/state.ts:22 type AnimalMode
+SYM game/src/sim/state.ts:24 interface Animal
+SYM game/src/sim/state.ts:52 interface GroundItem
+SYM game/src/sim/state.ts:61 interface Batch
+SYM game/src/sim/state.ts:67 type ProcessorKind
+SYM game/src/sim/state.ts:69 interface ProcessorState
+SYM game/src/sim/state.ts:75 type VehicleId
+SYM game/src/sim/state.ts:76 const VEHICLES
+SYM game/src/sim/state.ts:78 type BuyOrder
+SYM game/src/sim/state.ts:91 type Place
+SYM game/src/sim/state.ts:94 interface FleetVehicle
+SYM game/src/sim/state.ts:106 interface MapState
+SYM game/src/sim/state.ts:114 interface CampState
+SYM game/src/sim/state.ts:122 interface DayStats
+SYM game/src/sim/state.ts:135 interface PlayerState
+SYM game/src/sim/state.ts:150 interface GameState
+SYM game/src/sim/state.ts:182 fn emptyDayStats
+SYM game/src/sim/state.ts:186 fn newAnimal
+SYM game/src/sim/state.ts:219 fn createInitialState
 FILE game/src/sim/systems/animals.ts 5.2KB 123L exports: AnimalBody,frameKg,liveWeightKg,salePrice,buyPrice,sheepUnits,herdSheepUnits,grazingSheepUnits,dailyConditionDelta,dailyAnimals
 SYM game/src/sim/systems/animals.ts:8 interface AnimalBody
 SYM game/src/sim/systems/animals.ts:21 fn frameKg
@@ -582,7 +585,7 @@ SYM game/src/sim/systems/storage.ts:20 fn count
 SYM game/src/sim/systems/storage.ts:25 fn add
 SYM game/src/sim/systems/storage.ts:35 fn take
 SYM game/src/sim/systems/storage.ts:52 fn dailyStorageAging
-FILE game/src/sim/systems/sumtown.ts 10.2KB 224L exports: SumXZ,SumRoofSpec,SumYardSpec,SumBuildingSpec,SumCompoundSpec,SumFieldSpec,SumSpecialPlotSpec,SumZoneSpec,SumRoadSpec,SumPropSpec,SumLayout,Facing,TRADE_ROLES,TradeRole,+15
+FILE game/src/sim/systems/sumtown.ts 11.8KB 265L exports: SumXZ,SumRoofSpec,SumYardSpec,SumBuildingSpec,SumCompoundSpec,SumFieldSpec,SumSpecialPlotSpec,SumZoneSpec,SumRoadSpec,SumPropSpec,SumLayout,Facing,TRADE_ROLES,TradeRole,+17
 SYM game/src/sim/systems/sumtown.ts:12 type SumXZ
 SYM game/src/sim/systems/sumtown.ts:13 interface SumRoofSpec
 SYM game/src/sim/systems/sumtown.ts:14 interface SumYardSpec
@@ -614,6 +617,41 @@ SYM game/src/sim/systems/sumtown.ts:196 fn canSellAnimals
 SYM game/src/sim/systems/sumtown.ts:200 fn pointInPoly
 SYM game/src/sim/systems/sumtown.ts:208 fn distSeg
 SYM game/src/sim/systems/sumtown.ts:216 fn sumHeight
+SYM game/src/sim/systems/sumtown.ts:226 fn nearestOnPolyline
+SYM game/src/sim/systems/sumtown.ts:244 fn faceTowardRoad
+SYM game/src/sim/systems/sumtown.ts:259 fn plotHouse
+FILE game/src/sim/systems/town.ts 19.4KB 368L exports: HouseMode,ZdtgLoan,BankLoan,RelativeState,TownState,TownEvent,newTownState,plotDoors,TownRole,nearTownDoor,housePrice,buyHouse,setHouseMode,donate,+13
+SYM game/src/sim/systems/town.ts:18 type HouseMode
+SYM game/src/sim/systems/town.ts:19 interface ZdtgLoan
+SYM game/src/sim/systems/town.ts:20 interface BankLoan
+SYM game/src/sim/systems/town.ts:21 interface RelativeState
+SYM game/src/sim/systems/town.ts:22 interface TownState
+SYM game/src/sim/systems/town.ts:33 type TownEvent
+SYM game/src/sim/systems/town.ts:35 fn newTownState
+SYM game/src/sim/systems/town.ts:44 fn plotDoors
+SYM game/src/sim/systems/town.ts:51 type TownRole
+SYM game/src/sim/systems/town.ts:55 fn nearTownDoor
+SYM game/src/sim/systems/town.ts:74 fn near
+SYM game/src/sim/systems/town.ts:79 fn spend
+SYM game/src/sim/systems/town.ts:83 fn earn
+SYM game/src/sim/systems/town.ts:87 fn repUp
+SYM game/src/sim/systems/town.ts:93 fn housePrice
+SYM game/src/sim/systems/town.ts:97 fn buyHouse
+SYM game/src/sim/systems/town.ts:109 fn setHouseMode
+SYM game/src/sim/systems/town.ts:119 fn donate
+SYM game/src/sim/systems/town.ts:130 fn zdtgPackages
+SYM game/src/sim/systems/town.ts:135 fn takeZdtgLoan
+SYM game/src/sim/systems/town.ts:156 fn zdtgRepayable
+SYM game/src/sim/systems/town.ts:163 fn repayZdtgLoan
+SYM game/src/sim/systems/town.ts:185 fn bankCollateralHouses
+SYM game/src/sim/systems/town.ts:190 fn bankLimit
+SYM game/src/sim/systems/town.ts:197 fn takeBankLoan
+SYM game/src/sim/systems/town.ts:208 fn repayBankLoan
+SYM game/src/sim/systems/town.ts:226 interface GiftPlan
+SYM game/src/sim/systems/town.ts:229 fn giveGift
+SYM game/src/sim/systems/town.ts:274 fn townDaily
+SYM game/src/sim/systems/town.ts:328 fn townMonthly
+SYM game/src/sim/systems/town.ts:334 fn townSeason
 FILE game/src/sim/systems/travel.ts 25.8KB 572L exports: TravelEvent,fleetOf,initFleetVehicle,addVehicle,syncAway,cargoUnits,hayInOrders,hayRoom,cargoSlots,nearestVehicle,enterVehicle,exitVehicle,boardBest,takeFromStorage,+20
 SYM game/src/sim/systems/travel.ts:22 type TravelEvent
 SYM game/src/sim/systems/travel.ts:27 fn fleetOf
@@ -748,17 +786,18 @@ FILE game/tests/sim.test.ts 1.4KB 32L
 FILE game/tests/staff.test.ts 12.0KB 229L
 FILE game/tests/style.test.ts 7.9KB 148L
 FILE game/tests/sumtown.test.ts 4.5KB 90L
+FILE game/tests/town.test.ts 6.1KB 127L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 12.8KB 96L
+FILE docs/CONTEXT.md 13.3KB 97L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-28 ## 2. Стек ба командууд
-DOC docs/CONTEXT.md:29-70 ## 3. Файлын зураглал (`game/src/`)
-DOC docs/CONTEXT.md:71-73 ## 4. `data/*.json` → аль файл хэрэглэдэг
-DOC docs/CONTEXT.md:74-82 ## 5. Архитектурын дүрэм ([[architecture]])
-DOC docs/CONTEXT.md:83-86 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
-DOC docs/CONTEXT.md:87-89 ## 7. Нээлттэй асуултууд
-DOC docs/CONTEXT.md:90-96 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
+DOC docs/CONTEXT.md:29-71 ## 3. Файлын зураглал (`game/src/`)
+DOC docs/CONTEXT.md:72-74 ## 4. `data/*.json` → аль файл хэрэглэдэг
+DOC docs/CONTEXT.md:75-83 ## 5. Архитектурын дүрэм ([[architecture]])
+DOC docs/CONTEXT.md:84-87 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
+DOC docs/CONTEXT.md:88-90 ## 7. Нээлттэй асуултууд
+DOC docs/CONTEXT.md:91-97 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
 FILE docs/INDEX.md 13.5KB 134L
 DOC docs/INDEX.md:16-30 ## 1. Унших дараалал ба давуу эрх
 DOC docs/INDEX.md:31-105 ## 2. Баримтууд
@@ -886,11 +925,11 @@ DOC docs/competitive-analysis/summary.md:172-200 ## 6. Зах зээл, борл
 DOC docs/competitive-analysis/summary.md:201-213 ## 7. Манай ялгарах байр суурь (нэг дор)
 DOC docs/competitive-analysis/summary.md:214-242 ## 8. Шийдвэрийн асуултууд 🙋
 DOC docs/competitive-analysis/summary.md:243-248 ## Эх сурвалж
-FILE docs/decisions.md 26.0KB 170L
+FILE docs/decisions.md 27.0KB 172L
 DOC docs/decisions.md:16-101 ## 0. Хэрэглэгчийн шийдвэрийн түүх
 DOC docs/decisions.md:102-127 ## 13. Нээлттэй шийдвэрүүд 🙋 (бүх баримтаас нэгтгэсэн)
-DOC docs/decisions.md:128-161 ## 14. Нээлттэй шийдвэр — бусад эх сурвалжаас нэгтгэсэн (2026-11-15)
-DOC docs/decisions.md:162-170 ## 15. Баримтуудын зөрүү (2026-11-15-ны шилжүүлэлтээр илэрсэн, хэрэглэгч шийдэх)
+DOC docs/decisions.md:128-163 ## 14. Нээлттэй шийдвэр — бусад эх сурвалжаас нэгтгэсэн (2026-11-15)
+DOC docs/decisions.md:164-172 ## 15. Баримтуудын зөрүү (2026-11-15-ны шилжүүлэлтээр илэрсэн, хэрэглэгч шийдэх)
 FILE docs/grazing-livestock.md 27.4KB 316L
 DOC docs/grazing-livestock.md:17-125 ## 1. Малын үзүүлэлтүүд
 DOC docs/grazing-livestock.md:126-146 ## 2. Үнэ = амьдын жин × кг-ын үнэ
@@ -943,17 +982,17 @@ DOC docs/plan/M7.md:12-22 ## Блокууд
 DOC docs/plan/M7.md:23-25 ## Асуулга (9 асуулт)
 DOC docs/plan/M7.md:26-28 ## Нээлттэй асуулт
 DOC docs/plan/M7.md:29-32 ## Эрсдэл
-FILE docs/plan/V.md 14.3KB 69L
+FILE docs/plan/V.md 15.5KB 70L
 DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-20 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
-DOC docs/plan/V.md:21-49 ## Блокууд ба чеклист (2026-11-15)
-DOC docs/plan/V.md:50-52 ## Нээлттэй асуулт
-DOC docs/plan/V.md:53-59 ## Зогссон цэг
-DOC docs/plan/V.md:60-69 ## Шийдвэрийн чеклист
-FILE docs/plan/playtest.md 6.5KB 54L
+DOC docs/plan/V.md:21-50 ## Блокууд ба чеклист (2026-11-15)
+DOC docs/plan/V.md:51-53 ## Нээлттэй асуулт
+DOC docs/plan/V.md:54-60 ## Зогссон цэг
+DOC docs/plan/V.md:61-70 ## Шийдвэрийн чеклист
+FILE docs/plan/playtest.md 6.8KB 55L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
-DOC docs/plan/playtest.md:19-30 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
-DOC docs/plan/playtest.md:31-54 ## C. Мэдрэмж, үе шат бүрээр
+DOC docs/plan/playtest.md:19-31 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
+DOC docs/plan/playtest.md:32-55 ## C. Мэдрэмж, үе шат бүрээр
 FILE docs/seasons-camps.md 10.2KB 104L
 DOC docs/seasons-camps.md:17-40 ## 1. Хэрэглэгчийн шийдвэрүүд
 DOC docs/seasons-camps.md:41-54 ## 2. Улирал

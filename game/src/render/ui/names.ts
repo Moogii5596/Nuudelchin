@@ -57,6 +57,10 @@ const EXPENSE: Record<string, string> = {
   buy_vehicle: 'Тээвэр авсан',
   buy_dog: 'Нохой авсан',
   dogFood: 'Нохойн хоол',
+  buy_house: 'Хашаа байшин авсан',
+  donation: 'Дуганд хандив',
+  zdtgLoan: 'Малын зээл төлсөн',
+  bankLoan: 'Банкны зээл төлсөн',
 };
 export function expenseName(k: string): string {
   return EXPENSE[k] ?? k;

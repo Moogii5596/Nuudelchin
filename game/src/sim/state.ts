@@ -10,8 +10,9 @@ import { spawnWolves, type WolfState } from './systems/wolves';
 import type { Dog } from './systems/dogs';
 import { initFleetVehicle } from './systems/travel';
 import { newHelpersState, type HelpersState } from './systems/helpers';
+import { newTownState, type TownState } from './systems/town';
 
-export const SAVE_VERSION = 10;   // 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих · 6: нохой, чонын дайралт, сүргийн нүүдэл (M4) · 7: шөнө, хотлох, өглөөний бүтээгдэхүүн, Портер/Амжиргаа, шөнийн чоно (M4.5) · 8: газрын зураг, тээвэр жолоодох, ачаа, Худалдаачин (M4.6) · 9: туслах малчид, цайны газар, отор, туслахын мал (M5) · 10: улирал, цас, боодол өвс, 4 бууц, отрын бүтээгдэхүүн (M5.5)
+export const SAVE_VERSION = 11;   // 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих · 6: нохой, чонын дайралт, сүргийн нүүдэл (M4) · 7: шөнө, хотлох, өглөөний бүтээгдэхүүн, Портер/Амжиргаа, шөнийн чоно (M4.5) · 8: газрын зураг, тээвэр жолоодох, ачаа, Худалдаачин (M4.6) · 9: туслах малчид, цайны газар, отор, туслахын мал (M5) · 10: улирал, цас, боодол өвс, 4 бууц, отрын бүтээгдэхүүн (M5.5) · 11: сумын төвийн амьдрал — байшин, нэр хүнд, зээл, хамаатан (V3.4)
 
 export type ProductId = 'milk' | 'tarag' | 'aaruul' | 'urum' | 'wool' | 'felt' | 'cashmere';
 export const PRODUCTS: readonly ProductId[] = ['milk', 'tarag', 'aaruul', 'urum', 'wool', 'felt', 'cashmere'];
@@ -119,7 +120,7 @@ export interface CampState {
 }
 
 export interface DayStats {
-  income: Partial<Record<ProductId | 'animals', number>>;
+  income: Partial<Record<ProductId | 'animals' | 'rent' | 'loan', number>>;
   expenses: Record<string, number>;
   dropped: Partial<Record<ProductId, number>>;
   collected: Partial<Record<ProductId, number>>;
@@ -174,6 +175,8 @@ export interface GameState {
   helpers: HelpersState;
   today: DayStats;
   goalReachedDay: number | null;
+  /** V3.4: сумын төвийн амьдрал (байшин, нэр хүнд, зээл, хамаатан) */
+  town: TownState;
 }
 
 export function emptyDayStats(): DayStats {
@@ -257,6 +260,7 @@ export function createInitialState(cfg: GameConfig, seed: number): GameState {
     wolves: spawnWolves(cfg, seed, cfg.start.camp),
     dogs: [],
     helpers: newHelpersState(),
+    town: newTownState(cfg),
     today: emptyDayStats(),
     goalReachedDay: null,
   };

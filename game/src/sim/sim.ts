@@ -22,6 +22,7 @@ import { mapStep, syncAway, type TravelEvent } from './systems/travel';
 import { dailyOtor, helpersStep, payWages, refreshCandidates, type HelperEvent } from './systems/helpers';
 import { moveStep } from './systems/camps';
 import { herderStep } from './systems/herder';
+import { townDaily, townMonthly, townSeason, type TownEvent } from './systems/town';
 import { wolvesDaily, wolvesStep, nightRaid, endRaid, type WolfEvent } from './systems/wolves';
 
 export interface DayReport extends DayStats {
@@ -46,7 +47,7 @@ export interface DayReport extends DayStats {
   goalReached: boolean;
 }
 
-export type SimEvent = ClockEvent | WolfEvent | TravelEvent | HelperEvent | { type: 'dayReport'; report: DayReport } | { type: 'season'; season: Season; day: number };
+export type SimEvent = ClockEvent | WolfEvent | TravelEvent | HelperEvent | { type: 'dayReport'; report: DayReport } | TownEvent | { type: 'season'; season: Season; day: number };
 
 export class Sim {
   readonly cfg: GameConfig;
@@ -120,7 +121,10 @@ export class Sim {
     const events = tick(state.time, cfg.time);
     for (const ev of events) {
       if (ev.type === 'dayEnd') this.endDay(ev.day);
-      else if (ev.type === 'monthEnd') for (const e2 of payWages(cfg, state)) this.emit(e2);
+      else if (ev.type === 'monthEnd') {
+        for (const e2 of payWages(cfg, state)) this.emit(e2);
+        townMonthly(cfg, state);
+      }
       else if (ev.type === 'nightStart') {
         sleepAll(state);
         state.today.coldHit += coldNight(cfg, state, (a) => atHome(cfg, a));
@@ -133,6 +137,7 @@ export class Sim {
         if (season !== prevSeason) {
           this.refreshQuality();
           this.emit({ type: 'season', season, day: ev.day });
+          for (const e2 of townSeason(cfg, state, () => state.helpers.nextId++)) this.emit(e2);
         }
         morning(cfg, state, rng);
         endRaid(state);
@@ -182,7 +187,9 @@ export class Sim {
     const spoiled = storage.dailyStorageAging(cfg, state);
     for (const [p, n] of Object.entries(spoiled)) t.spoiled[p as keyof typeof t.spoiled] = (t.spoiled[p as keyof typeof t.spoiled] ?? 0) + (n ?? 0);
 
-    this.spend('living', cfg.economy.dailyLivingCost);
+    const town = townDaily(cfg, state);   // V3.4: түрээс, зээл, хамаатны айлчлал
+    for (const e2 of town.events) this.emit(e2);
+    if (!town.livingCovered) this.spend('living', cfg.economy.dailyLivingCost);
     if (state.dogs.length) this.spend('dogFood', state.dogs.length * cfg.dogs.foodPerDay);
     dogsDaily(cfg, state);
 

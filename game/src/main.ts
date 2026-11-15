@@ -22,6 +22,7 @@ import { DOG_ORDER_NAME } from './sim/systems/dogs';
 import { nearestVehicle, partySpeedKmPerMin } from './sim/systems/travel';
 import { nearTeahouse } from './sim/systems/helpers';
 import { nearLotSlot, nearTradeDoor, sumDoors } from './sim/systems/sumtown';
+import { nearTownDoor } from './sim/systems/town';
 import { campAccess, seasonProgress, yearOf } from './sim/systems/seasons';
 import { GameView } from './render/scene';
 import { Panels } from './render/ui/panels';
@@ -144,6 +145,7 @@ function start(): void {
       }
     } else if (e.type === 'wolfKill') toast(`🐺 Чоно ${t('species.' + e.species).toLowerCase()} барьж авлаа`, 'bad');
     else if (e.type === 'wolfGiveUp') toast('Чоно ангаа орхилоо', 'good');
+    else if (e.type === 'town') toast(e.msg, e.good ? 'good' : 'bad');
     else if (e.type === 'dogFight') toast(e.result === 'wolfKilled' ? `🐕 ${e.dog} чонотой барилдаж аллаа! Нохой шархадсан — хэд хоног амраана` : e.result === 'bothDied' ? `🐕 ${e.dog} чонотой барилдаж хоёулаа үхлээ` : `🐺 Хоёр чоно ${e.dog}-ыг барилаа`, e.result === 'wolfKilled' ? 'good' : 'bad');
     else if (e.type === 'wolfPups') toast(`🐺 Чонын үүрэнд ${e.n} гөлөг гарлаа — чоно өлсөж, илүү ан хийнэ`, 'bad');
     else if (e.type === 'wolfArrive') toast(`🐺 Өөр газраас ${e.n} чоно ирж үүрэнд суулаа`, 'bad');
@@ -186,7 +188,7 @@ function start(): void {
         if (!photoMode) toast('Зургийн горимоос гарлаа', 'good');
       }
       else if (what === 'storage') panels.open('storage');
-      else if (what === 'trade') panels.open(state.player.place === 'sum' ? (nearLotSlot(cfg, state) ? 'lot' : nearTeahouse(cfg, state) ? 'teahouse' : 'shop') : 'cargo');
+      else if (what === 'trade') panels.open(state.player.place === 'sum' ? (nearLotSlot(cfg, state) ? 'lot' : nearTownDoor(cfg, state) ? 'town' : nearTeahouse(cfg, state) ? 'teahouse' : 'shop') : 'cargo');
       else if (what === 'helpers') panels.open('helpers');
       else if (what === 'dogs') panels.open('dogs');
       else if (what === 'camps') panels.open('camps');
@@ -278,7 +280,9 @@ function start(): void {
         const v = slot && !slot.display ? (cfg.vehicles as unknown as Record<string, { name: string; emoji: string; price: number } | undefined>)[slot.vehicle] : undefined;
         return v ? `<kbd>E</kbd> ${v.emoji} ${v.name} — ${fmtMoney(v.price)} · Худалдан авах` : `${t('sum3d.lot.' + (slot?.vehicle ?? ''))} — удахгүй`;
       };
-      html = slot && !p.driving ? lotTxt() : door ? `<kbd>E</kbd> ${t('sum3d.' + door.id)}` : nearTeahouse(cfg, state) ? '<kbd>E</kbd> Цайны газар — туслах малчин хөлслөх' : nearV ? '<kbd>V</kbd> тэрэг/машиндаа суух' : p.mounted ? where + '. Буцахдаа <kbd>Tab</kbd> эсвэл захын хязгаар руу давхи' : where + ' · <kbd>Tab</kbd> газрын зураг';
+      const town = nearTownDoor(cfg, state);
+      const townTxt = (): string => town!.role === 'house' ? (state.town.houses[town!.id] ? 'Таны хашаа байшин' : 'Зарагдах хашаа байшин') : town!.role === 'relative' ? 'Хамаатан айл' : t('sum3d.' + town!.id) + (town!.role === 'soon' ? ' — тун удахгүй' : '');
+      html = slot && !p.driving ? lotTxt() : door ? `<kbd>E</kbd> ${t('sum3d.' + door.id)}` : town ? `<kbd>E</kbd> ${townTxt()}` : nearTeahouse(cfg, state) ? '<kbd>E</kbd> Цайны газар — туслах малчин хөлслөх' : nearV ? '<kbd>V</kbd> тэрэг/машиндаа суух' : p.mounted ? where + '. Буцахдаа <kbd>Tab</kbd> эсвэл захын хязгаар руу давхи' : where + ' · <kbd>Tab</kbd> газрын зураг';
     } else if (!p.away && !panels.isOpen) {
       const home = cfg.camps.home;
       const dHome = Math.hypot(p.x - home.x, p.z - home.z);

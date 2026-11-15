@@ -14,6 +14,7 @@ import * as processing from './systems/processing';
 import { buyLotVehicle, boardBest, canTravel, driveVehicle, enterVehicle, exitVehicle, leaveToMap, loadCargo, mapGo, migrateHere, takeFromStorage, droveAnimals, trade, unloadCargo, type TradePlan } from './systems/travel';
 import { startMove } from './systems/camps';
 import { worldLimit } from './systems/sumtown';
+import { buyHouse, donate, giveGift, repayBankLoan, repayZdtgLoan, setHouseMode, takeBankLoan, takeZdtgLoan, type GiftPlan, type HouseMode } from './systems/town';
 import { shout, toggleMount, toggleUurga } from './systems/herder';
 import { scareWolves } from './systems/wolves';
 import { newAnimal } from './state';
@@ -45,6 +46,15 @@ export type Command =
   | { type: 'unloadCargo'; vehicle: VehicleId }
   | { type: 'trade'; plan: TradePlan }
   | { type: 'buyLotVehicle'; slot: string }   // V3.3: машин худалдааны талбайгаас авч шууд суух
+  // V3.4 сумын төвийн амьдрал
+  | { type: 'buyHouse'; plot: string }
+  | { type: 'houseMode'; plot: string; mode: HouseMode }
+  | { type: 'donate'; amount: number }
+  | { type: 'zdtgLoan'; pkg: string }
+  | { type: 'zdtgRepay'; mode: 'animals' | 'money' }
+  | { type: 'bankLoan'; amount: number }
+  | { type: 'bankRepay'; amount: number }
+  | { type: 'gift'; relative: string; plan: GiftPlan }
   | { type: 'droveAnimals'; animalIds: number[] }   // морьтой: мал тууж явах
   | { type: 'takeFromStorage'; products: Partial<Record<ProductId, number>> }   // агуулахаас гартаа (зарахаар)
   | { type: 'neighborBull'; on: boolean }
@@ -256,6 +266,38 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
     case 'trade': {
       const err = trade(cfg, state, sim.random, cmd.plan, proximity);
       return err ? fail(err) : ok('Арилжаа хийлээ');
+    }
+    case 'buyHouse': {
+      const err = buyHouse(cfg, state, cmd.plot, proximity);
+      return err ? fail(err) : ok('🏠 Хашаа байшин худалдаж авлаа — түрээслүүлж болно');
+    }
+    case 'houseMode': {
+      const err = setHouseMode(cfg, state, cmd.plot, cmd.mode);
+      return err ? fail(err) : ok(cmd.mode === 'rent' ? 'Түрээслүүллээ — өдөр бүр түрээс орно' : 'Байшин хоосон');
+    }
+    case 'donate': {
+      const err = donate(cfg, state, cmd.amount, proximity);
+      return err ? fail(err) : ok('🙏 Хандив өглөө — нэр хүнд өслөө');
+    }
+    case 'zdtgLoan': {
+      const err = takeZdtgLoan(cfg, state, sim.random, cmd.pkg, proximity);
+      return err ? fail(err) : ok('🏛 Малын зээл авлаа — мал араас тань тууж/тэвшинд ачигдлаа');
+    }
+    case 'zdtgRepay': {
+      const err = repayZdtgLoan(cfg, state, cmd.mode, proximity);
+      return err ? fail(err) : ok('🏛 Малын зээлээ төллөө');
+    }
+    case 'bankLoan': {
+      const err = takeBankLoan(cfg, state, cmd.amount, proximity);
+      return err ? fail(err) : ok('🏦 Зээл авлаа');
+    }
+    case 'bankRepay': {
+      const err = repayBankLoan(cfg, state, cmd.amount, proximity);
+      return err ? fail(err) : ok('🏦 Зээл төллөө');
+    }
+    case 'gift': {
+      const err = giveGift(cfg, state, cmd.relative, cmd.plan, proximity);
+      return err ? fail(err) : ok('🎁 Бэлэг өглөө — хамаатантайгаа илүү дотно боллоо');
     }
     case 'buyLotVehicle': {
       const err = buyLotVehicle(cfg, state, cmd.slot, proximity);

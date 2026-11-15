@@ -9,6 +9,8 @@ import type { GameConfig } from '../sim/config';
 import type { VehicleId } from '../sim/state';
 import { allBuildings, facingOf, lotSlots, sumDoors, TRADE_ROLES, type SumBuildingSpec } from '../sim/systems/sumtown';
 import { buildSumCenter, type SumCenterBuild } from './sumlayout';
+import { plotDoors } from '../sim/systems/town';
+import type { GameState } from '../sim/state';
 import { mat, VisualRng } from './util';
 import { visualStyle } from './style';
 import { makeDog, poseDogLying } from './characters';
@@ -60,6 +62,8 @@ export class SumCenterView {
   readonly ground: THREE.Mesh;
   private built: SumCenterBuild;
   private lotVehicles: { id: VehicleId; mesh: THREE.Object3D }[] = [];
+  /** Зарах байшингийн «ЗАРНА» / «ТАНЫХ» шошго */
+  private houseSigns: { plot: string; sale: THREE.Object3D; mine: THREE.Object3D }[] = [];
 
   constructor(cfg: GameConfig) {
     const L = cfg.sumcenter;
@@ -102,8 +106,27 @@ export class SumCenterView {
     for (const d of sumDoors(cfg)) {
       if (d.role === 'teahouse') ringAt(d.x, d.z, S.shopR, 0x7ad0ff);
       else if ((TRADE_ROLES as readonly string[]).includes(d.role)) ringAt(d.x, d.z, S.shopR, 0xffd34a);
+      else if (d.role === 'temple' || d.role === 'zdtg' || d.role === 'bank') ringAt(d.x, d.z, S.shopR, 0xd08cff);
     }
     for (const s of lotSlots(cfg)) ringAt(s.x, s.z, S.lotR, 0x9be37a);
+    // V3.4: зарах байшин, хамаатан айл — ягаан тойрог, шошго
+    for (const d of plotDoors(cfg)) {
+      ringAt(d.x, d.z, S.shopR, 0xd08cff);
+      const y = H(d.x, d.z) + 4.4;
+      if (d.role === 'house') {
+        const sale = label('ЗАРНА', '#e0c23a', '#2b2620', 3.2, 0.8), mine = label('ТАНЫХ', '#3f7a4a', '#ffffff', 3.2, 0.8);
+        for (const m of [sale, mine]) {
+          m.position.set(d.x, y, d.z - 1.88);
+          this.group.add(m);
+        }
+        mine.visible = false;
+        this.houseSigns.push({ plot: d.id, sale, mine });
+      } else {
+        const m = label('ХАМААТАН', '#3f7a4a', '#ffffff', 3.6, 0.8);
+        m.position.set(d.x, y, d.z - 1.88);
+        this.group.add(m);
+      }
+    }
 
     // Худалдаанд байгаа тээвэр (зарагдсан нь нуугдана — syncLot)
     for (const s of lotSlots(cfg)) {
@@ -148,6 +171,15 @@ export class SumCenterView {
   }
 
   heightAt = (x: number, z: number): number => this.built.heightAt(x, z);
+
+  /** V3.4: худалдаж авсан байшингийн шошго */
+  syncTown(state: GameState): void {
+    for (const s of this.houseSigns) {
+      const own = !!state.town.houses[s.plot];
+      s.sale.visible = !own;
+      s.mine.visible = own;
+    }
+  }
 
   /** Худалдаж авсан тээврийг талбайгаас нууна */
   syncLot(owned: readonly string[]): void {

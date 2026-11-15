@@ -222,3 +222,44 @@ export function sumHeight(L: SumLayout, x: number, z: number): number {
   const t = Math.min(1, d / mt.ramp);
   return mt.peak * t * t * (3 - 2 * t) * bump;
 }
+
+function nearestOnPolyline(px: number, pz: number, pts: SumXZ[]): SumXZ {
+  let best: SumXZ = pts[0]!, bd = Infinity;
+  for (let i = 0; i + 1 < pts.length; i++) {
+    const a = pts[i]!, b = pts[i + 1]!;
+    const dx = b[0] - a[0], dz = b[1] - a[1];
+    const l2 = dx * dx + dz * dz || 1;
+    const t = Math.max(0, Math.min(1, ((px - a[0]) * dx + (pz - a[1]) * dz) / l2));
+    const q: SumXZ = [a[0] + t * dx, a[1] + t * dz];
+    const d = Math.hypot(q[0] - px, q[1] - pz);
+    if (d < bd) {
+      bd = d;
+      best = q;
+    }
+  }
+  return best;
+}
+
+/** Хамгийн ойрын зам руу харсан тал (хашааны хаалга) */
+export function faceTowardRoad(L: SumLayout, x: number, z: number): Facing {
+  let best: SumXZ = [x, z + 1], bd = Infinity;
+  for (const r of L.roads) {
+    const q = nearestOnPolyline(x, z, r.points);
+    const d = Math.hypot(q[0] - x, q[1] - z);
+    if (d < bd) {
+      bd = d;
+      best = q;
+    }
+  }
+  const dx = best[0] - x, dz = best[1] - z;
+  return Math.abs(dx) > Math.abs(dz) ? (dx > 0 ? 'e' : 'w') : dz > 0 ? 's' : 'n';
+}
+
+/** Тусгай хашааны гол байшин: хашааны хойд хэсэгт, нүүр урагшаа; хаалга хойд талд бол хажуу тийш */
+export function plotHouse(L: SumLayout, sp: SumSpecialPlotSpec): { gate: Facing; house: { x: number; z: number; w: number; d: number }; door: { x: number; z: number } } {
+  const gate = faceTowardRoad(L, sp.x, sp.z);
+  const h = sp.house;
+  const hxOff = gate === 'n' ? -(sp.w / 2 - h.w / 2 - 1.5) : -2;
+  const house = { x: sp.x + hxOff, z: sp.z - sp.d / 2 + h.d / 2 + 3, w: h.w, d: h.d };
+  return { gate, house, door: doorPoint({ ...house, front: 's' }) };
+}

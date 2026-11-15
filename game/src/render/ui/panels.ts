@@ -28,12 +28,13 @@ import { bedsTotal, bedsUsed, nearTeahouse, playerOwned, spareTents, type Helper
 import { campAccess, seasonProgress, yearOf } from '../../sim/systems/seasons';
 import { hayRoom } from '../../sim/systems/travel';
 import { canSellAnimals, canSellProducts, nearLotSlot, nearTradeDoor, orderAllowed } from '../../sim/systems/sumtown';
+import { bankLimit, housePrice, nearTownDoor, zdtgPackages, zdtgRepayable } from '../../sim/systems/town';
 import {
   CAMP_HINT, SEASON_EMOJI, SEASON_NAME, PASTURE_NAME, PRODUCT_EMOJI, PROCESSOR_NAME, WATER_NAME, WOLF_LEVEL_NAME, expenseName, fmtMinutes, fmtMoney, fmtNum, productName, speciesEmoji, stageName, unitOf,
 } from './names';
 import { t } from '../../i18n/i18n';
 
-type Kind = 'storage' | 'cargo' | 'shop' | 'lot' | 'arrive' | 'report' | 'dogs' | 'camps' | 'cheat' | 'teahouse' | 'helpers';
+type Kind = 'storage' | 'cargo' | 'shop' | 'lot' | 'town' | 'arrive' | 'report' | 'dogs' | 'camps' | 'cheat' | 'teahouse' | 'helpers';
 
 /** Туслахуудын цонхны дэд хэсэг: жагсаалт, отор явуулах, малаар цалинжуулах */
 interface HelperView {
@@ -203,6 +204,7 @@ export class Panels {
     else if (this.kind === 'cargo') html = this.cargoHtml();
     else if (this.kind === 'shop') html = this.shopHtml();
     else if (this.kind === 'lot') html = this.lotHtml();
+    else if (this.kind === 'town') html = this.townHtml();
     else if (this.kind === 'arrive') html = this.arriveHtml();
     else if (this.kind === 'report') html = this.reportHtml();
     else if (this.kind === 'dogs') html = this.dogsHtml();
@@ -470,6 +472,114 @@ export class Panels {
       ${role === 'livestock' ? `<label class="muted"><input type="checkbox" data-act="bull" ${state.neighborBull ? 'checked' : ''}> Хөршийн бух тавиулах (үнээ бүрт ${fmtMoney(cfg.economy.neighborBullFee)})</label>` : ''}</p>`;
   }
 
+  // ======================= Сумын төвийн амьдрал (V3.4): дуган, ЗДТГ, банк, байшин, хамаатан =======================
+  private townCommand(cmd: string, arg: string): Command {
+    const { state } = this;
+    switch (cmd) {
+      case 'donate':
+        return { type: 'donate', amount: Number(arg) };
+      case 'zdtgLoan':
+        return { type: 'zdtgLoan', pkg: arg };
+      case 'zdtgRepay':
+        return { type: 'zdtgRepay', mode: arg === 'money' ? 'money' : 'animals' };
+      case 'bankLoan':
+        return { type: 'bankLoan', amount: Number(arg) };
+      case 'bankRepay':
+        return { type: 'bankRepay', amount: Number(arg) };
+      case 'buyHouse':
+        return { type: 'buyHouse', plot: arg };
+      case 'houseMode': {
+        const [plot, mode] = arg.split(',') as [string, 'empty' | 'rent' | 'child'];
+        return { type: 'houseMode', plot, mode };
+      }
+      default: {
+        // gift:<relId>,<what>  what = dairy | animals | all
+        const [rel, what] = arg.split(',') as [string, string];
+        const dairy: Partial<Record<ProductId, number>> = {};
+        if (what !== 'animals') for (const [k, n] of Object.entries(sellableAtShop(state))) if (this.cfg.town.relatives.giftProducts.includes(k)) dairy[k as ProductId] = n ?? 0;
+        const animalIds = what !== 'dairy' ? sellableAnimals(state).map((a) => a.id) : [];
+        return { type: 'gift', relative: rel, plan: { products: dairy, animalIds } };
+      }
+    }
+  }
+
+  private townHtml(): string {
+    const { cfg, state } = this;
+    const T = state.town;
+    const door = nearTownDoor(cfg, state);
+    const close = '<span class="close" data-act="close">✕</span>';
+    if (!door) return `<h2>🏘 Сумын төв ${close}</h2><p class="bad">Барилгын үүдэнд (ягаан тойрог) очиж E дарна уу.</p>`;
+    const rep = `Нэр хүнд: <b>${fmtNum(T.reputation)}</b> / ${cfg.town.reputation.max}`;
+    const money = `Мөнгө: <b>${fmtMoney(state.money)}</b>`;
+    switch (door.role) {
+      case 'soon':
+        return `<h2>🏪 ${t('sum3d.' + door.id)} ${close}</h2><p class="muted">Тун удахгүй нээгдэнэ.</p>`;
+      case 'temple': {
+        const btns = cfg.town.temple.donations.map((a) => `<button class="btn ${state.money >= a ? 'gold' : ''}" data-act="donate:${a}" ${state.money >= a ? '' : 'disabled'}>${fmtMoney(a)}</button>`).join(' ');
+        return `<h2>🙏 ${t('sum3d.' + door.id)} ${close}</h2><p>${money} · ${rep}</p>
+          <p>Дуганд хандив өгвөл нэр хүнд өснө (10 000₮ тутамд +${cfg.town.temple.reputationPer10k}). Нэр хүнд ${cfg.town.zdtgLoan.minReputation}-аас дээш бол Засаг даргаас малаар зээл авч болно.</p>
+          <p>${btns}</p>`;
+      }
+      case 'zdtg': {
+        const L = T.zdtgLoan, Z = cfg.town.zdtgLoan;
+        let body = '';
+        if (L) {
+          const have = zdtgRepayable(cfg, state).length;
+          const cost = Math.round(L.value * Z.moneyMult);
+          body = `<p>Малын зээл: <b>${L.n} ${t('species.' + L.species).toLowerCase()}</b> · буцаах хугацаа <b>${L.dueDay}</b>-р өдөр ${L.overdue ? '<span class="bad">(хэтэрсэн)</span>' : ''}</p>
+            <p><button class="btn gold" data-act="zdtgRepay:animals" ${have >= L.n ? '' : 'disabled'}>Насанд хүрсэн ${L.n} малаар буцаах (танд ${have})</button>
+            <button class="btn" data-act="zdtgRepay:money" ${state.money >= cost ? '' : 'disabled'}>Мөнгөөр ${fmtMoney(cost)}</button></p>`;
+        } else if (T.reputation < Z.minReputation) {
+          body = `<p class="bad">Малын зээл авахад нэр хүнд ${Z.minReputation}-аас дээш байх ёстой — дуганд хандив өгч, зээлээ хугацаандаа төлж нэр хүндээ өсгө.</p>`;
+        } else {
+          body = `<p>Малаар зээл авч, ${Z.termDays} өдрийн дотор ижил тооны насанд хүрсэн эм малаар (эсвэл үнэлгээ × ${Z.moneyMult} мөнгөөр) буцаана. Хугацаандаа төлбөл нэр хүнд +${Z.onTimeReputation}.</p>
+            <p>${zdtgPackages(cfg).map((k) => `<button class="btn gold" data-act="zdtgLoan:${k.id}">${k.n} ${t('species.' + k.species).toLowerCase()}</button>`).join(' ')}</p>`;
+        }
+        return `<h2>🏛 ${t('sum3d.' + door.id)} ${close}</h2><p>${money} · ${rep}</p>${body}<p class="muted">Цагдаагийн хэсэг ЗДТГ-т байрладаг.</p>`;
+      }
+      case 'bank': {
+        const L = T.bankLoan, B = cfg.town.bankLoan;
+        const lim = bankLimit(cfg, state);
+        let body = '';
+        if (L) {
+          body = `<p>Зээлийн үлдэгдэл: <b>${fmtMoney(L.owed)}</b> (үндсэн ${fmtMoney(L.principal)}, сард ${Math.round(B.interestPerMonth * 100)}% хүү) · хугацаа <b>${L.dueDay}</b>-р өдөр. Хэтэрвэл барьцаа (байшин, мал) хураагдана.</p>
+            <p>${[L.owed, Math.round(L.owed / 2)].map((a) => `<button class="btn ${state.money >= a ? 'gold' : ''}" data-act="bankRepay:${a}" ${state.money >= a ? '' : 'disabled'}>${fmtMoney(a)} төлөх</button>`).join(' ')}</p>`;
+        } else {
+          const opts = [0.25, 0.5, 1].map((k) => Math.floor((lim * k) / 10000) * 10000).filter((a) => a >= B.minAmount);
+          body = `<p>Мал (үнэлгээний ${Math.round(B.animalLtv * 100)}%) ба сумын төвийн байшингаа (${Math.round(B.houseLtv * 100)}%) барьцаалж зээлнэ. Дээд хэмжээ: <b>${fmtMoney(lim)}</b> · хугацаа ${B.termDays} өдөр · сард ${Math.round(B.interestPerMonth * 100)}% хүү.</p>
+            <p>${opts.length ? opts.map((a) => `<button class="btn gold" data-act="bankLoan:${a}">${fmtMoney(a)} зээлэх</button>`).join(' ') : '<span class="muted">Барьцаа хүрэлцэхгүй</span>'}</p>`;
+        }
+        return `<h2>🏦 ${t('sum3d.' + door.id)} ${close}</h2><p>${money} · ${rep}</p>${body}`;
+      }
+      case 'house': {
+        const h = housePrice(cfg, door.id)!;
+        const own = T.houses[door.id];
+        if (!own) {
+          return `<h2>🏠 Зарагдах хашаа байшин ${close}</h2><p>${money}</p>
+            <p>Үнэ: <b>${fmtMoney(h.price)}</b> · түрээслүүлбэл өдөрт ${fmtMoney(h.rentPerDay)} · банкинд барьцаалж болно</p>
+            <p><button class="btn gold" data-act="buyHouse:${door.id}" ${state.money >= h.price ? '' : 'disabled'}>Худалдаж авах</button></p>`;
+        }
+        const btn = (m: string, label: string, dis = false): string => `<button class="btn ${own.mode === m ? 'gold' : ''}" data-act="houseMode:${door.id},${m}" ${dis ? 'disabled' : ''}>${label}</button>`;
+        return `<h2>🏠 Таны хашаа байшин ${close}</h2>
+          <p>${btn('rent', `Түрээслүүлэх (өдөрт ${fmtMoney(h.rentPerDay)})`)} ${btn('empty', 'Хоосон')} ${btn('child', 'Сургуульд сурдаг хүүхдээ байлгах', true)}</p>
+          <p class="muted">Хүүхдээ байлгах нь үе удмын систем нэмэгдэхэд нээгдэнэ.</p>`;
+      }
+      default: {
+        const r = T.relatives[door.id];
+        const R = cfg.town.relatives;
+        const have = sellableAtShop(state);
+        const dairy = Object.entries(have).filter(([k, n]) => R.giftProducts.includes(k) && (n ?? 0) > 0).map(([k, n]) => `${PRODUCT_EMOJI[k as ProductId]} ${fmtNum(n ?? 0)}`).join(' ');
+        const animals = sellableAnimals(state).length;
+        return `<h2>👪 Хамаатан айл ${close}</h2>
+          <p>Дотно байдал: <b>${fmtNum(r?.relation ?? 0)}</b> / 100</p>
+          <p class="muted">Сүү, тараг, цагаан идээ, мал бэлэглэвэл дотно болно. Хариуд нь хотонд тань ойр ойрхон айлчилж хоол хүнс авчирна (≥ ${R.visitMinRelation}); зун хүүхдүүд нь ирж туслана (≥ ${R.summerHelpMin}); өвөл тэжээл авчирна (≥ ${R.winterHayMin}).</p>
+          <p>Гартаа/тэргэндээ: ${dairy || '<span class="muted">цагаан идээ алга</span>'} · тууж/ачиж ирсэн мал: ${animals}</p>
+          <p><button class="btn gold" data-act="gift:${door.id},dairy" ${dairy ? '' : 'disabled'}>Цагаан идээгээ бэлэглэх</button>
+          <button class="btn gold" data-act="gift:${door.id},animals" ${animals ? '' : 'disabled'}>Малаа бэлэглэх</button></p>`;
+      }
+    }
+  }
+
   // ======================= Машин худалдааны талбай (V3.3) =======================
   private lotHtml(): string {
     const { cfg, state } = this;
@@ -562,7 +672,7 @@ export class Panels {
         <div>
           <h3>Мөнгө</h3>
           <table>
-            ${inc.map(([k, n]) => `<tr><td>${k === 'animals' ? '🐑 Мал зарсан' : `${PRODUCT_EMOJI[k] ?? ''} ${productName(k)}`}</td><td class="num good">+${fmtMoney(n ?? 0)}</td></tr>`).join('') || '<tr><td class="muted">Өнөөдөр орлого ороогүй</td><td></td></tr>'}
+            ${inc.map(([k, n]) => `<tr><td>${k === 'animals' ? '🐑 Мал зарсан' : k === 'rent' ? '🏠 Байшингийн түрээс' : k === 'loan' ? '🏦 Банкны зээл' : `${PRODUCT_EMOJI[k] ?? ''} ${productName(k)}`}</td><td class="num good">+${fmtMoney(n ?? 0)}</td></tr>`).join('') || '<tr><td class="muted">Өнөөдөр орлого ороогүй</td><td></td></tr>'}
             ${exp.map(([k, n]) => `<tr><td>${expenseName(k)}</td><td class="num bad">${fmtMoney(-(n ?? 0))}</td></tr>`).join('')}
             <tr class="total"><td>Өдрийн дүн</td><td class="num ${profit >= 0 ? 'good' : 'bad'}">${profit >= 0 ? '+' : ''}${fmtMoney(profit)}</td></tr>
             <tr><td>Одоо байгаа мөнгө</td><td class="num"><b>${fmtMoney(r.moneyEnd)}</b></td></tr>
@@ -870,6 +980,19 @@ export class Panels {
       case 'doUnload': {
         if (!d || !d.vehicle) break;
         const r = this.hooks.dispatch({ type: 'unloadCargo', vehicle: d.vehicle });
+        this.hooks.toast(r.msg ?? '', r.ok ? 'good' : 'bad');
+        break;
+      }
+      // V3.4 сумын төвийн амьдрал
+      case 'donate':
+      case 'zdtgLoan':
+      case 'zdtgRepay':
+      case 'bankLoan':
+      case 'bankRepay':
+      case 'buyHouse':
+      case 'houseMode':
+      case 'gift': {
+        const r = this.hooks.dispatch(this.townCommand(cmd, arg));
         this.hooks.toast(r.msg ?? '', r.ok ? 'good' : 'bad');
         break;
       }

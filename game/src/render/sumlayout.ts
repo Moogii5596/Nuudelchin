@@ -5,7 +5,7 @@
  */
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { doorPoint, sumHeight, type SumLayout, type SumBuildingSpec, type SumSpecialPlotSpec, type SumXZ } from '../sim/systems/sumtown';
+import { doorPoint, plotHouse, sumHeight, type SumLayout, type SumBuildingSpec, type SumSpecialPlotSpec, type SumXZ } from '../sim/systems/sumtown';
 
 type XZ = SumXZ;
 type BuildingSpec = SumBuildingSpec;
@@ -619,14 +619,13 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
   // --- Тусгай хашаа (зарагдах, хамаатны айл) ---
   const plots: SumPlotView[] = [];
   for (const sp of L.specialPlots ?? []) {
-    const gate = faceTowardRoad(sp.x, sp.z);
+    const ph = plotHouse(L, sp);
+    const gate = ph.gate;
     fence(sp.x, sp.z, sp.w, sp.d, sp.role === 'forSale' ? '#6B4F3A' : '#3F7A4A', 1.9, gate, 3.5);
     colliders.push({ id: `${sp.id}:plot`, x: sp.x, z: sp.z, w: sp.w, d: sp.d });
     const h = sp.house;
-    const hz = sp.z - sp.d / 2 + h.d / 2 + 3;                       // байшин хашааны хойд хэсэгт
-    const hxOff = gate === 'n' ? -(sp.w / 2 - h.w / 2 - 1.5) : -2;   // хойд хаалгыг хаахгүй
     const door = building({ id: sp.id + ':house', name: sp.name, kind: 'house', enterable: true, interior: sp.role === 'forSale' ? 'house_empty' : 'house_relative',
-      x: sp.x + hxOff, z: hz, w: h.w, d: h.d, floors: h.floors, roof: { type: 'gable', color: h.roof }, wall: h.wall, trim: '#A0522D', front: 's' });
+      x: ph.house.x, z: ph.house.z, w: h.w, d: h.d, floors: h.floors, roof: { type: 'gable', color: h.roof }, wall: h.wall, trim: '#A0522D', front: 's' });
     colliders.pop();
     homes.push(door);
     if (sp.ger) ger(sp.x + sp.w / 2 - 5, sp.z, '#F3EDE2', 2.8);

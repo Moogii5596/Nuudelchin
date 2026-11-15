@@ -303,7 +303,10 @@ export class GameView {
     const camp = p.place === 'camp';
     this.terrain.group.visible = this.animals.group.visible = this.items.group.visible = this.zones.group.visible = this.staff.group.visible = camp;
     this.sum.group.visible = !camp;
-    if (!camp) this.sum.syncLot(state.vehicles);
+    if (!camp) {
+      this.sum.syncLot(state.vehicles);
+      this.sum.syncTown(state);
+    }
     this.homeLight.visible = camp;
     if (camp) {
       if (this.terrain.sync(state)) {

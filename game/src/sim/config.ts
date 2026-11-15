@@ -19,6 +19,7 @@ import dogsJson from '../../../data/dogs.json';
 import worldmapJson from '../../../data/worldmap.json';
 import seasonsJson from '../../../data/seasons.json';
 import sumcenterJson from '../../../data/sumcenter.json';
+import townJson from '../../../data/town.json';
 import { lotSlots, sumDoors, allBuildings, TRADE_ROLES, type SumLayout } from './systems/sumtown';
 
 export type Species = 'sheep' | 'goat' | 'cow' | 'horse';
@@ -253,6 +254,8 @@ export interface GameConfig {
   worldmap: WorldMapConfig;
   seasons: SeasonsConfig;
   sumcenter: SumLayout;
+  /** V3.4: сумын төвийн амьдрал (байшин, хандив, зээл, хамаатан) — data/town.json */
+  town: typeof townJson;
   start: { camp: string; home: string; vehicles: string[]; storageLevel: number; animals: StartAnimal[] };
 }
 
@@ -275,6 +278,7 @@ export function loadConfig(): GameConfig {
     worldmap: worldmapJson as unknown as WorldMapConfig,
     seasons: seasonsJson as unknown as SeasonsConfig,
     sumcenter: sumcenterJson as unknown as SumLayout,
+    town: townJson,
   };
   const errors = validateConfig(cfg);
   if (errors.length) {
@@ -342,7 +346,7 @@ export function validateConfig(cfg: GameConfig): string[] {
 }
 
 /** V3.3: сумын төвийн байршил (data/sumcenter.json) ба worldmap.sum3d */
-const SUM_ROLES = [...TRADE_ROLES, 'teahouse', 'grocery', 'clothing', 'fuel', 'bank'] as readonly string[];
+const SUM_ROLES = [...TRADE_ROLES, 'teahouse', 'grocery', 'clothing', 'fuel', 'bank', 'temple', 'zdtg'] as readonly string[];
 export function validateSumLayout(cfg: GameConfig): string[] {
   const e: string[] = [];
   const S = cfg.worldmap.sum3d, L = cfg.sumcenter;
@@ -380,6 +384,16 @@ export function validateSumLayout(cfg: GameConfig): string[] {
   const doors = sumDoors(cfg);
   if (doors.filter((d) => d.role === 'teahouse').length !== 1) e.push('sumcenter: Цайны газар (gameRole teahouse) яг 1 байх ёстой');
   for (const r of TRADE_ROLES) if (!doors.some((d) => d.role === r)) e.push(`sumcenter: "${r}" үүрэгтэй дэлгүүр алга`);
+  // V3.4 data/town.json
+  const forSale = new Set((L.specialPlots ?? []).filter((p) => p.role === 'forSale').map((p) => p.id));
+  for (const [id, h] of Object.entries(cfg.town.houses)) {
+    if (!forSale.has(id)) e.push(`town.houses.${id}: sumcenter.json-д зарах хашаа (forSale) алга`);
+    if (!(h.price > 0 && h.rentPerDay >= 0)) e.push(`town.houses.${id}: price > 0, rentPerDay ≥ 0`);
+  }
+  for (const id of forSale) if (!(id in cfg.town.houses)) e.push(`town.houses: "${id}"-ийн үнэ алга`);
+  for (const k of cfg.town.zdtgLoan.packages) if (!cfg.animals.species[k.species as Species] || !(k.n > 0)) e.push(`town.zdtgLoan.packages.${k.id}: төрөл, n буруу`);
+  if (!cfg.town.temple.donations.every((x) => x > 0)) e.push('town.temple.donations: > 0');
+  for (const r of ['temple', 'zdtg', 'bank']) if (!doors.some((d) => d.role === r)) e.push(`sumcenter: "${r}" үүрэгтэй барилга алга`);
   for (const s of lotSlots(cfg)) {
     uniq(s.id);
     const known = Object.prototype.hasOwnProperty.call(cfg.vehicles, s.vehicle) && typeof (cfg.vehicles as Record<string, unknown>)[s.vehicle] === 'object';
