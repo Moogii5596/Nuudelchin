@@ -1,0 +1,26 @@
+{
+  "_doc": "V4.5: хүний дүрийн төрх (docs/character-design.md §4.3). render/character/spec.ts шалгана. presets.<нэр> — дүрийн загвар; base — өөр preset-ээс өвлөнө (объект гүн нийлнэ, массив солигдоно). player — тоглогч. Өнгө #rrggbb. skin: base (арьс, нүүр), shade (хүзүү), nail (хумс). hair.color — үсний ширхэгийн суурь. legs — өмд. deel: color/hem (байхгүй бол visuals.json outfits.player — R5-д энд шилжинэ), button — товч, furTrim — өвлийн дээлийн хормой, ханцуйны үс, winterTrim (байхгүй бол outfits.collarFur), terlegLighten — зуны тэрлэгийг цайруулах (0–0.6, байхгүй бол outfits.terlegLighten). sash: color — бүс, хөвөө; fold — бүсний нугалаа. vest — өвлийн хантааз: color даавуу, lining доторлогоо, fur энгэрийн үс. boots: shaft түрий, tan зулаг, sole ул, teal хөвөө, gold алтлаг хээ, pattern түрийн оюу хээ. bodies.<terleg|deel|winter>: thickness — биеийн зузаан (0.5–1.6), skirt — хормойн урт, м (0.2–1). hats.toortsog: felt эсгий, ink хар судал; hats.fox: fur/furTint үсэн хүрээ, silk торгон орой, trim хөх эмжээр, gold, stem/knot сампин, ribbon залаа. pose.elbowRest — зүүн, баруун тохойн амрах өнцөг (рад). props: uurga, sack.",
+  "presets": {
+    "man": {
+      "skin": { "base": "#e0b48a", "shade": "#d6a67c", "nail": "#e6c3aa" },
+      "hair": { "color": "#44332a" },
+      "legs": "#2b1d14",
+      "deel": { "button": "#d9d4c8", "furTrim": "#eadfcd" },
+      "sash": { "color": "#e0b030", "fold": "#b8891e" },
+      "vest": { "color": "#8a5a36", "lining": "#e9dfcc", "fur": "#f6f2ea" },
+      "boots": { "shaft": "#241b17", "tan": "#c98a3f", "sole": "#f0e8d6", "teal": "#35b89e", "gold": "#e0a93a", "pattern": "#3fd0b2" },
+      "bodies": {
+        "terleg": { "thickness": 0.95, "skirt": 0.58 },
+        "deel": { "thickness": 1, "skirt": 0.66 },
+        "winter": { "thickness": 1.12, "skirt": 0.72 }
+      },
+      "hats": {
+        "toortsog": { "felt": "#ece4d0", "ink": "#1e1a18" },
+        "fox": { "fur": "#8a7466", "furTint": "#8a6a56", "silk": "#b0302f", "trim": "#17152e", "gold": "#e0a93a", "stem": "#8f1f24", "knot": "#a3262b", "ribbon": "#9a2227" }
+      },
+      "pose": { "elbowRest": [-0.25, -0.6] },
+      "props": { "uurga": "#8a6a3a", "sack": "#b89a6a" }
+    }
+  },
+  "player": { "base": "man" }
+}

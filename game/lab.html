@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="mn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Дүрийн лаборатори — Нүүдэлчин</title>
+    <!-- V4.5 R6: зөвхөн dev (npm run dev → /lab.html); build-д орохгүй. Код: src/render/character/lab.ts -->
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #9fc8e8; font: 13px system-ui, "Segoe UI", sans-serif; }
+      #wrap canvas { display: block; }
+      #panel { position: absolute; left: 12px; bottom: 12px; right: 12px; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center;
+               padding: 10px 12px; border-radius: 10px; background: rgba(20, 16, 12, 0.66); color: #f4ead6; }
+      #panel[hidden], #stats:empty { display: none; }
+      #panel label { display: inline-flex; gap: 5px; align-items: center; }
+      #panel select, #panel input[type="range"] { font: inherit; }
+      #stats { position: absolute; top: 10px; left: 12px; padding: 6px 10px; border-radius: 8px; background: rgba(20, 16, 12, 0.6); color: #f4ead6; font: 12px ui-monospace, monospace; }
+      #out { position: absolute; top: 490px; left: 8px; font: 12px ui-monospace, monospace; }
+    </style>
+  </head>
+  <body>
+    <div id="wrap"></div>
+    <div id="stats"></div>
+    <pre id="out"></pre>
+    <div id="panel" hidden>
+      <label>Дүр <select id="preset"></select></label>
+      <label>Дээл <input type="color" id="deel" /></label>
+      <label>Хормой <input type="color" id="hem" /></label>
+      <label>Улирал
+        <select id="season">
+          <option value="summer">Зун</option><option value="autumn" selected>Намар</option><option value="winter">Өвөл</option><option value="spring">Хавар</option>
+          <option value="manual">Гараар ↓</option>
+        </select>
+      </label>
+      <label>Бие <select id="body"></select></label>
+      <label>Малгай <select id="hat"></select></label>
+      <label>Сэтгэл хөдлөл <select id="emo"></select></label>
+      <label>Хөдөлгөөн
+        <select id="mode"><option value="foot">явган</option><option value="mounted">морьтой</option><option value="seated">суусан</option></select>
+      </label>
+      <label>Хурд <input type="range" id="speed" min="0" max="6" step="0.1" value="0" /></label>
+      <label><input type="checkbox" id="talk" /> Ярих</label>
+      <label><input type="checkbox" id="raise" /> Гар өргөх</label>
+      <label><input type="checkbox" id="uurga" /> Уурга</label>
+      <label><input type="checkbox" id="crowd" /> Олон хүн (crowd)</label>
+      <label>Тогтмол зураг <select id="shots"><option value="">—</option></select></label>
+    </div>
+    <script type="module" src="/src/render/character/lab.ts"></script>
+  </body>
+</html>

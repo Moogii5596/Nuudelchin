@@ -1,0 +1,131 @@
+/**
+ * Гүйцэтгэл: дүрийг АРАГ ЯСТАЙ цөөн mesh (SkinnedMesh) болгоно (draw call 428 → 39, docs/character-design.md §2).
+ * Үе мөчний бүлгүүд (Group) хэвээр үлдэж яс болно — анимац тэднийг өмнөх шигээ эргүүлнэ. Mesh бүрийн оройг эцэг
+ * бүлэг (яс)-т нь 100% холбож, нэг давхарга (`body:*`, `hat:*` — улирлаар харагдах/нуугдах) доторх хэсгүүдийг
+ * материалаар нь нэгтгэнэ. Нэг өнгийн (зураггүй) материалуудыг оройн өнгө болгож нэг материалд нийлүүлнэ. Бэхэн
+ * хүрээ давхарга бүрт нэг mesh. Нэртэй mesh (head, hair, uurga, sack …) ба InstancedMesh (үс) хэвээр үлдэнэ.
+ */
+import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { outline, vertexColored } from './materials';
+
+const LAYER = /^(body|hat):/;
+const WHITE = new THREE.Color(1, 1, 1);
+
+/** Толин тусгал хувиргалт: гурвалжны эргэлтийг буцаана (гадагш харсан тал хэвээр). g индексгүй байх ёстой */
+export function flipWinding(g: THREE.BufferGeometry): void {
+  for (const name of Object.keys(g.attributes)) {
+    const at = g.attributes[name]!, sz = at.itemSize, arr = at.array as Float32Array;
+    for (let t = 0; t < at.count; t += 3) for (let c = 0; c < sz; c++) {
+      const i1 = (t + 1) * sz + c, i2 = (t + 2) * sz + c;
+      const v = arr[i1]!; arr[i1] = arr[i2]!; arr[i2] = v;
+    }
+  }
+}
+
+/** liveMats — ажиллах үед өнгө нь өөрчлөгддөг материал (ханцуй улирлаар) — оройн өнгөнд шингээхгүй */
+export function bakeSkinned(root: THREE.Object3D, liveMats: readonly THREE.Material[] = [], k = 1.06): { bones: number; meshes: number } {
+  root.updateMatrixWorld(true);
+  const INK = outline();
+  const layerOf = (o: THREE.Object3D): THREE.Object3D => {
+    for (let q = o.parent; q && q !== root; q = q.parent) if (LAYER.test(q.name)) return q;
+    return root;
+  };
+  const sources: THREE.Mesh[] = [];
+  root.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (!m.isMesh || (m as THREE.InstancedMesh).isInstancedMesh || (m as THREE.SkinnedMesh).isSkinnedMesh || m.name || m.children.length || Array.isArray(m.material)) return;
+    for (let q: THREE.Object3D | null = m; q && q !== root; q = q.parent) if (!q.visible && !LAYER.test(q.name)) return;   // нуугдсан хэсэг
+    sources.push(m);
+  });
+  // жижиг хэсгүүд сүүдэр тусгахгүй (нэгтгэсэн mesh сүүдэр тусгах эсэхийг том хэсгүүд шийднэ)
+  for (const o of sources) { o.geometry.computeBoundingSphere(); if (o.geometry.boundingSphere!.radius < 0.1) o.castShadow = false; }
+  const bones: THREE.Object3D[] = [], boneIdx = new Map<THREE.Object3D, number>();
+  const boneOf = (o: THREE.Object3D): number => {
+    const p = o.parent!;
+    let i = boneIdx.get(p);
+    if (i === undefined) { i = bones.length; bones.push(p); boneIdx.set(p, i); }
+    return i;
+  };
+  const flatColor = (m: THREE.Material): m is THREE.MeshLambertMaterial => {
+    const l = m as THREE.MeshLambertMaterial;
+    return !!l.isMeshLambertMaterial && !l.map && !liveMats.includes(l) && !l.transparent && l.opacity === 1 && !l.alphaTest && l.emissive.getHex() === 0;
+  };
+  interface Bucket { layer: THREE.Object3D; material: THREE.Material; geos: THREE.BufferGeometry[]; shadow: boolean }
+  const buckets = new Map<string, Bucket>();
+  const bucket = (layer: THREE.Object3D, material: THREE.Material): Bucket => {
+    const key = layer.uuid + '|' + material.uuid;
+    let b = buckets.get(key);
+    if (!b) { b = { layer, material, geos: [], shadow: false }; buckets.set(key, b); }
+    return b;
+  };
+  /** Геометрийг нэг хэлбэрт оруулна: индексгүй, position/normal (+uv, +color), бүх оройд нэг яс */
+  const prep = (m: THREE.Mesh, matrix: THREE.Matrix4, wantUv: boolean, wantColor: boolean, tint: THREE.Color = WHITE): THREE.BufferGeometry => {
+    const g = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone();
+    if (!g.attributes.normal) g.computeVertexNormals();
+    const n = g.attributes.position!.count;
+    for (const name of Object.keys(g.attributes)) if (!['position', 'normal', 'uv', 'color'].includes(name)) g.deleteAttribute(name);
+    if (wantUv && !g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(n * 2), 2));
+    if (!wantUv && g.attributes.uv) g.deleteAttribute('uv');
+    if (wantColor) {
+      const src = g.attributes.color, col = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) {
+        const r = src ? src.getX(i) : 1, gg = src ? src.getY(i) : 1, b = src ? src.getZ(i) : 1;
+        col[i * 3] = r * tint.r; col[i * 3 + 1] = gg * tint.g; col[i * 3 + 2] = b * tint.b;
+      }
+      g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    } else if (g.attributes.color) g.deleteAttribute('color');
+    g.applyMatrix4(matrix);
+    if (matrix.determinant() < 0) flipWinding(g);
+    const bi = boneOf(m), si = new Uint16Array(n * 4), sw = new Float32Array(n * 4);
+    for (let i = 0; i < n; i++) { si[i * 4] = bi; sw[i * 4] = 1; }
+    g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4));
+    g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw, 4));
+    return g;
+  };
+  const scaleK = new THREE.Matrix4().makeScale(k, k, k);
+  for (const m of sources) {
+    const layer = layerOf(m), mat = m.material as THREE.Material;
+    if (mat === INK) {   // гараар хийсэн хүрээ (гутлын хүрээ)
+      bucket(layer, INK).geos.push(prep(m, m.matrixWorld, false, false));
+    } else if (flatColor(mat)) {
+      const bk = bucket(layer, vertexColored(mat.flatShading, mat.side));
+      bk.geos.push(prep(m, m.matrixWorld, false, true, mat.color));
+      bk.shadow ||= m.castShadow;
+    } else {
+      const l = mat as THREE.MeshLambertMaterial;
+      const bk = bucket(layer, mat);
+      bk.geos.push(prep(m, m.matrixWorld, Boolean(l.map), Boolean(l.vertexColors)));
+      bk.shadow ||= m.castShadow;
+    }
+    if (!m.userData.noOutline) bucket(layer, INK).geos.push(prep(m, m.matrixWorld.clone().multiply(scaleK), false, false));
+  }
+  for (const m of sources) m.removeFromParent();
+  // яс = үе мөчний бүлгүүд; урвуу матрицыг одоогийн (амрах) байрлалаас тооцно
+  const skeleton = new THREE.Skeleton(bones as THREE.Bone[]);
+  const identity = new THREE.Matrix4();
+  for (const { layer, material, geos, shadow } of buckets.values()) {
+    const merged = mergeGeometries(geos, false);
+    if (!merged) throw new Error('bakeSkinned: mergeGeometries амжилтгүй');
+    const sk = new THREE.SkinnedMesh(merged, material);
+    sk.userData.noOutline = true;
+    sk.castShadow = shadow && material !== INK;
+    sk.frustumCulled = false;   // ясаар хөдөлдөг тул анхны хүрээгээр тасалбал алга болж мэднэ
+    layer.add(sk);              // давхарга нуугдахад хамт нуугдана
+    sk.updateMatrixWorld(true);
+    sk.bind(skeleton, identity);
+  }
+  return { bones: bones.length, meshes: buckets.size };
+}
+
+/** Үлдсэн (нэртэй) mesh бүрд хүүхэд болгон бэхэн хүрээ нэмнэ */
+export function addOutline(root: THREE.Object3D, k = 1.06): void {
+  const targets: THREE.Mesh[] = [];
+  root.traverse((o) => { if ((o as THREE.Mesh).isMesh && !o.userData.noOutline) targets.push(o as THREE.Mesh); });
+  const INK = outline();
+  for (const m of targets) {
+    const o = new THREE.Mesh(m.geometry, INK);
+    o.scale.setScalar(k);
+    m.add(o);
+  }
+}
