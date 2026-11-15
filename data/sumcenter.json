@@ -1,0 +1,1307 @@
+{
+  "_doc": "Сумын төвийн 3D байршил (V3.3, Могод сум). Нэгж: метр. z− = хойд, z+ = урд, x+ = зүүн. Барилгын нүүр анхдагчаар урагшаа (front). gameRole: тоглоомын үйлчилгээ (buyer — сүү/ноос авах, livestock — малын зах, vehicles — машин худалдаа, ger_tent, equipment, feed, pets, teahouse, fuel, bank). enterable — дотор нь орох (интерьер 🙋). specialPlots: forSale — худалдаж авах хашаа, relative — хамаатны айл (🙋 механик). Шошго i18n `sum3d.<id>`. Эх: Design canvas, 1 px = 0.5 м (`tools/` биш — гараар засна).",
+  "version": 1,
+  "id": "mogod",
+  "name": "Могод сумын төв",
+  "units": "m",
+  "axes": "z− = хойд (Тоглоомын талбай тал), z+ = урд (Малын зах тал), x+ = зүүн (дорно), x− = баруун, y = дээш. Барилгын нүүр анхдагчаар урагшаа. Төв (0,0) = канвасын (800, 525)",
+  "source": "Design canvas «Могод сумын төвийн ерөнхий төлөвлөгөө», 1 px = 0.5 м",
+  "entry": {
+    "x": 350.0,
+    "z": -25.0,
+    "exit": [
+      495.0,
+      -25.0
+    ],
+    "note": "Газрын зургаас ирэх цэг — цэцэрлэгийн зүүн талд. exit: 3D-ээс газрын зураг руу гарах цэг (замын үзүүр)"
+  },
+  "floorHeight": 3.2,
+  "terrain": {
+    "size": [
+      1000,
+      1000
+    ],
+    "ground": "#8FAE6A",
+    "mountain": {
+      "name": "Уул",
+      "peak": 55,
+      "ramp": 120,
+      "color": "#A79A72",
+      "polygon": [
+        [
+          -400.0,
+          -247.5
+        ],
+        [
+          -240.0,
+          -262.5
+        ],
+        [
+          -104.5,
+          -112.5
+        ],
+        [
+          -225.0,
+          -5.0
+        ],
+        [
+          -400.0,
+          -27.5
+        ]
+      ]
+    },
+    "lakes": [
+      {
+        "id": "lake_salt",
+        "name": "Нуур (хужир)",
+        "x": -180,
+        "z": 197.75,
+        "rx": 108,
+        "rz": 39,
+        "color": "#7FB3C9"
+      },
+      {
+        "id": "pond",
+        "name": "Цөөрөм",
+        "x": 42.5,
+        "z": 197,
+        "rx": 92.5,
+        "rz": 38.5,
+        "color": "#7FB3C9"
+      }
+    ],
+    "dryWash": {
+      "name": "Хуурай гол",
+      "width": 6,
+      "points": [
+        [
+          -170.0,
+          -42.5
+        ],
+        [
+          -155.1,
+          -36.2
+        ],
+        [
+          -140.5,
+          -29.5
+        ],
+        [
+          -125.9,
+          -22.3
+        ],
+        [
+          -111.4,
+          -15.0
+        ],
+        [
+          -96.9,
+          -7.5
+        ],
+        [
+          -82.2,
+          -0.0
+        ],
+        [
+          -67.2,
+          7.3
+        ],
+        [
+          -51.9,
+          14.5
+        ],
+        [
+          -36.2,
+          21.2
+        ],
+        [
+          -20.0,
+          27.5
+        ],
+        [
+          -5.1,
+          32.5
+        ],
+        [
+          9.4,
+          36.9
+        ],
+        [
+          23.8,
+          40.8
+        ],
+        [
+          37.9,
+          44.2
+        ],
+        [
+          51.9,
+          47.2
+        ],
+        [
+          65.7,
+          49.8
+        ],
+        [
+          79.4,
+          52.1
+        ],
+        [
+          93.0,
+          54.1
+        ],
+        [
+          106.5,
+          55.9
+        ],
+        [
+          120.0,
+          57.5
+        ]
+      ]
+    }
+  },
+  "roads": [
+    {
+      "id": "mountain_road",
+      "name": "Уулын зам",
+      "width": 9,
+      "points": [
+        [
+          -277.5,
+          -62.5
+        ],
+        [
+          -253.6,
+          -69.1
+        ],
+        [
+          -229.9,
+          -75.6
+        ],
+        [
+          -206.4,
+          -82.1
+        ],
+        [
+          -183.1,
+          -88.6
+        ],
+        [
+          -160.2,
+          -94.9
+        ],
+        [
+          -137.6,
+          -101.2
+        ],
+        [
+          -115.6,
+          -107.4
+        ],
+        [
+          -94.1,
+          -113.4
+        ],
+        [
+          -73.2,
+          -119.3
+        ],
+        [
+          -53.0,
+          -125.1
+        ],
+        [
+          -33.5,
+          -130.6
+        ],
+        [
+          -14.9,
+          -136.0
+        ],
+        [
+          2.9,
+          -141.1
+        ],
+        [
+          19.6,
+          -146.0
+        ],
+        [
+          35.4,
+          -150.6
+        ],
+        [
+          50.0,
+          -155.0
+        ]
+      ]
+    },
+    {
+      "id": "main_ew",
+      "name": "Төв гудамж (баруун)",
+      "width": 10,
+      "points": [
+        [
+          -47.8,
+          -85.8
+        ],
+        [
+          116.0,
+          -85.1
+        ]
+      ]
+    },
+    {
+      "id": "main_ew_e",
+      "name": "Төв гудамж (зүүн)",
+      "width": 10,
+      "points": [
+        [
+          188.0,
+          -84.7
+        ],
+        [
+          326.2,
+          -83.8
+        ]
+      ]
+    },
+    {
+      "id": "school_bypass",
+      "name": "Сургуулийн тойруу зам",
+      "width": 8,
+      "points": [
+        [
+          116.0,
+          -147.0
+        ],
+        [
+          188.0,
+          -147.0
+        ],
+        [
+          188.0,
+          -84.7
+        ]
+      ]
+    },
+    {
+      "id": "main_ns",
+      "name": "Хойд-урд гудамж",
+      "width": 10,
+      "points": [
+        [
+          116.0,
+          -162.7
+        ],
+        [
+          116.0,
+          160.0
+        ]
+      ]
+    },
+    {
+      "id": "south_ew",
+      "name": "Урд гудамж",
+      "width": 9,
+      "points": [
+        [
+          -117.9,
+          6.8
+        ],
+        [
+          333.1,
+          8.9
+        ]
+      ]
+    },
+    {
+      "id": "link",
+      "name": "Холбох зам",
+      "width": 7,
+      "points": [
+        [
+          50.0,
+          -155.0
+        ],
+        [
+          116.0,
+          -152.5
+        ],
+        [
+          116.0,
+          -86.0
+        ]
+      ]
+    },
+    {
+      "id": "access",
+      "name": "Орох зам (цэцэрлэгийн талаас)",
+      "width": 9,
+      "points": [
+        [
+          495.0,
+          -25.0
+        ],
+        [
+          345.0,
+          -25.0
+        ],
+        [
+          337.0,
+          -8.0
+        ],
+        [
+          333.0,
+          9.0
+        ]
+      ]
+    },
+    {
+      "id": "access_n",
+      "name": "Орох замын салаа",
+      "width": 7,
+      "points": [
+        [
+          345.0,
+          -25.0
+        ],
+        [
+          330.0,
+          -60.0
+        ],
+        [
+          326.0,
+          -84.0
+        ]
+      ]
+    },
+    {
+      "id": "fuel_drive",
+      "name": "Колонкийн орц",
+      "width": 7,
+      "points": [
+        [
+          378.0,
+          -29.0
+        ],
+        [
+          378.0,
+          -37.0
+        ]
+      ]
+    },
+    {
+      "id": "fuel_drive2",
+      "name": "Колонкийн гарц",
+      "width": 7,
+      "points": [
+        [
+          394.0,
+          -37.0
+        ],
+        [
+          394.0,
+          -29.0
+        ]
+      ]
+    }
+  ],
+  "buildings": [
+    {
+      "id": "school",
+      "enterable": true,
+      "interior": "school",
+      "name": "Сургууль",
+      "kind": "school",
+      "x": 152,
+      "z": -114,
+      "w": 56,
+      "d": 15,
+      "floors": 3,
+      "roof": {
+        "type": "flat",
+        "color": "#9AA3A6"
+      },
+      "wall": "#EFEBE2",
+      "trim": "#5C8A94"
+    },
+    {
+      "id": "dorm",
+      "name": "Сургуулийн дотуур байр",
+      "kind": "dormitory",
+      "x": 135,
+      "z": -72,
+      "w": 12,
+      "d": 34,
+      "floors": 2,
+      "roof": {
+        "type": "gable",
+        "color": "#D9622E"
+      },
+      "wall": "#EFEBE2",
+      "trim": "#3A5FB0"
+    },
+    {
+      "id": "zdtg",
+      "enterable": true,
+      "interior": "admin",
+      "name": "Засаг даргын тамгын газар",
+      "kind": "admin",
+      "x": 253,
+      "z": -66,
+      "w": 28,
+      "d": 14,
+      "floors": 2,
+      "front": "s",
+      "roof": {
+        "type": "hip",
+        "color": "#3F9E6E"
+      },
+      "wall": "#F3EDE2",
+      "trim": "#B5633F",
+      "yard": {
+        "w": 44,
+        "d": 30,
+        "fence": "#6E8A5C",
+        "dz": 4
+      }
+    },
+    {
+      "id": "bank",
+      "name": "Банк",
+      "kind": "bank",
+      "gameRole": "bank",
+      "enterable": true,
+      "interior": "bank",
+      "x": 292,
+      "z": -63,
+      "w": 18,
+      "d": 12,
+      "floors": 2,
+      "roof": {
+        "type": "flat",
+        "color": "#2E5C8A"
+      },
+      "wall": "#E8E4DA",
+      "trim": "#2E5C8A"
+    },
+    {
+      "id": "hospital_a",
+      "name": "Эмнэлэг",
+      "kind": "hospital",
+      "x": 63.5,
+      "z": -122,
+      "w": 50,
+      "d": 12,
+      "floors": 2,
+      "roof": {
+        "type": "flat",
+        "color": "#4A4A4A"
+      },
+      "wall": "#E8DCC0",
+      "trim": "#5C8AB0"
+    },
+    {
+      "id": "hospital_b",
+      "name": "Эмнэлэг, эмийн сан",
+      "kind": "hospital",
+      "x": 63.5,
+      "z": -102,
+      "w": 44,
+      "d": 11,
+      "floors": 1,
+      "roof": {
+        "type": "flat",
+        "color": "#4A4A4A"
+      },
+      "wall": "#E8DCC0",
+      "trim": "#5C8AB0"
+    },
+    {
+      "id": "culture",
+      "enterable": true,
+      "interior": "culture",
+      "name": "Соёлын төв",
+      "kind": "culture",
+      "x": 69,
+      "z": -45,
+      "w": 40,
+      "d": 18,
+      "floors": 1,
+      "h": 6.5,
+      "roof": {
+        "type": "gable",
+        "color": "#8A2E2E"
+      },
+      "wall": "#EFEBE2",
+      "trim": "#B5633F"
+    },
+    {
+      "id": "kinder",
+      "enterable": true,
+      "interior": "kindergarten",
+      "name": "Цэцэрлэг",
+      "kind": "kindergarten",
+      "x": 281.5,
+      "z": -23,
+      "w": 40,
+      "d": 14,
+      "floors": 2,
+      "roof": {
+        "type": "gable",
+        "color": "#8A2E2E"
+      },
+      "wall": "#EFEBE2",
+      "trim": "#C9B998",
+      "yard": {
+        "w": 70,
+        "d": 38,
+        "fence": "#9FAE7A",
+        "dx": 11.5,
+        "dz": 5
+      }
+    },
+    {
+      "id": "boiler",
+      "name": "Уурын зуух",
+      "kind": "boiler",
+      "x": -35,
+      "z": -53.5,
+      "w": 24,
+      "d": 14,
+      "floors": 1,
+      "h": 7,
+      "roof": {
+        "type": "flat",
+        "color": "#3A3A3A"
+      },
+      "wall": "#6E6A64",
+      "chimney": {
+        "dx": 14,
+        "dz": 0,
+        "h": 26
+      }
+    },
+    {
+      "id": "bath",
+      "name": "Халуун ус, үсчин",
+      "kind": "service",
+      "x": 0,
+      "z": -10,
+      "w": 12,
+      "d": 8,
+      "floors": 1,
+      "roof": {
+        "type": "gable",
+        "color": "#6E8A5C"
+      },
+      "wall": "#E8DCC0"
+    },
+    {
+      "id": "teahouse",
+      "name": "Цайны газар",
+      "kind": "teahouse",
+      "front": "n",
+      "x": 183,
+      "z": 20,
+      "w": 10,
+      "d": 8,
+      "floors": 1,
+      "roof": {
+        "type": "gable",
+        "color": "#D9A441"
+      },
+      "wall": "#E8DCC0",
+      "gameRole": "teahouse"
+    },
+    {
+      "id": "vet",
+      "name": "Мал эмнэлэг",
+      "kind": "vet",
+      "x": 70,
+      "z": 132,
+      "w": 14,
+      "d": 9,
+      "floors": 1,
+      "roof": {
+        "type": "gable",
+        "color": "#6E8A5C"
+      },
+      "wall": "#E8DCC0",
+      "yard": {
+        "w": 34,
+        "d": 28,
+        "fence": "#8A5A3A",
+        "dz": 4,
+        "animals": 6
+      }
+    },
+    {
+      "id": "temple",
+      "enterable": true,
+      "interior": "temple",
+      "name": "Сүм хийд, дуган",
+      "kind": "temple",
+      "x": 227.5,
+      "z": -34.5,
+      "w": 10,
+      "d": 10,
+      "floors": 1,
+      "h": 5,
+      "roof": {
+        "type": "pagoda",
+        "color": "#2FA84F"
+      },
+      "wall": "#D9622E",
+      "yard": {
+        "w": 34,
+        "d": 26,
+        "fence": "#D9A441",
+        "dz": 2
+      }
+    },
+    {
+      "id": "shop_1_1",
+      "name": "Тэжээвэр амьтан",
+      "kind": "shop",
+      "x": 132,
+      "z": -40,
+      "w": 9.6,
+      "d": 8,
+      "floors": 1,
+      "roof": {
+        "type": "gable",
+        "color": "#8FA7B0"
+      },
+      "wall": "#EFEBE2",
+      "gameRole": "pets"
+    },
+    {
+      "id": "shop_1_2",
+      "name": "Хувцас, гутал",
+      "kind": "shop",
+      "x": 148,
+      "z": -40,
+      "w": 9.6,
+      "d": 8,
+      "floors": 1,
+      "roof": {
+        "type": "gable",
+        "color": "#E0A1B5"
+      },
+      "wall": "#E8DCC0"
+    },
+    {
+      "id": "shop_1_3",
+      "name": "Малын тэжээл",
+      "kind": "shop",
+      "x": 164,
+      "z": -40,
+      "w": 9.6,
+      "d": 8,
+      "floors": 1,
+      "roof": {
+        "type": "gable",
+        "color": "#C85A4A"
+      },
+      "wall": "#EFEBE2",
+      "gameRole": "feed"
+    },
+    {
+      "id": "shop_1_4",
+      "name": "Хүнсний дэлгүүр",
+      "kind": "shop",
+      "x": 180,
+      "z": -40,
+      "w": 9.6,
+      "d": 8,
+      "floors": 1,
+      "roof": {
+        "type": "gable",
+        "color": "#D98A54"
+      },
+      "wall": "#E8DCC0",
+      "gameRole": "grocery"
+    },
+    {
+      "id": "car_dealer",
+      "name": "Машин худалдаа",
+      "kind": "shop",
+      "gameRole": "vehicles",
+      "x": 132,
+      "z": -12,
+      "w": 10,
+      "d": 8,
+      "floors": 1,
+      "roof": {
+        "type": "flat",
+        "color": "#3A5FB0"
+      },
+      "wall": "#EFEBE2",
+      "trim": "#3A5FB0"
+    },
+    {
+      "id": "equipment",
+      "name": "Тоног төхөөрөмж",
+      "kind": "shop",
+      "gameRole": "equipment",
+      "x": 218,
+      "z": -12,
+      "w": 10,
+      "d": 8,
+      "floors": 1,
+      "roof": {
+        "type": "gable",
+        "color": "#E0C23A"
+      },
+      "wall": "#E8DCC0"
+    }
+  ],
+  "compounds": [
+    {
+      "id": "hospital_yard",
+      "name": "Эмнэлгийн хашаа",
+      "kind": "hospital_yard",
+      "x": 65,
+      "z": -112.5,
+      "w": 62,
+      "d": 43,
+      "fence": "#7A8A94",
+      "gate": "s"
+    },
+    {
+      "id": "school_yard",
+      "name": "Сургуулийн хашаа",
+      "kind": "school_yard",
+      "x": 152.5,
+      "z": -97,
+      "w": 59,
+      "d": 88,
+      "fence": "#5C8A94",
+      "gate": "s"
+    },
+    {
+      "id": "buyer_yard",
+      "name": "Сүү, ноос хүлээн авах цэг",
+      "kind": "buyer_yard",
+      "x": 189,
+      "z": -10,
+      "w": 36,
+      "d": 22,
+      "fence": "#5C6B78",
+      "gate": "s",
+      "gateOffset": -2,
+      "buildings": [
+        {
+          "id": "buyer",
+          "name": "Сүү, ноос хүлээн авах цэг",
+          "kind": "shop",
+          "gameRole": "buyer",
+          "x": 177.5,
+          "z": -15.5,
+          "w": 10,
+          "d": 8,
+          "floors": 1,
+          "roof": {
+            "type": "gable",
+            "color": "#3A8FB0"
+          },
+          "wall": "#EFEBE2"
+        },
+        {
+          "id": "wool_store",
+          "name": "Ноосны агуулах",
+          "kind": "warehouse",
+          "x": 199,
+          "z": -15,
+          "w": 12,
+          "d": 9,
+          "floors": 1,
+          "h": 5,
+          "roof": {
+            "type": "gable",
+            "color": "#9AA3A6"
+          },
+          "wall": "#C9B998",
+          "trim": "#8A8072"
+        }
+      ]
+    },
+    {
+      "id": "ger_yard",
+      "name": "Гэр, майхны худалдаа",
+      "kind": "ger_tent_yard",
+      "x": 199,
+      "z": -47,
+      "w": 20,
+      "d": 28,
+      "fence": "#3F7A4A",
+      "gate": "s",
+      "gateOffset": 5,
+      "buildings": [
+        {
+          "id": "ger_shop",
+          "name": "Гэр, майхны худалдаа",
+          "kind": "shop",
+          "gameRole": "ger_tent",
+          "x": 194.5,
+          "z": -37.5,
+          "w": 9,
+          "d": 7,
+          "floors": 1,
+          "roof": {
+            "type": "gable",
+            "color": "#3F9E6E"
+          },
+          "wall": "#EFEBE2"
+        }
+      ],
+      "gers": [
+        [
+          194,
+          -53
+        ]
+      ]
+    },
+    {
+      "id": "resort",
+      "name": "Амралтын газар",
+      "kind": "resort",
+      "x": -322.5,
+      "z": 69.5,
+      "w": 72,
+      "d": 56,
+      "fence": "#B5633F",
+      "buildings": [
+        {
+          "id": "resort_main",
+          "name": "Амралтын газар (3 давхар)",
+          "kind": "hotel",
+          "x": -300,
+          "z": 58,
+          "w": 24,
+          "d": 14,
+          "floors": 3,
+          "roof": {
+            "type": "gable",
+            "color": "#3F9E6E"
+          },
+          "wall": "#EFEBE2",
+          "trim": "#B5633F"
+        },
+        {
+          "id": "resort_guard",
+          "name": "Харуулын байр",
+          "kind": "guard",
+          "x": -290,
+          "z": 93,
+          "w": 6,
+          "d": 5,
+          "floors": 1,
+          "roof": {
+            "type": "gable",
+            "color": "#B5633F"
+          },
+          "wall": "#E8DCC0"
+        }
+      ],
+      "gers": [
+        [
+          -345,
+          52
+        ],
+        [
+          -333,
+          52
+        ],
+        [
+          -321,
+          52
+        ],
+        [
+          -345,
+          66
+        ],
+        [
+          -333,
+          66
+        ],
+        [
+          -321,
+          66
+        ]
+      ],
+      "solar": [
+        [
+          -345,
+          88
+        ],
+        [
+          -335,
+          88
+        ]
+      ]
+    },
+    {
+      "id": "market",
+      "name": "Малын зах",
+      "kind": "livestock_market",
+      "gameRole": "livestock",
+      "x": 293,
+      "z": 40,
+      "w": 62,
+      "d": 42,
+      "fence": "#8A5A3A",
+      "gate": "n",
+      "pens": [
+        [
+          274,
+          44,
+          16,
+          12
+        ],
+        [
+          292,
+          44,
+          16,
+          12
+        ],
+        [
+          310,
+          44,
+          16,
+          12
+        ],
+        [
+          283,
+          27,
+          22,
+          10
+        ]
+      ],
+      "buildings": [
+        {
+          "id": "market_office",
+          "name": "Захын контор",
+          "kind": "office",
+          "x": 313,
+          "z": 27,
+          "w": 10,
+          "d": 7,
+          "floors": 1,
+          "roof": {
+            "type": "gable",
+            "color": "#8A5A3A"
+          },
+          "wall": "#E8DCC0"
+        }
+      ],
+      "animals": 18
+    }
+  ],
+  "fields": [
+    {
+      "id": "stadium",
+      "name": "Тоглоомын талбай",
+      "kind": "football",
+      "x": 224,
+      "z": -212,
+      "w": 80,
+      "d": 52,
+      "track": true
+    },
+    {
+      "id": "wrestling",
+      "name": "Бөх барилдах талбай",
+      "kind": "wrestling",
+      "x": 300.5,
+      "z": -133.5,
+      "r": 18
+    }
+  ],
+  "specialPlots": [
+    {
+      "id": "plot_sale_1",
+      "role": "forSale",
+      "name": "Зарагдах хашаа байшин",
+      "x": 58,
+      "z": 32,
+      "w": 24,
+      "d": 28,
+      "house": {
+        "w": 9,
+        "d": 7,
+        "floors": 1,
+        "roof": "#3A5FB0",
+        "wall": "#EFEBE2"
+      }
+    },
+    {
+      "id": "plot_sale_2",
+      "role": "forSale",
+      "name": "Зарагдах хашаа байшин (захад)",
+      "x": -200,
+      "z": 80,
+      "w": 24,
+      "d": 28,
+      "house": {
+        "w": 8,
+        "d": 6.5,
+        "floors": 1,
+        "roof": "#C85A4A",
+        "wall": "#9A6B45"
+      },
+      "ger": true
+    },
+    {
+      "id": "plot_rel_1",
+      "role": "relative",
+      "name": "Хамаатны айл",
+      "x": 136,
+      "z": 36,
+      "w": 24,
+      "d": 28,
+      "house": {
+        "w": 10,
+        "d": 7,
+        "floors": 1,
+        "roof": "#3F9E6E",
+        "wall": "#E8DCC0"
+      },
+      "ger": true
+    },
+    {
+      "id": "plot_rel_2",
+      "role": "relative",
+      "name": "Хамаатны айл (захад)",
+      "x": 318,
+      "z": 112,
+      "w": 24,
+      "d": 28,
+      "house": {
+        "w": 9,
+        "d": 7,
+        "floors": 2,
+        "roof": "#6E2222",
+        "wall": "#EFEBE2"
+      }
+    }
+  ],
+  "zones": [
+    {
+      "id": "res_ne",
+      "name": "Хашаа байшин (баруун хойд)",
+      "kind": "khashaa",
+      "x": -153,
+      "z": -237.5,
+      "w": 223.5,
+      "d": 110.5,
+      "fill": 0.85
+    },
+    {
+      "id": "res_nw",
+      "name": "Гэр хороолол (хойд)",
+      "kind": "khashaa",
+      "x": 77.5,
+      "z": -184,
+      "w": 199,
+      "d": 95,
+      "fill": 0.9
+    },
+    {
+      "id": "res_n",
+      "name": "Хашаа байшин (зүүн урд)",
+      "kind": "khashaa",
+      "x": 108.5,
+      "z": -6,
+      "w": 223.5,
+      "d": 137,
+      "fill": 0.85
+    },
+    {
+      "id": "res_w",
+      "name": "Хашаа байшин (урд)",
+      "kind": "khashaa",
+      "x": -65.5,
+      "z": 3,
+      "w": 174,
+      "d": 118.5,
+      "fill": 0.9
+    },
+    {
+      "id": "res_lone",
+      "name": "Тусдаа хашаанууд (баруун)",
+      "kind": "khashaa",
+      "x": -271.5,
+      "z": 51.5,
+      "w": 183,
+      "d": 107,
+      "fill": 0.45
+    }
+  ],
+  "props": [
+    {
+      "kind": "vehicleLot",
+      "x": 153,
+      "z": -11,
+      "w": 26,
+      "d": 10,
+      "shop": "car_dealer",
+      "slots": [
+        {
+          "id": "lot_porter",
+          "vehicle": "porter",
+          "x": 143,
+          "z": -11,
+          "rot": 0
+        },
+        {
+          "id": "lot_amjirgaa",
+          "vehicle": "amjirgaa",
+          "x": 150,
+          "z": -11,
+          "rot": 0
+        },
+        {
+          "id": "lot_milk",
+          "vehicle": "milkTanker",
+          "x": 157,
+          "z": -11,
+          "rot": 0
+        },
+        {
+          "id": "lot_cart",
+          "vehicle": "horseCart",
+          "x": 164,
+          "z": -11,
+          "rot": 0
+        }
+      ]
+    },
+    {
+      "kind": "tent",
+      "x": 204,
+      "z": -55,
+      "color": "#4A7A9C"
+    },
+    {
+      "kind": "tent",
+      "x": 204,
+      "z": -48,
+      "color": "#C85A4A"
+    },
+    {
+      "kind": "woolBales",
+      "x": 199,
+      "z": -6.5,
+      "w": 10,
+      "d": 3
+    },
+    {
+      "kind": "milkTanks",
+      "x": 174,
+      "z": -7
+    },
+    {
+      "kind": "truckScale",
+      "x": 187.5,
+      "z": -6
+    },
+    {
+      "kind": "equipmentDisplay",
+      "x": 218,
+      "z": -5,
+      "w": 8,
+      "d": 3
+    },
+    {
+      "kind": "fuelStation",
+      "id": "fuel",
+      "name": "Колонк",
+      "gameRole": "fuel",
+      "x": 385,
+      "z": -48,
+      "w": 30,
+      "d": 22
+    },
+    {
+      "kind": "plaza",
+      "x": 253,
+      "z": -53,
+      "w": 26,
+      "d": 8,
+      "color": "#9C958A"
+    },
+    {
+      "kind": "flagpole",
+      "x": 247,
+      "z": -52,
+      "h": 12
+    },
+    {
+      "kind": "monument",
+      "x": 259,
+      "z": -52
+    },
+    {
+      "kind": "gazebo",
+      "x": 96,
+      "z": -30,
+      "r": 3.5,
+      "color": "#8A5A3A"
+    },
+    {
+      "kind": "playground",
+      "x": 315,
+      "z": -22,
+      "w": 16,
+      "d": 24
+    },
+    {
+      "kind": "gardenBeds",
+      "x": 275,
+      "z": -4,
+      "w": 28,
+      "d": 9
+    },
+    {
+      "kind": "greenhouse",
+      "x": 165,
+      "z": -62,
+      "len": 8
+    },
+    {
+      "kind": "greenhouse",
+      "x": 165,
+      "z": -74,
+      "len": 8
+    },
+    {
+      "kind": "stupa",
+      "x": 240,
+      "z": -44
+    },
+    {
+      "kind": "ger",
+      "x": 238,
+      "z": -28,
+      "color": "#F3EDE2"
+    },
+    {
+      "kind": "coalPile",
+      "x": -20,
+      "z": -40,
+      "r": 5
+    },
+    {
+      "kind": "tank",
+      "x": 88,
+      "z": -96,
+      "r": 2.2,
+      "h": 3,
+      "color": "#6FB3A8"
+    }
+  ]
+}

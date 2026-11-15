@@ -5,10 +5,16 @@
 import * as THREE from 'three';
 import type { GameState } from '../sim/state';
 import type { Dwelling, Helper } from '../sim/systems/helpers';
-import { makeHerder, makeHorse, swingLegs, type Rig } from './characters';
+import { dressHerder, helperColors, makeHerder, makeHorse, swingLegs, type Rig } from './characters';
+import type { HelperRole } from './style';
+import type { Season } from '../sim/config';
 import { angDiff, mat, meshBox } from './util';
 
-const DEEL = [0x8a2a2a, 0x2a7a4a, 0x7a4a9a, 0xb07a2a, 0x2a6a8a, 0x5a5a5a];
+/** Туслахын үүрэг → дээлийн өнгө (V4.1). Адуу хариулж буй малчин = адуучин. */
+function helperRole(h: Helper): HelperRole {
+  if (h.task === 'herd') return h.herd === 'horse' ? 'horse' : 'herd';
+  return h.task;
+}
 
 function smallGer(scale: number): THREE.Group {
   const g = new THREE.Group();
@@ -48,6 +54,7 @@ interface HelperView {
   z: number;
   h: number;
   phase: number;
+  role: HelperRole;
 }
 
 export class StaffView {
@@ -55,15 +62,30 @@ export class StaffView {
   private views = new Map<number, HelperView>();
   private dwellings = new Map<string, THREE.Object3D>();
 
+  private season: Season = 'summer';
+  /** Улирал солигдоход туслахуудын хувцас (V4.1) */
+  setSeason(season: Season): void {
+    if (season === this.season) return;
+    this.season = season;
+    for (const v of this.views.values()) dressHerder(v.rig, season);
+  }
+
   update(state: GameState, heightAt: (x: number, z: number) => number, dt: number): void {
     this.syncDwellings(state.helpers.dwellings, heightAt);
     const alive = new Set<number>();
     for (const h of state.helpers.list as Helper[]) {
       alive.add(h.id);
       let v = this.views.get(h.id);
+      const role = helperRole(h);
+      // Үүрэг солигдвол дээлийн өнгө өөрчлөгдөнө — дүрсийг шинээр үүсгэнэ
+      if (v && v.role !== role) {
+        this.group.remove(v.root);
+        this.views.delete(h.id);
+        v = undefined;
+      }
       if (!v) {
-        const deel = DEEL[h.id % DEEL.length]!;
-        const rig = makeHerder(deel, deel, h.sex === 'f' ? 0x2a6a8a : 0x6b3d1e);
+        const rig = makeHerder(helperColors(role, h.sex));
+        dressHerder(rig, this.season);
         const root = new THREE.Group();
         let horse: Rig | null = null;
         if (h.kind === 'adult') {
@@ -75,7 +97,7 @@ export class StaffView {
         } else rig.root.scale.setScalar(0.68);
         root.add(rig.root);
         this.group.add(root);
-        v = { rig, horse, root, x: h.x, z: h.z, h: h.heading, phase: 0 };
+        v = { rig, horse, root, x: h.x, z: h.z, h: h.heading, phase: 0, role };
         this.views.set(h.id, v);
       }
       const visible = h.mode !== 'away' && state.player.place === 'camp' && !state.move;

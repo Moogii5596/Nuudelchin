@@ -8,6 +8,8 @@ import type { GameState } from '../sim/state';
 import { ridingHorse } from '../sim/systems/herder';
 import type { Wolf } from '../sim/systems/wolves';
 import type { Dog } from '../sim/systems/dogs';
+import { visualStyle, type HelperRole } from './style';
+import type { Season } from '../sim/config';
 import { angDiff, limb, meshBox, mat } from './util';
 
 export interface Rig {
@@ -18,16 +20,69 @@ export interface Rig {
   tail?: THREE.Object3D;
 }
 
-export function makeHerder(deel = 0x2f5d9b, hem = 0x2a528a, hat = 0xa52a2a): Rig {
+export interface HerderColors {
+  deel: number;
+  hem: number;
+  hat: number;
+}
+
+const hex = (c: string): number => parseInt(c.slice(1), 16);
+/** Өнгийг цагаан руу k хувиар ойртуулна (тэрлэг) */
+function lighten(c: number, k: number): number {
+  const ch = (sh: number): number => {
+    const v = (c >> sh) & 255;
+    return Math.round(v + (255 - v) * k) << sh;
+  };
+  return ch(16) | ch(8) | ch(0);
+}
+
+export function playerColors(): HerderColors {
+  const p = visualStyle.outfits.player;
+  return { deel: hex(p.deel), hem: hex(p.hem), hat: hex(p.hat) };
+}
+
+/** Туслахын дээл үүргээрээ, малгай хүйсээр (V4.1) */
+export function helperColors(role: HelperRole, sex: 'm' | 'f'): HerderColors {
+  const o = visualStyle.outfits;
+  const deel = hex(o.helperRoles[role]);
+  return { deel, hem: deel, hat: hex(o.helperHat[sex]) };
+}
+
+/**
+ * Малчин/туслах. Улирлын хувцасны хувилбарууд нэрлэгдсэн бүлгээр (`body:*`, `hat:*`) зэрэг үүснэ;
+ * `dressHerder` улирлаар нь харуулна (rig-ийг дахин үүсгэхгүй — камер, бусад лавлагаа хэвээр).
+ */
+export function makeHerder(colors: HerderColors = playerColors()): Rig {
+  const { deel, hem, hat } = colors;
+  const o = visualStyle.outfits;
   const g = new THREE.Group();
   // Нуруун дээрх уут (гарт барьсан бүтээгдэхүүн)
   const sack = meshBox(0.5, 0.6, 0.3, 0xb89a6a, 0, 1.35, -0.38, g);
   sack.name = 'sack';
   sack.visible = false;
   const legs = [limb(0.2, 0.85, 0x2b1d14, -0.15, 0.85, 0, g), limb(0.2, 0.85, 0x2b1d14, 0.15, 0.85, 0, g)];
-  meshBox(0.62, 0.9, 0.4, deel, 0, 1.3, 0, g);            // дээл
-  meshBox(0.64, 0.14, 0.42, 0xe0b030, 0, 1.05, 0, g);          // бүс
-  meshBox(0.69, 0.3, 0.44, hem, 0, 1.0, 0, g);            // дээлийн хормой
+  const belt = 0xe0b030;
+  // Зуны тэрлэг: нимгэн, цайвар
+  const terleg = new THREE.Group();
+  terleg.name = 'body:terleg';
+  const tc = lighten(deel, o.terlegLighten), th = lighten(hem, o.terlegLighten);
+  meshBox(0.58, 0.9, 0.36, tc, 0, 1.3, 0, terleg);
+  meshBox(0.6, 0.12, 0.38, belt, 0, 1.05, 0, terleg);
+  meshBox(0.64, 0.26, 0.4, th, 0, 1.0, 0, terleg);
+  // Энгийн дээл (намар, хавар)
+  const deelG = new THREE.Group();
+  deelG.name = 'body:deel';
+  meshBox(0.62, 0.9, 0.4, deel, 0, 1.3, 0, deelG);            // дээл
+  meshBox(0.64, 0.14, 0.42, belt, 0, 1.05, 0, deelG);         // бүс
+  meshBox(0.69, 0.3, 0.44, hem, 0, 1.0, 0, deelG);            // дээлийн хормой
+  // Өвлийн зузаан дээл, үстэй зах, урт хормой
+  const winter = new THREE.Group();
+  winter.name = 'body:winter';
+  meshBox(0.72, 0.94, 0.5, deel, 0, 1.3, 0, winter);
+  meshBox(0.74, 0.15, 0.52, belt, 0, 1.05, 0, winter);
+  meshBox(0.8, 0.42, 0.56, hem, 0, 0.92, 0, winter);
+  meshBox(0.56, 0.16, 0.56, hex(o.collarFur), 0, 1.8, 0, winter);   // үстэй зах
+  g.add(terleg, deelG, winter);
   const arms = [limb(0.16, 0.75, deel, -0.4, 1.7, 0, g), limb(0.16, 0.75, deel, 0.4, 1.7, 0, g)];
   // Шилбүүр/богино уурга — баруун гарт, урагшаа хазайж
   const uurga = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.035, 2.2, 6), mat(0x8a6a3a));
@@ -41,16 +96,40 @@ export function makeHerder(deel = 0x2f5d9b, hem = 0x2a528a, hat = 0xa52a2a): Rig
   head.position.y = 1.98;
   head.castShadow = true;
   g.add(head);
+  // Оройтой малгай (зун, намар)
+  const toortsog = new THREE.Group();
+  toortsog.name = 'hat:toortsog';
   const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.3, 0.1, 10), mat(0x6b3d1e));
   brim.position.y = 2.13;
-  g.add(brim);
   const top = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.32, 8), mat(hat));
   top.position.y = 2.32;
-  g.add(top);
-  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 5), mat(0xe0b030));
+  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 5), mat(belt));
   knob.position.y = 2.5;
-  g.add(knob);
-  return { root: g, legs, arms };
+  toortsog.add(brim, top, knob);
+  // Үнэгэн малгай: үстэй хүрээ, өндөр орой, чихэвч (өвөл, хавар)
+  const fox = new THREE.Group();
+  fox.name = 'hat:fox';
+  const fur = mat(hex(o.foxFur));
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(0.29, 0.29, 0.2, 10), fur);
+  band.position.y = 2.12;
+  const crown = new THREE.Mesh(new THREE.ConeGeometry(0.21, 0.36, 8), mat(hat));
+  crown.position.y = 2.38;
+  fox.add(band, crown);
+  for (const sx of [-1, 1]) meshBox(0.08, 0.28, 0.2, hex(o.foxFur), sx * 0.24, 1.96, 0, fox);   // чихэвч
+  g.add(toortsog, fox);
+  const rig: Rig = { root: g, legs, arms };
+  dressHerder(rig, 'summer');
+  return rig;
+}
+
+/** Улирлын хувцас (V4.1): `data/visuals.json` outfits.seasons */
+export function dressHerder(r: Rig, season: Season): void {
+  const look = visualStyle.outfits.seasons[season];
+  for (const child of r.root.children) {
+    const [kind, id] = child.name.split(':');
+    if (kind === 'body') child.visible = id === look.body;
+    else if (kind === 'hat') child.visible = id === look.hat;
+  }
 }
 
 export function makeHorse(color: number): Rig {
@@ -102,7 +181,7 @@ function makeWolf(): Rig {
 }
 
 /** Монгол банхар: хар, хүрэн хацартай */
-function makeDog(): Rig {
+export function makeDog(): Rig {
   const g = new THREE.Group();
   const c = 0x231d19, tan = 0x9a6634;
   meshBox(0.34, 0.4, 0.85, c, 0, 0.62, 0, g);
@@ -124,6 +203,23 @@ function makeDog(): Rig {
   const legs = ([[-0.11, 0.3], [0.11, 0.3], [-0.11, -0.3], [0.11, -0.3]] as const).map(([x, z]) => limb(0.1, 0.45, c, x, 0.45, z, g));
   head.name = 'head';
   return { root: g, legs, arms: [], head, tail };
+}
+
+/**
+ * V3.2: нохойн хэвтэх поз. t = 0 (зогссон) … 1 (хэвтсэн). Бие доошилж, урд хөл урагш,
+ * хойд хөл хойш сунаж, толгой доош, сүүл газарт тэгшэрнэ. Хэмжээ → data/visuals.json dogRest.
+ */
+export function poseDogLying(r: Rig, t: number, baseY = 0): void {
+  const dr = visualStyle.dogRest;
+  r.root.position.y = baseY - dr.bodyDrop * t;
+  const L = r.legs;
+  if (L.length === 4) {
+    const fold = (Math.PI / 2) * t;
+    L[0]!.rotation.x = L[1]!.rotation.x = -fold;   // урд хөл урагш
+    L[2]!.rotation.x = L[3]!.rotation.x = fold;    // хойд хөл хойш
+  }
+  if (r.head) r.head.rotation.x = dr.headDown * t;
+  if (r.tail) r.tail.rotation.x = -0.7 + (dr.tailFlat + 0.7) * t;
 }
 
 export function swingLegs(r: Rig, sw: number): void {
@@ -165,7 +261,7 @@ export class CharactersView {
   private herder = makeHerder();
   private horse = makeHorse(0x7a4a26);
   private wolves = new Map<number, { rig: Rig; x: number; z: number; h: number; phase: number }>();
-  private dogs = new Map<number, { rig: Rig; x: number; z: number; h: number; phase: number; bark: THREE.Sprite }>();
+  private dogs = new Map<number, { rig: Rig; x: number; z: number; h: number; phase: number; bark: THREE.Sprite; still: number; lie: number }>();
   private wolfCamp = '';
   private hPhase = 0;
   private horsePhase = 0;
@@ -204,6 +300,14 @@ export class CharactersView {
     H.legs[1]!.rotation.set(-1.4, 0, 0);
     H.arms[0]!.rotation.x = -0.9;
     H.arms[1]!.rotation.x = -0.9;
+  }
+
+  private season: Season | null = null;
+  /** Улирал солигдоход малчны хувцас (V4.1) */
+  setSeason(season: Season): void {
+    if (season === this.season) return;
+    this.season = season;
+    dressHerder(this.herder, season);
   }
 
   get herderObject(): THREE.Object3D {
@@ -295,7 +399,7 @@ export class CharactersView {
       alive.add(d.id);
       let v = this.dogs.get(d.id);
       if (!v) {
-        v = { rig: makeDog(), x: d.x, z: d.z, h: d.heading, phase: 0, bark: makeBubble('Хав хав!') };
+        v = { rig: makeDog(), x: d.x, z: d.z, h: d.heading, phase: 0, bark: makeBubble('Хав хав!'), still: 0, lie: 0 };
         v.bark.scale.set(1.8, 0.7, 1);
         this.campGroup.add(v.rig.root, v.bark);
         this.dogs.set(d.id, v);
@@ -312,12 +416,24 @@ export class CharactersView {
       v.x = nx;
       v.z = nz;
       v.phase += dt * sp * 3;
-      swingLegs(v.rig, sp > 0.15 ? Math.sin(v.phase) * 0.8 : 0);
+      // V3.2: удаан хөдлөхгүй (хуцахгүй, хөөхгүй) бол хэвтэнэ
+      const dr = visualStyle.dogRest;
+      v.still = sp > 0.15 || d.barkT > 0 || d.mode === 'chase' ? 0 : v.still + dt;
+      const lieTarget = v.still > dr.lieAfterSec ? 1 : 0;
+      v.lie += Math.sign(lieTarget - v.lie) * Math.min(Math.abs(lieTarget - v.lie), dt * dr.blendPerSec * (lieTarget ? 1 : 3));
       const y = heightAt(v.x, v.z);
-      v.rig.root.position.set(v.x, y + (sp > 0.2 ? Math.abs(Math.sin(v.phase)) * 0.045 : 0), v.z);
       v.rig.root.rotation.y = v.h;
-      if (v.rig.head) v.rig.head.rotation.x = d.barkT > 0 ? -0.38 + Math.sin(v.phase * 2) * 0.06 : Math.sin(v.phase * 0.4) * 0.035;
-      if (v.rig.tail) v.rig.tail.rotation.x = -0.7 + Math.sin(v.phase * 0.7 + d.id) * 0.18;
+      if (v.lie > 0.001) {
+        poseDogLying(v.rig, v.lie, y);
+        v.rig.root.position.x = v.x;
+        v.rig.root.position.z = v.z;
+        if (v.rig.tail) v.rig.tail.rotation.x += Math.sin(v.phase * 0.7 + d.id) * 0.05;
+      } else {
+        swingLegs(v.rig, sp > 0.15 ? Math.sin(v.phase) * 0.8 : 0);
+        v.rig.root.position.set(v.x, y + (sp > 0.2 ? Math.abs(Math.sin(v.phase)) * 0.045 : 0), v.z);
+        if (v.rig.head) v.rig.head.rotation.x = d.barkT > 0 ? -0.38 + Math.sin(v.phase * 2) * 0.06 : Math.sin(v.phase * 0.4) * 0.035;
+        if (v.rig.tail) v.rig.tail.rotation.x = -0.7 + Math.sin(v.phase * 0.7 + d.id) * 0.18;
+      }
       v.bark.visible = d.barkT > 0;
       v.bark.position.set(v.x, y + 1.9 + Math.sin(v.phase * 2) * 0.05, v.z);
     }

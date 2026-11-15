@@ -75,6 +75,25 @@ tags: [index, docs]
 | [[balance-m1]] | M1–M1.5 симуляцын дүн | 📜 Archived — `docs/_archive/` |
 | [[mvp-spec-obsolete]] | mvp-spec.md-ээс хасагдсан хуучирсан мөр | 📜 Archived — `docs/_archive/` |
 
+### Судалгаа — өрсөлдөгчийн шинжилгээ (`docs/competitive-analysis/`)
+
+> 📚 Санаа, сургамж — дүрэм биш. [[summary]] §8-ийн асуултуудыг хэрэглэгч 2026-11-15-нд шийдсэн (12-оос бусад) → [[decisions]] §0, [[M6]] M6.8–M6.12. Файлууд claude.ai Project «Монгол»-д бичигдсэн тул доторх `mvp-plan.md` = `docs/plan/M6.md`/`M7.md`, `mvp-spec.md` §13 = [[decisions]] §13, `README.md` = энэ INDEX.
+
+| Баримт | Юуны тухай | Төлөв |
+|---|---|---|
+| [[summary]] | **Эхлэх цэг.** 11 тоглоомын нэгдсэн дүгнэлт: гол 7 дүгнэлт, эрэмбэлсэн сэдэв A1–A9 / B1–B8 / C1–C12, «хийхгүй» жагсаалт, зөрчил, зах зээл, 15 шийдвэрийн асуулт | 📚 · 🙋 шийдвэр хүлээж буй |
+| [[khiimori]] | The Legend of Khiimori — 13-р зууны Монгол, морин элч (K1–K8, X1–X10) | 📚 |
+| [[nomad-steppeborn-saga]] | Nomad: Steppeborn Saga — нүүдэл + домог, pre-alpha (N1–N7, Y1–Y6) | 📚 |
+| [[herdling]] | Herdling — сүрэг туух, удирдагч, хялбар горим (H1–H9, Z1–Z8) | 📚 |
+| [[herder]] | Herder — бэлчээр шавхагдаж нүүх, ченж, мал аюул руу гүйх (R1–R12) | 📚 |
+| [[farvival]] | Farvival — уур амьсгалын үйлдэл, жанрын байршил (F1–F7) | 📚 бага ач холбогдол |
+| [[russian-village-simulator]] | Russian Village Simulator — үндэсний хөдөөний сим, ностальги, зорилгогүй байдал (RV1–RV13) | 📚 |
+| [[medieval-dynasty]] | Medieval Dynasty — нэр хүнд, ажилчид, үе удам, grind (MD1–MD14) | 📚 |
+| [[stardew-valley]] | Stardew Valley — олон давхар зорилт, цагийн дарамт (SV1–SV14) | 📚 |
+| [[ranch-simulator]] | Ranch Simulator — шагналгүй grind, чимээгүй ертөнц (RS1–RS12) | 📚 |
+| [[herding-adventures]] | Herding Adventures + туух механикийн тойм; туух системийн нэгдсэн санал §6 (HA1–HA10) | 📚 |
+| [[mount-and-blade-warband]] | Mount & Blade: Warband — [[living-world]]-ийн эх санаа; бүтэн зам, хоосон sandbox (MB1–MB14) | 📚 |
+
 ### V1+ дизайн (`docs/v1/`)
 
 | Баримт | Юуны тухай | Төлөв |

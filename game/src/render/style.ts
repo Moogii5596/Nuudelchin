@@ -46,6 +46,49 @@ export interface SmokeVisual {
   cookingMinutes: [number, number][];
 }
 
+/** V3.2: хөдлөхгүй нохой хэвтэх, сумын төвийн айлын нохой */
+export interface DogRestVisual {
+  lieAfterSec: number;
+  blendPerSec: number;
+  bodyDrop: number;
+  headDown: number;
+  tailFlat: number;
+  townDogChance: number;
+}
+
+/** V4.1: улирлын хувцас */
+export type OutfitBody = 'terleg' | 'deel' | 'winter';
+export type OutfitHat = 'toortsog' | 'fox';
+export type HelperRole = 'herd' | 'horse' | 'drive' | 'otor' | 'collect';
+export interface OutfitsVisual {
+  seasons: Record<Season, { body: OutfitBody; hat: OutfitHat }>;
+  terlegLighten: number;
+  foxFur: string;
+  collarFur: string;
+  player: { deel: string; hem: string; hat: string };
+  helperRoles: Record<HelperRole, string>;
+  helperHat: Record<'m' | 'f', string>;
+}
+
+/** V5.3: газрын зургийн цаасан төрх */
+export interface MapPaperVisual {
+  texture: number; repeat: number; grain: number; fibers: number; stains: number; stainStrength: number;
+  edgeDarken: number; edgeWidth: number; bankOffset: number; contours: number; contourWobble: number;
+  campRing: number; frameInset: number; frameGap: number;
+}
+
+/** V4.2: тээврийн тоос, гэрэл */
+export interface VehicleFxVisual {
+  dust: {
+    count: number; minSpeed: number; perSecPerSpeed: number; life: number; rise: number; spread: number;
+    size: number; opacity: number; nightLight: number; color: string; snowColor: string;
+  };
+  lights: {
+    nightBelow: number; nightFull: number; beamLength: number; beamWidth: number; beamOpacity: number; beamLift: number;
+    head: string; tail: string; lantern: string;
+  };
+}
+
 export interface CloudShadowVisual {
   scale: number;
   speedX: number;
@@ -112,6 +155,10 @@ export interface VisualStyle {
   grass: GrassVisual;
   water: WaterVisual;
   smoke: SmokeVisual;
+  dogRest: DogRestVisual;
+  outfits: OutfitsVisual;
+  vehicleFx: VehicleFxVisual;
+  mapPaper: MapPaperVisual;
   cloudShadow: CloudShadowVisual;
   flowers: FlowersVisual;
   mountains: { layers: MountainLayerVisual[] };
@@ -131,10 +178,85 @@ const isColor = (value: unknown): value is string => typeof value === 'string' &
 const isPositive = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value > 0;
 const seasons: Season[] = ['summer', 'autumn', 'winter', 'spring'];
 
+function parseMapPaper(p: Record<string, unknown>): MapPaperVisual {
+  const fail = (what: string): never => {
+    throw new Error(`data/visuals.json: mapPaper.${what} буруу`);
+  };
+  const inRange = (k: string, lo: number, hi: number): void => {
+    const v = p[k];
+    if (!(typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi)) fail(k);
+  };
+  const tex = p.texture;
+  if (!(Number.isInteger(tex) && (tex as number) >= 64 && (tex as number) <= 1024 && ((tex as number) & ((tex as number) - 1)) === 0)) fail('texture');
+  for (const k of ['repeat', 'edgeWidth', 'bankOffset', 'campRing', 'frameInset', 'frameGap'] as const) if (!isPositive(p[k])) fail(k);
+  for (const k of ['fibers', 'stains', 'contours'] as const) if (!(Number.isInteger(p[k]) && (p[k] as number) >= 0 && (p[k] as number) <= 2000)) fail(k);
+  inRange('grain', 0, 0.3);
+  inRange('stainStrength', 0, 0.5);
+  inRange('edgeDarken', 0, 1);
+  inRange('contourWobble', 0, 0.3);
+  return p as unknown as MapPaperVisual;
+}
+
+function parseVehicleFx(v: Record<string, unknown>): VehicleFxVisual {
+  const fail = (what: string): never => {
+    throw new Error(`data/visuals.json: vehicleFx.${what} буруу`);
+  };
+  const d = v.dust, l = v.lights;
+  if (!isRecord(d) || !isRecord(l)) return fail('dust/lights');
+  for (const k of ['minSpeed', 'perSecPerSpeed', 'life', 'rise', 'spread', 'size'] as const) if (!isPositive(d[k])) fail(`dust.${k}`);
+  if (!(Number.isInteger(d.count) && (d.count as number) > 0 && (d.count as number) <= 512)) fail('dust.count');
+  if (!(typeof d.opacity === 'number' && d.opacity > 0 && d.opacity <= 1)) fail('dust.opacity');
+  if (!(typeof d.nightLight === 'number' && d.nightLight >= 0 && d.nightLight <= 1)) fail('dust.nightLight');
+  if (!isColor(d.color) || !isColor(d.snowColor)) fail('dust.color');
+  for (const k of ['beamLength', 'beamWidth', 'beamOpacity', 'beamLift'] as const) if (!isPositive(l[k])) fail(`lights.${k}`);
+  if (!(typeof l.nightBelow === 'number' && typeof l.nightFull === 'number' && l.nightFull >= 0 && l.nightFull < l.nightBelow && l.nightBelow <= 1)) {
+    fail('lights.nightBelow/nightFull');
+  }
+  if (!isColor(l.head) || !isColor(l.tail) || !isColor(l.lantern)) fail('lights өнгө');
+  return { dust: d as unknown as VehicleFxVisual['dust'], lights: l as unknown as VehicleFxVisual['lights'] };
+}
+
+function parseOutfits(o: Record<string, unknown>): OutfitsVisual {
+  const fail = (what: string): never => {
+    throw new Error(`data/visuals.json: outfits.${what} буруу`);
+  };
+  const bodies: OutfitBody[] = ['terleg', 'deel', 'winter'];
+  const hats: OutfitHat[] = ['toortsog', 'fox'];
+  if (!isRecord(o.seasons)) fail('seasons');
+  const sv = o.seasons as Record<string, unknown>;
+  const parsedSeasons = {} as OutfitsVisual['seasons'];
+  for (const season of seasons) {
+    const e = sv[season];
+    if (!isRecord(e) || !bodies.includes(e.body as OutfitBody) || !hats.includes(e.hat as OutfitHat)) fail(`seasons.${season}`);
+    parsedSeasons[season] = { body: (e as Record<string, unknown>).body as OutfitBody, hat: (e as Record<string, unknown>).hat as OutfitHat };
+  }
+  if (typeof o.terlegLighten !== 'number' || !(o.terlegLighten >= 0 && o.terlegLighten <= 0.6)) fail('terlegLighten');
+  if (!isColor(o.foxFur) || !isColor(o.collarFur)) fail('foxFur/collarFur');
+  const colors = <K extends string>(v: unknown, keys: readonly K[], what: string): Record<K, string> => {
+    if (!isRecord(v)) return fail(what);
+    const out = {} as Record<K, string>;
+    for (const k of keys) {
+      const c = v[k];
+      if (!isColor(c)) return fail(`${what}.${k}`);
+      out[k] = c;
+    }
+    return out;
+  };
+  return {
+    seasons: parsedSeasons,
+    terlegLighten: o.terlegLighten as number,
+    foxFur: o.foxFur as string,
+    collarFur: o.collarFur as string,
+    player: colors(o.player, ['deel', 'hem', 'hat'] as const, 'player'),
+    helperRoles: colors(o.helperRoles, ['herd', 'horse', 'drive', 'otor', 'collect'] as const, 'helperRoles'),
+    helperHat: colors(o.helperHat, ['m', 'f'] as const, 'helperHat'),
+  };
+}
+
 export function validateVisualStyle(value: unknown): VisualStyle {
   if (
     !isRecord(value) || !isRecord(value.palette) || !isRecord(value.seasons) ||
-    !isRecord(value.grass) || !isRecord(value.water) || !isRecord(value.smoke) ||
+    !isRecord(value.grass) || !isRecord(value.water) || !isRecord(value.smoke) || !isRecord(value.dogRest) || !isRecord(value.outfits) || !isRecord(value.vehicleFx) || !isRecord(value.mapPaper) ||
     !isRecord(value.cloudShadow) || !isRecord(value.flowers) || !isRecord(value.mountains) ||
     !isRecord(value.quality) || !Array.isArray(value.timeOfDay)
   ) {
@@ -299,6 +421,21 @@ export function validateVisualStyle(value: unknown): VisualStyle {
     cookingMinutes.push([interval[0], interval[1]]);
   }
   const smoke: SmokeVisual = { cookingMinutes };
+  const dr = value.dogRest as Record<string, unknown>;
+  const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+  if (
+    !isPositive(dr.lieAfterSec) || !isPositive(dr.blendPerSec) || !isPositive(dr.bodyDrop) || (dr.bodyDrop as number) > 0.6 ||
+    !isNum(dr.headDown) || !isNum(dr.tailFlat) || !isNum(dr.townDogChance) || dr.townDogChance < 0 || dr.townDogChance > 1
+  ) {
+    throw new Error('data/visuals.json: dogRest тохиргоо буруу');
+  }
+  const outfits = parseOutfits(value.outfits as Record<string, unknown>);
+  const vehicleFx = parseVehicleFx(value.vehicleFx as Record<string, unknown>);
+  const mapPaper = parseMapPaper(value.mapPaper as Record<string, unknown>);
+  const dogRest: DogRestVisual = {
+    lieAfterSec: dr.lieAfterSec, blendPerSec: dr.blendPerSec, bodyDrop: dr.bodyDrop as number,
+    headDown: dr.headDown, tailFlat: dr.tailFlat, townDogChance: dr.townDogChance,
+  };
   const cloudValue = value.cloudShadow;
   if (
     !isPositive(cloudValue.scale) ||
@@ -395,6 +532,10 @@ export function validateVisualStyle(value: unknown): VisualStyle {
     grass,
     water,
     smoke,
+    dogRest,
+    outfits,
+    vehicleFx,
+    mapPaper,
     cloudShadow,
     flowers,
     mountains,

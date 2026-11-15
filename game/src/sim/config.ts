@@ -214,7 +214,24 @@ export interface WorldMapConfig {
   river: [number, number][];
   mountains: [number, number, number][];
   forests: [number, number, number][];
-  sum3d: { shop: { x: number; z: number; r: number }; teahouse: { x: number; z: number; r: number }; entry: { x: number; z: number }; parking: { x: number; z: number } };
+  sum3d: {
+    shop: { x: number; z: number; r: number };
+    teahouse: { x: number; z: number; r: number };
+    entry: { x: number; z: number };
+    parking: { x: number; z: number };
+    /** V3.1: нэг хашаатай кампус (сургууль, цэцэрлэг, захиргаа, цагдаа) */
+    campus: SumCampusConfig;
+    bank: { u: number; v: number; w: number; d: number; pad: [number, number]; clearR: number; roof: string };
+  };
+}
+
+export interface SumCampusConfig {
+  u: number;
+  v: number;
+  fence: [number, number];
+  clearR: number;
+  buildings: { id: string; x: number; z: number; w: number; d: number; roof: string }[];
+  field: { x: number; z: number; w: number; d: number };
 }
 
 export interface StartAnimal {
@@ -322,7 +339,34 @@ export function validateConfig(cfg: GameConfig): string[] {
     if (!Array.isArray(c.road) || c.road.length < 2) e.push(`camps.${id}.road: 2+ цэг хэрэгтэй`);
   }
   if (!Object.values(cfg.worldmap.locations).some((l) => l.kind === 'sum')) e.push('worldmap: сумын төв алга');
+  e.push(...validateSumCampus(cfg.worldmap.sum3d));
   if (!cfg.storage.levels[cfg.start.storageLevel]) e.push('start.storageLevel: агуулахын түвшин алга');
   for (const a of cfg.start.animals) if (!cfg.animals.species[a.species]) e.push(`start.animals: "${a.species}" алга`);
+  return e;
+}
+
+/** V3.1: кампусын барилга, талбай хашаандаа багтаж, хоорондоо давхцахгүй; банк кампусаас тусдаа. */
+function validateSumCampus(sum3d: WorldMapConfig['sum3d']): string[] {
+  const e: string[] = [];
+  const c = sum3d.campus;
+  const b = sum3d.bank;
+  if (!c || !b) return ['worldmap.sum3d: campus, bank хэрэгтэй'];
+  const [fw, fd] = c.fence;
+  if (!(fw > 0 && fd > 0 && c.clearR >= Math.hypot(fw, fd) / 2)) e.push('worldmap.sum3d.campus: fence > 0, clearR ≥ хашааны хагас диагональ');
+  const rects = [...c.buildings.map((r) => ({ ...r })), { ...c.field, id: 'field' }];
+  for (const r of rects) {
+    if (!(r.w > 0 && r.d > 0)) e.push(`worldmap.sum3d.campus.${r.id}: w, d > 0`);
+    if (Math.abs(r.x) + r.w / 2 > fw / 2 || Math.abs(r.z) + r.d / 2 > fd / 2) e.push(`worldmap.sum3d.campus.${r.id}: хашаанаас гарсан`);
+  }
+  for (let i = 0; i < rects.length; i++) {
+    for (let j = i + 1; j < rects.length; j++) {
+      const p = rects[i]!, q = rects[j]!;
+      if (Math.abs(p.x - q.x) < (p.w + q.w) / 2 && Math.abs(p.z - q.z) < (p.d + q.d) / 2) e.push(`worldmap.sum3d.campus: ${p.id} ба ${q.id} давхцсан`);
+    }
+  }
+  if (new Set(c.buildings.map((r) => r.id)).size !== c.buildings.length) e.push('worldmap.sum3d.campus.buildings: id давхардсан');
+  if (!(b.w > 0 && b.d > 0 && b.pad[0] >= b.w && b.pad[1] >= b.d)) e.push('worldmap.sum3d.bank: pad ≥ барилга > 0');
+  if (Math.abs(b.u - c.u) < (fw + b.pad[0]) / 2 && Math.abs(b.v - c.v) < (fd + b.pad[1]) / 2) e.push('worldmap.sum3d.bank: кампусын хашаатай давхцсан');
+  for (const hex of [b.roof, ...c.buildings.map((r) => r.roof)]) if (!/^#[0-9a-f]{6}$/i.test(hex)) e.push(`worldmap.sum3d: өнгө "${hex}" #rrggbb биш`);
   return e;
 }

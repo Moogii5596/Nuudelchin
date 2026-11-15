@@ -75,69 +75,90 @@ SYM game/src/render/camera.ts:10 class FollowCamera
 SYM game/src/render/camera.ts:30 method FollowCamera.span
 SYM game/src/render/camera.ts:116 method FollowCamera.update
 SYM game/src/render/camera.ts:136 method FollowCamera.resize
-FILE game/src/render/characters.ts 15.7KB 368L exports: Rig,makeHerder,makeHorse,swingLegs,CharactersView
-SYM game/src/render/characters.ts:13 interface Rig
-SYM game/src/render/characters.ts:21 fn makeHerder
-SYM game/src/render/characters.ts:56 fn makeHorse
-SYM game/src/render/characters.ts:72 fn makeWolf
-SYM game/src/render/characters.ts:105 fn makeDog
-SYM game/src/render/characters.ts:129 fn swingLegs
-SYM game/src/render/characters.ts:140 fn makeBubble
-SYM game/src/render/characters.ts:161 class CharactersView
-SYM game/src/render/characters.ts:188 method CharactersView.say
-SYM game/src/render/characters.ts:194 method CharactersView.seatHerder
-SYM game/src/render/characters.ts:209 method CharactersView.herderObject
-SYM game/src/render/characters.ts:213 method CharactersView.update
-SYM game/src/render/characters.ts:292 method CharactersView.updateDogs
-SYM game/src/render/characters.ts:330 method CharactersView.updateWolves
+FILE game/src/render/characters.ts 20.8KB 484L exports: Rig,HerderColors,playerColors,helperColors,makeHerder,dressHerder,makeHorse,makeDog,poseDogLying,swingLegs,CharactersView
+SYM game/src/render/characters.ts:15 interface Rig
+SYM game/src/render/characters.ts:23 interface HerderColors
+SYM game/src/render/characters.ts:29 fn hex
+SYM game/src/render/characters.ts:31 fn lighten
+SYM game/src/render/characters.ts:39 fn playerColors
+SYM game/src/render/characters.ts:45 fn helperColors
+SYM game/src/render/characters.ts:55 fn makeHerder
+SYM game/src/render/characters.ts:126 fn dressHerder
+SYM game/src/render/characters.ts:135 fn makeHorse
+SYM game/src/render/characters.ts:151 fn makeWolf
+SYM game/src/render/characters.ts:184 fn makeDog
+SYM game/src/render/characters.ts:212 fn poseDogLying
+SYM game/src/render/characters.ts:225 fn swingLegs
+SYM game/src/render/characters.ts:236 fn makeBubble
+SYM game/src/render/characters.ts:257 class CharactersView
+SYM game/src/render/characters.ts:284 method CharactersView.say
+SYM game/src/render/characters.ts:290 method CharactersView.seatHerder
+SYM game/src/render/characters.ts:307 method CharactersView.setSeason
+SYM game/src/render/characters.ts:313 method CharactersView.herderObject
+SYM game/src/render/characters.ts:317 method CharactersView.update
+SYM game/src/render/characters.ts:396 method CharactersView.updateDogs
+SYM game/src/render/characters.ts:446 method CharactersView.updateWolves
 FILE game/src/render/items.ts 3.7KB 97L exports: ItemsView
 SYM game/src/render/items.ts:12 fn canGeo
 SYM game/src/render/items.ts:22 fn fiberGeo
 SYM game/src/render/items.ts:37 class ItemsView
 SYM game/src/render/items.ts:64 method ItemsView.update
-FILE game/src/render/scene.ts 19.8KB 424L exports: GameView
+FILE game/src/render/scene.ts 19.9KB 427L exports: GameView
 SYM game/src/render/scene.ts:24 fn flakeTexture
 SYM game/src/render/scene.ts:37 class GameView
 SYM game/src/render/scene.ts:234 method GameView.applyQuality
 SYM game/src/render/scene.ts:263 method GameView.snapshot
 SYM game/src/render/scene.ts:276 method GameView.toggleHeatmap
 SYM game/src/render/scene.ts:282 method GameView.frame
-SYM game/src/render/scene.ts:341 method GameView.applyDaylight
-SYM game/src/render/scene.ts:401 method GameView.updateFlakes
-SYM game/src/render/scene.ts:417 method GameView.drawCalls
-SYM game/src/render/scene.ts:421 method GameView.triangleCount
-FILE game/src/render/staff.ts 4.8KB 131L exports: StaffView
-SYM game/src/render/staff.ts:13 fn smallGer
-SYM game/src/render/staff.ts:28 fn smallTent
-SYM game/src/render/staff.ts:53 class StaffView
-SYM game/src/render/staff.ts:58 method StaffView.update
-SYM game/src/render/staff.ts:112 method StaffView.syncDwellings
-FILE game/src/render/style.ts 15.6KB 409L exports: TimeVisual,SeasonVisual,GrassVisual,WaterVisual,SmokeVisual,CloudShadowVisual,FlowersVisual,MountainLayerVisual,VisualPalette,VisualStyle,validateVisualStyle,visualStyle,paletteHex
+SYM game/src/render/scene.ts:344 method GameView.applyDaylight
+SYM game/src/render/scene.ts:404 method GameView.updateFlakes
+SYM game/src/render/scene.ts:420 method GameView.drawCalls
+SYM game/src/render/scene.ts:424 method GameView.triangleCount
+FILE game/src/render/staff.ts 5.7KB 153L exports: StaffView
+SYM game/src/render/staff.ts:14 fn helperRole
+SYM game/src/render/staff.ts:19 fn smallGer
+SYM game/src/render/staff.ts:34 fn smallTent
+SYM game/src/render/staff.ts:60 class StaffView
+SYM game/src/render/staff.ts:67 method StaffView.setSeason
+SYM game/src/render/staff.ts:73 method StaffView.update
+SYM game/src/render/staff.ts:134 method StaffView.syncDwellings
+FILE game/src/render/style.ts 22.4KB 550L exports: TimeVisual,SeasonVisual,GrassVisual,WaterVisual,SmokeVisual,DogRestVisual,OutfitBody,OutfitHat,HelperRole,OutfitsVisual,MapPaperVisual,VehicleFxVisual,CloudShadowVisual,FlowersVisual,+6
 SYM game/src/render/style.ts:5 interface TimeVisual
 SYM game/src/render/style.ts:17 interface SeasonVisual
 SYM game/src/render/style.ts:24 interface GrassVisual
 SYM game/src/render/style.ts:35 interface WaterVisual
 SYM game/src/render/style.ts:45 interface SmokeVisual
-SYM game/src/render/style.ts:49 interface CloudShadowVisual
-SYM game/src/render/style.ts:58 interface FlowersVisual
-SYM game/src/render/style.ts:65 interface MountainLayerVisual
-SYM game/src/render/style.ts:75 interface VisualPalette
-SYM game/src/render/style.ts:108 interface VisualStyle
-SYM game/src/render/style.ts:128 fn isRecord
-SYM game/src/render/style.ts:130 fn isColor
-SYM game/src/render/style.ts:131 fn isPositive
-SYM game/src/render/style.ts:134 fn validateVisualStyle
-SYM game/src/render/style.ts:405 const visualStyle
-SYM game/src/render/style.ts:407 fn paletteHex
-FILE game/src/render/sumcenter.ts 24.7KB 545L exports: SumCenterView
-SYM game/src/render/sumcenter.ts:12 fn label
-SYM game/src/render/sumcenter.ts:32 fn houseModel
-SYM game/src/render/sumcenter.ts:61 fn house
-SYM game/src/render/sumcenter.ts:69 fn terrainFence
-SYM game/src/render/sumcenter.ts:123 fn residentialPlot
-SYM game/src/render/sumcenter.ts:203 fn resident
-SYM game/src/render/sumcenter.ts:228 class SumCenterView
-SYM game/src/render/sumcenter.ts:541 method SumCenterView.nearShop
+SYM game/src/render/style.ts:50 interface DogRestVisual
+SYM game/src/render/style.ts:60 type OutfitBody
+SYM game/src/render/style.ts:61 type OutfitHat
+SYM game/src/render/style.ts:62 type HelperRole
+SYM game/src/render/style.ts:63 interface OutfitsVisual
+SYM game/src/render/style.ts:74 interface MapPaperVisual
+SYM game/src/render/style.ts:81 interface VehicleFxVisual
+SYM game/src/render/style.ts:92 interface CloudShadowVisual
+SYM game/src/render/style.ts:101 interface FlowersVisual
+SYM game/src/render/style.ts:108 interface MountainLayerVisual
+SYM game/src/render/style.ts:118 interface VisualPalette
+SYM game/src/render/style.ts:151 interface VisualStyle
+SYM game/src/render/style.ts:175 fn isRecord
+SYM game/src/render/style.ts:177 fn isColor
+SYM game/src/render/style.ts:178 fn isPositive
+SYM game/src/render/style.ts:181 fn parseMapPaper
+SYM game/src/render/style.ts:200 fn parseVehicleFx
+SYM game/src/render/style.ts:219 fn parseOutfits
+SYM game/src/render/style.ts:256 fn validateVisualStyle
+SYM game/src/render/style.ts:546 const visualStyle
+SYM game/src/render/style.ts:548 fn paletteHex
+FILE game/src/render/sumcenter.ts 25.3KB 561L exports: SumCenterView
+SYM game/src/render/sumcenter.ts:15 fn hexColor
+SYM game/src/render/sumcenter.ts:19 fn label
+SYM game/src/render/sumcenter.ts:39 fn houseModel
+SYM game/src/render/sumcenter.ts:68 fn house
+SYM game/src/render/sumcenter.ts:76 fn terrainFence
+SYM game/src/render/sumcenter.ts:130 fn residentialPlot
+SYM game/src/render/sumcenter.ts:225 fn resident
+SYM game/src/render/sumcenter.ts:250 class SumCenterView
+SYM game/src/render/sumcenter.ts:557 method SumCenterView.nearShop
 FILE game/src/render/terrain.ts 60.4KB 1378L exports: TerrainView
 SYM game/src/render/terrain.ts:28 fn typeLookup
 SYM game/src/render/terrain.ts:59 fn grassClumpGeometry
@@ -230,29 +251,42 @@ SYM game/src/render/util.ts:61 fn merge
 SYM game/src/render/util.ts:74 fn meshBox
 SYM game/src/render/util.ts:83 fn limb
 SYM game/src/render/util.ts:95 fn batchStatic
-FILE game/src/render/vehicles.ts 9.6KB 202L exports: makeVehicleModel,VehiclesView
-SYM game/src/render/vehicles.ts:18 fn wheel
-SYM game/src/render/vehicles.ts:33 fn makeCart
-SYM game/src/render/vehicles.ts:69 fn makeTruck
-SYM game/src/render/vehicles.ts:98 fn makeVehicleModel
-SYM game/src/render/vehicles.ts:102 class VehiclesView
-SYM game/src/render/vehicles.ts:111 method VehiclesView.rig
-SYM game/src/render/vehicles.ts:122 method VehiclesView.buildRoad
-SYM game/src/render/vehicles.ts:167 method VehiclesView.update
-FILE game/src/render/worldmap.ts 15.9KB 366L exports: WorldMapView
+FILE game/src/render/vehicles.ts 19.8KB 415L exports: nightFactor,makeVehicleModel,VehiclesView
+SYM game/src/render/vehicles.ts:26 fn fxColor
+SYM game/src/render/vehicles.ts:29 fn nightFactor
+SYM game/src/render/vehicles.ts:37 fn makeBeam
+SYM game/src/render/vehicles.ts:71 fn placeBeam
+SYM game/src/render/vehicles.ts:88 fn lamp
+SYM game/src/render/vehicles.ts:97 class DustFx
+SYM game/src/render/vehicles.ts:134 method DustFx.setAmbient
+SYM game/src/render/vehicles.ts:141 method DustFx.emit
+SYM game/src/render/vehicles.ts:156 method DustFx.update
+SYM game/src/render/vehicles.ts:177 fn wheel
+SYM game/src/render/vehicles.ts:192 fn makeCart
+SYM game/src/render/vehicles.ts:231 fn makeTruck
+SYM game/src/render/vehicles.ts:261 fn makeVehicleModel
+SYM game/src/render/vehicles.ts:265 class VehiclesView
+SYM game/src/render/vehicles.ts:282 method VehiclesView.setAmbient
+SYM game/src/render/vehicles.ts:291 method VehiclesView.applyLights
+SYM game/src/render/vehicles.ts:301 method VehiclesView.rig
+SYM game/src/render/vehicles.ts:313 method VehiclesView.buildRoad
+SYM game/src/render/vehicles.ts:358 method VehiclesView.update
+FILE game/src/render/worldmap.ts 21.9KB 484L exports: paperPixels,WorldMapView
 SYM game/src/render/worldmap.ts:18 fn textSprite
-SYM game/src/render/worldmap.ts:40 class WorldMapView
-SYM game/src/render/worldmap.ts:169 method WorldMapView.heightAt
-SYM game/src/render/worldmap.ts:178 method WorldMapView.addCamp
-SYM game/src/render/worldmap.ts:190 method WorldMapView.addSum
-SYM game/src/render/worldmap.ts:204 method WorldMapView.addPath
-SYM game/src/render/worldmap.ts:216 method WorldMapView.resize
-SYM game/src/render/worldmap.ts:222 method WorldMapView.partyModel
-SYM game/src/render/worldmap.ts:247 method WorldMapView.snapshot
-SYM game/src/render/worldmap.ts:256 method WorldMapView.applySeason
-SYM game/src/render/worldmap.ts:278 method WorldMapView.update
-SYM game/src/render/worldmap.ts:329 method WorldMapView.replaceLabel
-SYM game/src/render/worldmap.ts:361 fn segDist
+SYM game/src/render/worldmap.ts:44 fn paperPixels
+SYM game/src/render/worldmap.ts:84 class WorldMapView
+SYM game/src/render/worldmap.ts:234 method WorldMapView.inkLines
+SYM game/src/render/worldmap.ts:286 method WorldMapView.heightAt
+SYM game/src/render/worldmap.ts:295 method WorldMapView.addCamp
+SYM game/src/render/worldmap.ts:307 method WorldMapView.addSum
+SYM game/src/render/worldmap.ts:321 method WorldMapView.addPath
+SYM game/src/render/worldmap.ts:333 method WorldMapView.resize
+SYM game/src/render/worldmap.ts:339 method WorldMapView.partyModel
+SYM game/src/render/worldmap.ts:364 method WorldMapView.snapshot
+SYM game/src/render/worldmap.ts:374 method WorldMapView.applySeason
+SYM game/src/render/worldmap.ts:396 method WorldMapView.update
+SYM game/src/render/worldmap.ts:447 method WorldMapView.replaceLabel
+SYM game/src/render/worldmap.ts:479 fn segDist
 FILE game/src/render/zones.ts 3.5KB 100L exports: ZonesView
 SYM game/src/render/zones.ts:22 class ZonesView
 SYM game/src/render/zones.ts:32 method ZonesView.toggle
@@ -288,7 +322,7 @@ SYM game/src/sim/commands.ts:68 fn nearHome
 SYM game/src/sim/commands.ts:77 fn ok
 SYM game/src/sim/commands.ts:78 fn fail
 SYM game/src/sim/commands.ts:80 fn applyCommand
-FILE game/src/sim/config.ts 15.7KB 328L exports: Species,Sex,Season,SeasonsConfig,SPECIES,TimeConfig,SpeciesConfig,AnimalsConfig,PastureTypeConfig,GrazingConfig,HerdConfig,PastureConfig,WaterShape,TerrainConfig,+8
+FILE game/src/sim/config.ts 18.1KB 372L exports: Species,Sex,Season,SeasonsConfig,SPECIES,TimeConfig,SpeciesConfig,AnimalsConfig,PastureTypeConfig,GrazingConfig,HerdConfig,PastureConfig,WaterShape,TerrainConfig,+9
 SYM game/src/sim/config.ts:22 type Species
 SYM game/src/sim/config.ts:23 type Sex
 SYM game/src/sim/config.ts:24 type Season
@@ -307,10 +341,12 @@ SYM game/src/sim/config.ts:182 interface CampConfig
 SYM game/src/sim/config.ts:192 interface HomeConfig
 SYM game/src/sim/config.ts:204 interface WorldLocation
 SYM game/src/sim/config.ts:209 interface WorldMapConfig
-SYM game/src/sim/config.ts:220 interface StartAnimal
-SYM game/src/sim/config.ts:228 interface GameConfig
-SYM game/src/sim/config.ts:247 fn loadConfig
-SYM game/src/sim/config.ts:274 fn validateConfig
+SYM game/src/sim/config.ts:228 interface SumCampusConfig
+SYM game/src/sim/config.ts:237 interface StartAnimal
+SYM game/src/sim/config.ts:245 interface GameConfig
+SYM game/src/sim/config.ts:264 fn loadConfig
+SYM game/src/sim/config.ts:291 fn validateConfig
+SYM game/src/sim/config.ts:349 fn validateSumCampus
 FILE game/src/sim/rng.ts 1.3KB 49L exports: Rng
 SYM game/src/sim/rng.ts:6 class Rng
 SYM game/src/sim/rng.ts:14 method Rng.state
@@ -650,7 +686,7 @@ SYM tools/codemap.ts:195 fn main
 FILE game/tests/animals.test.ts 2.3KB 39L
 FILE game/tests/breeding.test.ts 1.4KB 33L
 FILE game/tests/clock.test.ts 2.3KB 47L
-FILE game/tests/config.test.ts 0.6KB 16L
+FILE game/tests/config.test.ts 1.4KB 28L
 FILE game/tests/docs.test.ts 4.0KB 76L
 FILE game/tests/dogs.test.ts 7.5KB 190L
 FILE game/tests/grazing.test.ts 2.3KB 46L
@@ -665,7 +701,7 @@ FILE game/tests/rng.test.ts 0.8KB 26L
 FILE game/tests/seasons.test.ts 7.2KB 140L
 FILE game/tests/sim.test.ts 1.4KB 32L
 FILE game/tests/staff.test.ts 12.0KB 229L
-FILE game/tests/style.test.ts 3.9KB 80L
+FILE game/tests/style.test.ts 7.9KB 148L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/wolves.test.ts 14.7KB 337L
 FILE docs/CONTEXT.md 11.9KB 95L
@@ -677,12 +713,12 @@ DOC docs/CONTEXT.md:73-81 ## 5. Архитектурын дүрэм ([[architect
 DOC docs/CONTEXT.md:82-85 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
 DOC docs/CONTEXT.md:86-88 ## 7. Нээлттэй асуултууд
 DOC docs/CONTEXT.md:89-95 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
-FILE docs/INDEX.md 11.1KB 115L
+FILE docs/INDEX.md 13.5KB 134L
 DOC docs/INDEX.md:16-30 ## 1. Унших дараалал ба давуу эрх
-DOC docs/INDEX.md:31-86 ## 2. Баримтууд
-DOC docs/INDEX.md:87-90 ## 3. Гол тоо
-DOC docs/INDEX.md:91-109 ## 4. Нэр томьёо
-DOC docs/INDEX.md:110-115 ## 5. Баримт засах дүрэм
+DOC docs/INDEX.md:31-105 ## 2. Баримтууд
+DOC docs/INDEX.md:106-109 ## 3. Гол тоо
+DOC docs/INDEX.md:110-128 ## 4. Нэр томьёо
+DOC docs/INDEX.md:129-134 ## 5. Баримт засах дүрэм
 FILE docs/architecture.md 17.4KB 234L
 DOC docs/architecture.md:16-29 ## 1. Технологи
 DOC docs/architecture.md:30-68 ## 2. Хавтасны бүтэц
@@ -694,11 +730,121 @@ DOC docs/architecture.md:198-205 ## 7. Хэл
 DOC docs/architecture.md:206-216 ## 8. Тест ба тэнцвэр
 DOC docs/architecture.md:217-222 ## 9. Туршилтын цэс
 DOC docs/architecture.md:223-234 ## 10. Ажиллуулах
-FILE docs/decisions.md 16.8KB 133L
-DOC docs/decisions.md:16-82 ## 0. Хэрэглэгчийн шийдвэрийн түүх
-DOC docs/decisions.md:83-108 ## 13. Нээлттэй шийдвэрүүд 🙋 (бүх баримтаас нэгтгэсэн)
-DOC docs/decisions.md:109-124 ## 14. Нээлттэй шийдвэр — бусад эх сурвалжаас нэгтгэсэн (2026-11-15)
-DOC docs/decisions.md:125-133 ## 15. Баримтуудын зөрүү (2026-11-15-ны шилжүүлэлтээр илэрсэн, хэрэглэгч шийдэх)
+FILE docs/competitive-analysis/farvival.md 7.5KB 78L
+DOC docs/competitive-analysis/farvival.md:16-27 ## 1. Товч мэдээлэл
+DOC docs/competitive-analysis/farvival.md:28-37 ## 2. Агуулга
+DOC docs/competitive-analysis/farvival.md:38-43 ## 3. Жанрын байршил
+DOC docs/competitive-analysis/farvival.md:44-68 ## 4. Манай тоглоомд хамаарах сургамж
+DOC docs/competitive-analysis/farvival.md:69-73 ## 5. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
+DOC docs/competitive-analysis/farvival.md:74-78 ## Эх сурвалж
+FILE docs/competitive-analysis/herder.md 10.6KB 109L
+DOC docs/competitive-analysis/herder.md:16-27 ## 1. Товч мэдээлэл
+DOC docs/competitive-analysis/herder.md:28-36 ## 2. Гол давталт
+DOC docs/competitive-analysis/herder.md:37-47 ## 3. Системүүд
+DOC docs/competitive-analysis/herder.md:48-55 ## 4. ✅ Сайшаасан зүйлс
+DOC docs/competitive-analysis/herder.md:56-62 ## 5. ❌ Шүүмжилсэн зүйлс
+DOC docs/competitive-analysis/herder.md:63-95 ## 6. Манай тоглоомд хамаарах сургамж
+DOC docs/competitive-analysis/herder.md:96-101 ## 7. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
+DOC docs/competitive-analysis/herder.md:102-109 ## Эх сурвалж
+FILE docs/competitive-analysis/herding-adventures.md 12.3KB 119L
+DOC docs/competitive-analysis/herding-adventures.md:18-29 ## 1. Товч мэдээлэл
+DOC docs/competitive-analysis/herding-adventures.md:30-39 ## 2. Гол санаа — «Удирдлага биш, дарамт»
+DOC docs/competitive-analysis/herding-adventures.md:40-53 ## 3. Үнэлгээ (хөгжүүлэгчийн амлалт дээр үндэслэсэн)
+DOC docs/competitive-analysis/herding-adventures.md:54-65 ## 4. Сүрэг туух механикийн тойм (бусад тоглоомууд)
+DOC docs/competitive-analysis/herding-adventures.md:66-89 ## 5. Манай тоглоомд хамаарах сургамж
+DOC docs/competitive-analysis/herding-adventures.md:90-103 ## 6. Туух механикийн нэгдсэн санал (Herdling + Herding Adventures + бусад)
+DOC docs/competitive-analysis/herding-adventures.md:104-110 ## 7. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
+DOC docs/competitive-analysis/herding-adventures.md:111-119 ## Эх сурвалж
+FILE docs/competitive-analysis/herdling.md 18.6KB 157L
+DOC docs/competitive-analysis/herdling.md:16-27 ## 1. Товч мэдээлэл
+DOC docs/competitive-analysis/herdling.md:28-35 ## 2. Гол давталт
+DOC docs/competitive-analysis/herdling.md:36-67 ## 3. Системүүд
+DOC docs/competitive-analysis/herdling.md:68-76 ## 4. ✅ Сайшаасан зүйлс
+DOC docs/competitive-analysis/herdling.md:77-88 ## 5. ❌ Шүүмжилсэн зүйлс
+DOC docs/competitive-analysis/herdling.md:89-126 ## 6. Манай тоглоомд хамаарах сургамж
+DOC docs/competitive-analysis/herdling.md:127-138 ## 7. Гурван тоглоомын нийтлэг дүгнэлт
+DOC docs/competitive-analysis/herdling.md:139-146 ## 8. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
+DOC docs/competitive-analysis/herdling.md:147-157 ## Эх сурвалж
+FILE docs/competitive-analysis/khiimori.md 17.4KB 146L
+DOC docs/competitive-analysis/khiimori.md:15-26 ## 1. Товч мэдээлэл
+DOC docs/competitive-analysis/khiimori.md:27-34 ## 2. Гол давталт (core loop)
+DOC docs/competitive-analysis/khiimori.md:35-64 ## 3. Системүүд
+DOC docs/competitive-analysis/khiimori.md:65-75 ## 4. ✅ Юуг сайшаасан бэ
+DOC docs/competitive-analysis/khiimori.md:76-88 ## 5. ❌ Юуг шүүмжилсэн бэ
+DOC docs/competitive-analysis/khiimori.md:89-127 ## 6. Манай тоглоомд хамаарах сургамж
+DOC docs/competitive-analysis/khiimori.md:128-134 ## 7. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
+DOC docs/competitive-analysis/khiimori.md:135-146 ## Эх сурвалж
+FILE docs/competitive-analysis/medieval-dynasty.md 14.5KB 130L
+DOC docs/competitive-analysis/medieval-dynasty.md:16-27 ## 1. Товч мэдээлэл
+DOC docs/competitive-analysis/medieval-dynasty.md:28-36 ## 2. Гол давталт
+DOC docs/competitive-analysis/medieval-dynasty.md:37-47 ## 3. Системүүд
+DOC docs/competitive-analysis/medieval-dynasty.md:48-57 ## 4. ✅ Сайшаасан зүйлс (жингээр)
+DOC docs/competitive-analysis/medieval-dynasty.md:58-72 ## 5. ❌ Шүүмжилсэн зүйлс (жингээр)
+DOC docs/competitive-analysis/medieval-dynasty.md:73-108 ## 6. Манай тоглоомд хамаарах сургамж
+DOC docs/competitive-analysis/medieval-dynasty.md:109-116 ## 7. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
+DOC docs/competitive-analysis/medieval-dynasty.md:117-130 ## Эх сурвалж
+FILE docs/competitive-analysis/mount-and-blade-warband.md 14.5KB 124L
+DOC docs/competitive-analysis/mount-and-blade-warband.md:16-27 ## 1. Товч мэдээлэл
+DOC docs/competitive-analysis/mount-and-blade-warband.md:28-35 ## 2. Гол давталт
+DOC docs/competitive-analysis/mount-and-blade-warband.md:36-45 ## 3. ✅ Сайшаасан зүйлс
+DOC docs/competitive-analysis/mount-and-blade-warband.md:46-57 ## 4. ❌ Шүүмжилсэн зүйлс
+DOC docs/competitive-analysis/mount-and-blade-warband.md:58-92 ## 5. Манай тоглоомд хамаарах сургамж
+DOC docs/competitive-analysis/mount-and-blade-warband.md:93-103 ## 6. Таван тоглоомын нийтлэг дүгнэлт (энэ ээлжийн судалгаа)
+DOC docs/competitive-analysis/mount-and-blade-warband.md:104-110 ## 7. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
+DOC docs/competitive-analysis/mount-and-blade-warband.md:111-124 ## Эх сурвалж
+FILE docs/competitive-analysis/nomad-steppeborn-saga.md 17.3KB 161L
+DOC docs/competitive-analysis/nomad-steppeborn-saga.md:16-28 ## 1. Товч мэдээлэл
+DOC docs/competitive-analysis/nomad-steppeborn-saga.md:29-32 ## 2. Амласан гол давталт
+DOC docs/competitive-analysis/nomad-steppeborn-saga.md:33-58 ## 3. Амласан системүүд
+DOC docs/competitive-analysis/nomad-steppeborn-saga.md:59-69 ## 4. ✅ Сайн тал (санаа, чиглэлийн хувьд)
+DOC docs/competitive-analysis/nomad-steppeborn-saga.md:70-84 ## 5. ❌ Эрсдэл, сул тал
+DOC docs/competitive-analysis/nomad-steppeborn-saga.md:85-119 ## 6. Манай тоглоомд хамаарах сургамж
+DOC docs/competitive-analysis/nomad-steppeborn-saga.md:120-135 ## 7. Khiimori-тэй харьцуулалт
+DOC docs/competitive-analysis/nomad-steppeborn-saga.md:136-142 ## 8. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
+DOC docs/competitive-analysis/nomad-steppeborn-saga.md:143-149 ## 9. Дараагийн судлах тоглоом (санал)
+DOC docs/competitive-analysis/nomad-steppeborn-saga.md:150-161 ## Эх сурвалж
+FILE docs/competitive-analysis/ranch-simulator.md 11.3KB 111L
+DOC docs/competitive-analysis/ranch-simulator.md:16-28 ## 1. Товч мэдээлэл
+DOC docs/competitive-analysis/ranch-simulator.md:29-37 ## 2. Гол давталт
+DOC docs/competitive-analysis/ranch-simulator.md:38-45 ## 3. ✅ Сайшаасан зүйлс
+DOC docs/competitive-analysis/ranch-simulator.md:46-59 ## 4. ❌ Шүүмжилсэн зүйлс
+DOC docs/competitive-analysis/ranch-simulator.md:60-93 ## 5. Манай тоглоомд хамаарах сургамж
+DOC docs/competitive-analysis/ranch-simulator.md:94-100 ## 6. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
+DOC docs/competitive-analysis/ranch-simulator.md:101-111 ## Эх сурвалж
+FILE docs/competitive-analysis/russian-village-simulator.md 16.0KB 128L
+DOC docs/competitive-analysis/russian-village-simulator.md:18-32 ## 1. Товч мэдээлэл
+DOC docs/competitive-analysis/russian-village-simulator.md:33-44 ## 2. Агуулга
+DOC docs/competitive-analysis/russian-village-simulator.md:45-52 ## 3. ✅ Тоглогчид юуг таашаасан бэ
+DOC docs/competitive-analysis/russian-village-simulator.md:53-61 ## 4. ❌ Шүүмжилсэн зүйлс
+DOC docs/competitive-analysis/russian-village-simulator.md:62-72 ## 5. Дэд жанрын зураглал — «Орос амьдралын симулятор»
+DOC docs/competitive-analysis/russian-village-simulator.md:73-105 ## 6. Манай тоглоомд хамаарах сургамж
+DOC docs/competitive-analysis/russian-village-simulator.md:106-113 ## 7. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
+DOC docs/competitive-analysis/russian-village-simulator.md:114-128 ## Эх сурвалж
+FILE docs/competitive-analysis/stardew-valley.md 13.5KB 125L
+DOC docs/competitive-analysis/stardew-valley.md:16-26 ## 1. Товч мэдээлэл
+DOC docs/competitive-analysis/stardew-valley.md:27-34 ## 2. Гол давталт
+DOC docs/competitive-analysis/stardew-valley.md:35-48 ## 3. Урт хугацааны сэдлийн бүтэц (гол сургамж)
+DOC docs/competitive-analysis/stardew-valley.md:49-58 ## 4. ✅ Сайшаасан зүйлс (Steam сэтгэгдлийн жингээр)
+DOC docs/competitive-analysis/stardew-valley.md:59-71 ## 5. ❌ Шүүмжилсэн зүйлс (жингээр)
+DOC docs/competitive-analysis/stardew-valley.md:72-104 ## 6. Манай тоглоомд хамаарах сургамж
+DOC docs/competitive-analysis/stardew-valley.md:105-112 ## 7. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
+DOC docs/competitive-analysis/stardew-valley.md:113-125 ## Эх сурвалж
+FILE docs/competitive-analysis/summary.md 29.6KB 248L
+DOC docs/competitive-analysis/summary.md:17-28 ## 0. Гол 7 дүгнэлт
+DOC docs/competitive-analysis/summary.md:29-46 ## 1. Судалсан тоглоомууд
+DOC docs/competitive-analysis/summary.md:47-56 ## 2. Эрэмбэлэх арга
+DOC docs/competitive-analysis/summary.md:57-116 ## 3. Эрэмбэлсэн дүгнэлт
+DOC docs/competitive-analysis/summary.md:117-157 ## 4. Гол шийдвэрүүдийн хувилбарууд (дэлгэрэнгүй)
+DOC docs/competitive-analysis/summary.md:158-171 ## 5. Тоглоомуудын хоорондын зөрчил
+DOC docs/competitive-analysis/summary.md:172-200 ## 6. Зах зээл, борлуулалтын сургамж
+DOC docs/competitive-analysis/summary.md:201-213 ## 7. Манай ялгарах байр суурь (нэг дор)
+DOC docs/competitive-analysis/summary.md:214-242 ## 8. Шийдвэрийн асуултууд 🙋
+DOC docs/competitive-analysis/summary.md:243-248 ## Эх сурвалж
+FILE docs/decisions.md 24.4KB 160L
+DOC docs/decisions.md:16-101 ## 0. Хэрэглэгчийн шийдвэрийн түүх
+DOC docs/decisions.md:102-127 ## 13. Нээлттэй шийдвэрүүд 🙋 (бүх баримтаас нэгтгэсэн)
+DOC docs/decisions.md:128-151 ## 14. Нээлттэй шийдвэр — бусад эх сурвалжаас нэгтгэсэн (2026-11-15)
+DOC docs/decisions.md:152-160 ## 15. Баримтуудын зөрүү (2026-11-15-ны шилжүүлэлтээр илэрсэн, хэрэглэгч шийдэх)
 FILE docs/grazing-livestock.md 27.4KB 316L
 DOC docs/grazing-livestock.md:17-125 ## 1. Малын үзүүлэлтүүд
 DOC docs/grazing-livestock.md:126-146 ## 2. Үнэ = амьдын жин × кг-ын үнэ
@@ -715,22 +861,22 @@ DOC docs/helpers-m5.md:45-55 ## 3. Тэнцвэр (улиралгүй үед; 6 
 DOC docs/helpers-m5.md:56-61 ## 4. Хязгаарлалт / 🙋
 FILE docs/milestones.md 8.9KB 45L
 DOC docs/milestones.md:39-45 ## Эрсдэл
-FILE docs/mvp-spec.md 40.9KB 386L
+FILE docs/mvp-spec.md 49.2KB 450L
 DOC docs/mvp-spec.md:17-22 ## 0. Хэрэглэгчийн шийдвэрийн түүх
-DOC docs/mvp-spec.md:23-43 ## 1. Хүрээ
-DOC docs/mvp-spec.md:44-62 ## 2. Цаг (M4.5, M5.5)
-DOC docs/mvp-spec.md:63-78 ## 3. Эхлэл
-DOC docs/mvp-spec.md:79-127 ## 4. Бүтээгдэхүүн: мал үлдээнэ, малчин цуглуулна (Farm Frenzy маяг)
-DOC docs/mvp-spec.md:128-179 ## 5. Үнэ, тээвэр ба сумын төв
-DOC docs/mvp-spec.md:180-222 ## 6. Туслах малчид (M5 — [[helpers-m5]])
-DOC docs/mvp-spec.md:223-264 ## 7. Бэлчээр, бууц сэлгэх, доройтол
-DOC docs/mvp-spec.md:265-294 ## 8. Чоно (M4, M4.5, B6)
-DOC docs/mvp-spec.md:295-310 ## 9. Төллөлт ба нас (M5.5)
-DOC docs/mvp-spec.md:311-348 ## 10. Тоглоомын зорилго ба замын тэмдэгтүүд
-DOC docs/mvp-spec.md:349-371 ## 11. Прототипоос хасагдах, өөрчлөгдөх зүйл
-DOC docs/mvp-spec.md:372-377 ## 12. Хөгжүүлэлтийн явц
-DOC docs/mvp-spec.md:378-382 ## 13. Нээлттэй шийдвэрүүд 🙋
-DOC docs/mvp-spec.md:383-386 ## Эх сурвалж
+DOC docs/mvp-spec.md:23-48 ## 1. Хүрээ
+DOC docs/mvp-spec.md:49-67 ## 2. Цаг (M4.5, M5.5)
+DOC docs/mvp-spec.md:68-91 ## 3. Эхлэл
+DOC docs/mvp-spec.md:92-140 ## 4. Бүтээгдэхүүн: мал үлдээнэ, малчин цуглуулна (Farm Frenzy маяг)
+DOC docs/mvp-spec.md:141-197 ## 5. Үнэ, тээвэр ба сумын төв
+DOC docs/mvp-spec.md:198-240 ## 6. Туслах малчид (M5 — [[helpers-m5]])
+DOC docs/mvp-spec.md:241-282 ## 7. Бэлчээр, бууц сэлгэх, доройтол
+DOC docs/mvp-spec.md:283-320 ## 8. Чоно (M4, M4.5, B6)
+DOC docs/mvp-spec.md:321-336 ## 9. Төллөлт ба нас (M5.5)
+DOC docs/mvp-spec.md:337-412 ## 10. Тоглоомын зорилго ба замын тэмдэгтүүд
+DOC docs/mvp-spec.md:413-435 ## 11. Прототипоос хасагдах, өөрчлөгдөх зүйл
+DOC docs/mvp-spec.md:436-441 ## 12. Хөгжүүлэлтийн явц
+DOC docs/mvp-spec.md:442-446 ## 13. Нээлттэй шийдвэрүүд 🙋
+DOC docs/mvp-spec.md:447-450 ## Эх сурвалж
 FILE docs/night-transport.md 9.4KB 106L
 DOC docs/night-transport.md:18-32 ## 1. Цаг ба шөнө
 DOC docs/night-transport.md:33-44 ## 2. Хотлох (хэрэглэгчийн дүрэм)
@@ -738,30 +884,30 @@ DOC docs/night-transport.md:45-68 ## 3. Сүү, ноос хоносон газр
 DOC docs/night-transport.md:69-87 ## 4. Шөнийн чоно (хэрэглэгчийн дүрэм)
 DOC docs/night-transport.md:88-103 ## 5. Тээвэр
 DOC docs/night-transport.md:104-106 ## 6. Хэрэглэгчийн шийдвэр 🙋
-FILE docs/plan/M6.md 9.7KB 60L
+FILE docs/plan/M6.md 15.9KB 68L
 DOC docs/plan/M6.md:15-17 ## Зорилго
-DOC docs/plan/M6.md:18-33 ## MVP «дууссан» шалгуур (D1–D10 — M6 ба M7-ийн нийт)
-DOC docs/plan/M6.md:34-36 ## Одоогийн байдал
-DOC docs/plan/M6.md:37-49 ## Блокууд
-DOC docs/plan/M6.md:50-52 ## Нээлттэй асуулт
-DOC docs/plan/M6.md:53-58 ## Эрсдэл
-DOC docs/plan/M6.md:59-60 ## Хуваарь
-FILE docs/plan/M7.md 5.7KB 31L
-DOC docs/plan/M7.md:12-21 ## Блокууд
-DOC docs/plan/M7.md:22-24 ## Асуулга (8 асуулт)
-DOC docs/plan/M7.md:25-27 ## Нээлттэй асуулт
-DOC docs/plan/M7.md:28-31 ## Эрсдэл
-FILE docs/plan/V.md 8.0KB 67L
+DOC docs/plan/M6.md:18-34 ## MVP «дууссан» шалгуур (D1–D10 — M6 ба M7-ийн нийт)
+DOC docs/plan/M6.md:35-37 ## Одоогийн байдал
+DOC docs/plan/M6.md:38-55 ## Блокууд
+DOC docs/plan/M6.md:56-58 ## Нээлттэй асуулт
+DOC docs/plan/M6.md:59-66 ## Эрсдэл
+DOC docs/plan/M6.md:67-68 ## Хуваарь
+FILE docs/plan/M7.md 7.4KB 32L
+DOC docs/plan/M7.md:12-22 ## Блокууд
+DOC docs/plan/M7.md:23-25 ## Асуулга (9 асуулт)
+DOC docs/plan/M7.md:26-28 ## Нээлттэй асуулт
+DOC docs/plan/M7.md:29-32 ## Эрсдэл
+FILE docs/plan/V.md 12.0KB 68L
 DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-20 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
 DOC docs/plan/V.md:21-48 ## Блокууд ба чеклист (2026-11-15)
 DOC docs/plan/V.md:49-51 ## Нээлттэй асуулт
-DOC docs/plan/V.md:52-57 ## Зогссон цэг
-DOC docs/plan/V.md:58-67 ## Шийдвэрийн чеклист
-FILE docs/plan/playtest.md 4.4KB 48L
+DOC docs/plan/V.md:52-58 ## Зогссон цэг
+DOC docs/plan/V.md:59-68 ## Шийдвэрийн чеклист
+FILE docs/plan/playtest.md 6.1KB 53L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
-DOC docs/plan/playtest.md:19-24 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
-DOC docs/plan/playtest.md:25-48 ## C. Мэдрэмж, үе шат бүрээр
+DOC docs/plan/playtest.md:19-29 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
+DOC docs/plan/playtest.md:30-53 ## C. Мэдрэмж, үе шат бүрээр
 FILE docs/seasons-camps.md 10.2KB 104L
 DOC docs/seasons-camps.md:17-40 ## 1. Хэрэглэгчийн шийдвэрүүд
 DOC docs/seasons-camps.md:41-54 ## 2. Улирал

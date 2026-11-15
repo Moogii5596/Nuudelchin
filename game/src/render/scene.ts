@@ -286,6 +286,9 @@ export class GameView {
     const look = seasonLook(this.cfg, state);
     const season = seasonOf(this.cfg, state.time.day);
     this.applyDaylight(state.time.minute, season, p.x, p.z);
+    this.characters.setSeason(season);
+    this.vehicles.setAmbient(this.daylight, season);
+    this.staff.setSeason(season);
     // Газрын зураг: өөрийн scene, камертай (M4.6)
     if (p.place === 'map') {
       this.cam.mapMode = true;

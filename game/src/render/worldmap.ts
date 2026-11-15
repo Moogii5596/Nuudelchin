@@ -11,7 +11,7 @@ import { makeHerder, makeHorse } from './characters';
 import { makeVehicleModel } from './vehicles';
 import { seasonLook } from '../sim/systems/seasons';
 import { t } from '../i18n/i18n';
-import { paletteHex, visualStyle } from './style';
+import { paletteHex, visualStyle, type MapPaperVisual } from './style';
 
 const U = 6;   // 1 км = 6 нэгж
 
@@ -35,6 +35,50 @@ function textSprite(text: string, color = visualStyle.palette.mapInk, bg = 'rgba
   sp.scale.set((w / 64) * 4.2, 4.2, 1);
   sp.renderOrder = 20;
   return sp;
+}
+
+/**
+ * V5.3: хуучин цаасны процедур текстур (RGBA, давтагдана). Цагаан орчим утга — газрын өнгөтэй үржигдэнэ.
+ * DOM-гүй цэвэр функц (тестэд шалгана): толбо, цаасны утас, ширхэглэг.
+ */
+export function paperPixels(size: number, p: MapPaperVisual, seed = 9137): Uint8Array {
+  const rng = new VisualRng(seed);
+  const lum = new Float32Array(size * size).fill(1);
+  const wrap = (v: number): number => ((v % size) + size) % size;
+  // Толбо: зөөлөн бор дугуй, захаар ороосон (давтахад заадас гарахгүй)
+  for (let k = 0; k < p.stains; k++) {
+    const cx = rng.next() * size, cy = rng.next() * size, r = size * rng.range(0.06, 0.22), st = p.stainStrength * rng.range(0.4, 1);
+    const r0 = Math.ceil(r);
+    for (let dy = -r0; dy <= r0; dy++) {
+      for (let dx = -r0; dx <= r0; dx++) {
+        const d = Math.hypot(dx, dy) / r;
+        if (d >= 1) continue;
+        const i = wrap(Math.floor(cy) + dy) * size + wrap(Math.floor(cx) + dx);
+        lum[i] = lum[i]! - st * (1 - d) * (1 - d);
+      }
+    }
+  }
+  // Цаасны утас: богино муруй зураас, цайвар эсвэл бараан
+  for (let k = 0; k < p.fibers; k++) {
+    let x = rng.next() * size, y = rng.next() * size, a = rng.range(0, Math.PI * 2);
+    const len = rng.range(6, 26), tone = rng.next() < 0.5 ? -0.05 : 0.03;
+    for (let j = 0; j < len; j++) {
+      const i = wrap(Math.floor(y)) * size + wrap(Math.floor(x));
+      lum[i] = lum[i]! + tone;
+      a += rng.range(-0.25, 0.25);
+      x += Math.cos(a);
+      y += Math.sin(a);
+    }
+  }
+  const out = new Uint8Array(size * size * 4);
+  for (let i = 0; i < size * size; i++) {
+    const v = Math.min(1, Math.max(0, lum[i]! + (rng.next() - 0.5) * 2 * p.grain));
+    out[i * 4] = Math.round(255 * v);
+    out[i * 4 + 1] = Math.round(255 * v * 0.985);
+    out[i * 4 + 2] = Math.round(255 * v * 0.95);
+    out[i * 4 + 3] = 255;
+  }
+  return out;
 }
 
 export class WorldMapView {
@@ -106,7 +150,23 @@ export class WorldMapView {
     this.baseCol = Float32Array.from(col);
     geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
     geo.computeVertexNormals();
-    this.ground = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }));
+    // V5.3: хуучин цаас — процедур текстур, захаар бараан (хуудасны ирмэг)
+    const pp = visualStyle.mapPaper;
+    const ex0 = b.minX - 8, ex1 = b.maxX + 8, ez0 = b.minZ - 8, ez1 = b.maxZ + 8;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i) / U, z = pos.getZ(i) / U;
+      const k = Math.max(0, 1 - Math.min(x - ex0, ex1 - x, z - ez0, ez1 - z) / pp.edgeWidth);
+      this.edgeK.push(1 - pp.edgeDarken * k * k);
+    }
+    const tex = new THREE.DataTexture(paperPixels(pp.texture, pp), pp.texture, pp.texture, THREE.RGBAFormat);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(pp.repeat, pp.repeat * (D / W));
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.magFilter = THREE.LinearFilter;
+    tex.minFilter = THREE.LinearMipmapLinearFilter;
+    tex.generateMipmaps = true;
+    tex.needsUpdate = true;
+    this.ground = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true, map: tex }));
     this.scene.add(this.ground);
 
     // Гол
@@ -156,6 +216,8 @@ export class WorldMapView {
       this.scene.add(sp);
     }
 
+    this.scene.add(this.inkLines());
+
     // Тоглогч ба очих газар
     this.scene.add(this.party);
     this.target = new THREE.Mesh(new THREE.RingGeometry(1.2, 1.7, 24), new THREE.MeshBasicMaterial({ color: 0xffd34a, side: THREE.DoubleSide }));
@@ -163,6 +225,61 @@ export class WorldMapView {
     this.scene.add(this.target);
     this.line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), new THREE.LineDashedMaterial({ color: 0xffd34a, dashSize: 1.5, gapSize: 1 }));
     this.scene.add(this.line);
+  }
+
+  /**
+   * V5.3: бэхэн зураас нэг LineSegments-д (1 draw call): голын хоёр хөвөө, уулын контур,
+   * бууц/сумын төвийг тойруулсан гар зургийн цагираг, давхар хүрээ.
+   */
+  private inkLines(): THREE.LineSegments {
+    const wm = this.cfg.worldmap, b = wm.bounds, pp = visualStyle.mapPaper;
+    const rng = new VisualRng(5309);
+    const v: number[] = [];
+    const seg = (ax: number, az: number, bx: number, bz: number, lift: number): void => {
+      v.push(ax * U, this.heightAt(ax, az) + lift, az * U, bx * U, this.heightAt(bx, bz) + lift, bz * U);
+    };
+    const ring = (cx: number, cz: number, r: number, n: number, lift: number): void => {
+      const ph = rng.range(0, Math.PI * 2), ph2 = rng.range(0, Math.PI * 2);
+      const at = (i: number): [number, number] => {
+        const a = (i / n) * Math.PI * 2;
+        const rr = r * (1 + pp.contourWobble * (Math.sin(a * 3 + ph) * 0.6 + Math.sin(a * 5 + ph2) * 0.4));
+        return [cx + Math.cos(a) * rr, cz + Math.sin(a) * rr];
+      };
+      for (let i = 0; i < n; i++) {
+        const [ax, az] = at(i), [bx, bz] = at(i + 1);
+        seg(ax, az, bx, bz, lift);
+      }
+    };
+    // Голын хөвөө
+    for (const side of [-1, 1]) {
+      let prev: [number, number] | null = null;
+      wm.river.forEach(([x, z], i) => {
+        const [nx, nz] = wm.river[Math.min(i + 1, wm.river.length - 1)]!, [px, pz] = wm.river[Math.max(0, i - 1)]!;
+        const dx = nx - px, dz = nz - pz, l = Math.hypot(dx, dz) || 1;
+        const q: [number, number] = [x + (-dz / l) * pp.bankOffset * side, z + (dx / l) * pp.bankOffset * side];
+        if (prev) seg(prev[0], prev[1], q[0], q[1], 0.4);
+        prev = q;
+      });
+    }
+    // Уулын контур
+    for (const [mx, mz, r] of wm.mountains) {
+      for (let k = 1; k <= pp.contours; k++) ring(mx, mz, (r * 1.8 * k) / (pp.contours + 1), 48, 0.6);
+    }
+    // Бууц, сумын төвийн цагираг
+    for (const l of Object.values(wm.locations)) ring(l.x, l.z, l.kind === 'sum' ? pp.campRing * 1.7 : pp.campRing, 36, 0.4);
+    // Давхар хүрээ
+    for (const inset of [pp.frameInset, pp.frameInset + pp.frameGap]) {
+      const x0 = b.minX - 8 + inset, x1 = b.maxX + 8 - inset, z0 = b.minZ - 8 + inset, z1 = b.maxZ + 8 - inset;
+      const corners: [number, number][] = [[x0, z0], [x1, z0], [x1, z1], [x0, z1], [x0, z0]];
+      for (let c = 0; c < 4; c++) {
+        const [ax, az] = corners[c]!, [bx, bz] = corners[c + 1]!;
+        const n = 40;
+        for (let i = 0; i < n; i++) seg(ax + ((bx - ax) * i) / n, az + ((bz - az) * i) / n, ax + ((bx - ax) * (i + 1)) / n, az + ((bz - az) * (i + 1)) / n, 0.4);
+      }
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+    return new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: paletteHex('mapInk'), transparent: true, opacity: 0.75 }));
   }
 
   /** Газрын зургийн өндөр (км координатаар өгөхөд нэгжээр буцаана) */
@@ -249,6 +366,7 @@ export class WorldMapView {
   }
 
   private hillK: number[] = [];
+  private edgeK: number[] = [];   // V5.3: хуудасны захын бараан (1 — дунд, бага — зах)
   private baseCol!: Float32Array;
   private tintKey = '';
 
@@ -269,7 +387,7 @@ export class WorldMapView {
         let v = this.baseCol[i * 3 + ch]!;
         v += (straw[ch]! - v) * look.straw * 0.75;
         v += (white[ch]! - v) * sk;
-        a[i * 3 + ch] = v;
+        a[i * 3 + ch] = v * this.edgeK[i]!;
       }
     }
     attr.needsUpdate = true;

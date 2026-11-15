@@ -77,6 +77,32 @@
   "smoke": {
     "cookingMinutes": [[300, 510], [1020, 1200]]
   },
+  "dogRest": { "_doc": "V3.2: нохой lieAfterSec секунд хөдлөхгүй бол хэвтэнэ (blendPerSec — шилжилтийн хурд); bodyDrop м доошилж, хөл урагш/хойш хэвтэнэ, headDown толгой доош, tailFlat сүүлний өнцөг. townDogChance — сумын төвийн айлын үүдэнд хэвтэх нохойн магадлал.", "lieAfterSec": 2.5, "blendPerSec": 1.6, "bodyDrop": 0.36, "headDown": 0.24, "tailFlat": -0.12, "townDogChance": 0.4 },
+  "outfits": {
+    "_doc": "V4.1: малчин, туслахын улирлын хувцас. seasons.<улирал>: body = terleg (зуны нимгэн тэрлэг, terlegLighten-ээр цайруулсан), deel (энгийн дээл), winter (зузаан дээл, үстэй зах); hat = toortsog (оройтой малгай), fox (үнэгэн малгай, чихэвчтэй). player — тоглогчийн өнгө. helperRoles — туслахын дээл үүргээрээ (herd малчин, horse адуучин, drive жолооч, otor отор, collect хүүхэд/түүгч). helperHat — хүйсээр малгайн өнгө.",
+    "seasons": {
+      "summer": { "body": "terleg", "hat": "toortsog" },
+      "autumn": { "body": "deel", "hat": "toortsog" },
+      "winter": { "body": "winter", "hat": "fox" },
+      "spring": { "body": "deel", "hat": "fox" }
+    },
+    "terlegLighten": 0.22,
+    "foxFur": "#b8642a",
+    "collarFur": "#e6dccb",
+    "player": { "deel": "#2f5d9b", "hem": "#2a528a", "hat": "#a52a2a" },
+    "helperRoles": { "herd": "#8a2a2a", "horse": "#6b4a2a", "drive": "#5a5a5a", "otor": "#2a7a4a", "collect": "#b07a2a" },
+    "helperHat": { "m": "#6b3d1e", "f": "#2a6a8a" }
+  },
+  "mapPaper": {
+    "_doc": "V5.3: газрын зургийн хуучин цаасан төрх. texture — процедур цаасны px (2-ын зэрэг, 64–1024), repeat — газар дээр давтах тоо; grain — ширхэглэг (0–0.3), fibers — цаасны утас, stains — толбо, stainStrength — толбоны бараан; edgeDarken — захын бараан (0–1), edgeWidth — бараан эхлэх зай (км); bankOffset — голын бэхэн хөвөөний зай голын төвөөс (км); contours — уулын контурын тоо, contourWobble — гар зургийн долгион (0–0.3); campRing — бууцыг тойруулсан бэхэн цагираг (км); frameInset — хүрээний зай газрын захаас (км), frameGap — давхар хүрээний зай (км). Бэхний өнгө: palette.mapInk.",
+    "texture": 512, "repeat": 5, "grain": 0.06, "fibers": 320, "stains": 9, "stainStrength": 0.08,
+    "edgeDarken": 0.4, "edgeWidth": 9, "bankOffset": 0.42, "contours": 3, "contourWobble": 0.08, "campRing": 0.95, "frameInset": 3, "frameGap": 0.6
+  },
+  "vehicleFx": {
+    "_doc": "V4.2: тээврийн тоос, гэрэл. dust: count — бөөмийн хамгийн их тоо; minSpeed м/с-ээс хурдан явахад арын дугуйнаас perSecPerSpeed × хурд ширхэг/с гарна; life с амьдарна; rise м/с дээшилнэ; spread м/с хажуу тийш; size м; opacity эхний тунгалаг бус байдал; nightLight — шөнө тоосны гэрэлтэлт (0–1, өдрийн гэрлээр 1 хүртэл өснө; shader гэрэлгүй тул шөнө тод харагдахаас сэргийлнэ); color/snowColor — шороон/цасан тоос. lights: daylight < nightBelow үед асна (бүрэн асах nightFull); beamLength/beamWidth — урд гэрлийн туяа (м), beamOpacity, beamLift — туяа газраас дээш (м, өвсөнд далдлагдахгүй); head/tail/lantern — машины урд, арын гэрэл, тэрэгний дэнлүү.",
+    "dust": { "count": 64, "minSpeed": 1.5, "perSecPerSpeed": 2.2, "life": 1.6, "rise": 0.8, "spread": 0.7, "size": 1.4, "opacity": 0.55, "nightLight": 0.1, "color": "#c8b08a", "snowColor": "#eef2f6" },
+    "lights": { "nightBelow": 0.45, "nightFull": 0.15, "beamLength": 10, "beamWidth": 3.6, "beamOpacity": 0.4, "beamLift": 0.3, "head": "#fff2c0", "tail": "#ff3a2a", "lantern": "#ffb35c" }
+  },
   "cloudShadow": { "scale": 0.028, "speedX": 0.004, "speedZ": 0.002, "opacity": 0.18, "skyScale": 14, "skyOpacity": 0.34 },
   "flowers": {
     "height": 0.18,
