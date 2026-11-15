@@ -105,9 +105,9 @@ function gableGeometry(w: number, d: number, rise: number) {
 }
 
 function nearestOnPolyline(px: number, pz: number, pts: XZ[]): XZ {
-  let best: XZ = pts[0], bd = Infinity;
+  let best: XZ = pts[0]!, bd = Infinity;
   for (let i = 0; i + 1 < pts.length; i++) {
-    const a = pts[i], b = pts[i + 1];
+    const a = pts[i]!, b = pts[i + 1]!;
     const dx = b[0] - a[0], dz = b[1] - a[1];
     const l2 = dx * dx + dz * dz || 1;
     const t = Math.max(0, Math.min(1, ((px - a[0]) * dx + (pz - a[1]) * dz) / l2));
@@ -125,7 +125,7 @@ function rectNearPolyline(r: Rect, pts: XZ[], clearance: number) {
   const hw = r.w / 2 + clearance, hd = r.d / 2 + clearance;
   for (const [x, z] of pts) if (Math.abs(x - r.x) < hw && Math.abs(z - r.z) < hd) return true;
   for (let i = 0; i + 1 < pts.length; i++) {
-    const a = pts[i], b = pts[i + 1];
+    const a = pts[i]!, b = pts[i + 1]!;
     const steps = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 3);
     for (let s = 0; s <= steps; s++) {
       const t = s / steps;
@@ -188,13 +188,13 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     const verts: number[] = [];
     const dense: XZ[] = [];
     for (let i = 0; i + 1 < pts.length; i++) {
-      const a = pts[i], b = pts[i + 1];
+      const a = pts[i]!, b = pts[i + 1]!;
       const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 4));
       for (let s = 0; s < n; s++) dense.push([a[0] + ((b[0] - a[0]) * s) / n, a[1] + ((b[1] - a[1]) * s) / n]);
     }
-    dense.push(pts[pts.length - 1]);
+    dense.push(pts[pts.length - 1]!);
     for (let i = 0; i + 1 < dense.length; i++) {
-      const a = dense[i], b = dense[i + 1];
+      const a = dense[i]!, b = dense[i + 1]!;
       const dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1;
       const nx = (-dz / l) * width / 2, nz = (dx / l) * width / 2;
       const p = (x: number, z: number) => [x, heightAt(x, z) + lift, z];
@@ -315,7 +315,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     };
     if (b.w >= 6) { placeWin(true, 1); placeWin(true, -1); }
     if (b.d >= 10) { placeWin(false, 1); placeWin(false, -1); }
-    const doorOff = { n: [0, -b.d / 2 - 0.08], s: [0, b.d / 2 + 0.08], e: [b.w / 2 + 0.08, 0], w: [-b.w / 2 - 0.08, 0] }[front];
+    const doorOff: XZ = { n: [0, -b.d / 2 - 0.08] as XZ, s: [0, b.d / 2 + 0.08] as XZ, e: [b.w / 2 + 0.08, 0] as XZ, w: [-b.w / 2 - 0.08, 0] as XZ }[front];
     const dx = b.x + doorOff[0], dz = b.z + doorOff[1];
     const horizDoor = front === 'n' || front === 's';
     B.box(horizDoor ? 1.6 : 0.16, 2.2, horizDoor ? 0.16 : 1.6, dx, base, dz, 0, '#5C3A24');
@@ -602,7 +602,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     const pts = r.points;
     let carry = 0;
     for (let i = 0; i + 1 < pts.length; i++) {
-      const a = pts[i], b = pts[i + 1];
+      const a = pts[i]!, b = pts[i + 1]!;
       const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
       const dx = (b[0] - a[0]) / len, dz = (b[1] - a[1]) / len;
       for (let s = 30 - carry; s < len; s += 30) {
@@ -630,7 +630,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     colliders.pop();
     homes.push(door);
     if (sp.ger) ger(sp.x + sp.w / 2 - 5, sp.z, '#F3EDE2', 2.8);
-    const go = { n: [0, -sp.d / 2], s: [0, sp.d / 2], e: [sp.w / 2, 0], w: [-sp.w / 2, 0] }[gate];
+    const go: XZ = { n: [0, -sp.d / 2] as XZ, s: [0, sp.d / 2] as XZ, e: [sp.w / 2, 0] as XZ, w: [-sp.w / 2, 0] as XZ }[gate];
     const gx = sp.x + go[0], gz = sp.z + go[1];
     if (sp.role === 'forSale') {
       // «ЗАРНА» самбар хаалганы хажууд
@@ -671,7 +671,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
         if (L.terrain.lakes.some(lk => ((x - lk.x) / (lk.rx + 15)) ** 2 + ((z - lk.z) / (lk.rz + 15)) ** 2 < 1)) continue;
         if (heightAt(x, z) > 2) continue;
         const gate = faceTowardRoad(x, z);
-        const fc = fencePalette[Math.floor(rand() * fencePalette.length)];
+        const fc = fencePalette[Math.floor(rand() * fencePalette.length)]!;
         fence(x, z, pw, pd, fc, 1.9, gate, 3.5);
         colliders.push({ id: `${zn.id}:plot`, x, z, w: pw, d: pd });
         // гол байшин — хаалганы эсрэг талд
@@ -683,7 +683,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
         const hd0 = building({
           id: `${zn.id}:h${homes.length}`, name: 'Байшин', kind: 'house',
           x: hx, z: backZ, w: hw, d: hd, floors: rand() < 0.12 ? 2 : 1,
-          roof: { type: 'gable', color: roofPalette[Math.floor(rand() * roofPalette.length)] },
+          roof: { type: 'gable', color: roofPalette[Math.floor(rand() * roofPalette.length)]! },
           wall: wood ? '#9A6B45' : (rand() < 0.5 ? '#EFEBE2' : '#E8DCC0'), trim: wood ? '#6B4F3A' : '#A0522D',
         });
         colliders.pop();
@@ -693,7 +693,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
         if (rand() < 0.35) ger(sx, z + (rand() - 0.5) * 4, rand() < 0.15 ? '#E8DCC0' : '#F3EDE2', 2.8);
         else if (rand() < 0.6) {
           B.box(4, 2.2, 3.2, sx, heightAt(sx, z), z, 0, '#8A6A4A');
-          B.add(gableGeometry(4.4, 3.6, 0.9), roofPalette[Math.floor(rand() * roofPalette.length)], mat(sx, heightAt(sx, z) + 2.2, z));
+          B.add(gableGeometry(4.4, 3.6, 0.9), roofPalette[Math.floor(rand() * roofPalette.length)]!, mat(sx, heightAt(sx, z) + 2.2, z));
         }
         const ox = x + pw / 2 - 2, oz = gate === 'n' ? z + pd / 2 - 2 : z - pd / 2 + 2;
         if (rand() < 0.8) B.box(1.2, 2, 1.2, ox, heightAt(ox, oz), oz, 0, '#7A5A3E');

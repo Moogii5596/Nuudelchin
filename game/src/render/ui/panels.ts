@@ -27,12 +27,13 @@ import type { CheatAction } from '../../sim/systems/cheats';
 import { bedsTotal, bedsUsed, nearTeahouse, playerOwned, spareTents, type Helper, type HerdGroup } from '../../sim/systems/helpers';
 import { campAccess, seasonProgress, yearOf } from '../../sim/systems/seasons';
 import { hayRoom } from '../../sim/systems/travel';
+import { canSellAnimals, canSellProducts, nearLotSlot, nearTradeDoor, orderAllowed } from '../../sim/systems/sumtown';
 import {
   CAMP_HINT, SEASON_EMOJI, SEASON_NAME, PASTURE_NAME, PRODUCT_EMOJI, PROCESSOR_NAME, WATER_NAME, WOLF_LEVEL_NAME, expenseName, fmtMinutes, fmtMoney, fmtNum, productName, speciesEmoji, stageName, unitOf,
 } from './names';
 import { t } from '../../i18n/i18n';
 
-type Kind = 'storage' | 'cargo' | 'shop' | 'arrive' | 'report' | 'dogs' | 'camps' | 'cheat' | 'teahouse' | 'helpers';
+type Kind = 'storage' | 'cargo' | 'shop' | 'lot' | 'arrive' | 'report' | 'dogs' | 'camps' | 'cheat' | 'teahouse' | 'helpers';
 
 /** Туслахуудын цонхны дэд хэсэг: жагсаалт, отор явуулах, малаар цалинжуулах */
 interface HelperView {
@@ -201,6 +202,7 @@ export class Panels {
     if (this.kind === 'storage') html = this.storageHtml();
     else if (this.kind === 'cargo') html = this.cargoHtml();
     else if (this.kind === 'shop') html = this.shopHtml();
+    else if (this.kind === 'lot') html = this.lotHtml();
     else if (this.kind === 'arrive') html = this.arriveHtml();
     else if (this.kind === 'report') html = this.reportHtml();
     else if (this.kind === 'dogs') html = this.dogsHtml();
@@ -402,7 +404,10 @@ export class Panels {
     const { cfg, state } = this;
     const d = this.draft!;
     const p = state.player;
-    const near = Math.hypot(p.x - cfg.worldmap.sum3d.shop.x, p.z - cfg.worldmap.sum3d.shop.z) <= cfg.worldmap.sum3d.shop.r;
+    // V3.3: дэлгүүр бүр өөр үүрэгтэй — зөвхөн тухайн дэлгүүрийн хэсгүүд харагдана
+    const door = nearTradeDoor(cfg, state);
+    const near = !!door;
+    const role = door?.role ?? null;
     const f = p.driving ? state.fleet.find((x) => x.id === p.driving) : null;
     const have = sellableAtShop(state);
     const sellRows = PRODUCTS.map((pr) => {
@@ -427,7 +432,7 @@ export class Panels {
     const hayMax = hayRoom(cfg, state);
     const hayRow = `<tr><td>🌾 Боодол өвс <span class="muted">өвөл, хавар идэш дутсан малд бууцанд тань автоматаар өгнө · 1 боодол = ${cfg.seasons.hay.sheepDaysPerBale} хонин толгой·өдөр · энэ удаа ${hayMax} хүртэл (${f ? 'тээврийн сул байр' : 'морьтой'}) · бууцанд ${fmtNum(state.camps[state.campId]?.hay ?? 0)}</span></td><td class="num">${fmtMoney(cfg.seasons.hay.price)}</td>
         <td class="ctl"><button class="btn sm" data-act="hay-:1">−</button><b>${d.hay}</b><button class="btn sm" data-act="hay+:1">+</button><button class="btn sm" data-act="hay+:10">+10</button></td></tr>`;
-    const itemRows = hayRow + this.buyItems().map((it) => {
+    const itemRows = (role === 'feed' ? hayRow : '') + this.buyItems().filter((it) => role !== null && orderAllowed(role, it.order)).map((it) => {
       const on = d.buyItems.has(it.key);
       return `<tr><td>${it.label} <span class="muted">${it.note}</span></td><td class="num">${fmtMoney(orderPrice(cfg, state, it.order))}</td>
         <td class="ctl"><button class="btn sm ${on ? 'gold' : ''}" data-act="bi:${it.key}">${on ? '✓ Авна' : 'Авах'}</button></td></tr>`;
@@ -443,31 +448,58 @@ export class Panels {
     const how = f ? `${cfg.vehicles[f.id].emoji} ${cfg.vehicles[f.id].name}` : '🐎 Морьтой';
     const animalNote = f ? `Авсан мал тэвшинд ачигдана (${cfg.vehicles[f.id].sheepSlots} хонь эсвэл ${cfg.vehicles[f.id].cowSlots} үхэр)` : `Морьтой бол авсан малаа араасаа тууж харина — газрын зураг дээр ${fmtNum(cfg.vehicles.riding.droveKmh)} км/ц`;
     const empty = !Object.keys(plan.sell).length && !plan.sellAnimalIds.length && !plan.buy.length;
-    return `<h2>🏪 Худалдаачин <span class="close" data-act="close">✕</span></h2>
-      <p>${how} · Мөнгө: <b>${fmtMoney(state.money)}</b>${f ? ' · ' : ''}${this.cargoList().replace(/^<p>|<\/p>$/g, '')}</p>
-      <table><tr><th>Зарах</th><th class="num">Үнэ</th><th></th></tr>${sellRows || '<tr><td class="muted">Зарах бүтээгдэхүүн алга — хотондоо гартаа эсвэл тэргэндээ ачиж ир (T)</td></tr>'}</table>
-      ${groups.length ? `<table><tr><th>Мал зарах</th><th class="num">~Үнэ</th><th></th></tr>${animalRows}</table>` : ''}
+    const title = door ? t(`sum3d.${door.id}`) : 'Дэлгүүр';
+    if (!role) {
+      return `<h2>🏪 ${title} <span class="close" data-act="close">✕</span></h2>
+        <p class="bad">Дэлгүүрийн үүдэнд (шар тойрог) очиж E дарна уу.</p>
+        <p class="muted">Сүү, ноос — хүлээн авах цэг · мал — Малын зах · тэжээл, тоног төхөөрөмж, гэр майхан, тэжээвэр амьтан — тус тусын дэлгүүр · машин — Машин худалдааны талбай (ногоон тойрог)</p>`;
+    }
+    const sellSec = canSellProducts(role) ? `<table><tr><th>Зарах</th><th class="num">Үнэ</th><th></th></tr>${sellRows || '<tr><td class="muted">Зарах бүтээгдэхүүн алга — хотондоо гартаа эсвэл тэргэндээ ачиж ир (T)</td></tr>'}</table>` : '';
+    const animalSec = canSellAnimals(role)
+      ? `${groups.length ? `<table><tr><th>Мал зарах</th><th class="num">~Үнэ</th><th></th></tr>${animalRows}</table>` : ''}
       <table><tr><th>Мал авах</th><th class="num">Үнэ</th><th></th></tr>${buyAnimalRows}</table>
-      <p class="muted">${animalNote}</p>
-      <table><tr><th>Бараа авах</th><th class="num">Үнэ</th><th></th></tr>${itemRows}</table>
+      <p class="muted">${animalNote}</p>` : '';
+    const itemSec = itemRows ? `<table><tr><th>Бараа авах</th><th class="num">Үнэ</th><th></th></tr>${itemRows}</table>` : '';
+    return `<h2>🏪 ${title} <span class="close" data-act="close">✕</span></h2>
+      <p>${how} · Мөнгө: <b>${fmtMoney(state.money)}</b>${f ? ' · ' : ''}${this.cargoList().replace(/^<p>|<\/p>$/g, '')}</p>
+      ${sellSec}${animalSec}${itemSec}
       <table><tr class="total"><td>Орлого</td><td class="num">+${fmtMoney(income)}</td></tr><tr class="total"><td>Зардал</td><td class="num">−${fmtMoney(cost)}</td></tr>
       <tr class="total"><td><b>Дараа нь</b></td><td class="num"><b class="${after < 0 ? 'bad' : ''}">${fmtMoney(after)}</b></td></tr></table>
       ${!roomOk ? '<p class="bad">Авах мал тэвшинд багтахгүй</p>' : ''}${after < 0 ? '<p class="bad">Мөнгө хүрэхгүй — хүрэлцэхгүй бараа авагдахгүй</p>' : ''}
-      ${!near ? '<p class="bad">Худалдаачны дэлгүүрийн дэргэд (шар тойрог) оч</p>' : ''}
       <p><button class="btn gold" data-act="doTrade" ${empty || !near ? 'disabled' : ''}>Арилжаа хийх</button>
-      <label class="muted"><input type="checkbox" data-act="bull" ${state.neighborBull ? 'checked' : ''}> Хөршийн бух тавиулах (үнээ бүрт ${fmtMoney(cfg.economy.neighborBullFee)})</label></p>`;
+      ${role === 'livestock' ? `<label class="muted"><input type="checkbox" data-act="bull" ${state.neighborBull ? 'checked' : ''}> Хөршийн бух тавиулах (үнээ бүрт ${fmtMoney(cfg.economy.neighborBullFee)})</label>` : ''}</p>`;
+  }
+
+  // ======================= Машин худалдааны талбай (V3.3) =======================
+  private lotHtml(): string {
+    const { cfg, state } = this;
+    const s = nearLotSlot(cfg, state);
+    if (!s) return `<h2>🚚 ${t('sum3d.car_dealer')} <span class="close" data-act="close">✕</span></h2><p class="bad">Машин руу ойртоно уу (ногоон тойрог).</p>`;
+    const known = !s.display && s.vehicle in cfg.vehicles;
+    if (!known) return `<h2>🚚 ${t('sum3d.lot.' + s.vehicle)} <span class="close" data-act="close">✕</span></h2><p class="muted">Удахгүй худалдаанд гарна.</p>`;
+    const id = s.vehicle as VehicleId;
+    const v = cfg.vehicles[id];
+    const owned = state.vehicles.includes(id);
+    const kmh = Math.round(cfg.vehicles.sumCenterKm / v.oneWayHours);
+    const can = !owned && state.money >= v.price && !state.player.driving;
+    return `<h2>${v.emoji} ${v.name} <span class="close" data-act="close">✕</span></h2>
+      <p>${v.capacity} нэгж ачаа, ${v.sheepSlots} хонь / ${v.cowSlots} үхэр · ${kmh} км/ц${v.fuelPer100km ? ` · ${v.fuelPer100km} л/100 км` : ''}</p>
+      <table><tr class="total"><td>Үнэ</td><td class="num"><b>${fmtMoney(v.price)}</b></td></tr><tr class="total"><td>Таны мөнгө</td><td class="num">${fmtMoney(state.money)}</td></tr></table>
+      ${owned ? '<p class="muted">Танд аль хэдийн байгаа</p>' : state.money < v.price ? '<p class="bad">Мөнгө хүрэхгүй</p>' : ''}
+      <p><button class="btn gold" data-act="buyLot:${s.id}" ${can ? '' : 'disabled'}>Худалдан авах — шууд суугаад явна</button></p>`;
   }
 
   private shopPlan(): { sell: Partial<Record<ProductId, number>>; sellAnimalIds: number[]; buy: BuyOrder[] } {
     const d = this.draft!;
+    const role = nearTradeDoor(this.cfg, this.state)?.role ?? null;
     const sell: Partial<Record<ProductId, number>> = {};
-    for (const [k, n] of Object.entries(d.sell)) if ((n ?? 0) > 0) sell[k as ProductId] = n;
-    const sellAnimalIds = this.selectedAnimals(this.animalGroups(sellableAnimals(this.state))).map((a) => a.id);
+    if (role && canSellProducts(role)) for (const [k, n] of Object.entries(d.sell)) if ((n ?? 0) > 0) sell[k as ProductId] = n;
+    const sellAnimalIds = role && canSellAnimals(role) ? this.selectedAnimals(this.animalGroups(sellableAnimals(this.state))).map((a) => a.id) : [];
     const buy: BuyOrder[] = [];
     for (const c of ANIMAL_CATALOG) for (let i = 0; i < (d.buyAnimals[c.key] ?? 0); i++) buy.push({ kind: 'animal', species: c.species, sex: c.sex, age: c.age });
     for (const it of this.buyItems()) if (d.buyItems.has(it.key)) buy.push(it.order);
     if (d.hay > 0) buy.push({ kind: 'hay', n: d.hay });
-    return { sell, sellAnimalIds, buy };
+    return { sell, sellAnimalIds, buy: buy.filter((o) => role !== null && orderAllowed(role, o)) };
   }
 
   // ======================= өөр бууцанд ирэх (газрын зураг) =======================
@@ -839,6 +871,15 @@ export class Panels {
         if (!d || !d.vehicle) break;
         const r = this.hooks.dispatch({ type: 'unloadCargo', vehicle: d.vehicle });
         this.hooks.toast(r.msg ?? '', r.ok ? 'good' : 'bad');
+        break;
+      }
+      case 'buyLot': {
+        const r = this.hooks.dispatch({ type: 'buyLotVehicle', slot: arg });
+        this.hooks.toast(r.msg ?? '', r.ok ? 'good' : 'bad');
+        if (r.ok) {
+          this.close();
+          return;
+        }
         break;
       }
       case 'doTrade': {

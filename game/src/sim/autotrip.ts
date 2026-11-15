@@ -65,8 +65,8 @@ export class AutoTrip {
           plan: { sell: sellableAtShop(state), sellAnimalIds: sellableAnimals(state).map((a) => a.id), buy: this.plan.buy },
         }, false);
         if (!r.ok) this.error = r.msg ?? null;   // зарим зүйл авагдаагүй ч үргэлжилнэ
-        const e = cfg.worldmap.sum3d.entry;
-        sim.command({ type: 'leaveToMap', dirX: e.x, dirZ: e.z }, false);
+        const ex = cfg.sumcenter.entry.exit;
+        sim.command({ type: 'leaveToMap', dirX: ex[0], dirZ: ex[1] }, false);
         sim.command({ type: 'mapGo', x: 0, z: 0, dest: state.campId }, false);
         this.phase = 'home';
         return false;

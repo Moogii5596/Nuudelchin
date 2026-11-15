@@ -7,7 +7,7 @@
 import * as THREE from 'three';
 import type { GameConfig } from '../sim/config';
 import type { VehicleId } from '../sim/state';
-import { allBuildings, facingOf, lotSlots, sumDoors, type SumBuildingSpec } from '../sim/systems/sumtown';
+import { allBuildings, facingOf, lotSlots, sumDoors, TRADE_ROLES, type SumBuildingSpec } from '../sim/systems/sumtown';
 import { buildSumCenter, type SumCenterBuild } from './sumlayout';
 import { mat, VisualRng } from './util';
 import { visualStyle } from './style';
@@ -101,7 +101,7 @@ export class SumCenterView {
     const S = cfg.worldmap.sum3d;
     for (const d of sumDoors(cfg)) {
       if (d.role === 'teahouse') ringAt(d.x, d.z, S.shopR, 0x7ad0ff);
-      else if (d.role && d.role !== 'grocery' && d.role !== 'fuel' && d.role !== 'bank') ringAt(d.x, d.z, S.shopR, 0xffd34a);
+      else if ((TRADE_ROLES as readonly string[]).includes(d.role)) ringAt(d.x, d.z, S.shopR, 0xffd34a);
     }
     for (const s of lotSlots(cfg)) ringAt(s.x, s.z, S.lotR, 0x9be37a);
 

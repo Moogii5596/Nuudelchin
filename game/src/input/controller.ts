@@ -8,6 +8,7 @@ import type { GameConfig } from '../sim/config';
 import type { GameState } from '../sim/state';
 import type { Command, CommandResult } from '../sim/commands';
 import { riverZ } from '../sim/terrain';
+import { worldLimit } from '../sim/systems/sumtown';
 
 export type ActionKind = 'shout' | 'scare' | 'call' | 'mount' | 'uurga' | 'pickup' | 'deposit' | 'dog' | 'vehicle' | 'map';
 
@@ -257,9 +258,10 @@ export class PlayerController {
     }
     // Газрын хязгаар. Морьтой хүрвэл газрын зураг руу гарна (sim — movePlayer)
     const R = Math.hypot(x, z);
-    if (R > pl.worldRadius) {
-      x *= pl.worldRadius / R;
-      z *= pl.worldRadius / R;
+    const lim = worldLimit(this.cfg, p.place);
+    if (R > lim) {
+      x *= lim / R;
+      z *= lim / R;
     }
     // Голыг явганаар гатлахгүй (мориор гатална)
     const w = this.cfg.camps.camps[state.campId]?.waterShape;

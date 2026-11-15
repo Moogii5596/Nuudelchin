@@ -12,7 +12,7 @@ tags: [context, map, onboarding]
 ## 1. Тоглоом юу вэ
 НҮҮДЭЛ: Дөрвөн улирал — монгол нүүдэлчин малчны амьдралын тайван 3D симулятор (cozy sim); тоглоом дуусахгүй, цагийн хязгааргүй ([[mvp-spec]] §10).
 - **MVP «Зуслан»:** 1 сум, 4 бууц (Голын бэл `river`, Уулын ар `northSlope`, Уулын өвөр `valley`, Уулын энгэр `southSlope`) + сумын төв; 4 улирал (1 жил = 50 өдөр, зунаас эхэлнэ); шөнөтэй (06:00→06:00).
-- Мал (хонь, ямаа, үхэр, адуу) бэлчиж таргална, сүү/ноос газарт унана → цуглуулж, боловсруулж, Худалдаачинд зарна; туслах малчин хөлсөлнө; чоно, нохой; бууц сэлгэнэ; газрын зураг дээр тэрэг/машин жолооно.
+- Мал (хонь, ямаа, үхэр, адуу) бэлчиж таргална, сүү/ноос газарт унана → цуглуулж, боловсруулж, сумын төвийн дэлгүүрүүдэд зарна (V3.3: сүү/ноос хүлээн авах цэг, Малын зах, машин худалдаа г.м.); туслах малчин хөлсөлнө; чоно, нохой; бууц сэлгэнэ; газрын зураг дээр тэрэг/машин жолооно.
 - Том замын тэмдэг: гэр + 40 хонин толгой («гэр оронтой болсон» мөч, M6).
 - **Одоогийн үе шат:** → `PROGRESS.md` (1 мөр). Үе шатны төлөвлөгөө: `docs/plan/` ([[V]], [[M6]], [[M7]]).
 
@@ -48,6 +48,7 @@ TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `gam
 | `systems/seasons.ts` · `camps.ts` | Улирал, цас, өвс, хүйтэн, боодол өвс · бууц сэлгэх |
 | `systems/travel.ts` · `trip.ts` | Газрын зураг, тээвэр, ачаа, арилжаа · Худалдаачин, үнэ, тээврийн туслах |
 | `systems/cheats.ts` | ` цэсийн туршилтын үйлдлүүд |
+| `systems/sumtown.ts` | V3.3 сумын төв: `data/sumcenter.json`-ийн төрөл, хаалганы цэг (`sumDoors`, `doorPoint`), дэлгүүрийн үүрэг (`nearTradeDoor`, `orderAllowed`), машин худалдааны зогсоол (`lotSlots`), 3D-ийн хязгаар (`worldLimit`), газрын өндөр (`sumHeight`) |
 ### render/ — Three.js; GameState-ийг зөвхөн уншина
 | Файл | Үүрэг |
 |---|---|
@@ -55,7 +56,7 @@ TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `gam
 | `terrain.ts` | Бууцны газар, ус, мод, чулуу, өвс, бэлчээрийн өнгө (том — мужаар нээ) |
 | `animals.ts` · `characters.ts` · `staff.ts` | Мал (InstancedMesh) · малчин, морь, чоно, нохой · туслахууд, айлын гэр |
 | `items.ts` · `vehicles.ts` · `zones.ts` | Газрын бүтээгдэхүүн · тэрэг/машин · хамгаалалтын бүс |
-| `sumcenter.ts` · `worldmap.ts` | Сумын төв 3D (Худалдаачин, Цайны газар) · газрын зураг (дээрээс харсан) |
+| `sumcenter.ts` · `sumlayout.ts` · `worldmap.ts` | Сумын төвийн view (шошго, тойрог, оршин суугч, нохой, худалдаанд байгаа машин) · `data/sumcenter.json`-ийг low-poly merged mesh болгох бүтээгч (V3.3 Могод сум) · газрын зураг (дээрээс харсан) |
 | `camera.ts` · `style.ts` · `util.ts` | Дагах камер · `data/visuals.json`-ийн шалгалт, `visualStyle` · туслах |
 | `ui/panels.ts` · `ui/names.ts` | Бүх цонх: агуулах, тайлан, Худалдаачин, нүүх, нохой, туслах · нэрс, форматлагч |
 ### Бусад
@@ -65,10 +66,10 @@ TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `gam
 | `input/controller.ts` · `touch.ts` | Гар/хулгана → Command · утасны джойстик, товчнууд |
 | `device.ts` · `pwa.ts` | Чанар `low/mid/high`, мэдрэгч илрүүлэх · PWA суулгах, service worker |
 | `i18n/i18n.ts`, `mn.json`, `en.json` | Текстийн түлхүүр; `en.json` бүрэн биш (M6.7) |
-`game/tests/` (20 тестийн файл + `helpers.ts` дундын): нэрээр — animals, breeding, clock, config, dogs, grazing, herder, herds, night, pasture, products, rng, seasons, sim, wolves; `staff.test.ts` = туслахууд, `trip.test.ts` = тээвэр/арилжаа, `style.test.ts` = visuals.json, `playthrough.test.ts` = бүтэн тоглолт, `docs.test.ts` = баримт/CODEMAP/холбоосын нийцэл. `camps`, `cheats`, `processing`, `production` системд тусдаа тест байхгүй (playthrough/sim/products-оор дам). `tools/balance_sim/run.ts`: стратеги Идэвхтэй, Дунд, Залхуу, Үлддэг, Менежер × олон seed, тайлан `last_report.md`. Бусад: `game/index.html`, `vite.config.ts`, `sw-template.js` (PWA), `public/` (дүрс).
+`game/tests/` (20 тестийн файл + `helpers.ts` дундын): нэрээр — animals, breeding, clock, config, dogs, grazing, herder, herds, night, pasture, products, rng, seasons, sim, wolves; `staff.test.ts` = туслахууд, `trip.test.ts` = тээвэр/арилжаа, `style.test.ts` = visuals.json, `sumtown.test.ts` = сумын төв (дэлгүүрийн үүрэг, машин худалдаа, орох зам), `playthrough.test.ts` = бүтэн тоглолт, `docs.test.ts` = баримт/CODEMAP/холбоосын нийцэл. `camps`, `cheats`, `processing`, `production` системд тусдаа тест байхгүй (playthrough/sim/products-оор дам). `tools/balance_sim/run.ts`: стратеги Идэвхтэй, Дунд, Залхуу, Үлддэг, Менежер × олон seed, тайлан `last_report.md`. Бусад: `game/index.html`, `vite.config.ts`, `sw-template.js` (PWA), `public/` (дүрс).
 
 ## 4. `data/*.json` → аль файл хэрэглэдэг
-`sim/config.ts` бүгдийг ачаална (`loadConfig`, `validateConfig`); `visuals.json` → `render/style.ts` (`visualStyle`) → animals, scene, sumcenter, terrain, worldmap. Түлхүүрийг хэн ашигладгийг хүснэгтээр биш грепээр ол (хуучирдаггүй): `grep -rln 'cfg\.camps' game/src`, `grep -rn 'cfg\.camps\.' game/src/sim/systems/wolves.ts`. JSON түлхүүр: `time seasons animals pasture products processing storage economy vehicles worldmap helpers wolves dogs camps start player visuals`.
+`sim/config.ts` бүгдийг ачаална (`loadConfig`, `validateConfig`); `visuals.json` → `render/style.ts` (`visualStyle`) → animals, scene, sumcenter, terrain, worldmap. Түлхүүрийг хэн ашигладгийг хүснэгтээр биш грепээр ол (хуучирдаггүй): `grep -rln 'cfg\.camps' game/src`, `grep -rn 'cfg\.camps\.' game/src/sim/systems/wolves.ts`. JSON түлхүүр: `time seasons animals pasture products processing storage economy vehicles worldmap sumcenter helpers wolves dogs camps start player visuals` (`sumcenter` = `data/sumcenter.json`, сумын төвийн 3D байршил — V3.3).
 
 ## 5. Архитектурын дүрэм ([[architecture]])
 - **sim/render салгах:** `sim/` Three.js, DOM, `window` импортлохгүй. `render/` зөвхөн GameState уншина, логик бичихгүй.

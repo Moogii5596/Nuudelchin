@@ -74,7 +74,8 @@ export interface SumDoor {
   enterable: boolean;
 }
 
-export interface LotSlot { id: string; vehicle: string; x: number; z: number; rot: number }
+/** Машин худалдааны зогсоол. display — зөвхөн харуулах (vehicles.json-д хараахан байхгүй, 🙋) */
+export interface LotSlot { id: string; vehicle: string; x: number; z: number; rot: number; display?: boolean }
 
 /** Барилгын нүүрний чиглэл (анхдагч — урагшаа) */
 export function facingOf(b: Pick<SumBuildingSpec, 'front'>): Facing {
@@ -100,12 +101,9 @@ export function allBuildings(L: SumLayout): SumBuildingSpec[] {
   return [...L.buildings, ...L.compounds.flatMap((c) => c.buildings ?? [])];
 }
 
-const doorCache = new WeakMap<SumLayout, SumDoor[]>();
-/** Үүрэгтэй эсвэл орж болох барилгын хаалганууд + үүрэгтэй цогцолборын хаалга */
+/** Үүрэгтэй эсвэл орж болох барилгын хаалганууд + үүрэгтэй цогцолборын хаалга (~30 барилга — кэшгүй) */
 export function sumDoors(cfg: GameConfig): SumDoor[] {
   const L = cfg.sumcenter;
-  const hit = doorCache.get(L);
-  if (hit) return hit;
   const out: SumDoor[] = [];
   for (const b of allBuildings(L)) {
     if (!b.gameRole && !b.enterable) continue;
@@ -119,7 +117,6 @@ export function sumDoors(cfg: GameConfig): SumDoor[] {
     const horiz = g === 'n' || g === 's';
     out.push({ id: c.id, role: c.gameRole, kind: c.kind, x: p.x + (horiz ? off : 0), z: p.z + (horiz ? 0 : off), enterable: false });
   }
-  doorCache.set(L, out);
   return out;
 }
 

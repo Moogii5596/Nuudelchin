@@ -691,7 +691,8 @@
         "type": "gable",
         "color": "#E0A1B5"
       },
-      "wall": "#E8DCC0"
+      "wall": "#E8DCC0",
+      "gameRole": "clothing"
     },
     {
       "id": "shop_1_3",
@@ -1169,7 +1170,8 @@
           "vehicle": "milkTanker",
           "x": 157,
           "z": -11,
-          "rot": 0
+          "rot": 0,
+          "display": true
         },
         {
           "id": "lot_cart",

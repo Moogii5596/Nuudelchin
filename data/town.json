@@ -1,0 +1,35 @@
+{
+  "_doc": "V3.4 сумын төвийн амьдрал (хэрэглэгчийн шийдвэр 2026-11-15, тоонууд Claude-ийн анхдагч 🙋). houses — зарах хашаа байшин (sumcenter.json specialPlots forSale): үнэ, өдрийн түрээс. temple — дуганд хандив: хэмжээнүүд, 10 000₮ тутамд нэр хүнд. reputation — 0..max. zdtgLoan — Засаг даргаас малаар зээл: minReputation, багцууд (age — нас), termDays дотор ижил тооны насанд хүрсэн эм малаар (эсвэл үнэлгээ × moneyMult мөнгөөр) буцаана; хугацаандаа төлбөл onTimeReputation, хэтэрвэл lateReputation хасагдана. bankLoan — мал (animalLtv) ба байшингийн (houseLtv) үнэлгээгээр барьцаалсан зээл; хүү interestPerMonth (сар = time.monthDays өдөр), termDays хэтэрвэл барьцаа хураана. relatives — бэлэг (giftProducts, мал) 10 000₮ тутамд relationPer10k; өдөр бүр dailyDecay буурна; relation ≥ visitMinRelation үед visitGapMax..MinDays өдөр тутам хотонд айлчилж тэр өдрийн хоол хүнсийг авчирна; зун relation ≥ summerHelpMin бол хүүхэд нь цалингүй туслахаар ирнэ; өвөл relation ≥ winterHayMin бол (relation/10)·winterHayPer10 боодол өвс авчирна.",
+  "houses": {
+    "plot_sale_1": { "price": 24000000, "rentPerDay": 15000 },
+    "plot_sale_2": { "price": 14000000, "rentPerDay": 8000 }
+  },
+  "temple": { "donations": [10000, 50000, 100000, 500000], "reputationPer10k": 0.5 },
+  "reputation": { "start": 5, "max": 100 },
+  "zdtgLoan": {
+    "minReputation": 10,
+    "termDays": 100,
+    "moneyMult": 1.1,
+    "onTimeReputation": 5,
+    "lateReputation": 10,
+    "packages": [
+      { "id": "sheep10", "species": "sheep", "sex": "f", "age": 4, "n": 10 },
+      { "id": "goat10", "species": "goat", "sex": "f", "age": 4, "n": 10 },
+      { "id": "cow2", "species": "cow", "sex": "f", "age": 4, "n": 2 }
+    ]
+  },
+  "bankLoan": { "animalLtv": 0.5, "houseLtv": 0.6, "termDays": 50, "interestPerMonth": 0.02, "minAmount": 500000, "onTimeReputation": 3, "lateReputation": 15 },
+  "relatives": {
+    "startRelation": 30,
+    "relationPer10k": 1.5,
+    "dailyDecay": 0.2,
+    "giftProducts": ["milk", "tarag", "aaruul", "urum"],
+    "visitMinRelation": 20,
+    "visitGapMaxDays": 12,
+    "visitGapMinDays": 3,
+    "summerHelpMin": 40,
+    "winterHayMin": 30,
+    "winterHayPer10": 1,
+    "kidNames": ["Тэмүүжин", "Номин", "Билгүүн", "Сарнай"]
+  }
+}

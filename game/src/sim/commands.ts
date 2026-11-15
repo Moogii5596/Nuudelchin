@@ -11,8 +11,9 @@ import type { Sim } from './sim';
 import { driveFlock } from './systems/grazing';
 import * as storage from './systems/storage';
 import * as processing from './systems/processing';
-import { boardBest, canTravel, driveVehicle, enterVehicle, exitVehicle, leaveToMap, loadCargo, mapGo, migrateHere, takeFromStorage, droveAnimals, trade, unloadCargo, type TradePlan } from './systems/travel';
+import { buyLotVehicle, boardBest, canTravel, driveVehicle, enterVehicle, exitVehicle, leaveToMap, loadCargo, mapGo, migrateHere, takeFromStorage, droveAnimals, trade, unloadCargo, type TradePlan } from './systems/travel';
 import { startMove } from './systems/camps';
+import { worldLimit } from './systems/sumtown';
 import { shout, toggleMount, toggleUurga } from './systems/herder';
 import { scareWolves } from './systems/wolves';
 import { newAnimal } from './state';
@@ -43,6 +44,7 @@ export type Command =
   | { type: 'loadCargo'; vehicle: VehicleId; products: Partial<Record<ProductId, number>>; animalIds: number[] }
   | { type: 'unloadCargo'; vehicle: VehicleId }
   | { type: 'trade'; plan: TradePlan }
+  | { type: 'buyLotVehicle'; slot: string }   // V3.3: машин худалдааны талбайгаас авч шууд суух
   | { type: 'droveAnimals'; animalIds: number[] }   // морьтой: мал тууж явах
   | { type: 'takeFromStorage'; products: Partial<Record<ProductId, number>> }   // агуулахаас гартаа (зарахаар)
   | { type: 'neighborBull'; on: boolean }
@@ -91,7 +93,7 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
       if (p.driving || p.place === 'map') return fail('Жолоодож байна');
       // Морьтой 3D-ийн хязгаарт хүрвэл газрын зураг руу гарна (M4.6)
       const R = Math.hypot(cmd.x, cmd.z);
-      if (p.mounted && R >= cfg.player.worldRadius - 0.05) {
+      if (p.mounted && R >= worldLimit(cfg, p.place) - 0.05) {
         const err = leaveToMap(cfg, state, cmd.x, cmd.z);
         if (!err) {
           sim.emitTravel({ type: 'leftToMap' });
@@ -254,6 +256,10 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
     case 'trade': {
       const err = trade(cfg, state, sim.random, cmd.plan, proximity);
       return err ? fail(err) : ok('Арилжаа хийлээ');
+    }
+    case 'buyLotVehicle': {
+      const err = buyLotVehicle(cfg, state, cmd.slot, proximity);
+      return err ? fail(err) : ok(`${cfg.vehicles[p.driving!].emoji} ${cfg.vehicles[p.driving!].name} худалдаж авлаа — WASD жолоодох`);
     }
 
     case 'neighborBull':

@@ -16,6 +16,7 @@ import { newAnimal, type Animal, type BuyOrder, type FleetVehicle, type GameStat
 import { salePrice } from './animals';
 import * as storage from './storage';
 import { animalSlots, deliver, orderPrice, parkingSpot, productPrice, vehicleCfg } from './trip';
+import { canSellAnimals, canSellProducts, lotSlots, nearTradeDoor, orderAllowed, worldLimit } from './sumtown';
 import { startMove } from './camps';
 
 export type TravelEvent =
@@ -189,7 +190,7 @@ export function driveVehicle(cfg: GameConfig, state: GameState, x: number, z: nu
   const f = fleetOf(state, p.driving);
   if (!f) return null;
   const R = Math.hypot(x, z);
-  const lim = cfg.player.worldRadius;
+  const lim = worldLimit(cfg, p.place);
   if (R >= lim) {
     leaveToMap(cfg, state, x / R, z / R);
     return { type: 'leftToMap' };
@@ -284,11 +285,12 @@ function arrive(cfg: GameConfig, state: GameState, dest: string, rng: Rng): Trav
   if (loc.kind === 'camp' && dest !== state.campId) return { type: 'arriveCamp', campId: dest };
   let x: number, z: number, hx: number, hz: number;
   if (loc.kind === 'sum') {
-    const e = cfg.worldmap.sum3d.entry;
+    // V3.3: цэцэрлэгийн зүүн талын замаар орж ирнэ, нүүр нь сумын төв рүү
+    const e = cfg.sumcenter.entry;
     x = e.x;
     z = e.z;
-    hx = -e.x;
-    hz = -e.z;
+    hx = e.x - e.exit[0];
+    hz = e.z - e.exit[1];
     p.place = 'sum';
   } else {
     const road = cfg.camps.camps[state.campId]!.road;
@@ -304,7 +306,7 @@ function arrive(cfg: GameConfig, state: GameState, dest: string, rng: Rng): Trav
     p.place = 'camp';
   }
   // Хязгаараас дотор
-  const R = Math.hypot(x, z), lim = cfg.player.worldRadius - 4;
+  const R = Math.hypot(x, z), lim = worldLimit(cfg, p.place) - 4;
   if (R > lim) {
     x *= lim / R;
     z *= lim / R;
@@ -448,8 +450,15 @@ export function animalRoom(cfg: GameConfig, state: GameState): number {
 export function trade(cfg: GameConfig, state: GameState, rng: Rng, plan: TradePlan, proximity: boolean): string | null {
   const p = state.player;
   if (p.place !== 'sum') return 'Сумын төвд байх ёстой';
-  const shop = cfg.worldmap.sum3d.shop;
-  if (proximity && Math.hypot(p.x - shop.x, p.z - shop.z) > shop.r) return 'Худалдаачны дэлгүүрт оч';
+  // V3.3: дэлгүүр бүр өөр үүрэгтэй — ойрын дэлгүүрт зөвхөн тэнд байдаг зүйлийг авч/зарна
+  const door = proximity ? nearTradeDoor(cfg, state) : null;
+  if (proximity && !door) return 'Дэлгүүрийн үүдэнд (шар тойрог) оч';
+  if (door) {
+    const selling = Object.values(plan.sell).some((n) => (n ?? 0) > 0);
+    if (selling && !canSellProducts(door.role)) return 'Сүү, ноосыг хүлээн авах цэгт зарна';
+    if (plan.sellAnimalIds.length && !canSellAnimals(door.role)) return 'Малыг малын зах дээр зарна';
+    if (plan.buy.some((o) => !orderAllowed(door.role, o))) return 'Энэ дэлгүүрт ийм бараа байхгүй';
+  }
   const f = p.driving ? fleetOf(state, p.driving) : undefined;
   // Зарах: эхлээд тээврийн ачаанаас, дараа нь гарт барьснаас
   for (const [k, n] of Object.entries(plan.sell)) {
@@ -519,5 +528,45 @@ export function trade(cfg: GameConfig, state: GameState, rng: Rng, plan: TradePl
     spend(state, 'buy_' + o.kind, price);
   }
   if (failed.length) return `${failed.length} зүйл авч чадсангүй (${[...new Set(failed)].join(', ')} хүрэлцээгүй)`;
+  return null;
+}
+
+/**
+ * V3.3: Машин худалдааны талбай дээрх тээврийг худалдаж аваад шууд суух (хэрэглэгчийн шийдвэр 2026-11-15).
+ * Морьтой ирсэн бол унаа морь гэртээ буцна.
+ */
+export function buyLotVehicle(cfg: GameConfig, state: GameState, slotId: string, proximity: boolean): string | null {
+  const p = state.player;
+  if (p.place !== 'sum') return 'Сумын төвд байх ёстой';
+  if (p.driving) return 'Тэрэг/машинаас буу (V)';
+  const s = lotSlots(cfg).find((x) => x.id === slotId);
+  if (!s) return 'Ийм машин алга';
+  if (proximity && Math.hypot(p.x - s.x, p.z - s.z) > cfg.worldmap.sum3d.lotR) return 'Машин руу ойрт';
+  if (s.display || !(s.vehicle in cfg.vehicles)) return 'Удахгүй худалдаанд гарна';
+  const id = s.vehicle as VehicleId;
+  if (state.vehicles.includes(id)) return 'Танд аль хэдийн байгаа';
+  const price = cfg.vehicles[id].price;
+  if (state.money < price) return 'Мөнгө хүрэхгүй';
+  addVehicle(cfg, state, id);
+  spend(state, 'buy_vehicle', price);
+  const f = fleetOf(state, id)!;
+  f.place = 'sum';
+  f.x = s.x;
+  f.z = s.z;
+  f.heading = s.rot;
+  if (p.mounted) {
+    p.mounted = false;
+    const horse = state.animals.find((a) => a.riding);
+    if (horse) {
+      const home = cfg.camps.home;
+      horse.x = horse.tx = home.x + 3;
+      horse.z = horse.tz = home.z + 3;
+    }
+  }
+  p.driving = id;
+  p.x = f.x;
+  p.z = f.z;
+  p.heading = f.heading;
+  syncAway(state);
   return null;
 }

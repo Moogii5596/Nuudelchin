@@ -21,6 +21,7 @@ import { huntingWolves } from './sim/systems/wolves';
 import { DOG_ORDER_NAME } from './sim/systems/dogs';
 import { nearestVehicle, partySpeedKmPerMin } from './sim/systems/travel';
 import { nearTeahouse } from './sim/systems/helpers';
+import { nearLotSlot, nearTradeDoor, sumDoors } from './sim/systems/sumtown';
 import { campAccess, seasonProgress, yearOf } from './sim/systems/seasons';
 import { GameView } from './render/scene';
 import { Panels } from './render/ui/panels';
@@ -76,11 +77,11 @@ function start(): void {
     state.wolves = spawnWolves(cfg, seed, preset.camp);
     state.camps[preset.camp]!.snow = preset.season === 'winter' ? 22 : preset.season === 'spring' ? 5 : 0;
     if (shot === 6) {
-      const shop = cfg.worldmap.sum3d.shop;
+      const shop = sumDoors(cfg).find((d) => d.role === 'buyer')!;
       state.player.place = 'sum';
       state.player.away = true;
       state.player.x = shop.x;
-      state.player.z = shop.z - 10;
+      state.player.z = shop.z + 12;
     } else if (shot === 7) {
       const home = cfg.worldmap.locations[preset.camp]!;
       state.player.place = 'map';
@@ -147,7 +148,7 @@ function start(): void {
     else if (e.type === 'wolfPups') toast(`🐺 Чонын үүрэнд ${e.n} гөлөг гарлаа — чоно өлсөж, илүү ан хийнэ`, 'bad');
     else if (e.type === 'wolfArrive') toast(`🐺 Өөр газраас ${e.n} чоно ирж үүрэнд суулаа`, 'bad');
     else if (e.type === 'leftToMap') toast('🗺 Газрын зураг — очих газраа хулганаар дарна (явж байхдаа сольж болно)', 'good');
-    else if (e.type === 'arrived') toast(e.place === 'sum' ? '🏘 Сумын төвд ирлээ — Худалдаачны дэлгүүрт оч (шар тойрог, E)' : '🏠 Гэртээ ирлээ', 'good');
+    else if (e.type === 'arrived') toast(e.place === 'sum' ? '🏘 Сумын төвд ирлээ — дэлгүүрүүд шар тойрогтой (E), машин худалдаа ногоон тойрогтой' : '🏠 Гэртээ ирлээ', 'good');
     else if (e.type === 'arriveCamp') panels.showArrive(e.campId);
     else if (e.type === 'season') {
       const msg: Record<string, string> = {
@@ -185,7 +186,7 @@ function start(): void {
         if (!photoMode) toast('Зургийн горимоос гарлаа', 'good');
       }
       else if (what === 'storage') panels.open('storage');
-      else if (what === 'trade') panels.open(state.player.place === 'sum' ? (nearTeahouse(cfg, state) ? 'teahouse' : 'shop') : 'cargo');
+      else if (what === 'trade') panels.open(state.player.place === 'sum' ? (nearLotSlot(cfg, state) ? 'lot' : nearTeahouse(cfg, state) ? 'teahouse' : 'shop') : 'cargo');
       else if (what === 'helpers') panels.open('helpers');
       else if (what === 'dogs') panels.open('dogs');
       else if (what === 'camps') panels.open('camps');
@@ -269,10 +270,15 @@ function start(): void {
     if (!panels.isOpen && p.place === 'map') html = 'Газрын зураг: очих газраа зүүн товчоор дарна · баруун товч — эргүүлэх · дунд товч — хазайлгах · дугуй — томруулах · <kbd>Shift</kbd> — цаг хурдасгах';
     else if (!panels.isOpen && p.driving) html = '<kbd>W</kbd><kbd>S</kbd> явах/тоормос · <kbd>A</kbd><kbd>D</kbd> эргэх · <kbd>V</kbd> буух' + (p.place === 'camp' && Math.hypot(p.x - cfg.camps.home.x, p.z - cfg.camps.home.z) < cfg.vehicles.road.loadRange ? ' · <kbd>T</kbd> ачих/буулгах' : '') + ' · захын хязгаар руу явбал эсвэл <kbd>Tab</kbd> — газрын зураг';
     else if (!panels.isOpen && p.place === 'sum') {
-      const sh = cfg.worldmap.sum3d.shop;
+      const door = nearTradeDoor(cfg, state);
+      const slot = nearLotSlot(cfg, state);
       const nearV = nearestVehicle(cfg, state, cfg.vehicles.road.enterRange);
-      const where = 'Худалдаачин — шар тойрог · Цайны газар (туслах хөлслөх) — цэнхэр тойрог';
-      html = Math.hypot(p.x - sh.x, p.z - sh.z) <= sh.r ? '<kbd>E</kbd> Худалдаачин' : nearTeahouse(cfg, state) ? '<kbd>E</kbd> Цайны газар — туслах малчин хөлслөх' : nearV ? '<kbd>V</kbd> тэрэг/машиндаа суух' : p.mounted ? where + '. Буцахдаа <kbd>Tab</kbd> эсвэл захын хязгаар руу давхи' : where + ' · <kbd>Tab</kbd> газрын зураг';
+      const where = 'Дэлгүүрүүд — шар тойрог · Цайны газар (туслах хөлслөх) — цэнхэр · Машин худалдаа — ногоон';
+      const lotTxt = (): string => {
+        const v = slot && !slot.display ? (cfg.vehicles as unknown as Record<string, { name: string; emoji: string; price: number } | undefined>)[slot.vehicle] : undefined;
+        return v ? `<kbd>E</kbd> ${v.emoji} ${v.name} — ${fmtMoney(v.price)} · Худалдан авах` : `${t('sum3d.lot.' + (slot?.vehicle ?? ''))} — удахгүй`;
+      };
+      html = slot && !p.driving ? lotTxt() : door ? `<kbd>E</kbd> ${t('sum3d.' + door.id)}` : nearTeahouse(cfg, state) ? '<kbd>E</kbd> Цайны газар — туслах малчин хөлслөх' : nearV ? '<kbd>V</kbd> тэрэг/машиндаа суух' : p.mounted ? where + '. Буцахдаа <kbd>Tab</kbd> эсвэл захын хязгаар руу давхи' : where + ' · <kbd>Tab</kbd> газрын зураг';
     } else if (!p.away && !panels.isOpen) {
       const home = cfg.camps.home;
       const dHome = Math.hypot(p.x - home.x, p.z - home.z);

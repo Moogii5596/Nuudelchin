@@ -18,6 +18,8 @@ import playerJson from '../../../data/player.json';
 import dogsJson from '../../../data/dogs.json';
 import worldmapJson from '../../../data/worldmap.json';
 import seasonsJson from '../../../data/seasons.json';
+import sumcenterJson from '../../../data/sumcenter.json';
+import { lotSlots, sumDoors, allBuildings, TRADE_ROLES, type SumLayout } from './systems/sumtown';
 
 export type Species = 'sheep' | 'goat' | 'cow' | 'horse';
 export type Sex = 'm' | 'f';
@@ -214,25 +216,17 @@ export interface WorldMapConfig {
   river: [number, number][];
   mountains: [number, number, number][];
   forests: [number, number, number][];
+  /** V3.3: сумын төвийн 3D-ийн тохиргоо; байршил нь data/sumcenter.json (GameConfig.sumcenter) */
   sum3d: {
-    shop: { x: number; z: number; r: number };
-    teahouse: { x: number; z: number; r: number };
-    entry: { x: number; z: number };
-    parking: { x: number; z: number };
-    /** V3.1: нэг хашаатай кампус (сургууль, цэцэрлэг, захиргаа, цагдаа) */
-    campus: SumCampusConfig;
-    bank: { u: number; v: number; w: number; d: number; pad: [number, number]; clearR: number; roof: string };
+    /** 3D-ийн хязгаар (м) — хүрвэл газрын зураг руу */
+    radius: number;
+    /** Дэлгүүр, цайны газрын хаалганаас E дарах зай (м) */
+    shopR: number;
+    /** Машин худалдааны талбайд машин руу ойртох зай (м) */
+    lotR: number;
   };
 }
 
-export interface SumCampusConfig {
-  u: number;
-  v: number;
-  fence: [number, number];
-  clearR: number;
-  buildings: { id: string; x: number; z: number; w: number; d: number; roof: string }[];
-  field: { x: number; z: number; w: number; d: number };
-}
 
 export interface StartAnimal {
   species: Species;
@@ -258,6 +252,7 @@ export interface GameConfig {
   dogs: typeof dogsJson;
   worldmap: WorldMapConfig;
   seasons: SeasonsConfig;
+  sumcenter: SumLayout;
   start: { camp: string; home: string; vehicles: string[]; storageLevel: number; animals: StartAnimal[] };
 }
 
@@ -279,6 +274,7 @@ export function loadConfig(): GameConfig {
     dogs: dogsJson,
     worldmap: worldmapJson as unknown as WorldMapConfig,
     seasons: seasonsJson as unknown as SeasonsConfig,
+    sumcenter: sumcenterJson as unknown as SumLayout,
   };
   const errors = validateConfig(cfg);
   if (errors.length) {
@@ -339,34 +335,55 @@ export function validateConfig(cfg: GameConfig): string[] {
     if (!Array.isArray(c.road) || c.road.length < 2) e.push(`camps.${id}.road: 2+ цэг хэрэгтэй`);
   }
   if (!Object.values(cfg.worldmap.locations).some((l) => l.kind === 'sum')) e.push('worldmap: сумын төв алга');
-  e.push(...validateSumCampus(cfg.worldmap.sum3d));
+  e.push(...validateSumLayout(cfg));
   if (!cfg.storage.levels[cfg.start.storageLevel]) e.push('start.storageLevel: агуулахын түвшин алга');
   for (const a of cfg.start.animals) if (!cfg.animals.species[a.species]) e.push(`start.animals: "${a.species}" алга`);
   return e;
 }
 
-/** V3.1: кампусын барилга, талбай хашаандаа багтаж, хоорондоо давхцахгүй; банк кампусаас тусдаа. */
-function validateSumCampus(sum3d: WorldMapConfig['sum3d']): string[] {
+/** V3.3: сумын төвийн байршил (data/sumcenter.json) ба worldmap.sum3d */
+const SUM_ROLES = [...TRADE_ROLES, 'teahouse', 'grocery', 'clothing', 'fuel', 'bank'] as readonly string[];
+export function validateSumLayout(cfg: GameConfig): string[] {
   const e: string[] = [];
-  const c = sum3d.campus;
-  const b = sum3d.bank;
-  if (!c || !b) return ['worldmap.sum3d: campus, bank хэрэгтэй'];
-  const [fw, fd] = c.fence;
-  if (!(fw > 0 && fd > 0 && c.clearR >= Math.hypot(fw, fd) / 2)) e.push('worldmap.sum3d.campus: fence > 0, clearR ≥ хашааны хагас диагональ');
-  const rects = [...c.buildings.map((r) => ({ ...r })), { ...c.field, id: 'field' }];
-  for (const r of rects) {
-    if (!(r.w > 0 && r.d > 0)) e.push(`worldmap.sum3d.campus.${r.id}: w, d > 0`);
-    if (Math.abs(r.x) + r.w / 2 > fw / 2 || Math.abs(r.z) + r.d / 2 > fd / 2) e.push(`worldmap.sum3d.campus.${r.id}: хашаанаас гарсан`);
+  const S = cfg.worldmap.sum3d, L = cfg.sumcenter;
+  if (!L || !S) return ['data/sumcenter.json, worldmap.sum3d хэрэгтэй'];
+  if (!(S.radius > 50 && S.shopR > 0 && S.lotR > 0)) e.push('worldmap.sum3d: radius > 50, shopR > 0, lotR > 0');
+  const [tw, td] = L.terrain.size;
+  if (Math.min(tw, td) / 2 < S.radius) e.push('sumcenter.terrain.size: газар 3D-ийн хязгаарыг (radius) бүрхэх ёстой');
+  if (Math.hypot(L.entry.x, L.entry.z) > S.radius - 6) e.push('sumcenter.entry: хязгаараас дотор байх ёстой');
+  if (Math.hypot(L.entry.exit[0], L.entry.exit[1]) < S.radius) e.push('sumcenter.entry.exit: зам хязгаар хүртэл хүрэх ёстой');
+  const hex = (c: string, where: string): void => {
+    if (!/^#[0-9a-f]{6}$/i.test(c)) e.push(`sumcenter.${where}: өнгө "${c}" #rrggbb биш`);
+  };
+  const ids = new Set<string>();
+  const uniq = (id: string): void => {
+    if (ids.has(id)) e.push(`sumcenter: id "${id}" давхардсан`);
+    ids.add(id);
+  };
+  for (const b of allBuildings(L)) {
+    uniq(b.id);
+    if (!(b.w > 0 && b.d > 0 && b.floors >= 1)) e.push(`sumcenter.${b.id}: w, d > 0, floors ≥ 1`);
+    if (b.gameRole && !SUM_ROLES.includes(b.gameRole)) e.push(`sumcenter.${b.id}: gameRole "${b.gameRole}" тодорхойгүй`);
+    hex(b.wall, b.id + '.wall');
+    hex(b.roof.color, b.id + '.roof');
   }
-  for (let i = 0; i < rects.length; i++) {
-    for (let j = i + 1; j < rects.length; j++) {
-      const p = rects[i]!, q = rects[j]!;
-      if (Math.abs(p.x - q.x) < (p.w + q.w) / 2 && Math.abs(p.z - q.z) < (p.d + q.d) / 2) e.push(`worldmap.sum3d.campus: ${p.id} ба ${q.id} давхцсан`);
+  for (const c of L.compounds) {
+    uniq(c.id);
+    if (c.gameRole && !SUM_ROLES.includes(c.gameRole)) e.push(`sumcenter.${c.id}: gameRole "${c.gameRole}" тодорхойгүй`);
+    for (const b of c.buildings ?? []) {
+      if (Math.abs(b.x - c.x) + b.w / 2 > c.w / 2 || Math.abs(b.z - c.z) + b.d / 2 > c.d / 2) e.push(`sumcenter.${c.id}.${b.id}: хашаанаас гарсан`);
     }
   }
-  if (new Set(c.buildings.map((r) => r.id)).size !== c.buildings.length) e.push('worldmap.sum3d.campus.buildings: id давхардсан');
-  if (!(b.w > 0 && b.d > 0 && b.pad[0] >= b.w && b.pad[1] >= b.d)) e.push('worldmap.sum3d.bank: pad ≥ барилга > 0');
-  if (Math.abs(b.u - c.u) < (fw + b.pad[0]) / 2 && Math.abs(b.v - c.v) < (fd + b.pad[1]) / 2) e.push('worldmap.sum3d.bank: кампусын хашаатай давхцсан');
-  for (const hex of [b.roof, ...c.buildings.map((r) => r.roof)]) if (!/^#[0-9a-f]{6}$/i.test(hex)) e.push(`worldmap.sum3d: өнгө "${hex}" #rrggbb биш`);
+  for (const f of L.fields) uniq(f.id);
+  for (const p of L.specialPlots ?? []) uniq(p.id);
+  for (const r of L.roads) if (r.points.length < 2) e.push(`sumcenter.roads.${r.id}: 2+ цэг`);
+  const doors = sumDoors(cfg);
+  if (doors.filter((d) => d.role === 'teahouse').length !== 1) e.push('sumcenter: Цайны газар (gameRole teahouse) яг 1 байх ёстой');
+  for (const r of TRADE_ROLES) if (!doors.some((d) => d.role === r)) e.push(`sumcenter: "${r}" үүрэгтэй дэлгүүр алга`);
+  for (const s of lotSlots(cfg)) {
+    uniq(s.id);
+    const known = Object.prototype.hasOwnProperty.call(cfg.vehicles, s.vehicle) && typeof (cfg.vehicles as Record<string, unknown>)[s.vehicle] === 'object';
+    if (!known && !s.display) e.push(`sumcenter.lot.${s.id}: "${s.vehicle}" vehicles.json-д алга (зөвхөн харуулах бол display: true)`);
+  }
   return e;
 }

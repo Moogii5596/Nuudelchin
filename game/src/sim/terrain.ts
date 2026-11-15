@@ -81,9 +81,3 @@ export function waterLevel(camp: CampConfig): number {
   return baseHeightAt(camp, w.x, w.z) - (t.pondDepth ?? 0) * 0.45;
 }
 
-/** Сумын төвийн газрын өндөр (M4.6): төв нь тэгш, захдаа толгод */
-export function sumHeightAt(x: number, z: number): number {
-  const r = Math.hypot(x, z);
-  const n = Math.sin(x * 0.04) * 0.8 + Math.cos(z * 0.035) * 0.7 + Math.sin((x - z) * 0.02) * 1.1;
-  return n * 0.15 * smoothstep(60, 110, r) * 3 + smoothstep(120, 175, r) * (r - 120) * 0.25;
-}

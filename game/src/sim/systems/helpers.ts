@@ -21,6 +21,7 @@ import { isNight } from '../clock';
 import { salePrice, dailyConditionDelta, sheepUnits } from './animals';
 import * as storage from './storage';
 import { parkingSpot, productPrice, vehicleCfg } from './trip';
+import { teahouseDoor } from './sumtown';
 import { mapSpeedKmPerMin, sumId } from './travel';
 import { waterDistance } from '../terrain';
 import { scareWolf } from './wolves';
@@ -198,8 +199,8 @@ export function refreshCandidates(cfg: GameConfig, state: GameState): void {
 
 /** Цайны газар (сумын төвийн 3D) */
 export function nearTeahouse(cfg: GameConfig, state: GameState): boolean {
-  const t = cfg.worldmap.sum3d.teahouse;
-  return state.player.place === 'sum' && Math.hypot(state.player.x - t.x, state.player.z - t.z) <= t.r;
+  const t = teahouseDoor(cfg);
+  return state.player.place === 'sum' && Math.hypot(state.player.x - t.x, state.player.z - t.z) <= cfg.worldmap.sum3d.shopR;
 }
 
 /** Хөлслөх. Алдаа бол тайлбар */
