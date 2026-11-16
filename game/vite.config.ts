@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 import type { Plugin } from 'vite';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -34,5 +34,6 @@ export default defineConfig({
   preview: { host: true },
   // three.js нь дангаараа ~500 kB (бүтэн тоглоом ~870 kB, gzip ~240 kB) тул анхааруулгын хязгаарыг өсгөнө
   build: { chunkSizeWarningLimit: 1000 },
-  test: { environment: 'node', include: ['tests/**/*.test.ts'] },
+  // *.perf.test.ts (хугацаа хэмждэг) ердийн тестэд орохгүй — `npm run test:perf` (vitest.perf.config.ts)
+  test: { environment: 'node', include: ['tests/**/*.test.ts'], exclude: [...configDefaults.exclude, 'tests/**/*.perf.test.ts'] },
 });

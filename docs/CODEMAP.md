@@ -405,15 +405,15 @@ SYM game/src/render/items.ts:12 fn canGeo
 SYM game/src/render/items.ts:22 fn fiberGeo
 SYM game/src/render/items.ts:37 class ItemsView
 SYM game/src/render/items.ts:64 method ItemsView.update
-FILE game/src/render/labelAtlas.ts 3.8KB 83L exports: LabelStyle,LabelAtlas
+FILE game/src/render/labelAtlas.ts 4.5KB 92L exports: LabelStyle,LabelAtlas
 SYM game/src/render/labelAtlas.ts:8 interface LabelStyle
-SYM game/src/render/labelAtlas.ts:12 fn drawCell
-SYM game/src/render/labelAtlas.ts:26 class LabelAtlas
-SYM game/src/render/labelAtlas.ts:34 method LabelAtlas.cell
-SYM game/src/render/labelAtlas.ts:42 method LabelAtlas.add
-SYM game/src/render/labelAtlas.ts:50 method LabelAtlas.build
-SYM game/src/render/labelAtlas.ts:68 method LabelAtlas.setText
-SYM game/src/render/labelAtlas.ts:74 method LabelAtlas.setCell
+SYM game/src/render/labelAtlas.ts:14 fn drawCell
+SYM game/src/render/labelAtlas.ts:34 class LabelAtlas
+SYM game/src/render/labelAtlas.ts:42 method LabelAtlas.cell
+SYM game/src/render/labelAtlas.ts:50 method LabelAtlas.add
+SYM game/src/render/labelAtlas.ts:58 method LabelAtlas.build
+SYM game/src/render/labelAtlas.ts:76 method LabelAtlas.setText
+SYM game/src/render/labelAtlas.ts:82 method LabelAtlas.setCell
 FILE game/src/render/npcs.ts 13.5KB 261L exports: NpcView
 SYM game/src/render/npcs.ts:27 fn hex
 SYM game/src/render/npcs.ts:40 class NpcView
@@ -1246,34 +1246,35 @@ FILE game/tests/dogs.test.ts 7.5KB 190L
 FILE game/tests/ger.test.ts 9.5KB 181L
 FILE game/tests/grazing.test.ts 2.3KB 46L
 FILE game/tests/helpers.ts 0.8KB 20L
-FILE game/tests/herder.test.ts 8.4KB 176L
+FILE game/tests/herder.test.ts 6.3KB 139L
 FILE game/tests/herds.test.ts 5.1KB 112L
 FILE game/tests/interior.test.ts 10.1KB 200L
 FILE game/tests/night.test.ts 6.5KB 127L
 FILE game/tests/npcs.test.ts 8.1KB 137L
 FILE game/tests/pasture.test.ts 3.8KB 72L
+FILE game/tests/perf.perf.test.ts 3.2KB 57L
 FILE game/tests/persist.test.ts 10.2KB 212L
 FILE game/tests/playthrough.test.ts 6.3KB 133L
 FILE game/tests/products.test.ts 3.0KB 56L
 FILE game/tests/rng.test.ts 0.8KB 26L
 FILE game/tests/save.test.ts 11.7KB 233L
 FILE game/tests/seasons.test.ts 7.2KB 140L
-FILE game/tests/sim.test.ts 1.4KB 32L
+FILE game/tests/sim.test.ts 1.4KB 30L
 FILE game/tests/staff.test.ts 13.3KB 248L
 FILE game/tests/style.test.ts 8.9KB 165L
 FILE game/tests/sumtown.test.ts 4.5KB 90L
 FILE game/tests/town.test.ts 6.1KB 127L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 20.5KB 111L
+FILE docs/CONTEXT.md 20.8KB 112L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
-DOC docs/CONTEXT.md:19-28 ## 2. Стек ба командууд
-DOC docs/CONTEXT.md:29-85 ## 3. Файлын зураглал (`game/src/`)
-DOC docs/CONTEXT.md:86-88 ## 4. `data/*.json` → аль файл хэрэглэдэг
-DOC docs/CONTEXT.md:89-97 ## 5. Архитектурын дүрэм ([[architecture]])
-DOC docs/CONTEXT.md:98-101 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
-DOC docs/CONTEXT.md:102-104 ## 7. Нээлттэй асуултууд
-DOC docs/CONTEXT.md:105-111 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
+DOC docs/CONTEXT.md:19-29 ## 2. Стек ба командууд
+DOC docs/CONTEXT.md:30-86 ## 3. Файлын зураглал (`game/src/`)
+DOC docs/CONTEXT.md:87-89 ## 4. `data/*.json` → аль файл хэрэглэдэг
+DOC docs/CONTEXT.md:90-98 ## 5. Архитектурын дүрэм ([[architecture]])
+DOC docs/CONTEXT.md:99-102 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
+DOC docs/CONTEXT.md:103-105 ## 7. Нээлттэй асуултууд
+DOC docs/CONTEXT.md:106-112 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
 FILE docs/INDEX.md 13.9KB 135L
 DOC docs/INDEX.md:16-30 ## 1. Унших дараалал ба давуу эрх
 DOC docs/INDEX.md:31-106 ## 2. Баримтууд

@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:perf": "vitest run --config vitest.perf.config.ts",
     "balance": "tsx ../tools/balance_sim/run.ts",
     "codemap": "tsx ../tools/codemap.ts"
   },

@@ -16,9 +16,7 @@ describe('Sim (3D-гүй)', () => {
     const sim = new Sim(cfg, createInitialState(cfg, 1));
     const reports: DayReport[] = [];
     sim.on((e) => { if (e.type === 'dayReport') reports.push(e.report); });
-    const t0 = performance.now();
-    sim.runDays(30);
-    expect(performance.now() - t0).toBeLessThan(5000);
+    sim.runDays(30);   // хугацааны шалгалт — tests/perf.perf.test.ts (npm run test:perf)
     expect(reports).toHaveLength(30);
     expect(sim.state.time.day).toBe(31);
   });

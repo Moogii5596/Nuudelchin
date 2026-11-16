@@ -21,7 +21,8 @@ TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `gam
 | Юу | Команд |
 |---|---|
 | Хөгжүүлэх | `npm run dev` → http://localhost:5173 (`?herd=300` — 300 мал, `?stats` — FPS/draw call, `?shot=1..7` — хөрөг цэг) |
-| Тест | `npx vitest run tests/<file> --reporter=dot` (явцад), `npm test` (блок төгсгөлд) |
+| Тест | `npx vitest run tests/<file> --reporter=dot` (явцад), `npm test` (блок төгсгөлд; хугацаа хэмждэг `*.perf.test.ts` орохгүй) |
+| Гүйцэтгэлийн тест | `npm run test:perf` (`tests/perf.perf.test.ts`: 300 мал/өдөр < 300 мс, 30 өдөр < 5 сек; `vitest.perf.config.ts`) — нэг агент ажиллаж байхад, тусад нь |
 | Build | `npm run build` (`tsc --noEmit && vite build` → `game/dist/`) |
 | Тэнцвэр | `npm run balance -- --seeds 4 --days 220` (`--only Дунд,Үлддэг`, `--wolves.attack.enabled 0`, `--<json.зам> <утга>`) |
 Удирдлага: WASD/сум, Space «Хөөе», E түүх/агуулах, B агуулах, T сумын төв, M нүүх, K нохой, Z бүс, F морь, V тээвэр, Tab газрын зураг, G дулааны зураг, P зургийн горим, ❓ цэс (FPS), ` cheat цэс.
