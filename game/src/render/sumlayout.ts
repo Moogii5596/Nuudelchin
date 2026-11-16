@@ -34,6 +34,8 @@ export interface SumCenterBuild {
   homes: HomeDoor[];
   /** Айлын гэрийн байрлал (V3.5: render/ger-ээр sumcenter.ts зурна) — y газрын өндөр, r хананы радиус */
   gers: SumGer[];
+  /** Гудамжны гэрлийн шонгийн суурь (y — газрын өндөр); шөнийн гэрлийг sumcenter.ts асаана */
+  lamps: { x: number; y: number; z: number }[];
   colliders: Rect[];
   /** Камерын мөргөлдөөн (V4.5 R7): барилга, гэрийн хайрцаг/цилиндр */
   solids: CamSolids;
@@ -724,6 +726,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
   }
 
   // --- Гудамжны гэрэл, цахилгааны шон (гол гудамжаар) ---
+  const lamps: { x: number; y: number; z: number }[] = [];
   for (const r of L.roads) {
     if (r.width < 9) continue;
     const pts = r.points;
@@ -737,6 +740,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
         const y = heightAt(x, z);
         B.cyl(0.1, 0.14, 7, x, y, z, '#BDBDBD', 5);
         B.box(1.2, 0.15, 0.3, x + dz * 0.6, y + 6.9, z - dx * 0.6, 0, '#E8E2C8');
+        lamps.push({ x: x + dz * 0.6, y, z: z - dx * 0.6 });
         carry = len - s;
       }
     }
@@ -828,6 +832,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     plots,
     homes,
     gers,
+    lamps,
     ground: terrainMesh,
     colliders,
     solids,

@@ -165,7 +165,21 @@ export interface VisualPalette {
   stoneWarm: string;
 }
 
+/** Шөнийн тэнгэр: сар (диск + хөхөвтөр чиглэлт гэрэл), шөнийн доод гэрэл; сумын төвийн гудамжны гэрэл */
+export interface NightVisual {
+  moon: { discRadius: number; discDistance: number; color: string; lightColor: string; lightIntensity: number; peakElevation: number; minElevation: number; starOpacity: number };
+  /** шөнийн хамгийн бага hemi гэрэл (тас харанхуй болохгүй) */
+  hemiFloor: number;
+  streetLamp: {
+    color: string; bulbRadius: number; glowSize: number; glowOpacity: number;
+    lightIntensity: number; lightDistance: number; lightDecay: number; lightHeight: number;
+    /** чанарын түвшин тус бүрт PointLight-ийн тоо (low=0: зөвхөн glow sprite) ба glow-той шонгийн дээд тоо */
+    pointLights: Record<Quality, number>; glowCount: Record<Quality, number>;
+  };
+}
+
 export interface VisualStyle {
+  night: NightVisual;
   palette: VisualPalette;
   timeOfDay: TimeVisual[];
   seasons: Record<Season, SeasonVisual>;
@@ -312,12 +326,42 @@ function parseOutfits(o: Record<string, unknown>): OutfitsVisual {
   };
 }
 
+function parseNight(n: Record<string, unknown>): NightVisual {
+  const fail = (what: string): never => { throw new Error(`data/visuals.json: night.${what} буруу`); };
+  const m = n.moon, l = n.streetLamp;
+  if (!isRecord(m) || !isRecord(l)) return fail('moon/streetLamp');
+  for (const k of ['discRadius', 'discDistance', 'lightIntensity'] as const) if (!isPositive(m[k])) fail(`moon.${k}`);
+  for (const k of ['peakElevation', 'minElevation', 'starOpacity'] as const) {
+    if (typeof m[k] !== 'number' || (m[k] as number) < 0 || (m[k] as number) > 1) fail(`moon.${k}`);
+  }
+  if (!isColor(m.color) || !isColor(m.lightColor)) fail('moon.color');
+  if (typeof n.hemiFloor !== 'number' || n.hemiFloor < 0 || n.hemiFloor > 2) fail('hemiFloor');
+  if (!isColor(l.color)) fail('streetLamp.color');
+  for (const k of ['bulbRadius', 'glowSize', 'lightIntensity', 'lightDistance', 'lightDecay', 'lightHeight'] as const) if (!isPositive(l[k])) fail(`streetLamp.${k}`);
+  if (typeof l.glowOpacity !== 'number' || l.glowOpacity < 0 || l.glowOpacity > 1) fail('streetLamp.glowOpacity');
+  const perTier = (key: 'pointLights' | 'glowCount'): Record<Quality, number> => {
+    const r = l[key];
+    const out = {} as Record<Quality, number>;
+    for (const q of ['low', 'mid', 'high'] as const) {
+      const v = isRecord(r) ? r[q] : undefined;
+      if (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v > 64) fail(`streetLamp.${key}.${q}`);
+      out[q] = v as number;
+    }
+    return out;
+  };
+  return {
+    moon: m as unknown as NightVisual['moon'],
+    hemiFloor: n.hemiFloor as number,
+    streetLamp: { ...(l as unknown as NightVisual['streetLamp']), pointLights: perTier('pointLights'), glowCount: perTier('glowCount') },
+  };
+}
+
 export function validateVisualStyle(value: unknown): VisualStyle {
   if (
     !isRecord(value) || !isRecord(value.palette) || !isRecord(value.seasons) ||
     !isRecord(value.grass) || !isRecord(value.water) || !isRecord(value.smoke) || !isRecord(value.dogRest) || !isRecord(value.herderAnim) || !isRecord(value.sumResidents) || !isRecord(value.outfits) || !isRecord(value.vehicleFx) || !isRecord(value.mapPaper) ||
     !isRecord(value.cloudShadow) || !isRecord(value.flowers) || !isRecord(value.mountains) ||
-    !isRecord(value.quality) || !Array.isArray(value.timeOfDay)
+    !isRecord(value.quality) || !Array.isArray(value.timeOfDay) || !isRecord(value.night)
   ) {
     throw new Error('data/visuals.json: буруу үндсэн бүтэц');
   }
@@ -603,6 +647,7 @@ export function validateVisualStyle(value: unknown): VisualStyle {
     flowers,
     mountains,
     quality: qualityVisuals,
+    night: parseNight(value.night),
   };
 }
 

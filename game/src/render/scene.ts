@@ -75,6 +75,8 @@ export class GameView {
   private stars: THREE.Points;
   private sunDisc: THREE.Mesh;
   private moonDisc: THREE.Mesh;
+  private moonLight: THREE.DirectionalLight;
+  private moonDir = new THREE.Vector3(0, 1, 0);
   private sunDirection = new THREE.Vector3();
   private homePos: { x: number; z: number };
   private grassT = 0;
@@ -172,13 +174,15 @@ export class GameView {
     }
     const starGeo = new THREE.BufferGeometry();
     starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-    const starMat = new THREE.PointsMaterial({ color: 0xe7eeff, size: 1.1, sizeAttenuation: false, transparent: true, opacity: 0, depthWrite: false });
+    const starMat = new THREE.PointsMaterial({ color: 0xe7eeff, size: 1.1, sizeAttenuation: false, transparent: true, opacity: 0, depthWrite: false, fog: false });
     this.stars = new THREE.Points(starGeo, starMat);
     this.stars.frustumCulled = false;
     this.stars.renderOrder = -999;
     this.scene.add(this.stars);
     this.sunDisc = new THREE.Mesh(new THREE.SphereGeometry(3, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffe6b8, toneMapped: false }));
-    this.moonDisc = new THREE.Mesh(new THREE.SphereGeometry(2, 10, 8), new THREE.MeshBasicMaterial({ color: paletteHex('moonlight'), toneMapped: false }));
+    this.moonDisc = new THREE.Mesh(new THREE.SphereGeometry(visualStyle.night.moon.discRadius, 16, 12), new THREE.MeshBasicMaterial({ color: visualStyle.night.moon.color, toneMapped: false, fog: false }));
+    this.moonLight = new THREE.DirectionalLight(visualStyle.night.moon.lightColor, 0);
+    this.scene.add(this.moonLight, this.moonLight.target);
     this.scene.add(this.sunDisc, this.moonDisc);
     this.hemi = new THREE.HemisphereLight(0xdfeeff, 0x6b5a3a, 1.1);
     this.scene.add(this.hemi);
@@ -324,6 +328,7 @@ export class GameView {
     if (!camp) {
       this.sum.syncLot(state.vehicles);
       this.sum.syncTown(state, nightFactor(this.daylight));
+      this.sum.syncLamps(nightFactor(this.daylight), this.cam.camera.position);
     }
     this.homeLight.visible = camp;
     if (camp) {
@@ -481,7 +486,8 @@ export class GameView {
     fog.color.copy(this.skyCol);
     fog.far = sample.fogDistance * seasonStyle.fogScale;
     this.renderer.toneMappingExposure = sample.exposure * seasonStyle.exposureScale;
-    this.hemi.intensity = sample.hemiIntensity;
+    const night = visualStyle.night;
+    this.hemi.intensity = Math.max(sample.hemiIntensity, night.hemiFloor * (1 - day));
     this.hemi.color.copy(horizon);
     this.hemi.groundColor.copy(this.skyUniforms.ground.value);
     this.sun.intensity = sample.sunIntensity * seasonStyle.sunScale;
@@ -496,9 +502,18 @@ export class GameView {
     this.sun.target.position.set(cx, 0, cz);
     this.sunDisc.position.set(cx + this.sunDirection.x * 500, this.sunDirection.y * 500, cz + this.sunDirection.z * 500);
     this.sunDisc.visible = day > 0.22;
-    this.moonDisc.position.set(cx - this.sunDirection.x * 420, Math.max(24, 420 * this.sunDirection.y), cz - this.sunDirection.z * 420);
+    // Сар: шөнийн нумаар (нар шиг зүүнээс баруун), хаяанаас дээш; чиглэлт гэрэл нь хөхөвтөр
+    const nightLen = 1440 - daylightEnd + daylightStart;
+    const np = Math.min(1, Math.max(0, ((m < daylightStart ? m + 1440 : m) - daylightEnd) / nightLen));
+    const elev = night.moon.minElevation + (night.moon.peakElevation - night.moon.minElevation) * Math.sin(Math.PI * np);
+    const cosE = Math.sqrt(Math.max(0, 1 - elev * elev));
+    this.moonDir.set(-Math.cos(Math.PI * np) * cosE, elev, -0.22 * cosE).normalize();
+    this.moonDisc.position.set(cx + this.moonDir.x * night.moon.discDistance, this.moonDir.y * night.moon.discDistance, cz + this.moonDir.z * night.moon.discDistance);
     this.moonDisc.visible = day < 0.28;
-    (this.stars.material as THREE.PointsMaterial).opacity = Math.max(0, 1 - day * 3.8);
+    this.moonLight.intensity = night.moon.lightIntensity * Math.max(0, 1 - day * 2.5);
+    this.moonLight.position.set(cx + this.moonDir.x * 140, this.moonDir.y * 140, cz + this.moonDir.z * 140);
+    this.moonLight.target.position.set(cx, 0, cz);
+    (this.stars.material as THREE.PointsMaterial).opacity = Math.max(0, 1 - day * 3.8) * night.moon.starOpacity;
     this.homeLight.intensity = (1 - day) * 9;
     this.homeLight.position.set(this.homePos.x + 1.5, 2.2, this.homePos.z + 2.5);
   }

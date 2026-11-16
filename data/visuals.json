@@ -32,6 +32,17 @@
     "dung": "#7D6648",
     "stoneWarm": "#6E5A3E"
   },
+  "night": {
+    "_doc": "Шөнийн тэнгэр. moon.peakElevation/minElevation — сарны өндөр (sin өнцөг 0–1) шөнө дундаа/хамгийн намхан; lightIntensity — сарны хөхөвтөр чиглэлт гэрэл (шөнө дундаар); hemiFloor — шөнийн hemi гэрлийн доод хязгаар (тас харанхуй болохгүй). streetLamp: сумын төвийн гудамжны шон — pointLights чанарын түвшнээр (low=0), glowCount — glow-той шонгийн дээд тоо (камерт ойрууд).",
+    "moon": { "discRadius": 14, "discDistance": 600, "color": "#E6EEFF", "lightColor": "#8FA8E0", "lightIntensity": 0.55, "peakElevation": 0.42, "minElevation": 0.15, "starOpacity": 0.95 },
+    "hemiFloor": 0.62,
+    "streetLamp": {
+      "color": "#FFC77A", "bulbRadius": 0.28, "glowSize": 7, "glowOpacity": 0.75,
+      "lightIntensity": 14, "lightDistance": 26, "lightDecay": 1.6, "lightHeight": 6.6,
+      "pointLights": { "low": 0, "mid": 3, "high": 6 },
+      "glowCount": { "low": 10, "mid": 24, "high": 48 }
+    }
+  },
   "timeOfDay": [
     { "minute": 0, "skyTop": "#101a38", "skyHorizon": "#36405a", "ground": "#302d3b", "sun": "#91a4dd", "sunIntensity": 0.08, "hemiIntensity": 0.28, "fogDistance": 125, "exposure": 0.72 },
     { "minute": 300, "skyTop": "#182548", "skyHorizon": "#ed9e83", "ground": "#57453f", "sun": "#f0a77e", "sunIntensity": 0.3, "hemiIntensity": 0.42, "fogDistance": 135, "exposure": 0.84 },

@@ -15,6 +15,7 @@ import { nearTeahouse } from '../sim/systems/helpers';
 import type { GameState } from '../sim/state';
 import { mat, VisualRng } from './util';
 import { visualStyle } from './style';
+import { quality } from '../device';
 import { makeDog, poseDogLying } from './characters';
 import { makeCrowdFar, makeCrowdParts } from './character/crowd';
 import { bakeStatic, staticMeshes } from './character/bake';
@@ -88,6 +89,8 @@ export class SumCenterView {
   private townObjs: THREE.Mesh[] = [];
   private townWinter: boolean | null = null;
   private townMats: BuildingMaterials | null = null;
+  private lampGlow: THREE.Points | null = null;
+  private lampLights: THREE.PointLight[] = [];
   /** V6.3: хуваарьтай NPC-үүд (гадаа; дотор нь render/interior.ts-ээр) */
   readonly npcs: NpcView;
   private liveRigs = new Map<number, CharacterRig>();
@@ -218,6 +221,67 @@ export class SumCenterView {
       hills.push(m);
     }
     for (const m of staticMeshes(bakeStatic(hills), false)) { m.name = 'hills'; this.group.add(m); }
+    this.buildLamps();
+  }
+
+  /** Шөнийн гудамжны гэрэл: камерт ойрын N шонд glow (1 draw call, Points) + чанараар хязгаарлагдсан цөөн PointLight (low=0) */
+  private buildLamps(): void {
+    const NL = visualStyle.night.streetLamp;
+    const n = Math.min(this.built.lamps.length, NL.glowCount[quality]);
+    if (n === 0 || typeof document === 'undefined') return;
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = 64;
+    const g = cv.getContext('2d');
+    if (g) {
+      const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+      grad.addColorStop(0, 'rgba(255,255,255,1)');
+      grad.addColorStop(0.25, 'rgba(255,255,255,0.55)');
+      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = grad;
+      g.fillRect(0, 0, 64, 64);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+    this.lampGlow = new THREE.Points(geo, new THREE.PointsMaterial({
+      color: NL.color, map: new THREE.CanvasTexture(cv), size: NL.glowSize, sizeAttenuation: true,
+      transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
+    }));
+    this.lampGlow.frustumCulled = false;
+    this.lampGlow.visible = false;
+    this.lampGlow.name = 'lamp-glow';
+    this.group.add(this.lampGlow);
+    for (let i = 0; i < NL.pointLights[quality]; i++) {
+      const l = new THREE.PointLight(NL.color, 0, NL.lightDistance, NL.lightDecay);
+      this.lampLights.push(l);
+      this.group.add(l);
+    }
+  }
+
+  /** Шөнө (0–1) ба камерын байрлалаар ойрын шонгуудыг асаана */
+  syncLamps(night: number, cam: THREE.Vector3): void {
+    const glow = this.lampGlow;
+    if (!glow) return;
+    const NL = visualStyle.night.streetLamp;
+    const on = night > 0.02;
+    glow.visible = on;
+    for (const l of this.lampLights) l.intensity = 0;
+    if (!on) return;
+    const lamps = this.built.lamps;
+    const d2 = (p: { x: number; z: number }): number => (p.x - cam.x) ** 2 + (p.z - cam.z) ** 2;
+    const near = lamps.slice().sort((a, b) => d2(a) - d2(b));
+    const pos = glow.geometry.getAttribute('position') as THREE.BufferAttribute;
+    for (let i = 0; i < pos.count; i++) {
+      const p = near[i]!;
+      pos.setXYZ(i, p.x, p.y + NL.lightHeight, p.z);
+    }
+    pos.needsUpdate = true;
+    (glow.material as THREE.PointsMaterial).opacity = NL.glowOpacity * night;
+    this.lampLights.forEach((l, i) => {
+      const p = near[i];
+      if (!p) return;
+      l.position.set(p.x, p.y + NL.lightHeight, p.z);
+      l.intensity = NL.lightIntensity * night;
+    });
   }
 
   heightAt = (x: number, z: number): number => this.built.heightAt(x, z);
