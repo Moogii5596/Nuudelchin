@@ -22,7 +22,7 @@ import { WorldMapView } from './worldmap';
 import { StaffView } from './staff';
 import { InteriorView } from './interior';
 import { seasonLook, seasonOf } from '../sim/systems/seasons';
-import { paletteHex, visualStyle, type TimeVisual } from './style';
+import { fogRange, paletteHex, visualStyle, type TimeVisual } from './style';
 import { SpeedSmoother } from './character/talk';
 import { Q, isTouch, quality as activeQuality, type Quality, type QualitySpec } from '../device';
 import { ModelAnimals } from './animal/view';
@@ -108,7 +108,7 @@ export class GameView {
 
     const sky = 0x8cc4f0;
     this.scene.background = new THREE.Color(sky);
-    this.scene.fog = new THREE.Fog(sky, 90, 300);
+    this.scene.fog = new THREE.Fog(sky, visualStyle.fog.nearMax, 300);
     this.skyUniforms = {
       top: { value: new THREE.Color(sky) },
       horizon: { value: new THREE.Color(0xcfe6f5) },
@@ -490,7 +490,9 @@ export class GameView {
     (this.scene.background as THREE.Color).copy(this.skyCol);
     const fog = this.scene.fog as THREE.Fog;
     fog.color.copy(this.skyCol);
-    fog.far = sample.fogDistance * seasonStyle.fogScale;
+    const range = fogRange(sample.fogDistance, season);
+    fog.near = range.near;
+    fog.far = range.far;
     this.renderer.toneMappingExposure = sample.exposure * seasonStyle.exposureScale;
     const night = visualStyle.night;
     this.hemi.intensity = Math.max(sample.hemiIntensity, night.hemiFloor * (1 - day));

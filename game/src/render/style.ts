@@ -21,6 +21,14 @@ export interface SeasonVisual {
   sunScale: number;
 }
 
+/** Манангийн ойрын зах: near = min(nearMax, far × nearFarRatio) — near < far үргэлж (scene.ts applyDaylight) */
+export interface FogVisual {
+  nearMax: number;
+  nearFarRatio: number;
+  /** Шалгалт: улирал бүрийн хамгийн богино far нь near-аас дор хаяж ийм дахин хол */
+  minFarOverNear: number;
+}
+
 export interface GrassVisual {
   bladesPerTuft: Record<Quality, number>;
   bladeHeight: number;
@@ -200,6 +208,7 @@ export interface VisualStyle {
   palette: VisualPalette;
   timeOfDay: TimeVisual[];
   seasons: Record<Season, SeasonVisual>;
+  fog: FogVisual;
   grass: GrassVisual;
   water: WaterVisual;
   smoke: SmokeVisual;
@@ -375,6 +384,11 @@ function parseNight(n: Record<string, unknown>): NightVisual {
   };
 }
 
+function fogRangeFor(fog: FogVisual, fogDistance: number, fogScale: number): { near: number; far: number } {
+  const far = fogDistance * fogScale;
+  return { near: Math.min(fog.nearMax, far * fog.nearFarRatio), far };
+}
+
 export function validateVisualStyle(value: unknown): VisualStyle {
   if (
     !isRecord(value) || !isRecord(value.palette) || !isRecord(value.seasons) ||
@@ -456,6 +470,21 @@ export function validateVisualStyle(value: unknown): VisualStyle {
       exposureScale: entry.exposureScale,
       sunScale: entry.sunScale,
     };
+  }
+  const fogValue = value.fog;
+  if (
+    !isRecord(fogValue) || !isPositive(fogValue.nearMax) || !isPositive(fogValue.nearFarRatio) ||
+    !isPositive(fogValue.minFarOverNear) || fogValue.minFarOverNear <= 1
+  ) {
+    throw new Error('data/visuals.json: fog тохиргоо буруу');
+  }
+  const fog: FogVisual = { nearMax: fogValue.nearMax, nearFarRatio: fogValue.nearFarRatio, minFarOverNear: fogValue.minFarOverNear };
+  const minFogDistance = Math.min(...timeOfDay.map((key) => key.fogDistance));
+  for (const season of seasons) {
+    const range = fogRangeFor(fog, minFogDistance, seasonVisuals[season].fogScale);
+    if (!(range.far > fog.minFarOverNear * range.near)) {
+      throw new Error(`data/visuals.json: seasons.${season} манан far (${range.far}) нь near (${range.near}) × ${fog.minFarOverNear}-аас их байх ёстой`);
+    }
   }
   const grassValue = value.grass;
   const wind = grassValue.wind;
@@ -662,6 +691,7 @@ export function validateVisualStyle(value: unknown): VisualStyle {
     palette: parsedPalette,
     timeOfDay,
     seasons: seasonVisuals,
+    fog,
     grass,
     water,
     smoke,
@@ -680,6 +710,23 @@ export function validateVisualStyle(value: unknown): VisualStyle {
 }
 
 export const visualStyle = validateVisualStyle(visualsJson);
+
+/** Манангийн муж: тухайн цагийн fogDistance ба улирлын fogScale-ээс. near < far үргэлж. */
+export function fogRange(fogDistance: number, season: Season, style: VisualStyle = visualStyle): { near: number; far: number } {
+  return fogRangeFor(style.fog, fogDistance, style.seasons[season].fogScale);
+}
+
+/** Тухайн минутын fogDistance (timeOfDay түлхүүрүүдийн хооронд шугаман) */
+export function fogDistanceAt(minute: number, style: VisualStyle = visualStyle): number {
+  const m = ((minute % 1440) + 1440) % 1440;
+  const keys = style.timeOfDay;
+  let index = 0;
+  while (index < keys.length - 1 && keys[index + 1]!.minute < m) index++;
+  const a = keys[index]!;
+  const b = keys[Math.min(index + 1, keys.length - 1)]!;
+  const t = Math.min(1, Math.max(0, (m - a.minute) / Math.max(1, b.minute - a.minute)));
+  return a.fogDistance + (b.fogDistance - a.fogDistance) * t;
+}
 
 export function paletteHex(name: keyof VisualPalette): number {
   return Number.parseInt(visualStyle.palette[name].slice(1), 16);

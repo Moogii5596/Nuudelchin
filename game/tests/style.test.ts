@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import visualsJson from '../../data/visuals.json';
-import { validateVisualStyle } from '../src/render/style';
+import { fogDistanceAt, fogRange, validateVisualStyle } from '../src/render/style';
 
 describe('visual style configuration', () => {
   it('accepts the checked-in palette and daily/seasonal curves', () => {
@@ -8,6 +8,34 @@ describe('visual style configuration', () => {
     expect(style.timeOfDay[0]!.minute).toBe(0);
     expect(style.timeOfDay.at(-1)!.minute).toBe(1440);
     expect(Object.keys(style.seasons)).toHaveLength(4);
+  });
+
+  it('keeps fog near below far in every season at every time of day', () => {
+    const style = validateVisualStyle(visualsJson);
+    const minutes = [0, 300, 1260, 1440];
+    for (let minute = 0; minute <= 1440; minute += 15) minutes.push(minute);
+    for (const season of ['spring', 'summer', 'autumn', 'winter'] as const) {
+      for (const minute of minutes) {
+        const { near, far } = fogRange(fogDistanceAt(minute, style), season, style);
+        expect(near, `${season} ${minute}`).toBeGreaterThan(0);
+        expect(far, `${season} ${minute}`).toBeGreaterThan(near * style.fog.minFarOverNear);
+        expect(near, `${season} ${minute}`).toBeLessThanOrEqual(style.fog.nearMax);
+      }
+    }
+    // Өвлийн шөнө: 125 × 0.7 = 87.5 < 90 — near нь far-аас доош татагдана
+    const winterNight = fogRange(fogDistanceAt(0, style), 'winter', style);
+    expect(winterNight.far).toBeCloseTo(87.5);
+    expect(winterNight.near).toBeCloseTo(52.5);
+  });
+
+  it('rejects fog data where a season could push far too close to near', () => {
+    const badRatio: Record<string, unknown> = JSON.parse(JSON.stringify(visualsJson));
+    (badRatio.fog as Record<string, number>).nearFarRatio = 0.95;
+    expect(() => validateVisualStyle(badRatio)).toThrow(/манан far/);
+
+    const noFog: Record<string, unknown> = JSON.parse(JSON.stringify(visualsJson));
+    delete noFog.fog;
+    expect(() => validateVisualStyle(noFog)).toThrow(/fog тохиргоо/);
   });
 
   it('rejects invalid palette colors and unordered time keys', () => {

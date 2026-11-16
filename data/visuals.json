@@ -59,6 +59,7 @@
     "winter": { "skyTint": "#c9d8ed", "fogScale": 0.7, "exposureScale": 0.9, "sunScale": 0.76 },
     "spring": { "skyTint": "#d9e8df", "fogScale": 0.8, "exposureScale": 0.96, "sunScale": 0.9 }
   },
+  "fog": { "nearMax": 90, "nearFarRatio": 0.6, "minFarOverNear": 1.2 },
   "grass": {
     "bladesPerTuft": { "low": 5, "mid": 7, "high": 10 },
     "bladeHeight": 0.47,
