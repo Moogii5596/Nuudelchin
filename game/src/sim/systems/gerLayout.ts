@@ -31,6 +31,11 @@ export interface GerSimConfig extends GerLayoutSource {
   helper: { size: string };
 }
 
+/** Гол замын тэмдгийн гэрийн нөхцөл: өөрийн гэр (майхан биш) ба ханын тоо ≥ `goalWalls` (mvp-spec §10.2 — «том гэр, 5 ханат») */
+export function goalGerReached(cfg: { ger: GerLayoutSource; economy: { goalGerWalls: number } }, state: { home: string; homeSize: string }): boolean {
+  return state.home === 'ger' && (cfg.ger.sizes[state.homeSize]?.walls ?? 0) >= cfg.economy.goalGerWalls;
+}
+
 /** Гэрийн хэмжээний шат (бага → их): data/ger.json sizes-ийн бичигдсэн дараалал — нэг эх сурвалж */
 export function gerLadder(g: GerLayoutSource): string[] {
   return Object.keys(g.sizes);

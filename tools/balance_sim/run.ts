@@ -22,9 +22,21 @@ import { bestTruck, orderPrice } from '../../game/src/sim/systems/trip';
 import { AutoTrip } from '../../game/src/sim/autotrip';
 import { realSecondsPerDay } from '../../game/src/sim/clock';
 import { findHerds } from '../../game/src/sim/systems/herds';
+import { gerLadder, goalGerReached } from '../../game/src/sim/systems/gerLayout';
 import { bedsTotal, bedsUsed } from '../../game/src/sim/systems/helpers';
 import { campAccess, seasonOf, seasonProgress } from '../../game/src/sim/systems/seasons';
 import type { Season } from '../../game/src/sim/config';
+
+/** Зорилгын гэр (5+ ханат) хүртэл дараагийн хэмжээг шатаар худалдан авна; захиалга замд яваа бол дахиж авахгүй */
+function nextGerOrder(sim: Sim): BuyOrder | null {
+  const st = sim.state;
+  if (goalGerReached(sim.cfg, st)) return null;
+  const pending = [...st.player.orders, ...st.fleet.flatMap((f) => f.orders)].some((o) => o.kind === 'ger');
+  if (pending) return null;
+  const ladder = gerLadder(sim.cfg.ger);
+  const next = ladder[st.home === 'ger' ? ladder.indexOf(st.homeSize) + 1 : 0];
+  return next ? { kind: 'ger', size: next } : null;
+}
 /** Хонин толгой бүрт бэлтгэх боодол өвс (--hay 0 — өвс авахгүй) */
 const hayPerSU = Number(process.argv.includes('--hay') ? process.argv[process.argv.indexOf('--hay') + 1] : 0.5);
 
@@ -193,7 +205,7 @@ function buyPlan(sim: Sim, reserve: number, maxSU: number, dogs = 0): BuyOrder[]
     }
     return false;
   };
-  if (state.home !== 'ger' && su >= cfg.economy.goalSheepUnits) tryBuy({ kind: 'ger', size: sim.cfg.ger.home.size }, 0);
+  if (su >= cfg.economy.goalSheepUnits) { const g = nextGerOrder(sim); if (g) tryBuy(g, 0); }   // зорилго: том гэр (5+ ханат) + 40 хонин толгой — шатаар томсгоно
   // M4.6: эхлэлд тээвэргүй — морин тэрэг эхэнд авна (их ачаа, мал зөөнө)
   if (!state.vehicles.length) tryBuy({ kind: 'vehicle', id: 'horseCart' }, reserve / 2);
   if (!state.processors.some((p) => p.kind === 'pot')) tryBuy({ kind: 'processor', id: 'pot' }, reserve);
@@ -263,7 +275,7 @@ const lazy: Strategy = {
     if (hour === 10 || hour === 17) collectAll(sim);
     if (hour === 11 && sim.state.time.day % 3 === 0) {
       const orders: BuyOrder[] = [];
-      if (sim.state.home !== 'ger' && herdSheepUnits(sim.state, sim.cfg.animals) >= sim.cfg.economy.goalSheepUnits) orders.push({ kind: 'ger' });
+      if (herdSheepUnits(sim.state, sim.cfg.animals) >= sim.cfg.economy.goalSheepUnits) { const g = nextGerOrder(sim); if (g) orders.push(g); }
       tripIfUseful(sim, orders, 1, surplusMales(sim));
     }
   },

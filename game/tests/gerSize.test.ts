@@ -133,3 +133,23 @@ describe('Хадгалалт: homeSize, migrate 14 → 15', () => {
     expect(MIGRATIONS[14]).toBeTypeOf('function');
   });
 });
+
+describe('Гол замын тэмдэг (mvp-spec §10.2): том гэр (≥ 5 ханат) + 40 хонин толгой', () => {
+  const dayReport = (size: string, homeKind: 'ger' | 'tent', animals: number): boolean => {
+    const sim = newSim(6, (s) => { s.home = homeKind; s.homeSize = size; });
+    sim.command({ type: 'debugAddAnimals', n: animals });
+    let goal = false;
+    sim.on((e) => { if (e.type === 'dayReport') goal = e.report.goalReached; });
+    sim.runDays(1);
+    return goal;
+  };
+  it('эхлэл (бага 4 ханат) ба том 4 ханат + олон мал = зорилгод хүрээгүй; 5 ханат + 40 хонин толгой = хүрсэн; хонь цөөн бол үгүй', () => {
+    expect(cfg.economy.goalGerWalls).toBe(5);
+    expect(dayReport('small4', 'ger', 80)).toBe(false);
+    expect(dayReport('big4', 'ger', 80)).toBe(false);
+    expect(dayReport('small5', 'ger', 80)).toBe(true);
+    expect(dayReport('w8', 'ger', 80)).toBe(true);
+    expect(dayReport('small5', 'ger', 0)).toBe(false);
+    expect(dayReport('small5', 'tent', 80)).toBe(false);
+  }, 60_000);
+});

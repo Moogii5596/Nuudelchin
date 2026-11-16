@@ -23,6 +23,7 @@ import { dailyOtor, helpersStep, payWages, refreshCandidates, type HelperEvent }
 import { moveStep } from './systems/camps';
 import { herderStep } from './systems/herder';
 import { ensureInteriorValid } from './systems/interior';
+import { goalGerReached } from './systems/gerLayout';
 import { townDaily, townMonthly, townSeason, type TownEvent } from './systems/town';
 import { wolvesDaily, wolvesStep, nightRaid, endRaid, type WolfEvent } from './systems/wolves';
 
@@ -200,7 +201,8 @@ export class Sim {
     if (state.dogs.length) this.spend('dogFood', state.dogs.length * cfg.dogs.foodPerDay);
     dogsDaily(cfg, state);
 
-    const goal = state.home === 'ger' && su >= cfg.economy.goalSheepUnits;
+    // mvp-spec §10.2: гол замын тэмдэг = том гэр (≥ goalGerWalls ханат) + ≥ goalSheepUnits хонин толгой (эхлэл бага 4 ханат)
+    const goal = goalGerReached(cfg, state) && su >= cfg.economy.goalSheepUnits;
     if (goal && state.goalReachedDay === null) state.goalReachedDay = day;
 
     const ewes = state.animals.filter((a) => a.species === 'sheep' && a.sex === 'f' && a.age >= cfg.animals.species.sheep.adultAge);

@@ -287,7 +287,7 @@
   "ui.makes_dairy_products_and": "Makes dairy products and felt",
   "ui.capacity_units": "Capacity {capacity} units",
   "ui.ger_4_walls": "Ger (4 walls)",
-  "ui.goal_a_ger_40": "Goal: a ger + 40 sheep-equivalents",
+  "ui.goal_a_ger_40": "Goal: a large ger (5+ walls) + 40 sheep-equivalents",
   "ui.dog_bankhar": "Dog (bankhar)",
   "ui.10_m_protection_zone": "10 m protection zone, chases off nearby wolves · food {x} a day · K — command",
   "ui.helper_tent": "⛺ Helper tent",
@@ -391,7 +391,7 @@
   "ui.has_a_ger": "✅ Has a ger",
   "ui.ger": "Ger: {x}",
   "ui.goal_reached": " · <b class=\"good\">🎉 Goal reached!</b>",
-  "ui.daily_report_year_money": "\n      <h2>🌅 Daily report — day {day} <span class=\"muted\">· {x} {x2}, year {x3}</span></h2>\n      <div class=\"cols\">\n        <div>\n          <h3>Money</h3>\n          <table>\n            {x4}\n            {x5}\n            <tr class=\"total\"><td>Day total</td><td class=\"num {x6}\">{x7}{x8}</td></tr>\n            <tr><td>Money now</td><td class=\"num\"><b>{x9}</b></td></tr>\n          </table>\n          <p class=\"muted\">Income {x10} · expenses {x11}</p>\n        </div>\n        <div>\n          <h3>Products</h3>\n          <table><tr class=\"muted\"><td></td><td class=\"num\">dropped</td><td class=\"num\">collected</td><td class=\"num\">spoiled</td></tr>\n          {x12}</table>\n          <p>📦 Storage: {x13} / {cap}</p>\n        </div>\n      </div>\n      <h3>Animals & pasture</h3>\n      <p>Animals {animals} · sheep-equivalents <b>{x14}</b>{x15}{x16}<br>\n      Average condition {x17}% · today’s intake {x18}% · ewe weight {x19} kg<br>\n      {x20}</p>\n      <h3>Camp: {x21} · day {campDays}</h3>\n      <p>{x22}{x23}{x24}<br>Pasture grass {x25}% · degradation <span class=\"{x26}\">{x27}%</span> · grass regrowth <span class=\"{x28}\">{x29}%</span>\n      {x30}\n      <br><span class=\"muted\">Other camps (recovering): {x31}</span></p>\n      <h3>Goal: a ger + {goalSU} sheep-equivalents</h3>\n      <div class=\"bar\"><div style=\"width:{x32}%\"></div></div>\n      <p>{x33} · sheep-equivalents {x34} / {goalSU2}{x35}</p>\n      <p><button class=\"btn gold big\" data-act=\"close\">Tomorrow morning ▶</button> <span class=\"muted\">Enter</span></p>",
+  "ui.daily_report_year_money": "\n      <h2>🌅 Daily report — day {day} <span class=\"muted\">· {x} {x2}, year {x3}</span></h2>\n      <div class=\"cols\">\n        <div>\n          <h3>Money</h3>\n          <table>\n            {x4}\n            {x5}\n            <tr class=\"total\"><td>Day total</td><td class=\"num {x6}\">{x7}{x8}</td></tr>\n            <tr><td>Money now</td><td class=\"num\"><b>{x9}</b></td></tr>\n          </table>\n          <p class=\"muted\">Income {x10} · expenses {x11}</p>\n        </div>\n        <div>\n          <h3>Products</h3>\n          <table><tr class=\"muted\"><td></td><td class=\"num\">dropped</td><td class=\"num\">collected</td><td class=\"num\">spoiled</td></tr>\n          {x12}</table>\n          <p>📦 Storage: {x13} / {cap}</p>\n        </div>\n      </div>\n      <h3>Animals & pasture</h3>\n      <p>Animals {animals} · sheep-equivalents <b>{x14}</b>{x15}{x16}<br>\n      Average condition {x17}% · today’s intake {x18}% · ewe weight {x19} kg<br>\n      {x20}</p>\n      <h3>Camp: {x21} · day {campDays}</h3>\n      <p>{x22}{x23}{x24}<br>Pasture grass {x25}% · degradation <span class=\"{x26}\">{x27}%</span> · grass regrowth <span class=\"{x28}\">{x29}%</span>\n      {x30}\n      <br><span class=\"muted\">Other camps (recovering): {x31}</span></p>\n      <h3>Goal: a large ger ({walls}+ walls) + {goalSU} sheep-equivalents</h3>\n      <div class=\"bar\"><div style=\"width:{x32}%\"></div></div>\n      <p>{x33} · sheep-equivalents {x34} / {goalSU2}{x35}</p>\n      <p><button class=\"btn gold big\" data-act=\"close\">Tomorrow morning ▶</button> <span class=\"muted\">Enter</span></p>",
   "ui.taken_by_wolves_keep": "<br><b class=\"bad\">🐺 Taken by wolves: {x}</b> <span class=\"muted\">— keep the herd away from wolf territory, get dogs, stay near them</span>",
   "ui.dogs_you_have_no": "<h2>🐕 Dogs <span class=\"close\" data-act=\"close\">✕</span></h2>\n        <p>You have no dogs. Buy one in the sum center (T): <b>{x}</b>, food per day {x2}.</p>\n        <p class=\"muted\">Each dog has a {dog}  m protection zone: wolves will not enter it or attack animals inside. A dog barks nearby wolves away.</p>",
   "ui.no_animals_242": "<span class=\"muted\">no animals</span>",
@@ -723,5 +723,6 @@
   "ger.size.small5": "Small 5-wall",
   "ger.size.big5": "Large 5-wall",
   "ger.size.w6": "6-wall",
-  "ger.size.w8": "8-wall"
+  "ger.size.w8": "8-wall",
+  "ui.ger_progress": "{mark} Ger: {label} ({have}/{need} walls)"
 }

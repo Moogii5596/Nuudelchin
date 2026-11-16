@@ -287,7 +287,7 @@
   "ui.makes_dairy_products_and": "Цагаан идээ, эсгий хийнэ",
   "ui.capacity_units": "Багтаамж {capacity} нэгж",
   "ui.ger_4_walls": "Гэр (4 ханатай)",
-  "ui.goal_a_ger_40": "Зорилго: гэр + 40 хонин толгой",
+  "ui.goal_a_ger_40": "Зорилго: том гэр (5+ ханат) + 40 хонин толгой",
   "ui.dog_bankhar": "Нохой (банхар)",
   "ui.10_m_protection_zone": "10 м хамгаалалтын бүс, ойртсон чоныг хөөнө · хоол өдөрт {x} · K — команд",
   "ui.helper_tent": "⛺ Туслахын майхан",
@@ -391,7 +391,7 @@
   "ui.has_a_ger": "✅ Гэртэй",
   "ui.ger": "Гэр: {x}",
   "ui.goal_reached": " · <b class=\"good\">🎉 Зорилгодоо хүрлээ!</b>",
-  "ui.daily_report_year_money": "\n      <h2>🌅 {day}-р өдрийн тайлан <span class=\"muted\">· {x} {x2}, {x3}-р жил</span></h2>\n      <div class=\"cols\">\n        <div>\n          <h3>Мөнгө</h3>\n          <table>\n            {x4}\n            {x5}\n            <tr class=\"total\"><td>Өдрийн дүн</td><td class=\"num {x6}\">{x7}{x8}</td></tr>\n            <tr><td>Одоо байгаа мөнгө</td><td class=\"num\"><b>{x9}</b></td></tr>\n          </table>\n          <p class=\"muted\">Орлого {x10} · зардал {x11}</p>\n        </div>\n        <div>\n          <h3>Бүтээгдэхүүн</h3>\n          <table><tr class=\"muted\"><td></td><td class=\"num\">унасан</td><td class=\"num\">түүсэн</td><td class=\"num\">муудсан</td></tr>\n          {x12}</table>\n          <p>📦 Агуулах: {x13} / {cap}</p>\n        </div>\n      </div>\n      <h3>Мал ба бэлчээр</h3>\n      <p>Мал {animals} · хонин толгой <b>{x14}</b>{x15}{x16}<br>\n      Дундаж тарга {x17}% · өнөөдрийн идэш {x18}% · эм хонины жин {x19} кг<br>\n      {x20}</p>\n      <h3>Бууц: {x21} · {campDays} дахь өдөр</h3>\n      <p>{x22}{x23}{x24}<br>Бэлчээрийн өвс {x25}% · доройтол <span class=\"{x26}\">{x27}%</span> · өвс ургах хурд <span class=\"{x28}\">{x29}%</span>\n      {x30}\n      <br><span class=\"muted\">Бусад бууц (амарч сэргэж байна): {x31}</span></p>\n      <h3>Зорилго: гэр + {goalSU} хонин толгой</h3>\n      <div class=\"bar\"><div style=\"width:{x32}%\"></div></div>\n      <p>{x33} · хонин толгой {x34} / {goalSU2}{x35}</p>\n      <p><button class=\"btn gold big\" data-act=\"close\">Маргааш өглөө ▶</button> <span class=\"muted\">Enter</span></p>",
+  "ui.daily_report_year_money": "\n      <h2>🌅 {day}-р өдрийн тайлан <span class=\"muted\">· {x} {x2}, {x3}-р жил</span></h2>\n      <div class=\"cols\">\n        <div>\n          <h3>Мөнгө</h3>\n          <table>\n            {x4}\n            {x5}\n            <tr class=\"total\"><td>Өдрийн дүн</td><td class=\"num {x6}\">{x7}{x8}</td></tr>\n            <tr><td>Одоо байгаа мөнгө</td><td class=\"num\"><b>{x9}</b></td></tr>\n          </table>\n          <p class=\"muted\">Орлого {x10} · зардал {x11}</p>\n        </div>\n        <div>\n          <h3>Бүтээгдэхүүн</h3>\n          <table><tr class=\"muted\"><td></td><td class=\"num\">унасан</td><td class=\"num\">түүсэн</td><td class=\"num\">муудсан</td></tr>\n          {x12}</table>\n          <p>📦 Агуулах: {x13} / {cap}</p>\n        </div>\n      </div>\n      <h3>Мал ба бэлчээр</h3>\n      <p>Мал {animals} · хонин толгой <b>{x14}</b>{x15}{x16}<br>\n      Дундаж тарга {x17}% · өнөөдрийн идэш {x18}% · эм хонины жин {x19} кг<br>\n      {x20}</p>\n      <h3>Бууц: {x21} · {campDays} дахь өдөр</h3>\n      <p>{x22}{x23}{x24}<br>Бэлчээрийн өвс {x25}% · доройтол <span class=\"{x26}\">{x27}%</span> · өвс ургах хурд <span class=\"{x28}\">{x29}%</span>\n      {x30}\n      <br><span class=\"muted\">Бусад бууц (амарч сэргэж байна): {x31}</span></p>\n      <h3>Зорилго: том гэр ({walls}+ ханат) + {goalSU} хонин толгой</h3>\n      <div class=\"bar\"><div style=\"width:{x32}%\"></div></div>\n      <p>{x33} · хонин толгой {x34} / {goalSU2}{x35}</p>\n      <p><button class=\"btn gold big\" data-act=\"close\">Маргааш өглөө ▶</button> <span class=\"muted\">Enter</span></p>",
   "ui.taken_by_wolves_keep": "<br><b class=\"bad\">🐺 Чонод барьдсан: {x}</b> <span class=\"muted\">— сүргээ чонын нутгаас хол байлга, нохой ав, дэргэд нь бай</span>",
   "ui.dogs_you_have_no": "<h2>🐕 Нохой <span class=\"close\" data-act=\"close\">✕</span></h2>\n        <p>Танд нохой алга. Сумын төвөөс (T) авна: <b>{x}</b>, хоол өдөрт {x2}.</p>\n        <p class=\"muted\">Нохой бүр {dog} м хамгаалалтын бүстэй: чоно бүс рүү нь орохгүй, доторх малд дайрахгүй. Ойртсон чоныг хуцаж хөөнө.</p>",
   "ui.no_animals_242": "<span class=\"muted\">мал алга</span>",
@@ -723,5 +723,6 @@
   "ger.size.small5": "Бага 5 ханат",
   "ger.size.big5": "Их 5 ханат",
   "ger.size.w6": "6 ханат",
-  "ger.size.w8": "8 ханат"
+  "ger.size.w8": "8 ханат",
+  "ui.ger_progress": "{mark} Гэр: {label} ({have}/{need} ханат)"
 }

@@ -2,6 +2,7 @@
   "_doc": "Эдийн засаг. mvp-spec.md §3, §5.1, §10. Түр утгуудыг хэрэглэгч шалгана.",
   "startMoney": 200000,
   "goalSheepUnits": 40,
+  "goalGerWalls": 5,
   "dailyLivingCost": 6400,
   "hayBalePrice": 14000,
   "neighborBullFee": 96000
