@@ -12,12 +12,18 @@ import { cellIndex, type GrassGrid } from '../sim/systems/pasture';
 import { seasonLook, seasonOf } from '../sim/systems/seasons';
 import type { Den } from '../sim/systems/wolves';
 import { VisualRng, angDiff, batchStatic, clamp, mat, meshBox, strSeed } from './util';
-import { quality as activeQuality, type Quality } from '../device';
+import { isTouch, quality as activeQuality, type Quality } from '../device';
 import { paletteHex, visualStyle } from './style';
 import { GER, TENT } from './ger/config';
 import { makeGer, type GerBuilt } from './ger/ger';
 import { makeTent } from './ger/tent';
 
+/** Бэлчээрийн төрлийн өнгө; утсанд цайвар (мал тод харагдана) — data/visuals.json grass.touch */
+function pastureColor(typeId: string): THREE.Color {
+  const c = new THREE.Color(visualStyle.grass.pastureColors[typeId] ?? visualStyle.palette.summerGrass);
+  const k = visualStyle.grass.touch;
+  return isTouch ? c.lerp(new THREE.Color(k.lightenTo), k.lighten) : c;
+}
 const BARE = new THREE.Color(visualStyle.palette.dryGrass);
 const DRY = new THREE.Color(visualStyle.palette.autumnGrass);
 const ROCK = new THREE.Color(visualStyle.palette.rock);
@@ -424,7 +430,7 @@ export class TerrainView {
       const ci = Math.max(this.vCells[i * 4]!, this.vCells[i * 4 + 3]!);
       const typeId = ci >= 0 ? grid.typeIds[grid.type[ci] ?? 0] ?? 'steppe' : 'steppe';
       this.vSnowK[i] = SNOW_TYPE_MULT[typeId] ?? 1;
-      c.set(visualStyle.grass.pastureColors[typeId] ?? visualStyle.palette.summerGrass);
+      c.copy(pastureColor(typeId));
       b.copy(BARE);
       // Голын эрэг ногоон, өндөрт хад, оргилд цас
       const wd = waterDistance(this.camp.waterShape, x, z);
@@ -626,8 +632,9 @@ export class TerrainView {
   }
 
   private buildTufts(grid: GrassGrid, rng: VisualRng): void {
-    const { grassTufts: count, grassRadius } = visualStyle.quality[this.quality];
     const grass = visualStyle.grass;
+    const { grassTufts, grassRadius } = visualStyle.quality[this.quality];
+    const count = Math.max(1, Math.round(grassTufts * (isTouch ? grass.touch.density : 1)));
     if (!this.grassGridTexture || !this.grassHeightTexture) this.buildGrassTextures(grid);
     const geo = grassClumpGeometry(grass.bladesPerTuft[this.quality], grass.bladeHeight);
     const offsets = new Float32Array(count * 2);
@@ -642,7 +649,7 @@ export class TerrainView {
     }
     geo.setAttribute('aOffset', new THREE.InstancedBufferAttribute(offsets, 2));
     const lushColors = grid.typeIds.map((id) => {
-      const color = new THREE.Color(visualStyle.grass.pastureColors[id] ?? visualStyle.palette.summerGrass);
+      const color = pastureColor(id);
       return new THREE.Vector3(color.r, color.g, color.b);
     });
     const typeHeights = grid.typeIds.map((id) => clamp((this.cfg.pasture.types[id]?.heightCm ?? 10) / 20, 0, 1.4));
@@ -1349,19 +1356,21 @@ export class TerrainView {
       g.add(built.group);
       // Хаалганы өмнөх сав суулга: хаалганаас хажуу тийш, ханын гадна
       const doorZ = built.door.position.z - GER.shape.doorStandOff + 0.4;
+      const props = new THREE.Group();
       const milkCan = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.23, 0.52, 8), mat(paletteHex('snowShadow')));
       milkCan.position.set(-1.35, 0.28, doorZ);
-      g.add(milkCan);
+      props.add(milkCan);
       const canNeck = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.14, 8), mat(paletteHex('snowShadow')));
       canNeck.position.set(-1.35, 0.61, doorZ);
-      g.add(canNeck);
+      props.add(canNeck);
       const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.2, 0.2, 8), mat(paletteHex('woodDark')));
       pot.position.set(1.25, 0.12, doorZ);
-      g.add(pot);
+      props.add(pot);
       const potRim = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.025, 5, 10), mat(paletteHex('woodAccent')));
       potRim.rotation.x = Math.PI / 2;
       potRim.position.set(1.25, 0.23, doorZ);
-      g.add(potRim);
+      props.add(potRim);
+      g.add(batchStatic(props));   // сав суулга нэг draw call
       const top = built.chimneyTop!;
       this.smokeOrigin.set(top.x, top.y, top.z);
       const smokeCount = 28;
@@ -1383,8 +1392,10 @@ export class TerrainView {
       g.add(built.group);
       // Агуулах (сав суулга) майхны хажууд
       const sideX = TENT.kinds.start!.W / 2 + TENT.ropeOut + 0.5;
-      meshBox(0.7, 0.6, 0.5, paletteHex('woodAccent'), sideX, 0.3, -0.8, g);
-      meshBox(0.5, 0.5, 0.5, paletteHex('wood'), sideX + 0.1, 0.25, 0.1, g);
+      const props = new THREE.Group();
+      meshBox(0.7, 0.6, 0.5, paletteHex('woodAccent'), sideX, 0.3, -0.8, props);
+      meshBox(0.5, 0.5, 0.5, paletteHex('wood'), sideX + 0.1, 0.25, 0.1, props);
+      g.add(batchStatic(props));
     }
     g.position.set(0, this.heightAt(0, 0), 0);
     this.homeGroup = g;

@@ -14,8 +14,18 @@
   "speeds": [
     1,
     2,
+    3,
     4
   ],
+  "skip": {
+    "_doc": "Цаг алгасах (⏭): симуляцийг speed× хурдаар жинхэнээр нь гүйлгэнэ (input/skip.ts). eveningMinute/morningMinute — зорилтот цаг. maxStepsPerFrame — кадр тутмын алхмын дээд хязгаар; touchRenderEvery — утсанд N кадр тутам нэг зурна. zoneCheckMinutes — шөнө мал хамгаалалтын бүсээс гарсныг шалгах давтамж.",
+    "speed": 30,
+    "eveningMinute": 1140,
+    "morningMinute": 420,
+    "maxStepsPerFrame": 20,
+    "touchRenderEvery": 3,
+    "zoneCheckMinutes": 10
+  },
   "monthDays": 5,
   "animalYearDays": 50,
   "mapFastForward": 8

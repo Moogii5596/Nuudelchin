@@ -95,13 +95,22 @@ export class ModelAnimals {
   /** Чанар солигдоход дэлгэрэнгүй хувилбарыг үүсгэнэ/устгана */
   setQuality(q: Quality): void { this.qual = q; this.applyQuality(); }
   private applyQuality(): void {
-    const want = animalLook.quality[this.qual].detail > 0;
+    const want = this.detailN() > 0;
     for (const [, s] of this.each()) {
       if (want && !s.detail) s.detail = new AnimalSet(s.model.parts('detail'), this.group, DETAIL_CAP);
       else if (!want && s.detail) { s.detail.dispose(); s.detail = null; }
-      s.light?.meshes.forEach((m) => { m.castShadow = this.qual !== 'low'; });
-      s.detail?.meshes.forEach((m) => { m.castShadow = this.qual !== 'low'; });
+      if (s.light) this.shadows(s.light);
+      if (s.detail) this.shadows(s.detail);
     }
+  }
+  /** Утасны хөнгөн горим (data/visuals.json grass.touch.lodShadows; scene.ts нэг удаа тавина): draw call хэмнэнэ — загварт хүрэхгүй, зөвхөн зурах бодлого */
+  static lite = false;
+  /** Ойрын хэдэн мал дэлгэрэнгүй хувилбараар зурагдах вэ (утсанд 0 — жижиг дэлгэцэд ялгаа харагдахгүй, draw call хоёр дахин бага) */
+  private detailN(): number { return ModelAnimals.lite ? 0 : animalLook.quality[this.qual].detail; }
+  /** Сүүдэр: хөнгөн чанарт үгүй; утсанд зөвхөн их бие (эхний хэсэг ба түүний хувилбарууд) — хөл, толгойн сүүдэр тус бүр нэг draw call */
+  private shadows(set: AnimalSet): void {
+    const torso = set.parts[0]!.name.split(' ')[0]!;   // «бие+сүүл» (♂/♀/өсвөр хувилбарууд ижил эхлэлтэй)
+    set.meshes.forEach((m, i) => { m.castShadow = this.qual !== 'low' && (!ModelAnimals.lite || set.parts[i]!.name.startsWith(torso)); });
   }
 
   /** Төрөл бүрийн гурвалжин ба draw call (stats, тест) */
@@ -120,13 +129,14 @@ export class ModelAnimals {
     const Qd = animalLook.quality[this.qual];
     // Хамгийн ойрын N мал (бүх төрлийн хамт) дэлгэрэнгүй
     const near = new Set<Placed>();
-    if (Qd.detail > 0) {
+    const detailN = this.detailN();
+    if (detailN > 0) {
       const best: Placed[] = [];
       for (const [, s] of this.each()) for (const p of s.queue) {
         if (p.dist > Qd.detailR) continue;
         let i = best.length;
         while (i > 0 && best[i - 1]!.dist > p.dist) i--;
-        if (i < Qd.detail) { best.splice(i, 0, p); if (best.length > Qd.detail) best.pop(); }
+        if (i < detailN) { best.splice(i, 0, p); if (best.length > detailN) best.pop(); }
       }
       for (const p of best) near.add(p);
     }
@@ -171,7 +181,7 @@ export class ModelAnimals {
 
   private newLight(name: LookSpecies, s: PerSpecies): AnimalSet {
     const set = new AnimalSet(s.model.parts('light'), this.group, CAPS[name]);
-    set.meshes.forEach((m) => { m.castShadow = this.qual !== 'low'; });
+    this.shadows(set);
     set.begin();
     return set;
   }

@@ -26,7 +26,9 @@ export class FollowCamera {
   solids: CamSolids | null = null;
   /** Саадаас болж камерын зай хэд хувь үлдсэн (1 = бүтэн) — аажмаар сэргэнэ */
   private clipT = 1;
-  private ptr: { x: number; y: number; sx: number; sy: number; id: number; drag: boolean; button: number; touch: boolean } | null = null;
+  /** Утас: хуруугаар чирэхэд камер эргэх бүс (жишээ нь дэлгэцийн баруун хагас). null = хаана ч. Газрын зурагт хамаарахгүй */
+  touchRotate: ((clientX: number, clientY: number) => boolean) | null = null;
+  private ptr: { x: number; y: number; sx: number; sy: number; id: number; drag: boolean; button: number; touch: boolean; rot: boolean } | null = null;
   private lastTap = 0;
   private cameraReady = false;
   private smoothPosition = new THREE.Vector3();
@@ -59,7 +61,8 @@ export class FollowCamera {
         }
         if (this.touches.size > 2) return;
       }
-      this.ptr = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, id: e.pointerId, drag: false, button: e.button, touch };
+      const rot = !touch || !this.touchRotate || this.touchRotate(e.clientX, e.clientY);
+      this.ptr = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, id: e.pointerId, drag: false, button: e.button, touch, rot };
     });
     dom.addEventListener('pointermove', (e) => {
       if (this.touches.has(e.pointerId)) {
@@ -79,7 +82,7 @@ export class FollowCamera {
           // Утсанд нэг хуруугаар чирэхэд газрын зургийг эргүүлнэ
           if (p.button === 2 || p.touch) this.mapYaw -= (e.clientX - p.x) * 0.006;
           else if (p.button === 1) this.mapPitch = clamp(this.mapPitch + (e.clientY - p.y) * 0.004, 0.3, 1.45);
-        } else {
+        } else if (p.rot) {
           this.yaw -= (e.clientX - p.x) * 0.006;
           this.pitch = clamp(this.pitch + (e.clientY - p.y) * 0.004, 0.12, 1.35);
         }

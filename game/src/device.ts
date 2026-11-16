@@ -66,6 +66,6 @@ export function touchKeys(s: string): string {
   return s
     .replace(/<kbd>([A-Za-z0-9]+)<\/kbd>/g, (m, k: string) => (KEY_ICON[k] ? `<kbd>${KEY_ICON[k]}</kbd>` : m))
     .replace(/\((Q|E|T|B|M|J|K|N|V|F|U|H|Z|G|F1)\)/g, (_m, k: string) => `(${KEY_ICON[k]})`)
-    .replace(/\(1\/2\/3\)/g, '(⏱)')
+    .replace(/\(1–4\)/g, '(⏱)')
     .replace(/(^|[\s(·,—])(Q|E|T|B|M|J|K|N|V|F|U|H|Tab|Space|F1)(?=[\s),·—:]|$)/g, (_m, pre: string, k: string) => pre + KEY_ICON[k]);
 }

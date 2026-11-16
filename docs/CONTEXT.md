@@ -2,7 +2,7 @@
 title: CONTEXT — төслийн нэг хуудсан зураглал
 type: Architecture
 status: Active
-last_updated: 2026-11-15
+last_updated: 2026-11-16
 tags: [context, map, onboarding]
 ---
 # CONTEXT: «Нүүдэлчин» нэг хуудсан зураглал
@@ -87,6 +87,7 @@ TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `gam
 | `camera.ts` · `camclip.ts` · `style.ts` · `util.ts` | Дагах камер · камерын мөргөлдөөн (барилга/гэрийн хайрцаг, цилиндр; цэвэр) · `data/visuals.json`-ийн шалгалт, `visualStyle` · туслах |
 | `ui/sleepPanel.ts` | `SleepPanel`: хамаатны цонхонд сэрэх цаг сонгох + «Унтах» (`panels.ts townHtml`-д шигтгэгдэнэ; sim — `systems/sleep.ts`) |
 | `ui/panels.ts` · `ui/names.ts` | Бүх цонх: агуулах, тайлан, Худалдаачин, нүүх, нохой, туслах · нэрс, форматлагч |
+| `ui/timebar.ts` | Баруун дээд мөр (утас + компьютер): хурдны цэс 1×–4×, ⏭ алгасах цэс, алгасах үеийн бүдгэрүүлэлт + «Зогсоох»; `popup()`-ийг утасны ☰ цэс хамт ашиглана |
 | `ui/menu.ts` · `ui/menu.css` | M6.3 эхлэлийн дэлгэц (▶ Үргэлжлүүлэх, 🆕 Шинэ, 📂 Слот, 📄 Файл, ⚙, 📲, 📥 Код — M6.4 идэвхгүй), шинэ тоглоом (слот + тайван тохиргоо), оршил (3 дэлгэц), тоглоомын цэс (❓/Esc/F1). Өөр тоглоом (шинэ, өөр слот, файл) эхлэхэд `Intent`-ийг sessionStorage-д бичиж хуудас дахин ачаалж `main.ts boot()` уншина; «Үргэлжлүүлэх» дахин ачаалахгүй |
 ### Бусад
 | Файл | Үүрэг |
@@ -97,7 +98,8 @@ TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `gam
 | `i18n/msg.ts` | `tm(msg)`: sim-ийн `Msg` → одоогийн хэлээр бичиг (параметр дотор Msg, жагсаалт → таслалаар) |
 | `persist/transfer.ts` · `persist/transferCode.ts` | M6.4 шилжүүлэх код — клиент: `createTransfer` (POST → 8 тэмдэгт `K7M2-9QXA`), `redeemTransfer` (GET → state), `TransferError.kind` (offline, network, not_configured, rate_limited, too_large, not_found, bad_code, bad_file, server); нийтлэг код/хязгаар (`MAX_BYTES` 700 KB gzip, TTL 24 ц). Сервер: `game/api/transfer.ts` (Vercel Function, Web handler `GET`/`POST`, `createHandlers({store})` — тестэд Redis-гүй) + `game/api/_redis.ts` (`Store`, `UpstashStore`, env `UPSTASH_REDIS_REST_URL/TOKEN` эсвэл `KV_REST_API_*`). `sw-template.js` /api/*-г кэшлэхгүй |
 | `persist/file.ts` | `.nuudel` gzip экспорт/импорт: `exportBytes`/`importBytes`, `downloadFile`/`readFile` (UI — M6.3) |
-| `input/controller.ts` · `touch.ts` | Гар/хулгана → Command · утасны джойстик, товчнууд |
+| `input/controller.ts` · `touch.ts` | Гар/хулгана → Command · утасны джойстик, нөхцөлт үйлдлийн товчнууд (хэрэгтэй нь `.prime`), ☰ цэс |
+| `input/skip.ts` | Цаг алгасах ⏭ (`SkipRun`, Three.js/DOM-гүй): симуляцийг `time.json skip.speed`× хурдаар жинхэнээр алхуулна; автомат зогсолт (чоно, шөнө мал бүсээс гарах, жолооч/туслахын мэдэгдэл). Тест `tests/skip.test.ts` |
 | `device.ts` · `pwa.ts` | Чанар `low/mid/high`, мэдрэгч илрүүлэх · PWA суулгах, service worker |
 | `i18n/i18n.ts`, `mn.json`, `en.json` | Текстийн түлхүүр; `en.json` бүрэн биш (M6.7) |
 | `i18n/npcStrings.ts`, `npc.mn.json`, `npc.en.json` | V6.3 NPC-ийн үг: `npc.<id>.1–3`, `npc.away` (`npcLine`, `npcText`; нэгдсэн хүснэгтээс тусдаа) |

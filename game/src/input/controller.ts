@@ -113,6 +113,7 @@ export class PlayerController {
       case 'Digit1':
       case 'Digit2':
       case 'Digit3':
+      case 'Digit4':
         this.hooks.onSpeed(Number(code.slice(-1)) - 1);
         break;
       case 'KeyG':

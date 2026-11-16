@@ -15,7 +15,7 @@ import { characters, characterSpec } from './character/spec';
 import { talkBus, turnToward } from './character/talk';
 import type { Season } from '../sim/config';
 import { angDiff } from './util';
-import { quality as activeQuality, type Quality } from '../device';
+import { isTouch, quality as activeQuality, type Quality } from '../device';
 import { animalLook } from './animal/config';
 import { ageIdxOf } from './animal/model';
 import { gaitFor, type Action } from './animal/pose';
@@ -84,7 +84,21 @@ export class CharactersView {
   private talkSeq = 0;
   private faceYaw: number | null = null;
 
+  /**
+   * Утас (data/visuals.json grass.touch): малчны зөвхөн хамгийн том хэсгүүд сүүдэр тусгана — жижиг хэсэг бүрийн сүүдэр
+   * тусдаа draw call, жижиг дэлгэцэд харагдахгүй. Загварт хүрэхгүй, зөвхөн сүүдрийн туг.
+   */
+  private liteShadows(): void {
+    const k = visualStyle.grass.touch;
+    if (!isTouch || !k.lodShadows) return;
+    const casters: THREE.Mesh[] = [];
+    this.herder.root.traverse((o) => { if (o instanceof THREE.Mesh && o.castShadow) casters.push(o); });
+    casters.sort((a, b) => (b.geometry.attributes.position?.count ?? 0) - (a.geometry.attributes.position?.count ?? 0));
+    casters.forEach((m, i) => { if (i >= k.herderShadowParts) m.castShadow = false; });
+  }
+
   constructor() {
+    this.liteShadows();
     this.models = new ModelAnimals(this.group, this.quality);
     this.group.add(this.herder.root, this.campGroup);
     this.bubbles = {
@@ -148,6 +162,7 @@ export class CharactersView {
     if (season === this.season) return;
     this.season = season;
     dressCharacter(this.herder, season);
+    this.liteShadows();
   }
 
   get herderObject(): THREE.Object3D {

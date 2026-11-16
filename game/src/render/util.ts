@@ -88,18 +88,35 @@ export function limb(w: number, h: number, color: number, x: number, y: number, 
   return p;
 }
 
+/** mat()-ийн өнгөнүүдийг оройн өнгөнд шингээсэн нэг материал (batchStatic) */
+const bakedMat = new THREE.MeshLambertMaterial({ color: 0xffffff, flatShading: true, vertexColors: true });
+
 /**
- * Хөдөлгөөнгүй объектуудыг (мод, чулуу, хашаа) материалаар нь нэг mesh болгоно.
- * Mesh биш объект (шугам г.м.) хэвээр үлдэнэ.
+ * Хөдөлгөөнгүй объектуудыг (мод, чулуу, хашаа) цөөн mesh болгоно.
+ * mat()-аар үүссэн энгийн өнгөт материалууд (өнгө нь хэзээ ч солигддоггүй) оройн өнгөнд шингэж НЭГ материал болно —
+ * өнгө бүрт нэг draw call байсныг сүүдэртэй/сүүдэргүй гэсэн хоёрт буулгана. Бусад материал (улирлаар өнгө нь солигддог
+ * шинэс г.м.) материалаараа нэгдэнэ. Mesh биш объект (шугам г.м.) хэвээр үлдэнэ.
  */
 export function batchStatic(src: THREE.Group): THREE.Group {
   src.updateMatrixWorld(true);
+  const shared = new Set<THREE.Material>(matCache.values());
   const byMat = new Map<THREE.Material, { geos: THREE.BufferGeometry[]; shadow: boolean }>();
+  const baked: Record<'shadow' | 'plain', THREE.BufferGeometry[]> = { shadow: [], plain: [] };
   const out = new THREE.Group();
   const keep: THREE.Object3D[] = [];
   src.traverse((o) => {
     if (o instanceof THREE.Mesh && !(o instanceof THREE.InstancedMesh) && !Array.isArray(o.material)) {
       const g = (o.geometry as THREE.BufferGeometry).clone().applyMatrix4(o.matrixWorld);
+      if (shared.has(o.material)) {
+        const n = g.index ? g.toNonIndexed() : g;
+        for (const k of Object.keys(n.attributes)) if (k !== 'position') n.deleteAttribute(k);
+        const c = (o.material as THREE.MeshLambertMaterial).color, count = n.attributes.position!.count;
+        const col = new Float32Array(count * 3);
+        for (let i = 0; i < count; i++) { col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b; }
+        n.setAttribute('color', new THREE.BufferAttribute(col, 3));
+        baked[o.castShadow ? 'shadow' : 'plain'].push(n);
+        return;
+      }
       let e = byMat.get(o.material);
       if (!e) {
         e = { geos: [], shadow: false };
@@ -112,6 +129,16 @@ export function batchStatic(src: THREE.Group): THREE.Group {
   for (const [m, e] of byMat) {
     const mesh = new THREE.Mesh(merge(e.geos), m);
     mesh.castShadow = e.shadow;
+    mesh.receiveShadow = true;
+    out.add(mesh);
+  }
+  for (const kind of ['shadow', 'plain'] as const) {
+    if (!baked[kind].length) continue;
+    const geo = mergeGeometries(baked[kind], false);
+    if (!geo) throw new Error('mergeGeometries амжилтгүй');
+    geo.computeVertexNormals();
+    const mesh = new THREE.Mesh(geo, bakedMat);
+    mesh.castShadow = kind === 'shadow';
     mesh.receiveShadow = true;
     out.add(mesh);
   }

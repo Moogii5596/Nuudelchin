@@ -74,6 +74,14 @@
       "southSlope": "#93954F",
       "foothill": "#5F9440",
       "northSlope": "#4E6B3A"
+    },
+    "touch": {
+      "_doc": "Утас (мэдрэгч дэлгэц): жижиг дэлгэцэд мал тод харагдахын тулд өвсний багцын тоог density дахин болгож, бэлчээрийн өнгийг lightenTo руу lighten хувиар цайруулна. lodShadows=true бол мал зөвхөн их биеэрээ сүүдэр тусгаж, ойрын дэлгэрэнгүй хувилбар (detail) үүсэхгүй, малчны зөвхөн хамгийн том herderShadowParts хэсэг сүүдэр тусгана — draw call ≤ 120.",
+      "density": 0.5,
+      "lighten": 0.3,
+      "lightenTo": "#D9D6A6",
+      "lodShadows": true,
+      "herderShadowParts": 6
     }
   },
   "water": {

@@ -24,7 +24,8 @@ import { InteriorView } from './interior';
 import { seasonLook, seasonOf } from '../sim/systems/seasons';
 import { paletteHex, visualStyle, type TimeVisual } from './style';
 import { SpeedSmoother } from './character/talk';
-import { Q, quality as activeQuality, type Quality, type QualitySpec } from '../device';
+import { Q, isTouch, quality as activeQuality, type Quality, type QualitySpec } from '../device';
+import { ModelAnimals } from './animal/view';
 
 /** Цасны ширхгийн дугуй бүдэг бараг (canvas) */
 function flakeTexture(): THREE.Texture {
@@ -39,6 +40,9 @@ function flakeTexture(): THREE.Texture {
   g.fillRect(0, 0, 32, 32);
   return new THREE.CanvasTexture(c);
 }
+
+// Утас: малын сүүдэр зөвхөн их биеэр, ойрын дэлгэрэнгүй LOD үгүй (draw call ≤ 120) — data/visuals.json grass.touch.lodShadows
+ModelAnimals.lite = isTouch && visualStyle.grass.touch.lodShadows;
 
 export class GameView {
   readonly renderer: THREE.WebGLRenderer;

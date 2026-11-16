@@ -74,6 +74,8 @@ export interface TimeConfig {
   nightRealSecondsPerGameHour: number;
   mapFastForward: number;        // газрын зураг дээр Shift — цаг хурдасгах
   speeds: number[];
+  /** Цаг алгасах (⏭) — input/skip.ts */
+  skip: { speed: number; eveningMinute: number; morningMinute: number; maxStepsPerFrame: number; touchRenderEvery: number; zoneCheckMinutes: number };
   monthDays: number;
   animalYearDays: number;
 }

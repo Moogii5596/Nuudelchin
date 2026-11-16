@@ -39,6 +39,9 @@ import { SaveStore } from './persist/idb';
 import { Autosave, attachPageEvents, attachSimEvents } from './persist/autosave';
 import { MenuUI, takeIntent } from './render/ui/menu';
 import { TouchUI } from './input/touch';
+import { SkipRun, skipGoal, type SkipTarget } from './input/skip';
+import { TimeBar } from './render/ui/timebar';
+import type { DayReport } from './sim/sim';
 import { registerServiceWorker, onConnectionChange } from './pwa';
 import { isTouch, touchKeys, quality, QUALITIES, QUALITY_NAME, QUALITY_SPEC, setQuality } from './device';
 
@@ -144,7 +147,7 @@ function start(boot?: Boot): void {
   if (qs.get('heatmap') === '1') view.toggleHeatmap(state);
   const hud = document.getElementById('hud')!;
   const perf = document.getElementById('perf')!;
-  // FPS самбар: утсан дээр ❓ цэснээс асаана (суулгасан апп-д ?stats нэмэх боломжгүй)
+  // FPS/draw/tris самбар: анхдагчаар нуугдсан. Cheat цэс (`) эсвэл утсанд ❓ цэснээс асаана (суулгасан апп-д ?stats нэмэх боломжгүй)
   const PERF_KEY = 'nuudel.showPerf';
   let showPerf = qs.has('stats') || qs.get('perf') === '1';
   try {
@@ -152,6 +155,19 @@ function start(boot?: Boot): void {
   } catch {
     /* localStorage хаалттай бол үл тооно */
   }
+  const setPerf = (on: boolean): void => {
+    showPerf = on;
+    perf.style.display = on ? '' : 'none';
+    try {
+      localStorage.setItem(PERF_KEY, on ? '1' : '0');
+    } catch {
+      /* хадгалж чадахгүй бол энэ удаад л ажиллана */
+    }
+  };
+  perf.style.display = showPerf ? '' : 'none';   // анхдагчаар нуугдсан: cheat цэс (`), ?stats, утсанд ❓ цэснээс асаана
+  // Цаг алгасах (⏭): идэвхтэй гүйлт, алгасах үед хойшлуулсан өдрийн тайлан
+  let skip: SkipRun | null = null;
+  let pendingReport: DayReport | null = null;
   const help = document.getElementById('help')!;
   const prompt = document.getElementById('prompt')!;
   help.innerHTML = t('ui.p_photo_mode_the', { x: t('help.title'), x2: isTouch ? t('help.touch') + '\n\n' + touchKeys(t('help.body')) : t('help.body') });
@@ -184,11 +200,14 @@ function start(boot?: Boot): void {
     },
     onFirstTap: () => touchUI?.enterLandscape(),
   });
-  const panels = new Panels(cfg, state, { dispatch: (cmd) => { const r = sim.command(cmd); if (r.ok && (cmd.type === 'moveCamp' || cmd.type === 'sleep')) autosave?.request('move'); return r; }, toast, toggleZones: () => view.zones.toggle() });
+  const panels = new Panels(cfg, state, { dispatch: (cmd) => { const r = sim.command(cmd); if (r.ok && (cmd.type === 'moveCamp' || cmd.type === 'sleep')) autosave?.request('move'); return r; }, toast, toggleZones: () => view.zones.toggle(), perf: { on: () => showPerf, toggle: () => setPerf(!showPerf) } });
   const showReports = qs.get('report') !== '0';
   let huntToastT = 0;
   sim.on((e) => {
-    if (e.type === 'dayReport' && showReports) panels.showReport(e.report);
+    if (e.type === 'dayReport' && showReports) {
+      if (skip) pendingReport = e.report;   // алгасаж дуусахад харуулна
+      else panels.showReport(e.report);
+    }
     else if (e.type === 'traderArrive') toast(t('trader.arrive', { kind: t('trader.kind.' + e.kind), until: formatTime({ day: state.time.day, minute: e.until }) }), 'good');
     else if (e.type === 'traderLeave') toast(t('trader.leave'), '');
     else if (e.type === 'milestone') toast(t(e.kind === 'stage' ? 'ms.reached' : 'ms.first_toast', { name: t((e.kind === 'stage' ? 'ms.stage.' : 'ms.first.') + e.id) }), 'good');
@@ -228,7 +247,7 @@ function start(boot?: Boot): void {
   const controller = new PlayerController(cfg, {
     dispatch: (cmd) => sim.command(cmd),
     state: () => state,
-    blocked: (code) => panels.isOpen || menu.isOpen || (photoMode && code !== 'KeyP'),
+    blocked: (code) => panels.isOpen || menu.isOpen || !!skip || (photoMode && code !== 'KeyP'),
     onAction: (kind, res) => {
       if (res.ok && (kind === 'shout' || kind === 'scare' || kind === 'call')) view.characters.say(kind);
       if (res.msg) toast(res.msg, res.ok ? 'good' : 'bad');
@@ -257,10 +276,56 @@ function start(boot?: Boot): void {
   });
   controller.walk = controllerWalk;
   // Утасны удирдлага (мэдрэгч дэлгэц)
-  const touchUI = isTouch && !captureMode ? new TouchUI(cfg, controller, { speedIdx: () => speedIdx, speeds: cfg.time.speeds }, { menuGate: !!boot }) : null;
+  const clockText = (minute: number): string => formatTime({ day: state.time.day, minute });
+  const endSkip = (): void => {
+    const s = skip;
+    if (!s) return;
+    skip = null;
+    s.dispose();
+    bar?.hideSkip();
+    acc = 0;
+    hudT = 0;
+    const at = clockText(s.goal.minute);
+    if (s.stop === 'done') toast(t(s.target === 'evening' ? 'ui.skip_done_evening' : 'ui.skip_done_morning', { x: at }), 'good');
+    else if (s.stop === 'user') toast(t('ui.skip_stop_user'), '');
+    else if (s.stop) {
+      const why = { wolf: t('ui.skip_stop_wolf'), zone: t('ui.skip_stop_zone'), driver: t('ui.skip_stop_driver'), helper: t('ui.skip_stop_helper'), arrived: t('ui.skip_stop_arrived') }[s.stop];
+      toast(why, s.stop === 'wolf' || s.stop === 'zone' ? 'bad' : 'good');
+    }
+    if (pendingReport) {
+      const r = pendingReport;
+      pendingReport = null;
+      panels.showReport(r);
+    }
+  };
+  const startSkip = (target: SkipTarget): void => {
+    if (skip || panels.isOpen || menu.isOpen || photoMode) return;
+    const goal = skipGoal(cfg, state.time, target);
+    if (!goal) {
+      toast(t('ui.skip_too_late'), '');
+      return;
+    }
+    skip = new SkipRun(sim, target);
+    acc = 0;
+    if (skip.stop) endSkip();   // чоно аль хэдийн мал хөөж байна
+    else bar?.showSkip(clockText(goal.minute));
+  };
+  // Баруун дээд: хурд (1× 2× 3× 4× цэс) + ⏭ алгасах — утас, компьютер хоёуланд
+  const bar = captureMode ? null : new TimeBar({
+    speeds: cfg.time.speeds,
+    speedIdx: () => speedIdx,
+    setSpeed: (i) => controller.press('Digit' + (i + 1)),
+    skipTime: (target) => {
+      const g = skipGoal(cfg, state.time, target);
+      return g ? clockText(g.minute) : null;
+    },
+    startSkip,
+    stopSkip: () => skip?.cancel(),
+  });
+  const touchUI = isTouch && bar ? new TouchUI(cfg, controller, bar, { menuGate: !!boot }) : null;
+  if (isTouch) view.cam.touchRotate = (x) => x >= window.innerWidth / 2;   // зүүн хагас — джойстик, газар товших; баруун хагас — камер
   let hudCompact = isTouch;
   if (isTouch && !captureMode) {
-    if (!showPerf) perf.style.display = 'none';
     document.getElementById('toasts')!.appendChild(prompt);
     hud.addEventListener('click', () => {
       hudCompact = !hudCompact;
@@ -284,13 +349,7 @@ function start(boot?: Boot): void {
         return;
       }
       if (b.dataset.h === 'perf') {
-        showPerf = !showPerf;
-        perf.style.display = showPerf ? '' : 'none';
-        try {
-          localStorage.setItem(PERF_KEY, showPerf ? '1' : '0');
-        } catch {
-          /* хадгалж чадахгүй бол энэ удаад л ажиллана */
-        }
+        setPerf(!showPerf);
         renderHelp();
         return;
       }
@@ -316,6 +375,7 @@ function start(boot?: Boot): void {
   // Esc: тусламж нээлттэй бол хаана, үгүй бол тоглоомын цэс (самбар нээлттэй бол самбар өөрөө хаагдана; capture — самбараас өмнө уншина)
   if (boot) window.addEventListener('keydown', (e) => {
     if (e.code !== 'Escape' || menu.isOpen || panels.isOpen || photoMode) return;
+    if (skip) { skip.cancel(); return; }
     if (help.style.display === 'block') help.style.display = 'none';
     else menu.toggleGame();
   }, true);
@@ -330,6 +390,7 @@ function start(boot?: Boot): void {
   let acc = 0;
   let last = performance.now();
   let hudT = 0;
+  let skipFrame = 0;
   let grassAvg = averageBiomass(state.grass, 120);
   let grassT = 0;
   // Байршил (мөн орсон барилга) солигдоход дэлгэц бүдгэрнэ
@@ -398,19 +459,25 @@ function start(boot?: Boot): void {
 
     // Газрын зураг дээр Shift — цаг хурдасна (M4.6)
     const fast = state.player.place === 'map' && !state.move && (controller.isDown('ShiftLeft') || controller.isDown('ShiftRight'));
-    const speed = (cfg.time.speeds[speedIdx] ?? 1) * (fast ? cfg.time.mapFastForward : 1);
+    // Алгасах (⏭): цаг үсрэхгүй — симуляц skip.speed× хурдаар жинхэнээр алхана; цонх нээгдвэл зогсоно
+    if (skip && paused) skip.cancel();
+    const speed = skip ? cfg.time.skip.speed : (cfg.time.speeds[speedIdx] ?? 1) * (fast ? cfg.time.mapFastForward : 1);
     if (!paused) {
-      controller.update(dt, state, view.cam.forward());
+      if (!skip) controller.update(dt, state, view.cam.forward());
       acc += dt * speed;
+      const maxSteps = skip ? cfg.time.skip.maxStepsPerFrame : 60;
       let steps = 0;
-      while (acc >= secPerMinuteNow() && steps < 60 && !panels.isOpen) {
+      while (acc >= secPerMinuteNow() && steps < maxSteps && !panels.isOpen) {
         acc -= secPerMinuteNow();
         view.snapshot(state);
-        sim.step();
         steps++;
+        if (!skip) sim.step();
+        else if (!skip.step()) break;
       }
-      if (steps >= 60) acc = 0;
+      if (steps >= maxSteps) acc = 0;
     }
+    if (skip?.stop) endSkip();
+    else if (skip) bar?.setSkipClock(`${isNight(state.time, cfg.time) ? '🌙' : '☀️'} ${formatTime(state.time)}`);
     autosave?.flush();   // алхмуудын завсарт (state бүтэн)
     if (state.milestones.ceremony && !panels.isOpen && !menu.isOpen && !photoMode) panels.open('ceremony');   // M6.5 баярын мөч (хадгалалтаас ачаалсан үед ч хүлээгдэж байвал)
     if (placeKey() !== previousPlace) {
@@ -421,7 +488,9 @@ function start(boot?: Boot): void {
       fade.classList.add('play');
     }
     const spm = secPerMinuteNow();
-    view.frame(state, Math.min(1, acc / spm), paused && !menu.isStart ? 0 : dt, paused ? 0 : spm / speed);
+    // Утсанд алгасах үед рендерийг сийрэгжүүлнэ (симуляцид CPU үлдээнэ)
+    skipFrame = skip ? skipFrame + 1 : 0;
+    if (!skip || !isTouch || skipFrame % cfg.time.skip.touchRenderEvery === 0) view.frame(state, Math.min(1, acc / spm), paused && !menu.isStart ? 0 : dt, paused ? 0 : spm / speed);
 
     fpsFrames++;
     fpsT += rawDt;
@@ -499,20 +568,21 @@ function start(boot?: Boot): void {
         `📦 ${fmtNum(storage.used(state))}/${storage.capacity(cfg, state)} · ✋ ${carryTxt} (${fmtNum(carried)}/${cfg.products.carryUnits})${onGround ? t('ui.on_the_ground', { onGround }) : ''}<br>` +
         `${t('hud.camp')}: ${t('camp.' + state.campId)} · ${t('hud.grass')} ${Math.round(grassAvg * 100)}% · ${t('hud.degrade')} ${Math.round(degrade * 100)}%<br>` +
         (msTxt ? `${msTxt}<br>` : '') +
-        `${status} · ${t('hud.speed')}: ${speed}×${fast ? ' ⏩' : ''} <small>(1/2/3)</small><br>` +
+        `${status} · ${t('hud.speed')}: ${speed}×${fast ? ' ⏩' : ''} <small>(1–4)</small><br>` +
         dogsTxt +
         helpersTxt +
         alert +
         `<small>${t('hud.milestone')} · ${t('help.hint')}${view.heatmap ? ' · G: heatmap' : ''}${view.zones.visible ? t('ui.z_zones') : ''}${state.wolves.peaceful ? t('ui.wolves_off') : ''}</small>`;
       // Утсанд HUD хураангуй — дарвал бүтэн харагдана
       hud.innerHTML = hudCompact
-        ? touchKeys(head) +
-          `💰 <b>${fmtMoney(state.money)}</b> · 🐑 ${state.animals.filter((a) => !a.riding).length} · ✋ ${fmtNum(carried)}/${cfg.products.carryUnits}<br>` +
-          `${touchKeys(status)}<br>` +
-          alert +
-          t('ui.more')
+        // 2 мөр: (1) өдөр, цаг, мөнгө, малын тоо; (2) гар + уурга/морины төлөв. Дарвал дэлгэрэнгүй
+        ? `${head.replace('<br>', '')} · 💰 <b>${fmtMoney(state.money)}</b> · 🐑 ${state.animals.filter((a) => !a.riding).length}<br>` +
+          `✋ ${t('hud.hand')}: ${fmtNum(carried)}/${cfg.products.carryUnits} · ${touchKeys(status)} ${t('ui.more')}` +
+          (alert ? '<br>' + alert.replace(/<br>$/, '') : '')
         : touchKeys(full) + (isTouch ? t('ui.collapse') : '');
-      touchUI?.update(state, panels.isOpen || menu.isOpen || help.style.display === 'block');
+      const uiHidden = panels.isOpen || menu.isOpen || help.style.display === 'block';
+      bar?.update(uiHidden || photoMode);
+      touchUI?.update(state, uiHidden);
       perf.textContent = qs.has('stats') || showPerf
         ? t('ui.fps_max_ms_draw', { x: fps.toFixed(0), x2: worstShown.toFixed(0), drawCalls: view.drawCalls, x3: view.triangleCount.toLocaleString(), length: state.animals.length, geometries: view.renderer.info.memory.geometries, textures: view.renderer.info.memory.textures })
         : t('ui.fps_max_ms_draw_78', { x: fps.toFixed(0), x2: worstShown.toFixed(0), drawCalls: view.drawCalls, length: state.animals.length });

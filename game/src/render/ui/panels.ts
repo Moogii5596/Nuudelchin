@@ -96,6 +96,8 @@ export interface UiHooks {
   toast: (msg: string | Msg, kind?: '' | 'good' | 'bad') => void;
   /** Хамгаалалтын бүс харуулах (Z) — cheat цэснээс */
   toggleZones?: () => boolean;
+  /** FPS/draw/tris самбар (анхдагчаар нуугдсан) — cheat цэснээс асаана/унтраана */
+  perf?: { on: () => boolean; toggle: () => void };
 }
 
 export class Panels {
@@ -755,7 +757,8 @@ export class Panels {
   // ======================= туршилтын цэс (`) =======================
   private cheatHtml(): string {
     const { cfg, state } = this;
-    const rows = CHEATS.map((row) => `<p>${row.map((c) => `<button class="btn sm" data-act="cheat:${c.act}">${c.label}</button>`).join(' ')}</p>`).join('');
+    const perf = this.hooks.perf ? `<p><button class="btn sm ${this.hooks.perf.on() ? 'gold' : ''}" data-act="perf">${t('ui.perf_panel', { x: this.hooks.perf.on() ? t('ui.on') : t('ui.off') })}</button></p>` : '';
+    const rows = CHEATS.map((row) => `<p>${row.map((c) => `<button class="btn sm" data-act="cheat:${c.act}">${c.label}</button>`).join(' ')}</p>`).join('') + perf;
     const camps = Object.keys(cfg.camps.camps).map((id) => `<button class="btn sm ${id === state.campId ? 'gold' : ''}" data-act="cheat:camp:${id}">${t('camp.' + id)}</button>`).join(' ');
     return t('ui.debug_menu_jump_to', { rows, camps, x: state.wolves.peaceful ? t('ui.off_261') : t('ui.on_262'), length: state.dogs.length, length2: state.animals.length });
   }
@@ -1063,6 +1066,9 @@ export class Panels {
         if (this.kind !== 'cheat') return;   // өдрийн тайлан нээгдсэн
         break;
       }
+      case 'perf':
+        this.hooks.perf?.toggle();
+        break;
       case 'zones': {
         const on = this.hooks.toggleZones?.();
         this.hooks.toast(on ? t('ui.protection_zones_are_visible_303') : t('ui.protection_zones_hidden'), 'good');

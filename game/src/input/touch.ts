@@ -1,8 +1,9 @@
 /**
  * Утасны удирдлага (мэдрэгч дэлгэц). Гарын товчны оронд дэлгэцэн дээрх товчнууд:
  *  - зүүн доод: джойстик — алхах/давхих (захад нь түлхвэл гүйнэ), жолоодох
- *  - баруун доод: үйлдлийн том товчнууд (Хөөе, чоно үргээх, түүх, морь, уурга, тэрэг, газрын зураг)
- *  - баруун дээд: цэс (агуулах, ачаа, нүүх, туслах, нохой, бүс, хурд, тусламж, бүтэн дэлгэц)
+ *  - баруун доод: үйлдлийн том товчнууд — Морь, Зураг, Уурга байнга; бусад нь нөхцөлөөр (түүх: ойр бүтээгдэхүүн байхад,
+ *    үргээх: чоно ойртоход г.м.). Тухайн мөчид хамгийн хэрэгтэй товч томорч тодорно (.prime)
+ *  - баруун дээд: хурд, ⏭ алгасах (render/ui/timebar.ts), бүтэн дэлгэц, ☰ цэс (агуулах, ачаа, нүүх, туслах, нохой, бүс, тусламж)
  * Товч бүр PlayerController.press(<товчны код>)-ийг дуудна — тоглоомын логик гартай яг адил.
  * Газар дээр дарах (тийш явах), чирэх (камер), хоёр хуруугаар чимхэх (томруулах) — render/camera.ts.
  */
@@ -11,24 +12,18 @@ import type { GameConfig } from '../sim/config';
 import type { GameState } from '../sim/state';
 import { driverSendTarget, type PlayerController } from './controller';
 import { nearestVehicle } from '../sim/systems/travel';
+import { huntingWolves } from '../sim/systems/wolves';
+import { ridingHorse } from '../sim/systems/herder';
+import { nearEnterDoor } from '../sim/systems/interior';
+import { el, popup, type Popup, type TimeBar } from '../render/ui/timebar';
 import { pwa, isIOS, inAppBrowser, canLockLandscape, landscapeFullscreen } from '../pwa';
-
-export interface TouchHooks {
-  speedIdx: () => number;
-  speeds: number[];
-}
 
 interface Btn {
   el: HTMLElement;
   show: (s: GameState) => boolean;
+  /** Одоо хамгийн хэрэгтэй үйлдэл үү: > 0 бол тэргүүлэх зэрэг (их нь түрүүлнэ) */
+  prime?: (s: GameState) => number;
 }
-
-const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, html = ''): HTMLElementTagNameMap[K] => {
-  const e = document.createElement(tag);
-  e.className = cls;
-  e.innerHTML = html;
-  return e;
-};
 
 export class TouchUI {
   private joy: HTMLElement;
@@ -36,14 +31,14 @@ export class TouchUI {
   private joyId: number | null = null;
   private acts: Btn[] = [];
   private menu: Btn[] = [];
-  private speedBtn: HTMLElement | null = null;
+  private menuPop: Popup;
   private startEl: HTMLElement;
   private rotateEl: HTMLElement;
   private started = false;
   private sheetEl: HTMLElement;
 
   /** opts.menuGate: «▶ Тоглох» хаалгыг эхлэлийн цэс (render/ui/menu.ts) орлоно — цэсний эхний товшилт нь хэвтээ/бүтэн дэлгэцийн зөвшөөрөл болно (M6.3) */
-  constructor(private cfg: GameConfig, private ctl: PlayerController, private hooks: TouchHooks, opts: { menuGate?: boolean } = {}) {
+  constructor(private cfg: GameConfig, private ctl: PlayerController, private bar: TimeBar, opts: { menuGate?: boolean } = {}) {
     document.body.classList.add('touch');
 
     // --- Джойстик ---
@@ -82,58 +77,84 @@ export class TouchUI {
     this.joy.addEventListener('pointercancel', release);
     document.body.appendChild(this.joy);
 
-    // --- Үйлдлийн товчнууд ---
+    // --- Үйлдлийн товчнууд (нөхцөлөөс хамаарна) ---
     const camp = (s: GameState): boolean => s.player.place === 'camp' && !s.player.driving && !s.move && !s.player.interior;
     const actBox = el('div', 'acts');
-    const addAct = (icon: string, label: string, code: string, show: (s: GameState) => boolean, hold = false): void => {
+    const addAct = (icon: string, label: string, code: string, show: (s: GameState) => boolean, prime?: (s: GameState) => number, hold = false): void => {
       const b = el('button', 'tbtn act', `<span>${icon}</span><small>${label}</small>`);
       this.bind(b, code, hold);
       actBox.appendChild(b);
-      this.acts.push({ el: b, show });
+      this.acts.push({ el: b, show, prime });
     };
+    const dist = (a: { x: number; z: number }, b: { x: number; z: number }): number => Math.hypot(a.x - b.x, a.z - b.z);
     const nearV = (s: GameState): boolean => !!nearestVehicle(this.cfg, s, this.cfg.vehicles.road.enterRange);
-    addAct('📣', t('ui.shout'), 'Space', camp);
-    addAct('🐺', t('ui.scare'), 'KeyQ', camp);
-    addAct('✋', t('ui.pick_up'), 'KeyE', (s) => camp(s) && !driverSendTarget(this.cfg, s));
-    addAct('📦', t('ui.send_act'), 'KeyE', (s) => camp(s) && !!driverSendTarget(this.cfg, s));
-    addAct('🏪', t('ui.trade'), 'KeyE', (s) => s.player.place === 'sum' && !s.player.driving && !s.player.interior);
-    addAct('🚪', t('ui.leave_act'), 'KeyE', (s) => !!s.player.interior);   // V6.1: дотор E — гарах эсвэл лангуунд цонх нээх
+    // Чоно ойртсон: мал хөөж байгаа, эсвэл үргээх зайд (Q хүрэх зай) чоно байна
+    const wolfNear = (s: GameState): boolean => {
+      const r = this.cfg.wolves.scareRadius[s.player.mounted ? 'mounted' : 'onFoot'];
+      return huntingWolves(s).length > 0 || s.wolves.list.some((w) => w.mode !== 'flee' && dist(w, s.player) <= r);
+    };
+    // Түүх/хийх: ойр бүтээгдэхүүн байна, эсвэл гартаа ачаатай агуулахын дэргэд
+    const canPick = (s: GameState): boolean => {
+      const p = s.player, home = this.cfg.camps.home;
+      return s.items.some((it) => dist(it, p) <= this.cfg.products.pickupRadius * 1.6) || (p.carry.length > 0 && dist(p, home) <= home.storageRadius);
+    };
+    const canSend = (s: GameState): boolean => camp(s) && !!driverSendTarget(this.cfg, s);
+    const herdNear = (s: GameState): boolean => {
+      const r = s.player.mounted ? this.cfg.player.shout.radiusMounted : this.cfg.player.shout.radius;
+      return s.animals.some((a) => !a.riding && dist(a, s.player) <= r);
+    };
+    const horseFar = (s: GameState): boolean => {
+      const h = ridingHorse(s);
+      return !!h && dist(h, s.player) > this.cfg.player.mountRange;
+    };
+    addAct('🐺', t('ui.scare'), 'KeyQ', (s) => camp(s) && wolfNear(s), () => 5);
+    addAct('✋', t('ui.pick_up'), 'KeyE', (s) => camp(s) && !canSend(s) && canPick(s), () => 4);
+    addAct('📦', t('ui.send_act'), 'KeyE', canSend, () => 4);
+    addAct('🚪', t('ui.enter_act'), 'KeyE', (s) => camp(s) && !canSend(s) && !canPick(s) && !s.player.mounted && !!nearEnterDoor(this.cfg, s), () => 3);
+    addAct('🏪', t('ui.trade'), 'KeyE', (s) => s.player.place === 'sum' && !s.player.driving && !s.player.interior, () => 3);
+    addAct('🚪', t('ui.leave_act'), 'KeyE', (s) => !!s.player.interior, () => 3);   // V6.1: дотор E — гарах эсвэл лангуунд цонх нээх
+    addAct('📣', t('ui.shout'), 'Space', (s) => camp(s) && herdNear(s));
+    addAct('🐴', t('ui.call'), 'KeyH', (s) => camp(s) && !s.player.mounted && horseFar(s));
+    addAct('🚚', t('ui.cart'), 'KeyV', (s) => s.player.place !== 'map' && !s.move && (!!s.player.driving || (!s.player.mounted && nearV(s))), (s) => (s.player.driving ? 0 : 2));
     addAct('🪵', t('ui.switch'), 'KeyU', camp);
     addAct('🐎', t('ui.horse'), 'KeyF', (s) => (s.player.place === 'camp' || s.player.place === 'sum') && !s.player.driving && !s.move && !s.player.interior);
-    addAct('🐴', t('ui.call'), 'KeyH', (s) => camp(s) && !s.player.mounted);
-    addAct('🚚', t('ui.cart'), 'KeyV', (s) => s.player.place !== 'map' && !s.move && (!!s.player.driving || (!s.player.mounted && nearV(s))));
     addAct('🗺', t('ui.map'), 'Tab', (s) => s.player.place !== 'map' && !s.move);
-    addAct('⏩', t('ui.gallop'), 'ShiftLeft', (s) => s.player.place === 'map' && !s.move, true);
+    addAct('⏩', t('ui.gallop'), 'ShiftLeft', (s) => s.player.place === 'map' && !s.move, undefined, true);
     document.body.appendChild(actBox);
 
-    // --- Цэс ---
-    const menuBox = el('div', 'tmenu');
-    const addMenu = (icon: string, title: string, onTap: () => void, show: (s: GameState) => boolean = () => true): HTMLElement => {
+    // --- Баруун дээд: хурд, ⏭ (TimeBar) + бүтэн дэлгэц + ☰ цэс ---
+    const top = (icon: string, title: string): HTMLButtonElement => {
       const b = el('button', 'tbtn sm', icon);
       b.title = title;
       b.setAttribute('aria-label', title);
-      b.addEventListener('click', (e) => {
-        e.preventDefault();
-        onTap();
-      });
-      menuBox.appendChild(b);
-      this.menu.push({ el: b, show });
+      this.bar.box.appendChild(b);
       return b;
     };
+    if (document.fullscreenEnabled) {
+      top('⛶', t('ui.fullscreen')).addEventListener('click', (e) => {
+        e.preventDefault();
+        void this.fullscreen(!document.fullscreenElement);
+      });
+    }
+    this.menuPop = popup(top('☰', t('ui.menu')), 'grid');
+    const addMenu = (icon: string, label: string, code: string, show: (s: GameState) => boolean = () => true): void => {
+      const b = el('button', 'tbtn item', `<span>${icon}</span>${label}`);
+      b.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.menuPop.close();
+        this.ctl.press(code);
+      });
+      this.menuPop.el.appendChild(b);
+      this.menu.push({ el: b, show });
+    };
     const atCamp = (s: GameState): boolean => s.player.place === 'camp' && !s.move;
-    addMenu('📦', t('ui.storage'), () => this.ctl.press('KeyB'), atCamp);
-    addMenu('🧺', t('ui.load_goods'), () => this.ctl.press('KeyT'), atCamp);
-    addMenu('🏕', t('ui.move_camp'), () => this.ctl.press('KeyM'), atCamp);
-    addMenu('👥', t('ui.helpers_319'), () => this.ctl.press('KeyJ'));
-    addMenu('🐕', t('ui.dogs'), () => this.ctl.press('KeyK'), (s) => s.dogs.length > 0);
-    addMenu('🛡', t('ui.zones'), () => this.ctl.press('KeyZ'), atCamp);
-    this.speedBtn = addMenu('1×', t('ui.speed'), () => {
-      const n = (this.hooks.speedIdx() + 1) % this.hooks.speeds.length;
-      this.ctl.press('Digit' + (n + 1));
-    });
-    addMenu('❓', t('ui.help'), () => this.ctl.press('F1'));
-    if (document.fullscreenEnabled) addMenu('⛶', t('ui.fullscreen'), () => void this.fullscreen(!document.fullscreenElement));
-    document.body.appendChild(menuBox);
+    addMenu('📦', t('ui.storage'), 'KeyB', atCamp);
+    addMenu('🧺', t('ui.load_goods'), 'KeyT', atCamp);
+    addMenu('🏕', t('ui.move_camp'), 'KeyM', atCamp);
+    addMenu('👥', t('ui.helpers_319'), 'KeyJ');
+    addMenu('🐕', t('ui.dogs'), 'KeyK', (s) => s.dogs.length > 0);
+    addMenu('🛡', t('ui.zones'), 'KeyZ', atCamp);
+    addMenu('❓', t('ui.help'), 'F1');
 
     // --- Босоо байрлал: хэвтээ болгох / суулгах ---
     // Android: «Хэвтээ дэлгэцээр тоглох» товч нь бүтэн дэлгэц болгоод хэвтээ түгжинэ — утсаа эргүүлэх шаардлагагүй.
@@ -254,15 +275,21 @@ export class TouchUI {
     return window.innerHeight > window.innerWidth * 1.05;
   }
 
-  /** HUD-тай хамт 0.25 сек тутам: тухайн нөхцөлд хэрэгтэй товчнуудыг л харуулна */
+  /** HUD-тай хамт 0.25 сек тутам: тухайн нөхцөлд хэрэгтэй товчнуудыг л харуулж, хамгийн хэрэгтэйг нь тодруулна */
   update(state: GameState, panelOpen: boolean): void {
     this.rotateEl.style.display = this.portrait && this.sheetEl.style.display !== 'flex' ? 'flex' : 'none';
     const p = state.player;
     const hideAll = panelOpen;
     this.joy.style.display = hideAll || p.place === 'map' || state.move ? 'none' : '';
-    for (const b of this.acts) b.el.style.display = !hideAll && b.show(state) ? '' : 'none';
-    for (const b of this.menu) b.el.style.display = !hideAll && b.show(state) ? '' : 'none';
-    if (this.speedBtn) this.speedBtn.textContent = `${this.hooks.speeds[this.hooks.speedIdx()] ?? 1}×`;
+    let best: Btn | null = null, bestK = 0;
+    for (const b of this.acts) {
+      const on = !hideAll && b.show(state);
+      b.el.style.display = on ? '' : 'none';
+      const k = on && b.prime ? b.prime(state) : 0;
+      if (k > bestK) { best = b; bestK = k; }
+    }
+    for (const b of this.acts) b.el.classList.toggle('prime', b === best);
+    for (const b of this.menu) b.el.style.display = b.show(state) ? '' : 'none';
     if (hideAll && this.joyId === null) this.ctl.stick = { x: 0, y: 0 };
   }
 }

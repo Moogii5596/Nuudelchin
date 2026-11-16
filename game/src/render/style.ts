@@ -30,6 +30,8 @@ export interface GrassVisual {
   colorJitter: number;
   wind: { swayX: number; swayZ: number; freqX: number; freqZ: number };
   pastureColors: Record<string, string>;
+  /** Утас: өвс сийрэг, цайвар; малын сүүдэр/LOD хөнгөн (terrain.ts, animal/view.ts) */
+  touch: { density: number; lighten: number; lightenTo: string; lodShadows: boolean; herderShadowParts: number };
 }
 
 export interface WaterVisual {
@@ -483,6 +485,14 @@ export function validateVisualStyle(value: unknown): VisualStyle {
   ) {
     throw new Error('data/visuals.json: grass-ийн хэмжээ, fade, jitter эсвэл салхины тохиргоо буруу');
   }
+  const touch = grassValue.touch;
+  if (
+    !isRecord(touch) || typeof touch.density !== 'number' || !(touch.density > 0 && touch.density <= 1) ||
+    typeof touch.lighten !== 'number' || !(touch.lighten >= 0 && touch.lighten <= 1) || !isColor(touch.lightenTo) || typeof touch.lodShadows !== 'boolean' ||
+    typeof touch.herderShadowParts !== 'number' || !Number.isInteger(touch.herderShadowParts) || touch.herderShadowParts < 0
+  ) {
+    throw new Error('data/visuals.json: grass.touch (density 0–1, lighten 0–1, lightenTo өнгө, lodShadows, herderShadowParts) буруу');
+  }
   const grass: GrassVisual = {
     bladesPerTuft,
     bladeHeight: grassValue.bladeHeight,
@@ -497,6 +507,7 @@ export function validateVisualStyle(value: unknown): VisualStyle {
       freqZ: wind.freqZ,
     },
     pastureColors,
+    touch: { density: touch.density, lighten: touch.lighten, lightenTo: touch.lightenTo, lodShadows: touch.lodShadows, herderShadowParts: touch.herderShadowParts },
   };
   const waterValue = value.water;
   const wave = waterValue.wave;
