@@ -51,6 +51,25 @@ export function driverSendTarget(cfg: GameConfig, st: GameState): VehicleId | nu
   return f.id;
 }
 
+export type PrimaryAction = 'deposit' | 'pickup' | 'send' | 'enter' | 'leave' | 'service' | 'trade';
+
+/**
+ * Утасны гол товч (E) одоо юу хийхийг хэлнэ — хийх зүйлгүй бол null (товч нуугдана).
+ * `interact()`-ийн дараалалтай ижил байх ёстой.
+ */
+export function primaryAction(cfg: GameConfig, st: GameState): PrimaryAction | null {
+  const p = st.player;
+  if (p.interior) return atExit(cfg, st) ? 'leave' : interiorService(cfg, st) ? 'service' : null;
+  if (p.place === 'sum') return !p.driving && !nearLotSlot(cfg, st) && nearEnterDoor(cfg, st) ? 'enter' : p.driving ? null : 'trade';
+  if (p.place !== 'camp' || p.away || p.driving || st.move) return null;
+  if (driverSendTarget(cfg, st)) return 'send';
+  const near = st.items.some((it) => Math.hypot(it.x - p.x, it.z - p.z) <= cfg.products.pickupRadius);
+  if (!p.carry.length && !near && nearEnterDoor(cfg, st)) return 'enter';
+  const home = cfg.camps.home;
+  if (p.carry.length && Math.hypot(p.x - home.x, p.z - home.z) <= home.storageRadius) return 'deposit';
+  return near ? 'pickup' : null;
+}
+
 export class PlayerController {
   private keys = new Set<string>();
   private target: { x: number; z: number; run: boolean } | null = null;

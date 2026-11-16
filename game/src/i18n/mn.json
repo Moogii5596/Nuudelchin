@@ -459,9 +459,6 @@
   "ui.otor_sent_to_animals": "🏕 Отор {x} руу явлаа ({length} мал)",
   "ui.shout": "Хөөе",
   "ui.scare": "Үргээх",
-  "ui.pick_up": "Түүх",
-  "ui.trade": "Худалдаа",
-  "ui.leave_act": "Гарах/Үйлдэл",
   "ui.switch": "Уурга",
   "ui.horse": "Морь",
   "ui.call": "Дуудах",
@@ -818,7 +815,6 @@
   "sleep.go": "😴 Унтах — {x}-д сэрнэ",
   "sleep.closed": "Унтах цаг биш (18:00–03:00 хооронд унтана)",
   "ui.e_send_to_sum_center": " · <kbd>E</kbd> сум руу явуулах (жолооч)",
-  "ui.send_act": "Явуулах",
   "ui.driver_waits_for_orders": "🚚 Жолооч — автомат аялал унтраалттай; тэрэг/машинд ачаад дэргэд нь E дарна",
   "ui.auto_trip_toggle": "<button class=\"btn sm {cls}\" data-act=\"autoTrip:{on}\">⏰ {departHour}:00 автомат аялал: {state}</button>",
   "sim.no_driver": "Хөлсний жолооч алга",
@@ -828,5 +824,12 @@
   "sim.driver_no_fuel": "Түлшгүй — түлшний мөнгө хүрэхгүй",
   "sim.driver_sent": "🚚 Жолооч сумын төв рүү хөдөллөө",
   "sim.auto_trip_on": "Автомат аялал асаалттай",
-  "sim.auto_trip_off": "Автомат аялал унтраалттай"
+  "sim.auto_trip_off": "Автомат аялал унтраалттай",
+  "ui.act_deposit": "Хийх",
+  "ui.act_pickup": "Түүх",
+  "ui.act_send": "Явуулах",
+  "ui.act_enter": "Орох",
+  "ui.act_leave": "Гарах",
+  "ui.act_service": "Лангуу",
+  "ui.act_trade": "Худалдаа"
 }

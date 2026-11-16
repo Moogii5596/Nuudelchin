@@ -32,34 +32,37 @@ FILE game/src/i18n/npcStrings.ts 0.8KB 16L exports: npcText,NPC_LINES,npcLine
 SYM game/src/i18n/npcStrings.ts:11 fn npcText
 SYM game/src/i18n/npcStrings.ts:14 const NPC_LINES
 SYM game/src/i18n/npcStrings.ts:16 const npcLine
-FILE game/src/input/controller.ts 17.6KB 399L exports: ActionKind,ControllerHooks,driverSendTarget,PlayerController
+FILE game/src/input/controller.ts 18.7KB 418L exports: ActionKind,ControllerHooks,driverSendTarget,PrimaryAction,primaryAction,PlayerController
 SYM game/src/input/controller.ts:19 type ActionKind
 SYM game/src/input/controller.ts:21 interface ControllerHooks
 SYM game/src/input/controller.ts:33 fn angDiff
 SYM game/src/input/controller.ts:44 fn driverSendTarget
-SYM game/src/input/controller.ts:54 class PlayerController
-SYM game/src/input/controller.ts:82 method PlayerController.press
-SYM game/src/input/controller.ts:156 method PlayerController.hold
-SYM game/src/input/controller.ts:164 method PlayerController.shout
-SYM game/src/input/controller.ts:170 method PlayerController.scare
-SYM game/src/input/controller.ts:186 method PlayerController.interact
-SYM game/src/input/controller.ts:215 method PlayerController.useAction
-SYM game/src/input/controller.ts:240 method PlayerController.isDown
-SYM game/src/input/controller.ts:245 method PlayerController.moveTo
-SYM game/src/input/controller.ts:250 method PlayerController.update
-SYM game/src/input/controller.ts:358 method PlayerController.drive
-FILE game/src/input/touch.ts 12.0KB 268L exports: TouchHooks,TouchUI
-SYM game/src/input/touch.ts:16 interface TouchHooks
-SYM game/src/input/touch.ts:33 class TouchUI
-SYM game/src/input/touch.ts:192 method TouchUI.enterLandscape
-SYM game/src/input/touch.ts:196 method TouchUI.start
-SYM game/src/input/touch.ts:202 method TouchUI.refreshInstall
-SYM game/src/input/touch.ts:209 method TouchUI.install
-SYM game/src/input/touch.ts:218 method TouchUI.bind
-SYM game/src/input/touch.ts:236 method TouchUI.fullscreen
-SYM game/src/input/touch.ts:249 method TouchUI.paused
-SYM game/src/input/touch.ts:253 method TouchUI.portrait
-SYM game/src/input/touch.ts:258 method TouchUI.update
+SYM game/src/input/controller.ts:54 type PrimaryAction
+SYM game/src/input/controller.ts:60 fn primaryAction
+SYM game/src/input/controller.ts:73 class PlayerController
+SYM game/src/input/controller.ts:101 method PlayerController.press
+SYM game/src/input/controller.ts:175 method PlayerController.hold
+SYM game/src/input/controller.ts:183 method PlayerController.shout
+SYM game/src/input/controller.ts:189 method PlayerController.scare
+SYM game/src/input/controller.ts:205 method PlayerController.interact
+SYM game/src/input/controller.ts:234 method PlayerController.useAction
+SYM game/src/input/controller.ts:259 method PlayerController.isDown
+SYM game/src/input/controller.ts:264 method PlayerController.moveTo
+SYM game/src/input/controller.ts:269 method PlayerController.update
+SYM game/src/input/controller.ts:377 method PlayerController.drive
+FILE game/src/input/touch.ts 13.6KB 304L exports: TouchHooks,TouchUI
+SYM game/src/input/touch.ts:15 fn mainLabel
+SYM game/src/input/touch.ts:29 interface TouchHooks
+SYM game/src/input/touch.ts:46 class TouchUI
+SYM game/src/input/touch.ts:221 method TouchUI.enterLandscape
+SYM game/src/input/touch.ts:225 method TouchUI.start
+SYM game/src/input/touch.ts:231 method TouchUI.refreshInstall
+SYM game/src/input/touch.ts:238 method TouchUI.install
+SYM game/src/input/touch.ts:247 method TouchUI.bind
+SYM game/src/input/touch.ts:265 method TouchUI.fullscreen
+SYM game/src/input/touch.ts:278 method TouchUI.paused
+SYM game/src/input/touch.ts:282 method TouchUI.portrait
+SYM game/src/input/touch.ts:287 method TouchUI.update
 FILE game/src/main.ts 33.2KB 562L
 SYM game/src/main.ts:45 fn toast
 SYM game/src/main.ts:69 fn start
@@ -1801,6 +1804,7 @@ FILE game/tests/stuck.test.ts 4.4KB 80L
 FILE game/tests/style.test.ts 8.9KB 165L
 FILE game/tests/sumtown.test.ts 4.6KB 91L
 FILE game/tests/sumwalk.test.ts 20.5KB 320L
+FILE game/tests/touchPrimary.test.ts 1.6KB 32L
 FILE game/tests/town.test.ts 6.1KB 127L
 FILE game/tests/trader.test.ts 8.4KB 164L
 FILE game/tests/transfer.test.ts 14.2KB 255L
@@ -1997,14 +2001,15 @@ DOC docs/plan/LEAD.md:26-32 ## 3. Явж буй ажил (энэ тэмдэгл�
 DOC docs/plan/LEAD.md:33-45 ## 4. Хэрэглэгчийн шийдвэр хүлээж буй
 DOC docs/plan/LEAD.md:46-50 ## 5. Дараагийн алхам
 DOC docs/plan/LEAD.md:51-54 ## 6. Контекст хэмнэх (2026-11-16)
-FILE docs/plan/M6.md 21.3KB 73L
+FILE docs/plan/M6.md 22.1KB 78L
 DOC docs/plan/M6.md:15-17 ## Зорилго
 DOC docs/plan/M6.md:18-34 ## MVP «дууссан» шалгуур (D1–D10 — M6 ба M7-ийн нийт)
 DOC docs/plan/M6.md:35-37 ## Одоогийн байдал
 DOC docs/plan/M6.md:38-56 ## Блокууд
 DOC docs/plan/M6.md:57-63 ## Жолооч: сум руу шууд явуулах + 9 цагийн аяллын засвар (2026-11-16) ✅
-DOC docs/plan/M6.md:64-71 ## Эрсдэл
-DOC docs/plan/M6.md:72-73 ## Хуваарь
+DOC docs/plan/M6.md:64-68 ## Утасны удирдлага хялбаршуулсан (2026-11-16) ✅
+DOC docs/plan/M6.md:69-76 ## Эрсдэл
+DOC docs/plan/M6.md:77-78 ## Хуваарь
 FILE docs/plan/M7.md 7.6KB 31L
 DOC docs/plan/M7.md:12-22 ## Блокууд
 DOC docs/plan/M7.md:23-27 ## Асуулга (10 асуулт)
@@ -2014,15 +2019,15 @@ DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
 DOC docs/plan/V.md:24-265 ## Блокууд ба чеклист (2026-11-15)
 DOC docs/plan/V.md:266-287 ## Зогссон цэг
-FILE docs/plan/playtest.md 22.6KB 136L
+FILE docs/plan/playtest.md 23.0KB 137L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
 DOC docs/plan/playtest.md:19-39 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
-DOC docs/plan/playtest.md:40-113 ## C. Мэдрэмж, үе шат бүрээр
-DOC docs/plan/playtest.md:114-117 ## V4.6 хонь, ямаа (🧑 мэдрэмж)
-DOC docs/plan/playtest.md:118-123 ## V4.6 S2 үхэр, адуу, нохой, чоно (🧑 мэдрэмж)
-DOC docs/plan/playtest.md:124-126 ## Хүний масштаб 1.7 м (characters.json scale 0.70) (🧑 мэдрэмж)
-DOC docs/plan/playtest.md:127-133 ## Сумын төвийн NPC жигд алхалт ба мөргөлдөөн (🧑 мэдрэмж, 2026-11-16)
-DOC docs/plan/playtest.md:134-136 ## Мэдэгдэж буй дутагдал: NPC хашаа гаталгах (sumwalk, 2026-11-16)
+DOC docs/plan/playtest.md:40-114 ## C. Мэдрэмж, үе шат бүрээр
+DOC docs/plan/playtest.md:115-118 ## V4.6 хонь, ямаа (🧑 мэдрэмж)
+DOC docs/plan/playtest.md:119-124 ## V4.6 S2 үхэр, адуу, нохой, чоно (🧑 мэдрэмж)
+DOC docs/plan/playtest.md:125-127 ## Хүний масштаб 1.7 м (characters.json scale 0.70) (🧑 мэдрэмж)
+DOC docs/plan/playtest.md:128-134 ## Сумын төвийн NPC жигд алхалт ба мөргөлдөөн (🧑 мэдрэмж, 2026-11-16)
+DOC docs/plan/playtest.md:135-137 ## Мэдэгдэж буй дутагдал: NPC хашаа гаталгах (sumwalk, 2026-11-16)
 FILE docs/seasons-camps.md 10.2KB 104L
 DOC docs/seasons-camps.md:17-40 ## 1. Хэрэглэгчийн шийдвэрүүд
 DOC docs/seasons-camps.md:41-54 ## 2. Улирал

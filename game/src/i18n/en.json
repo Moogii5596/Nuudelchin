@@ -459,9 +459,6 @@
   "ui.otor_sent_to_animals": "🏕 Otor sent to {x} ({length} animals)",
   "ui.shout": "Shout",
   "ui.scare": "Scare",
-  "ui.pick_up": "Pick up",
-  "ui.trade": "Trade",
-  "ui.leave_act": "Leave/Act",
   "ui.switch": "Switch",
   "ui.horse": "Horse",
   "ui.call": "Call",
@@ -818,7 +815,6 @@
   "sleep.go": "😴 Sleep — wake at {x}",
   "sleep.closed": "Not sleeping time (you can sleep between 18:00 and 03:00)",
   "ui.e_send_to_sum_center": " · <kbd>E</kbd> send to sum center (driver)",
-  "ui.send_act": "Send",
   "ui.driver_waits_for_orders": "🚚 Driver — auto trip off; load a cart/vehicle and press E next to it",
   "ui.auto_trip_toggle": "<button class=\"btn sm {cls}\" data-act=\"autoTrip:{on}\">⏰ {departHour}:00 auto trip: {state}</button>",
   "sim.no_driver": "No hired driver",
@@ -828,5 +824,12 @@
   "sim.driver_no_fuel": "No fuel — not enough money for fuel",
   "sim.driver_sent": "🚚 The driver left for the sum center",
   "sim.auto_trip_on": "Auto trip on",
-  "sim.auto_trip_off": "Auto trip off"
+  "sim.auto_trip_off": "Auto trip off",
+  "ui.act_deposit": "Store",
+  "ui.act_pickup": "Pick up",
+  "ui.act_send": "Send",
+  "ui.act_enter": "Enter",
+  "ui.act_leave": "Leave",
+  "ui.act_service": "Counter",
+  "ui.act_trade": "Trade"
 }

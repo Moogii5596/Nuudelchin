@@ -9,7 +9,20 @@
 import { t } from '../i18n/i18n';
 import type { GameConfig } from '../sim/config';
 import type { GameState } from '../sim/state';
-import { driverSendTarget, type PlayerController } from './controller';
+import { primaryAction, type PlayerController, type PrimaryAction } from './controller';
+
+const MAIN_ICON: Record<PrimaryAction, string> = { deposit: '📥', pickup: '✋', send: '📦', enter: '🚪', leave: '🚪', service: '🛎', trade: '🏪' };
+const mainLabel = (k: PrimaryAction): string => {
+  switch (k) {
+    case 'deposit': return t('ui.act_deposit');
+    case 'pickup': return t('ui.act_pickup');
+    case 'send': return t('ui.act_send');
+    case 'enter': return t('ui.act_enter');
+    case 'leave': return t('ui.act_leave');
+    case 'service': return t('ui.act_service');
+    case 'trade': return t('ui.act_trade');
+  }
+};
 import { nearestVehicle } from '../sim/systems/travel';
 import { pwa, isIOS, inAppBrowser, canLockLandscape, landscapeFullscreen } from '../pwa';
 
@@ -32,6 +45,9 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, html = '
 
 export class TouchUI {
   private joy: HTMLElement;
+  private zone: HTMLElement;
+  private main!: HTMLElement;
+  private mainKind: PrimaryAction | null | undefined;
   private knob: HTMLElement;
   private joyId: number | null = null;
   private acts: Btn[] = [];
@@ -46,15 +62,15 @@ export class TouchUI {
   constructor(private cfg: GameConfig, private ctl: PlayerController, private hooks: TouchHooks, opts: { menuGate?: boolean } = {}) {
     document.body.classList.add('touch');
 
-    // --- Джойстик ---
+    // --- Джойстик: зүүн доод бүсийн хаана ч хуруугаа тавихад тэнд гарч ирнэ (хөвөгч) ---
     this.joy = el('div', 'joy');
     this.knob = el('div', 'knob');
     this.joy.appendChild(this.knob);
+    this.zone = el('div', 'joyzone');
+    let cx = 0, cy = 0, R = 60;
     const move = (e: PointerEvent): void => {
-      const r = this.joy.getBoundingClientRect();
-      const R = r.width / 2;
-      let dx = (e.clientX - (r.left + R)) / R;
-      let dy = (e.clientY - (r.top + R)) / R;
+      let dx = (e.clientX - cx) / R;
+      let dy = (e.clientY - cy) / R;
       const l = Math.hypot(dx, dy);
       if (l > 1) {
         dx /= l;
@@ -68,18 +84,31 @@ export class TouchUI {
       this.joyId = null;
       this.ctl.stick = { x: 0, y: 0 };
       this.knob.style.transform = '';
+      this.joy.classList.remove('live');
+      this.joy.style.left = this.joy.style.top = this.joy.style.bottom = '';
     };
-    this.joy.addEventListener('pointerdown', (e) => {
+    this.zone.addEventListener('pointerdown', (e) => {
+      if (this.joyId !== null) return;
       e.preventDefault();
-      this.joy.setPointerCapture(e.pointerId);
+      this.zone.setPointerCapture(e.pointerId);
       this.joyId = e.pointerId;
+      R = this.joy.offsetWidth / 2 || 60;
+      // Хуруу тавьсан цэг төв болно (дэлгэцээс гарахгүй)
+      cx = Math.min(Math.max(e.clientX, R + 4), window.innerWidth - R - 4);
+      cy = Math.min(Math.max(e.clientY, R + 4), window.innerHeight - R - 4);
+      this.joy.style.left = `${cx - R}px`;
+      this.joy.style.top = `${cy - R}px`;
+      this.joy.style.bottom = 'auto';
+      this.joy.classList.add('live');
       move(e);
     });
-    this.joy.addEventListener('pointermove', (e) => {
+    this.zone.addEventListener('pointermove', (e) => {
       if (e.pointerId === this.joyId) move(e);
     });
-    this.joy.addEventListener('pointerup', release);
-    this.joy.addEventListener('pointercancel', release);
+    this.zone.addEventListener('pointerup', release);
+    this.zone.addEventListener('pointercancel', release);
+    this.zone.addEventListener('contextmenu', (e) => e.preventDefault());
+    document.body.appendChild(this.zone);
     document.body.appendChild(this.joy);
 
     // --- Үйлдлийн товчнууд ---
@@ -92,12 +121,12 @@ export class TouchUI {
       this.acts.push({ el: b, show });
     };
     const nearV = (s: GameState): boolean => !!nearestVehicle(this.cfg, s, this.cfg.vehicles.road.enterRange);
+    // Гол товч (E): нөхцөлөөс хамаарч нэр, дүрс нь солигдоно; хийх зүйлгүй бол нуугдана (update)
+    this.main = el('button', 'tbtn act main');
+    this.bind(this.main, 'KeyE', false);
+    actBox.appendChild(this.main);
     addAct('📣', t('ui.shout'), 'Space', camp);
     addAct('🐺', t('ui.scare'), 'KeyQ', camp);
-    addAct('✋', t('ui.pick_up'), 'KeyE', (s) => camp(s) && !driverSendTarget(this.cfg, s));
-    addAct('📦', t('ui.send_act'), 'KeyE', (s) => camp(s) && !!driverSendTarget(this.cfg, s));
-    addAct('🏪', t('ui.trade'), 'KeyE', (s) => s.player.place === 'sum' && !s.player.driving && !s.player.interior);
-    addAct('🚪', t('ui.leave_act'), 'KeyE', (s) => !!s.player.interior);   // V6.1: дотор E — гарах эсвэл лангуунд цонх нээх
     addAct('🪵', t('ui.switch'), 'KeyU', camp);
     addAct('🐎', t('ui.horse'), 'KeyF', (s) => (s.player.place === 'camp' || s.player.place === 'sum') && !s.player.driving && !s.move && !s.player.interior);
     addAct('🐴', t('ui.call'), 'KeyH', (s) => camp(s) && !s.player.mounted);
@@ -259,7 +288,14 @@ export class TouchUI {
     this.rotateEl.style.display = this.portrait && this.sheetEl.style.display !== 'flex' ? 'flex' : 'none';
     const p = state.player;
     const hideAll = panelOpen;
-    this.joy.style.display = hideAll || p.place === 'map' || state.move ? 'none' : '';
+    const noJoy = hideAll || p.place === 'map' || !!state.move;
+    this.joy.style.display = this.zone.style.display = noJoy ? 'none' : '';
+    const kind = hideAll ? null : primaryAction(this.cfg, state);
+    if (kind !== this.mainKind) {
+      this.mainKind = kind;
+      this.main.style.display = kind ? '' : 'none';
+      if (kind) this.main.innerHTML = `<span>${MAIN_ICON[kind]}</span><small>${mainLabel(kind)}</small>`;
+    }
     for (const b of this.acts) b.el.style.display = !hideAll && b.show(state) ? '' : 'none';
     for (const b of this.menu) b.el.style.display = !hideAll && b.show(state) ? '' : 'none';
     if (this.speedBtn) this.speedBtn.textContent = `${this.hooks.speeds[this.hooks.speedIdx()] ?? 1}×`;
