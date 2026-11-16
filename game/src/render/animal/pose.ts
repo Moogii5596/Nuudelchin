@@ -55,7 +55,8 @@ export function makeRig(species: LookSpecies): Rig {
 }
 
 /** Хөдөлгөөнийг rig-д тавина (dt = бодит секунд). Дараа нь rig.root.updateMatrixWorld(true) */
-export function poseAnimal(S: Rig, dt: number, o: PoseInput): void {
+export function poseAnimal(S: Rig, dt0: number, o: PoseInput): void {
+  const dt = dt0 > 0 ? Math.min(dt0, 0.25) : 0;   // сөрөг/том dt үйлдлийн жинг тархааж болохгүй
   const d = S.look.d, mo = S.look.motion, M = animalLook.motion, A_ = animalLook.age, st = S.st, c = st.c, k = 1 - Math.exp(-dt * 5);
   const action: Action = o.action === 'browse' && !mo.browse ? 'graze' : o.action;
   if (mo.browse && dt > 0) { st.brT -= dt; if (st.brT < 0) { st.brOn = !st.brOn; st.brT = st.brOn ? rnd(4, 7) : rnd(6, 12); } }   // бэлчих дундаа үе үе бут зулгаана

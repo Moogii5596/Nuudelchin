@@ -1,7 +1,8 @@
 /**
  * Малыг sim-ийн GameState-ээс InstancedMesh-ээр зурна (architecture.md §5).
- * Төрөл бүр хэдэн хэсэгтэй (их бие, толгой, эвэр, хөл) бөгөөд хэсэг бүр нэг InstancedMesh:
- * 300 мал ≈ 20 draw call. Хөлийг алхаж буй хурдаар савлуулж, бэлчиж байхад толгой доошилно.
+ * V4.6: ХОНЬ, ЯМАА — шинэ загвар (render/animal/: хөнгөн сүргийн хувилбар, ойрын N малд дэлгэрэнгүй, хоёр үетэй хөл).
+ * ҮХЭР, АДУУ — хуучин энгийн загвар (S2 батлагдаад render/animal/-д төрөл бүр нэг модулиар нэмэгдэнэ). Хуучин загвар: төрөл
+ * бүр хэдэн хэсэгтэй (их бие, толгой, эвэр, хөл), хэсэг бүр нэг InstancedMesh; хөлийг алхаж буй хурдаар савлуулна.
  *
  * Sim алхам (1 тоглоомын минут) хооронд байрлалыг зөөлрүүлнэ (interpolation):
  * snapshot() — алхмын өмнөх байрлал, update(alpha) — өмнөх ба одоогийн хооронд.
@@ -14,6 +15,7 @@ import { frameKg } from '../sim/systems/animals';
 import { angDiff, boxGeo, clamp, merge } from './util';
 import { paletteHex, visualStyle } from './style';
 import { quality as activeQuality, type Quality } from '../device';
+import { hasModel, ModelAnimals } from './animal/view';
 
 type Frame = 'body' | 'head' | 'leg' | 'tail';
 
@@ -47,67 +49,6 @@ function helperMark(width: number, length: number, y: number, z: number): THREE.
   g.scale(width, 0.045, length);
   g.translate(0, y, z);
   return g;
-}
-
-function sheepDef(): SpeciesDef {
-  const body = new THREE.IcosahedronGeometry(0.5, 0);
-  body.scale(1, 0.92, 1.35);
-  body.translate(0, 0.78, 0);
-  const tail = new THREE.SphereGeometry(0.26, 6, 5);
-  tail.scale(1.1, 0.8, 0.7);
-  tail.translate(0, 0.68, -0.66);
-  const horns: THREE.BufferGeometry[] = [];
-  for (const s of [-1, 1]) {
-    const h = new THREE.TorusGeometry(0.11, 0.045, 4, 8, Math.PI * 1.5);
-    h.rotateY((s * Math.PI) / 2);
-    h.translate(s * 0.19, 0.11, 0.11);
-    horns.push(h);
-  }
-  return {
-    parts: [
-      { geo: body, frame: 'body', color: 'body' },
-      { geo: tail, frame: 'tail', color: 'body', scale: (a) => 0.65 + 0.9 * a.condition },
-      { geo: merge([boxGeo(0.3, 0.32, 0.42, 0, 0.03, 0.17), boxGeo(0.34, 0.08, 0.1, 0, 0.13, 0.05)]), frame: 'head', color: 0x3a2a20 },
-      { geo: merge(horns), frame: 'head', color: 0xcdbf9e, only: (a) => a.sex === 'm' && a.age >= 1 },
-      { geo: helperMark(0.24, 0.38, 1.17, -0.08), frame: 'body', color: paletteHex('bluePattern'), only: (a) => a.ownerId !== undefined },
-      { geo: legGeo(0.11, 0.5), frame: 'leg', color: LEG_DARK },
-    ],
-    headPivot: [0, 0.95, 0.55],
-    tailPivot: [0, 0.68, -0.72],
-    grazeHead: 0.85,
-    legs: [[-0.2, 0.38], [0.2, 0.38], [-0.2, -0.38], [0.2, -0.38]],
-    legTop: 0.5,
-    palette: [0xf1ece0, 0xebe4d2, 0xf4f0e6, 0xe2d9c4],
-    stride: 0.9,
-  };
-}
-
-function goatDef(): SpeciesDef {
-  const horns: THREE.BufferGeometry[] = [];
-  for (const s of [-1, 1]) {
-    const h = new THREE.ConeGeometry(0.045, 0.4, 4);
-    h.rotateX(-0.7);
-    h.translate(s * 0.08, 0.32, 0.02);
-    horns.push(h);
-  }
-  return {
-    parts: [
-      { geo: merge([boxGeo(0.42, 0.48, 0.95, 0, 0.8, 0), boxGeo(0.07, 0.2, 0.07, 0, 1.04, -0.5, -0.6)]), frame: 'body', color: 'body' },
-      { geo: merge([boxGeo(0.24, 0.28, 0.4, 0, 0.08, 0.16), boxGeo(0.08, 0.16, 0.08, 0, -0.1, 0.34)]), frame: 'head', color: 'body' },
-      { geo: boxGeo(0.12, 0.18, 0.1, 0, -0.2, 0.34), frame: 'head', color: LEG_DARK },
-      { geo: boxGeo(0.08, 0.38, 0.08, 0, 1.05, -0.5, -0.35), frame: 'tail', color: LEG_DARK },
-      { geo: merge(horns), frame: 'head', color: 0x8a7a60, only: (a) => a.age >= 0.5, scale: (a) => (a.sex === 'm' ? 1.3 : 0.85) },
-      { geo: helperMark(0.28, 0.48, 1.0, -0.05), frame: 'body', color: paletteHex('bluePattern'), only: (a) => a.ownerId !== undefined },
-      { geo: legGeo(0.09, 0.56), frame: 'leg', color: LEG_DARK },
-    ],
-    headPivot: [0, 1.0, 0.42],
-    tailPivot: [0, 1.05, -0.5],
-    grazeHead: 0.9,
-    legs: [[-0.14, 0.33], [0.14, 0.33], [-0.14, -0.33], [0.14, -0.33]],
-    legTop: 0.56,
-    palette: [0xe8e2d4, 0x6b4a2e, 0x2a2420, 0x8a847c, 0xb89a70],
-    stride: 0.9,
-  };
 }
 
 function cowDef(): SpeciesDef {
@@ -180,6 +121,8 @@ export class AnimalsView {
   readonly group = new THREE.Group();
   private quality: Quality = activeQuality;
   private species = new Map<Species, SpeciesMeshes>();
+  /** Хонь, ямаа (шинэ загвар) */
+  private models: ModelAnimals;
   private viz = new Map<number, Viz>();
   private frameNo = 0;
   private mBase = new THREE.Matrix4();
@@ -195,9 +138,11 @@ export class AnimalsView {
   private yAxis = new THREE.Vector3(0, 1, 0);
 
   constructor(private cfg: GameConfig) {
-    const defs: Record<Species, SpeciesDef> = { sheep: sheepDef(), goat: goatDef(), cow: cowDef(), horse: horseDef() };
+    this.models = new ModelAnimals(cfg, this.group, this.quality);
+    const defs: Partial<Record<Species, SpeciesDef>> = { cow: cowDef(), horse: horseDef() };
     for (const sp of SPECIES) {
       const def = defs[sp];
+      if (!def) continue;   // хонь, ямаа — шинэ загвар (this.models)
       const meshes = def.parts.map((part) => {
         const n = part.frame === 'leg' ? MAX_PER_SPECIES * 4 : MAX_PER_SPECIES;
         const m = new THREE.InstancedMesh(part.geo, new THREE.MeshLambertMaterial({ color: 0xffffff, flatShading: true }), n);
@@ -215,6 +160,7 @@ export class AnimalsView {
 
   setQuality(quality: Quality): void {
     this.quality = quality;
+    this.models.setQuality(quality);
   }
 
   /** Sim алхмын өмнө дуудна: одоогийн байрлал «өмнөх» болно */
@@ -239,9 +185,8 @@ export class AnimalsView {
 
     for (const a of state.animals) {
       if (a.riding) continue; // унаа морийг characters.ts зурна
-      const sm = this.species.get(a.species);
-      if (!sm) continue;
-      const def = sm.def;
+      const isModel = hasModel(a.species), sm = this.species.get(a.species);
+      if (!sm && !isModel) continue;
       let v = this.viz.get(a.id);
       if (!v) {
         v = { px: a.x, pz: a.z, h: a.heading, phase: (a.id * 1.7) % 6.28, head: 0, seen: 0 };
@@ -252,6 +197,13 @@ export class AnimalsView {
       const z = v.pz + (a.z - v.pz) * alpha;
       const moved = Math.hypot(a.x - v.px, a.z - v.pz);
       const speed = stepSec > 0 ? moved / stepSec : 0; // м/сек (бодит)
+      if (isModel) {   // хонь, ямаа: шинэ загвар
+        const target0 = moved > 0.02 ? Math.atan2(a.x - v.px, a.z - v.pz) : a.heading;
+        v.h += angDiff(target0, v.h) * Math.min(1, dt * 6);
+        this.models.add({ a, x, y: heightAt(x, z), z, heading: v.h, speed, dist: Math.hypot(x - state.player.x, z - state.player.z) });
+        continue;
+      }
+      const def = sm!.def;
 
       // Чиглэл: хөдөлж байвал хөдлөх зүг рүү, үгүй бол sim-ийн чиглэл рүү зөөлөн эргэнэ
       const target = moved > 0.02 ? Math.atan2(a.x - v.px, a.z - v.pz) : a.heading;
@@ -293,7 +245,7 @@ export class AnimalsView {
       let bodyCol = def.palette[(a.id * 7 + 3) % def.palette.length] ?? def.palette[0]!;
       def.parts.forEach((part, pi) => {
         if (part.only && !part.only(a)) return;
-        const mesh = sm.meshes[pi]!;
+        const mesh = sm!.meshes[pi]!;
         let i = counts.get(mesh) ?? 0;
         this.c.setHex(part.color === 'body' ? bodyCol : part.color);
         if (part.frame === 'tail') {
@@ -331,6 +283,7 @@ export class AnimalsView {
       });
     }
 
+    this.models.flush(dt, visualStyle.quality[this.quality].animalAnimationDistance);
     for (const { meshes } of this.species.values()) {
       for (const m of meshes) {
         m.count = counts.get(m) ?? 0;
@@ -345,5 +298,6 @@ export class AnimalsView {
   /** Бууц солигдоход (мал шинэ газарт гарч ирнэ) зөөлрүүлэлтийг тэглэнэ */
   reset(): void {
     this.viz.clear();
+    this.models.reset();
   }
 }

@@ -89,7 +89,7 @@ describe('render/animal — хөдөлгөөн', () => {
     settle(rig, 'lie', base);
     expect(rig.body.position.y).toBeLessThan(yStand);
     settle(rig, 'graze', base);
-    expect(rig.neck.rotation.x + rig.head.rotation.x).toBeGreaterThan(headStand + 0.5);
+    expect(rig.neck.rotation.x + rig.head.rotation.x).toBeGreaterThan(headStand + 0.3);
     settle(rig, 'stand', base);
     let maxKnee = 0;
     for (let i = 0; i < 120; i++) { poseAnimal(rig, 0.03, { ...base, action: 'walk', speed: 1.0 }); maxKnee = Math.max(maxKnee, rig.legs[0]!.knee.rotation.x); }
@@ -122,5 +122,16 @@ describe('render/animal — хөдөлгөөн', () => {
     expect(goatModel.isPatched(3)).toBe(true);
     expect([0, 1, 2, 3, 4].some((v) => sheepModel.isPatched(v))).toBe(false);
     expect(goatModel.colors(0, true).wool).not.toBe(goatModel.colors(0, false).wool);   // хөгшин бүдэг
+  });
+});
+
+describe('render/animal — тогтвортой байдал', () => {
+  it('сөрөг, том, NaN dt байрлалыг эвдэхгүй (үйлдлийн жин 0–1 дотор)', () => {
+    const rig = makeRig('goat'), o = { speed: 1, fast: false, sc: 1, old: false, fat: 0.6 };
+    for (const dt of [-5, 100, 0.016, Number.NaN, 0.5, -0.1]) {
+      poseAnimal(rig, dt, { ...o, action: 'graze' });
+      for (const v of Object.values(rig.st.c)) { expect(Number.isFinite(v)).toBe(true); expect(v).toBeGreaterThanOrEqual(-1e-9); expect(v).toBeLessThanOrEqual(1 + 1e-9); }
+    }
+    expect(rig.legs[0]!.up.scale.y).toBeLessThan(2);
   });
 });

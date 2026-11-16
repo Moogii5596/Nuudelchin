@@ -293,7 +293,7 @@ export class GameView {
     this.place = p.place;
     this.skyUniforms.cloudTime.value += Math.max(0, dt);
     const look = seasonLook(this.cfg, state);
-    if (import.meta.env.DEV) { (window as unknown as { __state?: GameState; __cam?: FollowCamera }).__state = state; (window as unknown as { __cam?: FollowCamera }).__cam = this.cam; }   // dev: туршилтын зураг авахад (цаг, өдөр, байрлал өөрчлөх)
+    if (import.meta.env.DEV) { (window as unknown as { __state?: GameState; __cam?: FollowCamera }).__state = state; (window as unknown as { __cam?: FollowCamera }).__cam = this.cam; (window as unknown as { __scene?: unknown }).__scene = this; }   // dev: туршилтын зураг авахад (цаг, өдөр, байрлал өөрчлөх)
     const season = seasonOf(this.cfg, state.time.day);
     this.applyDaylight(state.time.minute, season, p.x, p.z);
     this.characters.setSeason(season);

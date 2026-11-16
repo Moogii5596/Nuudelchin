@@ -33,15 +33,15 @@ export interface PartDef {
 const PC = new THREE.Color(animalLook.palette.patch), MC = new THREE.Color(animalLook.palette.mark);
 const vec = (c: THREE.Color): string => `vec3( ${c.r.toFixed(4)}, ${c.g.toFixed(4)}, ${c.b.toFixed(4)} )`;
 export const LMAT = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true });
-LMAT.onBeforeCompile = (sh) => {      // aSlot: 0 тогтмол, 1 instanceColor, 1..2 алаг толбо (iPatch), 3 туслахын тэмдэг (iMark)
+LMAT.onBeforeCompile = (sh) => {      // three r187: vColor = vec4. aSlot: 0 тогтмол, 1 instanceColor, 1..2 алаг толбо (iPatch), 3 туслахын тэмдэг (iMark)
   sh.vertexShader = sh.vertexShader
     .replace('#include <common>', '#include <common>\nattribute float aSlot;\nattribute float iPatch;\nattribute float iMark;')
     .replace('#include <color_vertex>', [
-      'vColor = vec3( 1.0 );', '#ifdef USE_COLOR', ' vColor *= color;', '#endif', '#ifdef USE_INSTANCING_COLOR',
-      ' vec3 ic = instanceColor.xyz; vec3 base = mix( vec3( 1.0 ), ic, min( aSlot, 1.0 ) );',
+      'vColor = vec4( 1.0 );', '#ifdef USE_COLOR', ' vColor.rgb *= color;', '#endif', '#ifdef USE_INSTANCING_COLOR',
+      ' vec3 ic = instanceColor.rgb; vec3 base = mix( vec3( 1.0 ), ic, min( aSlot, 1.0 ) );',
       ` vec3 patched = mix( base, mix( ic, ${vec(PC)}, iPatch ), clamp( aSlot - 1.0, 0.0, 1.0 ) );`,
       ` vec3 marked = mix( ic, ${vec(MC)}, iMark );`,
-      ' vColor.xyz *= mix( patched, marked, step( 2.5, aSlot ) );', '#endif',
+      ' vColor.rgb *= mix( patched, marked, step( 2.5, aSlot ) );', '#endif',
     ].join('\n'));
 };
 
