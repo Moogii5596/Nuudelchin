@@ -1,0 +1,76 @@
+{
+  "_doc": "V4.6: хонь, ямааны ДҮРСЛЭЛ (tools/character-lab/animals.html-ийн LAB, SHEEP, GOAT — хэрэглэгч баталсан). Sim-ийн тоо (жин, нас) data/animals.json. render/animal/config.ts шалгана. age.growth/oldSize нь data/animals.json-тай ижил; young — нярай, хурга/ишгийн хөл, биеийн харьцаа; old — хөгшин (туранхай, нуруу хонхойно, цайвар өнгө). palette — тогтмол өнгө (туурай, нүд, хамар, чихний дотор, хошуу, эвэр, алаг толбо, туслахын тэмдэг mark). motion — хөдөлгөөний нийтлэг тоо: stepLen/stepGap/stepRepeat/stepDur — бэлчих үеийн хагас алхам, kneeWalk — алхахад өвдөг нугалах, chewHz, headNod. quality.<high|mid|low>.detail — тоглогчоос ойрын хэдэн малыг дэлгэрэнгүй хувилбараар зурах (0 = хөнгөн л), detailR — тэр зай (м). lightCap — төрөл тус бүрийн instance-ийн дээд хэмжээ. species.<sheep|goat>: d — бие, хүзүү, толгойн холбоос, хөл (legSplit дээд/доод хувь, hock хойд шагайн амралтын өнцөг, hoofH/hoofK туурай), сүүл (tail, tailAt, tailRaise, wag), skirt — ямааны ноолууран хормой; head — толгой (L урт, r/rn арын/хошууны радиус, hx хажуугийн нарийсалт, zb эргэх цэг, eye*, pupil, ear {l,w,droop}, horn {len,r0,t,phi,fk эмийн харьцаа,pts}, beard); motion — fatX/fatY (тарга → өргөн/өндөр), pitch/neckGraze/headGraze (бэлчих), browse* (ямаа бут зулгаах); light/detail — геометрийн хуваалт; stride — нэг бүтэн алхмын урт (м); variants — зүс: wool, head, patch (алаг), weight (санамсаргүй сонголтын жин)",
+  "version": 1,
+  "lightCap": 3000,
+  "age": {
+    "growth": [0.5, 0.72, 0.86, 0.95, 1.0],
+    "oldSize": 0.95,
+    "young": { "legK": 1.2, "bodyShort": 0.4, "headGrow": 0.9, "max": 0.5 },
+    "old": { "fat": -0.32, "sag": 0.035, "neckDown": 0.28, "headDown": 0.3, "woolTo": "#8f8a82", "woolK": 0.5, "headTo": "#8a8480", "headK": 0.3 },
+    "hornK": [0, 0.35, 0.65, 0.9, 1, 1],
+    "adultIdx": 3
+  },
+  "palette": {
+    "hair": "#6b5e50", "hoof": "#2a2018", "eyeWhite": "#f3ead6", "eyeInk": "#1c1410", "nose": "#1c1410",
+    "earInner": "#b7a09a", "muzzleTip": "#bab0a8", "horn": "#cfc3a6", "patch": "#1b1715", "mark": "#2a4f8a"
+  },
+  "motion": {
+    "kneeWalk": 0.9, "walkAmp": 0.5, "fleeAmp": 0.85, "stepLen": 0.244, "stepGap": [3, 6], "stepRepeat": [5, 9], "stepDur": 0.9,
+    "headNod": 0.03, "chewHz": 5.5, "walkFollow": 5
+  },
+  "quality": {
+    "high": { "detail": 6, "detailR": 40 },
+    "mid": { "detail": 3, "detailR": 30 },
+    "low": { "detail": 0, "detailR": 0 }
+  },
+  "species": {
+    "sheep": {
+      "stride": 1.0,
+      "d": {
+        "body": { "L": 0.92, "R": 0.30, "wide": 1.1, "p": 2.5 }, "bodyY": 0.47,
+        "neckAt": [0, 0.53, 0.36], "neckRest": 0.02, "neckLen": 0.29, "neckR": 1, "headAt": [0, 0, 0.30], "headTilt": 0.5,
+        "legLen": 0.3, "legY": 0.3, "legR0": 0.072, "legR1": 0.04, "legX": 0.13, "legZ": 0.27, "legSplit": 0.5, "hock": 0.08,
+        "tail": { "w": 0.2, "h": 0.17, "d": 0.09 }, "tailAt": [0, 0.455, -0.4], "tailRaise": 0, "wag": 0.05
+      },
+      "head": { "L": 0.30, "r": 0.105, "rn": 0.052, "bridge": 0, "eyeT": 0.41, "ea": 0.022, "eb": 0.030, "hx": 0.92, "zb": 0.22, "ear": { "l": 0.15, "w": 0.09, "droop": 0.8 } },
+      "motion": { "fatX": [0.8, 0.4], "fatY": [0.84, 0.3], "pitch": 0.19, "neckGraze": 1.15, "headGraze": 1.25 },
+      "light": { "bodySeg": 18, "bodyRows": 9, "tail": [8, 4], "neck": [6, 2] },
+      "detail": { "bodySeg": 44, "bodyRows": 44, "tail": [28, 20], "neck": [24, 5] },
+      "variants": [
+        { "wool": "#f3eee1", "head": "#2a2420", "weight": 0.3 },
+        { "wool": "#f3eee1", "head": "#6b4a32", "weight": 0.1 },
+        { "wool": "#f3eee1", "head": "#e9ddc6", "weight": 0.3 },
+        { "wool": "#b89a74", "head": "#5a4430", "weight": 0.15 },
+        { "wool": "#5a5350", "head": "#241f1c", "weight": 0.15 }
+      ]
+    },
+    "goat": {
+      "stride": 1.2,
+      "d": {
+        "body": { "L": 0.92, "R": 0.285, "wide": 1.05, "p": 2.8 }, "bodyY": 0.62,
+        "neckAt": [0, 0.78, 0.36], "neckRest": -0.65, "neckLen": 0.26, "neckR": 0.95, "headAt": [0, 0, 0.27], "headTilt": 0.8,
+        "legLen": 0.36, "legY": 0.36, "legR0": 0.068, "legR1": 0.042, "legX": 0.125, "legZ": 0.29, "hoofH": 0.06, "hoofK": 1.3, "legSplit": 0.5, "hock": 0.1,
+        "tail": { "w": 0.035, "h": 0.075, "d": 0.03 }, "tailAt": [0, 0.8, -0.43], "tailRaise": 2.5, "wag": 0.14,
+        "skirt": { "lieK": 0.6, "hair": 0.14, "amp": 0.04, "attach": 0.15, "knee": -0.95, "off": 0.03, "flare": 0.03 }
+      },
+      "head": {
+        "L": 0.37, "r": 0.08, "rn": 0.036, "bridge": 0.012, "eyeT": 0.36, "ea": 0.024, "eb": 0.018, "hx": 0.8, "zb": 0.22,
+        "pupil": [0.9, 0.3], "pupilFwd": 0.02, "eyeC": "#e3c070", "tip": "#c09c98",
+        "ear": { "l": 0.17, "w": 0.065, "droop": 0.55 },
+        "horn": { "len": 0.26, "r0": 0.019, "t": 0.14, "phi": 1.2, "fk": 0.45, "pts": [[0, 0, 0], [0.1, 0.6, -0.2], [0.25, 1.0, -0.7], [0.4, 1.0, -1.3], [0.55, 0.7, -1.9]] },
+        "beard": { "len": 0.12, "w": 0.015, "t": 0.8 }
+      },
+      "motion": { "fatX": [0.88, 0.24], "fatY": [0.9, 0.16], "pitch": 0.3, "neckGraze": 1.2, "headGraze": 1.4, "browse": true, "browsePitch": -0.52, "neckBrowse": -0.75, "headBrowse": 0.0, "browseLeg": 0.85, "browseKnee": 1.1 },
+      "light": { "bodySeg": 16, "bodyRows": 8, "tail": [5, 3], "neck": [6, 2], "skirt": [4, 2] },
+      "detail": { "bodySeg": 44, "bodyRows": 44, "tail": [28, 20], "neck": [24, 5], "skirt": [20, 8] },
+      "patchMask": true,
+      "variants": [
+        { "wool": "#f3eee1", "head": "#e9ddc6", "weight": 0.3 },
+        { "wool": "#2f2a28", "head": "#1e1a18", "weight": 0.2 },
+        { "wool": "#8a5a38", "head": "#5e3a24", "weight": 0.2 },
+        { "wool": "#f3eee1", "head": "#2a2420", "patch": true, "weight": 0.15 },
+        { "wool": "#8d8984", "head": "#5d5753", "weight": 0.15 }
+      ]
+    }
+  }
+}
