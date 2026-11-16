@@ -21,7 +21,7 @@ import { bakeStatic, staticMeshes } from './character/bake';
 import { GER } from './ger/config';
 import { makeGer, type GerBuilt } from './ger/ger';
 import type { CamSolids } from './camclip';
-import { seasonOf } from '../sim/systems/seasons';
+import { seasonLook, seasonOf } from '../sim/systems/seasons';
 import { LabelAtlas, type LabelStyle } from './labelAtlas';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { characters, characterSpec } from './character/spec';
@@ -229,6 +229,8 @@ export class SumCenterView {
     const winter = seasonOf(this.cfg, state.time.day) === 'winter';
     if (winter !== this.gerWinter) this.buildGers(winter);
     if (winter !== this.townWinter) this.buildTown(winter);
+    const look = seasonLook(this.cfg, state);   // газар, зам, цөөрөм: бууцны terrain-тай ижил улирлын палитр
+    this.built.setLook(look.season, look.straw, look.winter);
     this.townMats?.setGlow(night * 1.6);   // шөнө цонх, хаягийн самбар, гэрлийн шон гэрэлтэнэ
     this.syncTalk(state);
     for (const s of this.houseSigns) {

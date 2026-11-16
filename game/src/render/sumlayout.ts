@@ -11,6 +11,7 @@ import type { CamSolids } from './camclip';
 import { TOWN, BUILDING_CONFIG as BC, appendAt, makePlot } from './building';
 import { TownBuilder, labModel, gerSlotLocal } from './building/town';
 import { GER } from './ger/config';
+import { visualStyle } from './style';
 import { GATE_PHI, houseFootprint, houseSlot, labOrigin, rotLocal, type TownEntry } from '../sim/systems/buildingSize';
 
 type XZ = SumXZ;
@@ -39,6 +40,8 @@ export interface SumCenterBuild {
   /** V3.5: лабораторийн барилгууд (улирлаар нэг mesh-д угсарна) */
   town: TownBuilder;
   heightAt: (x: number, z: number) => number;
+  /** V3.5: газар, зам, цөөрмийн улирлын өнгө (бууцны terrain-тай ижил палитр: visuals.json). straw 0–1 хуурайшилт, winter 0–1 цас */
+  setLook: (season: 'summer' | 'autumn' | 'winter' | 'spring', straw: number, winter: number) => void;
   dispose: () => void;
 }
 
@@ -168,6 +171,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
 
   // --- Газар ---
   let terrainMesh!: THREE.Mesh;
+  let paintTerrain: (season: 'summer' | 'autumn' | 'winter' | 'spring', straw: number, winter: number) => void = () => {};
   {
     const [W, D] = L.terrain.size;
     const seg = quality === 'low' ? 100 : 160;
@@ -177,16 +181,29 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     const col = new Float32Array(pos.count * 3);
     const cG = new THREE.Color(L.terrain.ground), cM = new THREE.Color(mt.color), cDry = new THREE.Color('#B7A57A');
     const tmp = new THREE.Color();
+    const nz = new Float32Array(pos.count), hh = new Float32Array(pos.count);
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i), z = pos.getZ(i);
       const h = heightAt(x, z);
       pos.setY(i, h);
-      const n = 0.5 + 0.5 * Math.sin(x * 0.13 + z * 0.09) * Math.cos(z * 0.11 - x * 0.05);
-      tmp.copy(cG).lerp(cDry, 0.12 * n);
-      if (h > 0) tmp.lerp(cM, Math.min(1, h / (mt.peak * 0.5)));
-      col[i * 3] = tmp.r; col[i * 3 + 1] = tmp.g; col[i * 3 + 2] = tmp.b;
+      hh[i] = h;
+      nz[i] = 0.5 + 0.5 * Math.sin(x * 0.13 + z * 0.09) * Math.cos(z * 0.11 - x * 0.05);
     }
+    const P = visualStyle.palette, cAutumn = new THREE.Color(P.autumnGrass), cSpring = new THREE.Color(P.dryGrass).lerp(new THREE.Color(P.dirt), 0.45), cSnow = new THREE.Color(P.snow), cShade = new THREE.Color(P.snowShadow);
+    paintTerrain = (season, straw, winter) => {
+      const cStraw = season === 'autumn' ? cAutumn : season === 'summer' ? cDry : cSpring;   // намар шаргал, хавар хүрэн
+      for (let i = 0; i < pos.count; i++) {
+        const h = hh[i]!;
+        tmp.copy(cG).lerp(cDry, 0.12 * nz[i]!);
+        tmp.lerp(cStraw, Math.min(1, straw) * 0.85);
+        if (h > 0) tmp.lerp(cM, Math.min(1, h / (mt.peak * 0.5)));
+        if (winter > 0) tmp.lerp(cSnow, Math.min(1, winter) * (h > 0 ? 0.9 : 0.94)).lerp(cShade, 0.06 * nz[i]! * winter);   // цас: талбай, уулын энгэр
+        col[i * 3] = tmp.r; col[i * 3 + 1] = tmp.g; col[i * 3 + 2] = tmp.b;
+      }
+      (g.getAttribute('color') as THREE.BufferAttribute).needsUpdate = true;
+    };
     g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    paintTerrain('summer', 0, 0);
     g.computeVertexNormals();
     const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }));
     m.name = 'terrain';
@@ -198,7 +215,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
 
   const B = new Batch();     // зам, хашлага, жижиг зүйл, хуучин хайрцаг барилга — нэг mesh
   const town = new TownBuilder();   // V3.5: лабораторийн барилга, хашаа байшин — улирал бүрт нэг mesh (render/building)
-  const ribbon = (pts: XZ[], width: number, color: string, lift: number) => {
+  const ribbon = (pts: XZ[], width: number, color: string, lift: number, T: Batch = B) => {
     const c = new THREE.Color(color);
     const verts: number[] = [];
     const dense: XZ[] = [];
@@ -219,26 +236,41 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
     g.computeVertexNormals();
-    B.add(g, c, mat(0, 0, 0));
+    T.add(g, c, mat(0, 0, 0));
   };
 
-  // --- Зам, хуурай гол ---
-  ribbon(L.terrain.dryWash.points, L.terrain.dryWash.width, '#B9AE96', 0.04);
-  for (const r of L.roads) ribbon(r.points, r.width, '#8B6F55', 0.08);
-
-  // --- Нуур ---
-  for (const lk of L.terrain.lakes) {
-    const shape = new THREE.Shape();
-    shape.absellipse(0, 0, lk.rx, lk.rz, 0, Math.PI * 2, false, 0);
-    const g = new THREE.ShapeGeometry(shape, 32);
-    g.rotateX(-Math.PI / 2);
-    B.add(g, lk.color, mat(lk.x, 0.12, lk.z));
-    const shore = new THREE.Shape();
-    shore.absellipse(0, 0, lk.rx + 4, lk.rz + 3, 0, Math.PI * 2, false, 0);
-    const gs = new THREE.ShapeGeometry(shore, 32);
-    gs.rotateX(-Math.PI / 2);
-    B.add(gs, '#C9C2A6', mat(lk.x, 0.06, lk.z));
-  }
+  // --- Зам, хуурай гол, нуур: улирлаар өнгө солигддог тул тусдаа mesh (setLook) ---
+  const decalMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
+  disposables.push(decalMat);
+  let decalMesh: THREE.Mesh | null = null, lookKey = '';
+  const buildDecals = (straw: number, winter: number): void => {
+    const D = new Batch(), P = visualStyle.palette, snow = new THREE.Color(P.snow);
+    const tint = (hex: string, k: number): THREE.Color => new THREE.Color(hex).lerp(snow, Math.min(1, k));
+    ribbon(L.terrain.dryWash.points, L.terrain.dryWash.width, '#B9AE96', 0.04, D);
+    for (const r of L.roads) ribbon(r.points, r.width, '#' + tint('#8B6F55', winter * 0.62 + straw * 0.0).getHexString(), 0.08, D);
+    for (const lk of L.terrain.lakes) {
+      const shape = new THREE.Shape();
+      shape.absellipse(0, 0, lk.rx, lk.rz, 0, Math.PI * 2, false, 0);
+      const g = new THREE.ShapeGeometry(shape, 32);
+      g.rotateX(-Math.PI / 2);
+      D.add(g, tint(lk.color, winter * 0.7), mat(lk.x, 0.12, lk.z));   // өвөл мөстэнө
+      const shore = new THREE.Shape();
+      shore.absellipse(0, 0, lk.rx + 4, lk.rz + 3, 0, Math.PI * 2, false, 0);
+      const gs = new THREE.ShapeGeometry(shore, 32);
+      gs.rotateX(-Math.PI / 2);
+      D.add(gs, tint('#C9C2A6', winter * 0.9), mat(lk.x, 0.06, lk.z));
+    }
+    if (decalMesh) { group.remove(decalMesh); decalMesh.geometry.dispose(); }
+    decalMesh = D.mesh(decalMat, 'sumcenter-decals');
+    if (decalMesh) { decalMesh.castShadow = false; group.add(decalMesh); }
+  };
+  const setLook = (season: 'summer' | 'autumn' | 'winter' | 'spring', straw: number, winter: number): void => {
+    const key = season + Math.round(straw * 20) + '|' + Math.round(winter * 20);
+    if (key === lookKey) return;
+    lookKey = key;
+    paintTerrain(season, straw, winter);
+    buildDecals(straw, winter);
+  };
 
   // --- Хашаа (банзан хашаа, хаалгатай) ---
   const fence = (x: number, z: number, w: number, d: number, color: string, h = 1.8, gateSide: 'n' | 's' | 'e' | 'w' = 's', gate = 4, gateOff = 0) => {
@@ -798,6 +830,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     solids,
     town,
     heightAt,
-    dispose: () => disposables.forEach(d => d.dispose()),
+    setLook,
+    dispose: () => { disposables.forEach(d => d.dispose()); decalMesh?.geometry.dispose(); },
   };
 }
