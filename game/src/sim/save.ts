@@ -109,6 +109,7 @@ export function validateState(cfg: GameConfig, s: GameState): string[] {
   }
   need(fin(s.money), 'money: тоо байх ёстой (NaN/Infinity биш)');
   need(s.home === 'tent' || s.home === 'ger', `home: "tent"|"ger" (${String(s.home)})`);
+  need(typeof s.homeSize === 'string' && s.homeSize in cfg.ger.sizes, `homeSize: data/ger.json sizes-ийн түлхүүр (${String(s.homeSize)})`);
   need(fin(s.dayStartMoney ?? 0), 'dayStartMoney: тоо эсвэл null');
   need(Array.isArray(s.flockCenters) && s.flockCenters.every((c) => Array.isArray(c) && fin(c[0]) && isObj(c[1]) && fin(c[1].x) && fin(c[1].z) && fin(c[1].n)), 'flockCenters: [id, {x,z,n}][]');
 

@@ -372,7 +372,7 @@ export class GameView {
   /** Бууцны камерын саад: өөрийн гэр/майхан, туслахын байр, айлын гэр (цөөн, өөрчлөгдвөл л дахин тооцно) */
   private campSolids(state: GameState): CamSolids {
     const dw = state.helpers.dwellings;
-    const key = state.home + '|' + dw.map((d) => d.kind + d.x + ',' + d.z).join(';');
+    const key = state.home + '|' + state.homeSize + '|' + dw.map((d) => d.kind + d.x + ',' + d.z).join(';');
     if (key === this.campKey) return this.campSol;
     this.campKey = key;
     const cyls: CamSolids['cyls'] = [];
@@ -387,7 +387,7 @@ export class GameView {
       cyls.push({ x, z, r: Math.max(k.L, k.W) / 2 + TENT.ropeOut * 0.5 + 0.3, y0: y - 2, y1: y + k.H + 0.5 });
     };
     const h = this.cfg.camps.home;
-    if (state.home === 'ger') gerAt(h.x, h.z, GER.home.size); else tentAt(h.x, h.z, 'start');
+    if (state.home === 'ger') gerAt(h.x, h.z, state.homeSize); else tentAt(h.x, h.z, 'start');
     for (const d of dw) {
       if (d.kind === 'helperTent') tentAt(d.x, d.z, 'otor');
       else if (d.kind === 'horseCamp') tentAt(d.x, d.z, 'horse');
@@ -407,7 +407,7 @@ export class GameView {
       this.cam.dist = cc.dist;
       this.cam.pitch = cc.pitch;
     }
-    this.interior.show(ip.room, ip.door, this.characters.herderObject);
+    this.interior.show(ip.room, ip.door, this.characters.herderObject, state.homeSize);
     this.interior.update(dt, this.daylight);
     // V6.3: барилгын NPC-үүд өрөөнд (ажлын байрандаа); хамгийн ойр нь ярина
     const ispeed = dt > 0 ? Math.hypot(ip.x - this.inPrev.x, ip.z - this.inPrev.z) / dt : 0;

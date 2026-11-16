@@ -148,6 +148,8 @@ export class TerrainView {
   private camp!: CampConfig;
   campId = '';
   private homeKind = '';
+  /** M6.13: өөрийн гэрийн хэмжээ (state.homeSize) — өөрчлөгдвөл гэрийг дахин барина */
+  private homeSizeKey: string = GER.home.size;
   /** Гэр/майхны загвар (render/ger): өвөл/зун солигдоход дахин барина */
   private homeBuilt: GerBuilt | null = null;
   private homeWinter = false;
@@ -214,7 +216,10 @@ export class TerrainView {
       this.build(state);
       return true;
     }
-    if (state.home !== this.homeKind || this.currentSeason === 'winter' !== this.homeWinter) this.buildHome(state.home);
+    if (state.home !== this.homeKind || state.homeSize !== this.homeSizeKey || this.currentSeason === 'winter' !== this.homeWinter) {
+      this.homeSizeKey = state.homeSize;
+      this.buildHome(state.home);
+    }
     this.syncHay(state);
     return false;
   }
@@ -247,6 +252,7 @@ export class TerrainView {
     this.group.add(batchStatic(decor));
     this.buildMountains(new VisualRng(this.tuftSeed ^ 0x4d4f554e));
     this.homeKind = '';
+    this.homeSizeKey = state.homeSize;
     this.buildHome(state.home);
     this.hayShown = -1;
     this.syncHay(state);
@@ -1311,7 +1317,7 @@ export class TerrainView {
     const season = this.homeWinter ? 'winter' : 'summer';
     const g = new THREE.Group();
     if (kind === 'ger') {
-      const built = makeGer(GER.home.size, { season });
+      const built = makeGer(this.homeSizeKey, { season });
       this.homeBuilt = built;
       g.add(built.group);
       // Хаалганы өмнөх сав суулга: хаалганаас хажуу тийш, ханын гадна

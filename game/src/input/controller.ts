@@ -11,6 +11,7 @@ import { riverZ } from '../sim/terrain';
 import { nearLotSlot, worldLimit } from '../sim/systems/sumtown';
 import { atExit, currentRoom, interiorService, nearEnterDoor } from '../sim/systems/interior';
 import { m } from '../sim/msg';
+import { gerRadiusFor } from '../sim/systems/gerLayout';
 
 export type ActionKind = 'shout' | 'scare' | 'call' | 'mount' | 'uurga' | 'pickup' | 'deposit' | 'dog' | 'vehicle' | 'map' | 'interior';
 
@@ -288,7 +289,7 @@ export class PlayerController {
 
     // Майхан/гэрийг тойрно
     const home = this.cfg.camps.home;
-    const hr = (state.home === 'ger' ? home.gerRadius : home.tentRadius) + (p.mounted ? 0.8 : 0.3);
+    const hr = (state.home === 'ger' ? gerRadiusFor(this.cfg.ger, home.gerRadius, state.homeSize) : home.tentRadius) + (p.mounted ? 0.8 : 0.3);
     const hd = Math.hypot(x - home.x, z - home.z);
     if (p.place === 'camp' && hd < hr) {
       x = home.x + ((x - home.x) / (hd || 1)) * hr;
@@ -340,7 +341,7 @@ export class PlayerController {
     // Майхан/гэрийг мөргөхгүй
     if (p.place === 'camp') {
       const home = this.cfg.camps.home;
-      const hr = (state.home === 'ger' ? home.gerRadius : home.tentRadius) + 2.5;
+      const hr = (state.home === 'ger' ? gerRadiusFor(this.cfg.ger, home.gerRadius, state.homeSize) : home.tentRadius) + 2.5;
       const hd = Math.hypot(x - home.x, z - home.z);
       if (hd < hr) {
         x = home.x + ((x - home.x) / (hd || 1)) * hr;

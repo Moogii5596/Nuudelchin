@@ -18,8 +18,9 @@ import { relocateHelpers } from './helpers';
 export function moveHours(cfg: GameConfig, state: GameState, byTruck: boolean): number {
   const m = cfg.camps.move;
   const ger = state.home === 'ger';
-  if (byTruck) return ger ? Number(m.truckHoursGer) : Number(m.truckHoursTent);
-  return ger ? Number(m.cartHoursGer) : Number(m.cartHoursTent);
+  const k = ger ? cfg.ger.sizes[state.homeSize]!.moveMult : 1;   // M6.13: ханын тоо ихсэх тусам нүүх удаан
+  if (byTruck) return (ger ? Number(m.truckHoursGer) : Number(m.truckHoursTent)) * k;
+  return (ger ? Number(m.cartHoursGer) : Number(m.cartHoursTent)) * k;
 }
 
 /**
@@ -34,7 +35,7 @@ export function startMove(cfg: GameConfig, state: GameState, to: string, fromMap
   const truck = bestTruck(cfg, state);
   const byTruck = truck !== null;
   if (truck) {
-    const trips = state.home === 'ger' ? Number(cfg.camps.move.truckTripsGer) : Number(cfg.camps.move.truckTripsTent);
+    const trips = state.home === 'ger' ? Number(cfg.camps.move.truckTripsGer) * cfg.ger.sizes[state.homeSize]!.moveMult : Number(cfg.camps.move.truckTripsTent);
     const liters = (cfg.vehicles.campDistanceKm * 2 * trips * cfg.vehicles[truck].fuelPer100km) / 100;
     const cost = liters * cfg.vehicles.fuelPricePerL;
     state.money -= cost;

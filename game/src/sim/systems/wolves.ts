@@ -24,6 +24,7 @@
  * бэлчээрлэлт, төллөлтийн санамсаргүй дарааллыг өөрчлөхгүй.
  */
 import { seasonOf } from './seasons';
+import { gerRadiusFor } from './gerLayout';
 import type { GameConfig, Species } from '../config';
 import { Rng } from '../rng';
 import type { Animal, GameState } from '../state';
@@ -142,7 +143,7 @@ export function protectionZones(cfg: GameConfig, state: GameState): Zone[] {
   const zones: Zone[] = [
     { kind: 'pen', x: home.pen.x, z: home.pen.z, r: home.pen.r + pr.pen },
     { kind: 'yard', x: home.cowYard.x, z: home.cowYard.z, r: home.cowYard.r + pr.pen },   // үхрийн хэвтэр (M4.5)
-    { kind: 'home', x: home.x, z: home.z, r: state.home === 'ger' ? pr.ger : pr.tent },
+    { kind: 'home', x: home.x, z: home.z, r: state.home === 'ger' ? gerRadiusFor(cfg.ger, pr.ger, state.homeSize) : pr.tent },
   ];
   const p = state.player;
   if (!p.away) zones.push({ kind: 'herder', x: p.x, z: p.z, r: p.mounted ? pr.herderMounted : pr.herder });

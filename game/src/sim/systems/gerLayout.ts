@@ -8,7 +8,11 @@ export interface LayoutBox { x: number; z: number; hw: number; hd: number; phi: 
 
 /** `data/ger.json` → "ger"-ийн хэрэгтэй хэсэг (бүтцээрээ тохирно) */
 export interface GerLayoutSource {
-  sizes: Record<string, { diameter: number; uni: number; doorW: number; wallH: number; topH: number; tonoD: number }>;
+  sizes: Record<string, { walls: number; diameter: number; uni: number; doorW: number; wallH: number; topH: number; tonoD: number; price: number; storage: number; moveMult: number }>;
+  /** Томсгохдоо одоогийн гэрийг буцаан тооцох хувь */
+  upgrade: { tradeIn: number };
+  /** Эхлэлийн (анхдагч) гэрийн хэмжээ */
+  home: { size: string };
   shape: { frameOut: number; doorStandOff: number; chimneyOffR: number; chimneySector: number; spokes: number; tonoRingW: number; hayavchOut: number };
   winter: { extraR: number; hayavchOut: number };
   interior: {
@@ -25,6 +29,24 @@ export interface GerLayoutSource {
 export interface GerSimConfig extends GerLayoutSource {
   home: { size: string };
   helper: { size: string };
+}
+
+/** Гэрийн хэмжээний шат (бага → их): data/ger.json sizes-ийн бичигдсэн дараалал — нэг эх сурвалж */
+export function gerLadder(g: GerLayoutSource): string[] {
+  return Object.keys(g.sizes);
+}
+
+/** Одоогийн гэрээс (null = гэргүй, майхан) `next` хэмжээнд шилжих үнэ: шинэ үнэ − одоогийнх × tradeIn. Томсгох биш бол Infinity */
+export function gerUpgradePrice(g: GerLayoutSource, current: string | null, next: string): number {
+  const ladder = gerLadder(g), to = ladder.indexOf(next), from = current === null ? -1 : ladder.indexOf(current);
+  if (to < 0 || to <= from) return Infinity;
+  const cur = current === null ? 0 : Math.round(g.sizes[current]!.price * g.upgrade.tradeIn);
+  return g.sizes[next]!.price - cur;
+}
+
+/** Гэрийн бууцны хамгаалалт, алхах цагирагийн радиус: анхны (бага 4 ханат) радиусыг гэрийн ханын өргөнөөр тохируулна */
+export function gerRadiusFor(g: GerLayoutSource, baseRadius: number, sizeKey: string): number {
+  return baseRadius + gerOuterRadius(g, sizeKey) - gerOuterRadius(g, g.home.size);
 }
 
 /** Гэрийн хананы радиус (өвөл зузаарна) */

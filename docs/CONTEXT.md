@@ -57,7 +57,7 @@ TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `gam
 | `systems/interior.ts` | V6.1 орж болдог барилга: `player.interior` (өрөөний координат), орох/гарах/дотор хөдлөх (enter/exit/moveInterior); хаалганы цэг sumtown-оос; `data/interiors.json` |
 | `msg.ts` | M6.7b хэрэглэгчид харагдах мессеж: `Msg { key, params }`, `m(key, params)`, `raw(text)` (хөгжүүлэгч/туршилтын цэс). sim i18n импортлохгүй; `CommandResult.msg`, `TownEvent.msg`, `DOG_ORDER_NAME` нь Msg. UI `tm()` (i18n/msg.ts) → `t(key, params)`; түлхүүр `sim.*` (mn.json, en.json) |
 | `systems/difficulty.ts` | M6.10 тайван тохиргоо: `Difficulty`, `clampDifficulty`, `defaultDifficulty`, шалгагч. Утга `state.settings.difficulty`; `setDifficulty` команд; wolves.ts (дайралт, өлсөх, барих), night.ts (сүү, ноос), helpers.ts (отрын чоно) уншина. Хүрээ нь `data/difficulty.json` |
-| `systems/gerLayout.ts` | V3.5/V6.2 гэрийн дотор тавилгын байрлал, хаалганы цэг (Three.js-гүй): `gerDoorOffset`, `gerBoxes`/`gerBlockers`, `placeOnWall`, `pushOutOfBox`. `render/ger/gerInterior.ts` ба `systems/interior.ts` (`roomSpec` — гэр төрлийн өрөө) хуваалцана. Тоо нь `data/ger.json` |
+| `systems/gerLayout.ts` | V3.5/V6.2 гэрийн дотор тавилгын байрлал, хаалганы цэг (Three.js-гүй): `gerDoorOffset`, `gerLadder` (хэмжээний шат), `gerUpgradePrice` (томсгох үнэ), `gerRadiusFor` (бүс, алхах цагираг), `gerBoxes`/`gerBlockers`, `placeOnWall`, `pushOutOfBox`. `render/ger/gerInterior.ts` ба `systems/interior.ts` (`roomSpec` — гэр төрлийн өрөө) хуваалцана. Тоо нь `data/ger.json` |
 ### render/ — Three.js; GameState-ийг зөвхөн уншина
 | Файл | Үүрэг |
 |---|---|
@@ -113,6 +113,6 @@ TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `gam
 Кодын функц/классын мөр болон бусад баримтын `##` мужийг `grep -n '<түлхүүр>' docs/CODEMAP.md`-ээр ол. Доорх блок автомат:
 <!-- codemap:start -->
 _Автомат (`cd game && npm run codemap`), гараар бүү засаарай. Хэсгийн мөрийн муж: `sed -n 'a,bp' <файл>`._
-- `docs/mvp-spec.md`: §0 Хэрэглэгчийн шийдвэрийн түүх 17–22 · §1 Хүрээ 23–50 · §2 Цаг 51–69 · §3 Эхлэл 70–102 · §4 Бүтээгдэхүүн: мал үлдээнэ, ма… 103–151 · §5 Үнэ, тээвэр ба сумын төв 152–208 · §6 Туслах малчид 209–251 · §7 Бэлчээр, бууц сэлгэх, доройтол 252–293 · §8 Чоно 294–331 · §9 Төллөлт ба нас 332–347 · §10 Тоглоомын зорилго ба замын тэ… 348–422 · §11 Прототипоос хасагдах, өөрчлөг… 423–445 · §12 Хөгжүүлэлтийн явц 446–451 · §13 Нээлттэй шийдвэр байхгүй 452–456 · Эх сурвалж 457–460
+- `docs/mvp-spec.md`: §0 Хэрэглэгчийн шийдвэрийн түүх 17–22 · §1 Хүрээ 23–50 · §2 Цаг 51–69 · §3 Эхлэл 70–103 · §4 Бүтээгдэхүүн: мал үлдээнэ, ма… 104–152 · §5 Үнэ, тээвэр ба сумын төв 153–209 · §6 Туслах малчид 210–252 · §7 Бэлчээр, бууц сэлгэх, доройтол 253–294 · §8 Чоно 295–332 · §9 Төллөлт ба нас 333–348 · §10 Тоглоомын зорилго ба замын тэ… 349–423 · §11 Прототипоос хасагдах, өөрчлөг… 424–446 · §12 Хөгжүүлэлтийн явц 447–452 · §13 Нээлттэй шийдвэр байхгүй 453–457 · Эх сурвалж 458–461
 - `docs/visuals-plan.md`: §1 Зорилго 19–31 · §2 Зарчим 32–40 · §3 Хэв маяг 41–96 · §4 Одоо байгаа зүйл 97–109 · §5 Үе шатууд 110–215 · §6 Чанарын түвшин 216–233 · §7 Хэмжилт 234–257 · §8 Хойшлогдох 258–261 · §9 Шийдвэрүүд 262–274 · §10–11 Хэрэгжүүлэлтийн тэмдэглэл ба … 275–277
 <!-- codemap:end -->

@@ -139,7 +139,7 @@ describe('Туслах малчид (M5)', () => {
   });
 
   it('отор: илүү майхангүй бол явуулахгүй; гэртэй бол хуучин майхнаараа мал өөр бууцанд бэлчиж, буцаахад ирнэ', () => {
-    const sim = newSim(8);
+    const sim = newSim(8, (s) => (s.home = 'tent'));
     hireOne(sim, true);
     const h = sim.state.helpers.list.find((x) => x.kind === 'adult')!;
     const ids = sim.state.animals.filter((a) => a.species === 'sheep').slice(0, 5).map((a) => a.id);

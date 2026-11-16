@@ -715,5 +715,13 @@
   "sim.go_up_to_the": "Машин руу ойрт",
   "sim.coming_on_sale_soon": "Удахгүй худалдаанд гарна",
   "sim.dog_order": "🐕 {who}: {order}",
-  "sim.raw": "{text}"
+  "sim.raw": "{text}",
+  "ui.ger_size": "Гэр: {x}",
+  "ui.ger_size_note": "{walls} ханат · агуулахад +{storage} нэгж багтаамж (одоогийн гэрээ солиход тооцогдоно) · нүүх удаан",
+  "ger.size.small4": "Бага 4 ханат",
+  "ger.size.big4": "Том 4 ханат",
+  "ger.size.small5": "Бага 5 ханат",
+  "ger.size.big5": "Их 5 ханат",
+  "ger.size.w6": "6 ханат",
+  "ger.size.w8": "8 ханат"
 }

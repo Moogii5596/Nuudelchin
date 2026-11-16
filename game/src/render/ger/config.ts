@@ -4,7 +4,7 @@
  */
 import gerJson from '../../../../data/ger.json';
 
-export interface GerSize { label: string; walls: number; diameter: number; wallH: number; topH: number; tonoD: number; uni: number; belts: number; doorW: number; doorH: number }
+export interface GerSize { label: string; price: number; storage: number; moveMult: number; walls: number; diameter: number; wallH: number; topH: number; tonoD: number; uni: number; belts: number; doorW: number; doorH: number }
 export interface DoorVariant { label: string; base: string; frame: string; line: string; accent: string; motif: string; stile?: number }
 export interface GerShape {
   puff: number; roofPuff: number; beltPinch: number; eaveDrop: number; shoulderIn: number; shoulderUp: number; hayavchH: number; hayavchOut: number;
@@ -36,6 +36,8 @@ export interface GerConfig {
   shade: { wallBottom: number; furnitureBottom: number; furnitureTop: number };
   /** Тоглогчийн гэрийн хэмжээ (хэмжээний шат M6.13-д sim-ээс) */
   home: { size: string };
+  /** Гэр сольж томсгох: одоогийн гэрийг буцаан тооцох хувь (M6.13) */
+  upgrade: { tradeIn: number };
   /** Туслахын гэр: хуучирсан бүрээс, 2 бүслүүр, энгийн модон хаалга */
   helper: { size: string; coverColor: string; belts: number; doorMotif: string };
 }
@@ -63,7 +65,7 @@ function check(errs: string[], root: unknown, path: string, kind: 'num' | 'hex' 
 const SHAPE_NUM = ['puff', 'roofPuff', 'beltPinch', 'eaveDrop', 'shoulderIn', 'shoulderUp', 'hayavchH', 'hayavchOut', 'beltOut', 'beltH', 'tonoRingW', 'tonoRingH', 'tonoRise', 'tonoProud', 'spokes', 'spokeT',
   'urkhOut', 'urkhRopeLean', 'chimneyR', 'chimneyH', 'chimneyOffR', 'chimneySector', 'doorSill', 'jambW', 'lintelH', 'frameOut', 'leafT', 'doorStandOff', 'doorSwing', 'outlineW'];
 const WINTER_NUM = ['extraR', 'hayavchH', 'hayavchOut', 'puff', 'roofPuff', 'shoulderUp', 'bankW', 'bankH', 'roofSnowTo'];
-const SIZE_NUM = ['walls', 'diameter', 'wallH', 'topH', 'tonoD', 'uni', 'belts', 'doorW', 'doorH'];
+const SIZE_NUM = ['price', 'storage', 'moveMult', 'walls', 'diameter', 'wallH', 'topH', 'tonoD', 'uni', 'belts', 'doorW', 'doorH'];
 const TENT_NUM = ['L', 'W', 'H', 'wall', 'doorW'];
 
 /** Тохиргооны алдааны жагсаалт (хоосон бол зөв) */
@@ -94,6 +96,7 @@ export function gerConfigErrors(data: unknown): string[] {
   if (!isObj(g.sizes) || Object.keys(g.sizes).length === 0) errs.push('sizes: хоосон биш объект байх ёстой');
   else for (const k of Object.keys(g.sizes)) for (const f of SIZE_NUM) check(errs, g.sizes, `${k}.${f}`, 'num');
   check(errs, g, 'home.size', 'str');
+  check(errs, g, 'upgrade.tradeIn', 'num');
   if (isObj(g.sizes) && isObj(g.home) && typeof g.home.size === 'string' && !(g.home.size in g.sizes)) errs.push(`home.size "${g.home.size}" sizes-д алга`);
   check(errs, g, 'helper.coverColor', 'hex');
   check(errs, g, 'helper.size', 'str');

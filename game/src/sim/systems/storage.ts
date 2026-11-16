@@ -6,7 +6,8 @@ import type { GameConfig } from '../config';
 import type { Batch, GameState, ProductId } from '../state';
 
 export function capacity(cfg: GameConfig, state: GameState): number {
-  return cfg.storage.levels[state.storageLevel]?.capacity ?? 0;
+  // M6.13: томсгосон гэр багтаамж нэмнэ (data/ger.json sizes[k].storage)
+  return (cfg.storage.levels[state.storageLevel]?.capacity ?? 0) + (state.home === 'ger' ? cfg.ger.sizes[state.homeSize]?.storage ?? 0 : 0);
 }
 
 export function used(state: GameState): number {

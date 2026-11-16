@@ -193,7 +193,7 @@ function buyPlan(sim: Sim, reserve: number, maxSU: number, dogs = 0): BuyOrder[]
     }
     return false;
   };
-  if (state.home !== 'ger' && su >= cfg.economy.goalSheepUnits) tryBuy({ kind: 'ger' }, 0);
+  if (state.home !== 'ger' && su >= cfg.economy.goalSheepUnits) tryBuy({ kind: 'ger', size: sim.cfg.ger.home.size }, 0);
   // M4.6: эхлэлд тээвэргүй — морин тэрэг эхэнд авна (их ачаа, мал зөөнө)
   if (!state.vehicles.length) tryBuy({ kind: 'vehicle', id: 'horseCart' }, reserve / 2);
   if (!state.processors.some((p) => p.kind === 'pot')) tryBuy({ kind: 'processor', id: 'pot' }, reserve);

@@ -4,6 +4,7 @@
  * өөрөө жолоодож газрын зургаар явна (systems/travel.ts). Энд үнэ, тээврийн багтаамж, захиалга хүргэх.
  */
 import type { GameConfig } from '../config';
+import { gerUpgradePrice } from './gerLayout';
 import type { Rng } from '../rng';
 import { newAnimal, type BuyOrder, type GameState, type ProductId, type VehicleId } from '../state';
 import { buyPrice } from './animals';
@@ -45,7 +46,7 @@ export function orderPrice(cfg: GameConfig, state: GameState, o: BuyOrder): numb
     case 'storage':
       return cfg.storage.levels[state.storageLevel + 1]?.price ?? Infinity;
     case 'ger':
-      return cfg.economy.gerPrice;
+      return gerUpgradePrice(cfg.ger, state.home === 'ger' ? state.homeSize : null, o.size);
     case 'vehicle':
       return cfg.vehicles[o.id].price;
     case 'dog':
@@ -85,6 +86,7 @@ export function deliver(cfg: GameConfig, state: GameState, rng: Rng, orders: Buy
         break;
       case 'ger':
         state.home = 'ger';
+        state.homeSize = o.size;
         break;
       case 'vehicle':
         addVehicle(cfg, state, o.id);

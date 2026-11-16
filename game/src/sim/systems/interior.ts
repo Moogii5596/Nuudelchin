@@ -119,7 +119,7 @@ export function campEnterDoors(cfg: GameConfig, state: GameState): EnterDoor[] {
   const out: EnterDoor[] = [];
   const home = cfg.camps.home;
   if (state.home === 'ger') {
-    out.push({ id: 'home', room: I.gerRooms.home ?? '', place: 'camp', x: home.x, z: home.z + gerDoorOffset(cfg.ger, cfg.ger.home.size), outHeading: 0, service: null });
+    out.push({ id: 'home', room: I.gerRooms.home ?? '', place: 'camp', x: home.x, z: home.z + gerDoorOffset(cfg.ger, state.homeSize), outHeading: 0, service: null });
   }
   for (const d of state.helpers.dwellings) {
     const room = I.gerRooms[d.kind];
@@ -163,31 +163,32 @@ export function nearEnterDoor(cfg: GameConfig, state: GameState): EnterDoor | nu
 const resolved = new WeakMap<GameConfig, Map<string, RoomSpec>>();
 
 /** Өрөөний тодорхойлолт. Гэр төрлийн өрөөний хэмжээ, саад нь data/ger.json-оос тооцогдоно (кэштэй) */
-export function roomSpec(cfg: GameConfig, id: string): RoomSpec | null {
+export function roomSpec(cfg: GameConfig, id: string, homeSize: string = cfg.ger.home.size): RoomSpec | null {
   const raw = cfg.interiors.rooms[id];
   if (!raw) return null;
   if (!raw.gerSize) return raw;
   let m = resolved.get(cfg);
   if (!m) resolved.set(cfg, (m = new Map()));
-  let r = m.get(id);
+  const ck = `${id}|${raw.gerSize === 'home' ? homeSize : ''}`;
+  let r = m.get(ck);
   if (!r) {
-    const key = raw.gerSize === 'home' ? cfg.ger.home.size : cfg.ger.helper.size;
+    const key = raw.gerSize === 'home' ? homeSize : cfg.ger.helper.size;
     const Ri = gerInnerRadius(cfg.ger, key);
     r = { ...raw, shape: 'round', r: Ri, entry: [0, Ri - 0.55], exit: [0, Ri - cfg.interiors.bodyR - 0.05], exitR: 0.9, counter: null, spots: [], obstacles: gerBoxes(cfg.ger, key), blockers: gerBlockers(cfg.ger, key) };
-    m.set(id, r);
+    m.set(ck, r);
   }
   return r;
 }
 
 /** Гэрийн хэмжээний түлхүүр (data/ger.json sizes) — гэр төрлийн өрөө биш бол null */
-export function roomGerSize(cfg: GameConfig, room: RoomSpec): string | null {
-  return room.gerSize ? (room.gerSize === 'home' ? cfg.ger.home.size : cfg.ger.helper.size) : null;
+export function roomGerSize(cfg: GameConfig, room: RoomSpec, homeSize: string = cfg.ger.home.size): string | null {
+  return room.gerSize ? (room.gerSize === 'home' ? homeSize : cfg.ger.helper.size) : null;
 }
 
 /** Тоглогч орсон өрөө (дотор биш бол null) */
 export function currentRoom(cfg: GameConfig, state: GameState): RoomSpec | null {
   const it = state.player.interior;
-  return it ? roomSpec(cfg, it.room) : null;
+  return it ? roomSpec(cfg, it.room, state.homeSize) : null;
 }
 
 /** Өрөөний хэмжээнд байрлалыг хязгаарлана (хана, bodyR) */
@@ -224,7 +225,7 @@ export function enterBuilding(cfg: GameConfig, state: GameState, doorId?: string
   if (p.mounted) return m('sim.dismount');
   const door = doorId ? enterDoors(cfg, state).find((d) => d.id === doorId) : nearEnterDoor(cfg, state);
   if (!door) return m('sim.no_door_nearby_to');
-  const room = roomSpec(cfg, door.room);
+  const room = roomSpec(cfg, door.room, state.homeSize);
   if (!room) return m('sim.the_interior_is_not');
   p.x = door.x;
   p.z = door.z;

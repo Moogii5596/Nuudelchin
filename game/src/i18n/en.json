@@ -715,5 +715,13 @@
   "sim.go_up_to_the": "Go up to the vehicle",
   "sim.coming_on_sale_soon": "Coming on sale soon",
   "sim.dog_order": "🐕 {who}: {order}",
-  "sim.raw": "{text}"
+  "sim.raw": "{text}",
+  "ui.ger_size": "Ger: {x}",
+  "ui.ger_size_note": "{walls} walls · +{storage} storage capacity (your current ger is traded in) · moving takes longer",
+  "ger.size.small4": "Small 4-wall",
+  "ger.size.big4": "Large 4-wall",
+  "ger.size.small5": "Small 5-wall",
+  "ger.size.big5": "Large 5-wall",
+  "ger.size.w6": "6-wall",
+  "ger.size.w8": "8-wall"
 }

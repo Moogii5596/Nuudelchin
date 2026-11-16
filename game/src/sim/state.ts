@@ -14,7 +14,7 @@ import { initFleetVehicle } from './systems/travel';
 import { newHelpersState, type HelpersState } from './systems/helpers';
 import { newTownState, type TownState } from './systems/town';
 
-export const SAVE_VERSION = 14;   // 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих · 6: нохой, чонын дайралт, сүргийн нүүдэл (M4) · 7: шөнө, хотлох, өглөөний бүтээгдэхүүн, Портер/Амжиргаа, шөнийн чоно (M4.5) · 8: газрын зураг, тээвэр жолоодох, ачаа, Худалдаачин (M4.6) · 9: туслах малчид, цайны газар, отор, туслахын мал (M5) · 10: улирал, цас, боодол өвс, 4 бууц, отрын бүтээгдэхүүн (M5.5) · 11: сумын төвийн амьдрал — байшин, нэр хүнд, зээл, хамаатан (V3.4) · 12: орж болдог барилга — player.interior (V6.1) · 13: Sim-ийн нуугдмал төлөв state-д — dayStartMoney, flockCenters (M6.1) · 14: settings.difficulty — тайван тохиргооны гулсуурууд (M6.10)
+export const SAVE_VERSION = 15;   // 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих · 6: нохой, чонын дайралт, сүргийн нүүдэл (M4) · 7: шөнө, хотлох, өглөөний бүтээгдэхүүн, Портер/Амжиргаа, шөнийн чоно (M4.5) · 8: газрын зураг, тээвэр жолоодох, ачаа, Худалдаачин (M4.6) · 9: туслах малчид, цайны газар, отор, туслахын мал (M5) · 10: улирал, цас, боодол өвс, 4 бууц, отрын бүтээгдэхүүн (M5.5) · 11: сумын төвийн амьдрал — байшин, нэр хүнд, зээл, хамаатан (V3.4) · 12: орж болдог барилга — player.interior (V6.1) · 13: Sim-ийн нуугдмал төлөв state-д — dayStartMoney, flockCenters (M6.1) · 14: settings.difficulty — тайван тохиргооны гулсуурууд (M6.10) · 15: homeSize — гэрийн хэмжээ, BuyOrder ger.size (M6.13)
 
 export type ProductId = 'milk' | 'tarag' | 'aaruul' | 'urum' | 'wool' | 'felt' | 'cashmere';
 export const PRODUCTS: readonly ProductId[] = ['milk', 'tarag', 'aaruul', 'urum', 'wool', 'felt', 'cashmere'];
@@ -81,7 +81,7 @@ export type BuyOrder =
   | { kind: 'animal'; species: Species; sex: Sex; age: number }
   | { kind: 'processor'; id: ProcessorKind }
   | { kind: 'storage' }
-  | { kind: 'ger' }
+  | { kind: 'ger'; size: string }   // M6.13: гэр (data/ger.json sizes-ийн түлхүүр) — томсгох/анхны гэр
   | { kind: 'vehicle'; id: VehicleId }
   | { kind: 'dog' }
   | { kind: 'helperTent' }   // ганц бие туслахын байр (M5)
@@ -173,6 +173,8 @@ export interface GameState {
   time: TimeState;
   money: number;
   home: 'tent' | 'ger';
+  /** M6.13: өөрийн гэрийн хэмжээ (data/ger.json sizes-ийн түлхүүр); home='tent' үед ч хадгалагдана (дараагийн гэрийн суурь) */
+  homeSize: string;
   campId: string;
   camps: Record<string, CampState>;
   grass: GrassGrid;
@@ -266,6 +268,7 @@ export function createInitialState(cfg: GameConfig, seed: number): GameState {
     time: newTime(cfg.time),
     money: cfg.economy.startMoney,
     home: cfg.start.home === 'ger' ? 'ger' : 'tent',
+    homeSize: cfg.ger.home.size,
     campId: cfg.start.camp,
     camps,
     grass,
@@ -306,6 +309,13 @@ export const MIGRATIONS: Record<number, (s: GameState) => void> = {
   12: (s) => { s.dayStartMoney ??= null; s.flockCenters ??= []; },
   // 13 → 14: гулсуур байгаагүй үеийн тоглолт = бүгд ×1 (data/difficulty.json-ийн анхдагчтай тест тулгана)
   13: (s) => { s.settings ??= { difficulty: { wolves: 1, animalsDie: true, products: 1, timeSpeed: 1 } }; },
+  // 14 → 15: homeSize (хуучин гэр = бага 4 ханат, ger.home.size), хүлээгдэж буй ger захиалгад size
+  14: (s) => {
+    s.homeSize ??= 'small4';
+    const fix = (os: { kind: string; size?: string }[] | undefined): void => { for (const o of os ?? []) if (o.kind === 'ger') o.size ??= 'small4'; };
+    fix(s.player.orders);
+    for (const f of s.fleet ?? []) fix(f.orders);
+  },
 };
 /** Хамгийн эртний дэмжих хувилбар (түүнээс өмнөх нь прототип — шилжүүлэхгүй) */
 export const MIN_SAVE_VERSION = 11;

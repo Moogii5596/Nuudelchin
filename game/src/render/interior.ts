@@ -20,6 +20,7 @@ export class InteriorView {
   readonly scene = new THREE.Scene();
   /** Шал — дарж явахад (pickGround) */
   ground: THREE.Mesh | null = null;
+  private homeSize = '';
   private root: THREE.Group | null = null;
   private key = '';
   private ring: THREE.Mesh | null = null;
@@ -41,13 +42,14 @@ export class InteriorView {
   }
 
   /** Өрөөг үүсгэнэ (аль хэдийн тэр өрөө байвал юу ч хийхгүй) */
-  show(roomId: string, doorId: string, herder: THREE.Object3D): void {
-    const key = `${roomId}|${doorId}`;
+  show(roomId: string, doorId: string, herder: THREE.Object3D, homeSize: string = this.cfg.ger.home.size): void {
+    const key = `${roomId}|${doorId}|${homeSize}`;
     if (this.root && this.key === key) return;
     this.hide();
-    const room = roomSpec(this.cfg, roomId);
+    const room = roomSpec(this.cfg, roomId, homeSize);
     if (!room) return;
     this.key = key;
+    this.homeSize = homeSize;
     this.root = this.build(room);
     this.scene.add(this.root);
     this.adopted = { obj: herder, parent: herder.parent };
@@ -134,7 +136,7 @@ export class InteriorView {
   }
 
   private build(room: RoomSpec): THREE.Group {
-    const gerSize = roomGerSize(this.cfg, room);
+    const gerSize = roomGerSize(this.cfg, room, this.homeSize);
     if (gerSize) return this.buildGer(room, gerSize);
     const g = new THREE.Group();
     const I = this.cfg.interiors;

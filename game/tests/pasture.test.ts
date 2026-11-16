@@ -44,7 +44,7 @@ import { newSim, steps } from './helpers';
 
 describe('Бууц сэлгэх (mvp-spec.md §7.3)', () => {
   it('майхантай тэргээр 8 цаг нүүж, шинэ бууцанд мал ирнэ; хуучин бууц сэргэнэ', () => {
-    const sim = newSim(11);
+    const sim = newSim(11, (s) => (s.home = 'tent'));
     sim.state.camps.river!.degrade = 0.4;
     const r = sim.command({ type: 'moveCamp', to: 'valley' });
     expect(r.ok).toBe(true);
