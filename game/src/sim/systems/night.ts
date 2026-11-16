@@ -116,7 +116,9 @@ export function morning(cfg: GameConfig, state: GameState, rng: Rng): void {
         drop(state, rng, a.species === 'sheep' ? 'wool' : 'cashmere', rule.amount, a.x, a.z, 0.6);
         gave(fsp, a);
       } else if (intakeFactor(cfg, a.lastGut) <= 0) note(fsp).lowGut++;
+      else note(fsp).waiting = (note(fsp).waiting ?? 0) + 1;
     } else if (rule && a.age >= 1) note(fsp).lowCond++;
+    else if (rule) note(fsp).young = (note(fsp).young ?? 0) + 1;
     if (a.mode === 'sleep' || a.mode === 'home' || a.mode === 'rest') {
       a.mode = 'graze';
       a.tx = a.x;

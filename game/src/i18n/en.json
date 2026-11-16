@@ -869,7 +869,7 @@
   "rep.h_forecast": "🍼 Upcoming births",
   "rep.gave_outside": "{n} of them slept outside the camp, so it lies out there",
   "rep.why_gut": "{n} ate almost no grass yesterday",
-  "rep.why_cond": "{n} too thin to grow fibre",
+  "rep.why_cond": "{n} too thin (fibre does not grow)",
   "rep.why_partial": "{n} gave less than one can (carried over)",
   "rep.why_dry": "{n} dry (did not calve)",
   "rep.wolf_attacks": "Attacks: {n}",
@@ -903,5 +903,7 @@
   "rep.gave.goat": "{n} goats left cashmere",
   "rep.none.cow": "{n} cows left no milk",
   "rep.none.sheep": "{n} sheep left no wool",
-  "rep.none.goat": "{n} goats left no cashmere"
+  "rep.none.goat": "{n} goats left no cashmere",
+  "rep.why_waiting": "{n} not due yet (fibre is ready once every {days} days)",
+  "rep.why_young": "{n} under one year old"
 }

@@ -959,7 +959,7 @@ SYM game/src/render/ui/names.ts:101 const SEASON_EMOJI
 SYM game/src/render/ui/names.ts:103 const CAMP_HINT
 SYM game/src/render/ui/names.ts:110 const WATER_NAME
 SYM game/src/render/ui/names.ts:111 const WOLF_LEVEL_NAME
-FILE game/src/render/ui/panels.ts 80.5KB 1264L exports: UiHooks,Panels
+FILE game/src/render/ui/panels.ts 80.8KB 1266L exports: UiHooks,Panels
 SYM game/src/render/ui/panels.ts:98 fn esc
 SYM game/src/render/ui/panels.ts:100 interface UiHooks
 SYM game/src/render/ui/panels.ts:109 class Panels
@@ -992,15 +992,15 @@ SYM game/src/render/ui/panels.ts:703 method Panels.openLog
 SYM game/src/render/ui/panels.ts:709 method Panels.logHtml
 SYM game/src/render/ui/panels.ts:727 method Panels.reportHtml
 SYM game/src/render/ui/panels.ts:750 method Panels.reportDetailHtml
-SYM game/src/render/ui/panels.ts:792 method Panels.wolfKillsHtml
-SYM game/src/render/ui/panels.ts:799 method Panels.dogsHtml
-SYM game/src/render/ui/panels.ts:822 method Panels.campsHtml
-SYM game/src/render/ui/panels.ts:853 method Panels.cheatHtml
-SYM game/src/render/ui/panels.ts:863 method Panels.teahouseHtml
-SYM game/src/render/ui/panels.ts:880 method Panels.helpersHtml
-SYM game/src/render/ui/panels.ts:925 method Panels.otorHtml
-SYM game/src/render/ui/panels.ts:945 method Panels.payHtml
-SYM game/src/render/ui/panels.ts:960 method Panels.act
+SYM game/src/render/ui/panels.ts:794 method Panels.wolfKillsHtml
+SYM game/src/render/ui/panels.ts:801 method Panels.dogsHtml
+SYM game/src/render/ui/panels.ts:824 method Panels.campsHtml
+SYM game/src/render/ui/panels.ts:855 method Panels.cheatHtml
+SYM game/src/render/ui/panels.ts:865 method Panels.teahouseHtml
+SYM game/src/render/ui/panels.ts:882 method Panels.helpersHtml
+SYM game/src/render/ui/panels.ts:927 method Panels.otorHtml
+SYM game/src/render/ui/panels.ts:947 method Panels.payHtml
+SYM game/src/render/ui/panels.ts:962 method Panels.act
 FILE game/src/render/ui/sleepPanel.ts 2.4KB 49L exports: SleepCtx,SleepPanel
 SYM game/src/render/ui/sleepPanel.ts:12 interface SleepCtx
 SYM game/src/render/ui/sleepPanel.ts:19 fn hhmm
@@ -1169,7 +1169,7 @@ SYM game/src/sim/sim.ts:181 method Sim.runDays
 SYM game/src/sim/sim.ts:186 method Sim.endDay
 SYM game/src/sim/sim.ts:270 method Sim.spend
 SYM game/src/sim/sim.ts:276 method Sim.random
-FILE game/src/sim/state.ts 21.8KB 426L exports: SAVE_VERSION,ProductId,PRODUCTS,AnimalMode,Animal,GroundItem,Batch,ProcessorKind,ProcessorState,VehicleId,VEHICLES,BuyOrder,Place,InteriorState,+16
+FILE game/src/sim/state.ts 22.1KB 428L exports: SAVE_VERSION,ProductId,PRODUCTS,AnimalMode,Animal,GroundItem,Batch,ProcessorKind,ProcessorState,VehicleId,VEHICLES,BuyOrder,Place,InteriorState,+16
 SYM game/src/sim/state.ts:21 const SAVE_VERSION
 SYM game/src/sim/state.ts:23 type ProductId
 SYM game/src/sim/state.ts:24 const PRODUCTS
@@ -1192,14 +1192,14 @@ SYM game/src/sim/state.ts:177 type YieldSpecies
 SYM game/src/sim/state.ts:178 type WolfWhere
 SYM game/src/sim/state.ts:179 type DeathCause
 SYM game/src/sim/state.ts:181 interface YieldNote
-SYM game/src/sim/state.ts:190 interface PlayerState
-SYM game/src/sim/state.ts:209 interface GameState
-SYM game/src/sim/state.ts:263 fn emptyDayStats
-SYM game/src/sim/state.ts:267 fn newAnimal
-SYM game/src/sim/state.ts:300 fn createInitialState
-SYM game/src/sim/state.ts:369 const MIGRATIONS
-SYM game/src/sim/state.ts:414 const MIN_SAVE_VERSION
-SYM game/src/sim/state.ts:417 fn migrateState
+SYM game/src/sim/state.ts:192 interface PlayerState
+SYM game/src/sim/state.ts:211 interface GameState
+SYM game/src/sim/state.ts:265 fn emptyDayStats
+SYM game/src/sim/state.ts:269 fn newAnimal
+SYM game/src/sim/state.ts:302 fn createInitialState
+SYM game/src/sim/state.ts:371 const MIGRATIONS
+SYM game/src/sim/state.ts:416 const MIN_SAVE_VERSION
+SYM game/src/sim/state.ts:419 fn migrateState
 FILE game/src/sim/systems/animals.ts 5.6KB 130L exports: AnimalBody,frameKg,liveWeightKg,salePrice,buyPrice,sheepUnits,herdSheepUnits,grazingSheepUnits,dailyConditionDelta,dailyAnimals
 SYM game/src/sim/systems/animals.ts:8 interface AnimalBody
 SYM game/src/sim/systems/animals.ts:21 fn frameKg
@@ -1431,7 +1431,7 @@ SYM game/src/sim/systems/milestones.ts:115 interface GoalProgress
 SYM game/src/sim/systems/milestones.ts:118 fn seasonGoal
 SYM game/src/sim/systems/milestones.ts:131 fn nextStage
 SYM game/src/sim/systems/milestones.ts:150 fn validateMilestones
-FILE game/src/sim/systems/night.ts 6.6KB 126L exports: goesHome,homeSpot,atHome,eveningStep,sleepAll,intakeFactor,dailyMilkLiters,morning
+FILE game/src/sim/systems/night.ts 6.8KB 128L exports: goesHome,homeSpot,atHome,eveningStep,sleepAll,intakeFactor,dailyMilkLiters,morning
 SYM game/src/sim/systems/night.ts:17 fn goesHome
 SYM game/src/sim/systems/night.ts:22 fn homeSpot
 SYM game/src/sim/systems/night.ts:31 fn atHome
@@ -1838,7 +1838,7 @@ FILE game/tests/perf.perf.test.ts 3.2KB 57L
 FILE game/tests/persist.test.ts 10.2KB 212L
 FILE game/tests/playthrough.test.ts 6.3KB 133L
 FILE game/tests/products.test.ts 3.0KB 56L
-FILE game/tests/report.test.ts 4.8KB 83L
+FILE game/tests/report.test.ts 5.2KB 88L
 FILE game/tests/rng.test.ts 0.8KB 26L
 FILE game/tests/save.test.ts 12.5KB 243L
 FILE game/tests/seasons.test.ts 7.2KB 140L

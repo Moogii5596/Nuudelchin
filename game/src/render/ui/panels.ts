@@ -756,9 +756,11 @@ export class Panels {
       const y = r.yield?.[k];
       if (!y) continue;
       if (y.gave) yl.push(t('rep.gave.' + k, { n: y.gave }) + (y.outside ? ' — ' + t('rep.gave_outside', { n: y.outside }) : ''));
-      const none = y.lowGut + y.lowCond + y.partial + y.dry;
+      const waiting = y.waiting ?? 0, young = y.young ?? 0;
+      const every = k === 'cow' ? 0 : this.cfg.products.drops[k === 'sheep' ? 'wool' : 'cashmere'].everyDays;
+      const none = y.lowGut + y.lowCond + y.partial + y.dry + waiting + young;
       if (none) {
-        const why = [y.lowGut ? t('rep.why_gut', { n: y.lowGut }) : '', y.lowCond ? t('rep.why_cond', { n: y.lowCond }) : '', y.partial ? t('rep.why_partial', { n: y.partial }) : '', y.dry ? t('rep.why_dry', { n: y.dry }) : ''].filter(Boolean);
+        const why = [y.lowGut ? t('rep.why_gut', { n: y.lowGut }) : '', y.lowCond ? t('rep.why_cond', { n: y.lowCond }) : '', y.partial ? t('rep.why_partial', { n: y.partial }) : '', y.dry ? t('rep.why_dry', { n: y.dry }) : '', waiting ? t('rep.why_waiting', { n: waiting, days: every }) : '', young ? t('rep.why_young', { n: young }) : ''].filter(Boolean);
         yl.push(`<span class="bad">${t('rep.none.' + k, { n: none })}</span>: ${why.join(', ')}`);
       }
     }

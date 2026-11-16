@@ -185,6 +185,8 @@ export interface YieldNote {
   lowCond: number;   // тарга муу (ноос/ноолуур ургахгүй)
   partial: number;   // сүү: нэг сав хүрээгүй, хуримтлагдаж байна
   dry: number;       // үнээ: тугаллаагүй, сүүгүй
+  waiting?: number;  // хонь/ямаа: ноос/ноолуурын ээлж болоогүй (everyDays хоногт нэг удаа ургаж гүйцнэ)
+  young?: number;    // хонь/ямаа: нэг нас хүрээгүй төл — ноос/ноолуур өгөхгүй
 }
 
 export interface PlayerState {

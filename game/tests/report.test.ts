@@ -26,6 +26,11 @@ describe('Өдрийн тайлангийн дэлгэрэнгүй (1f) — си
     until(sim, 2, cfg.time.dayStartMinute + 5);
     expect(s.today.yield?.cow).toMatchObject({ outside: 1, lowGut: 1 });
     expect(s.today.yield!.cow!.gave).toBeGreaterThanOrEqual(1);
+    // Хонь: ноос үлдээгээгүй шалтгаан бүр тоологдоно — нийлбэр нь нэг нас хүрсэн бүх хонь
+    const ys = s.today.yield!.sheep!;
+    const adultSheep = s.animals.filter((x) => x.species === 'sheep' && x.age >= 1).length;
+    expect(ys.gave + ys.lowGut + ys.lowCond + (ys.waiting ?? 0)).toBe(adultSheep);
+    expect((ys.waiting ?? 0) + ys.lowGut + ys.lowCond).toBeGreaterThan(0);
     expect(s.items.some((it) => it.product === 'milk' && Math.hypot(it.x - out.x, it.z - out.z) < 8)).toBe(true);
 
     // 2-р өдөр: чоно дуудна (cheat) — үүрний нутагт үлдсэн хонь
