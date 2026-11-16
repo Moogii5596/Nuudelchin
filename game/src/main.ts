@@ -39,7 +39,7 @@ import { registerServiceWorker, onConnectionChange } from './pwa';
 import { isTouch, touchKeys, quality, QUALITIES, QUALITY_NAME, QUALITY_SPEC, setQuality } from './device';
 
 function toast(msg: string, kind: '' | 'good' | 'bad' = ''): void {
-  if (isTouch) msg = touchKeys(msg.replace('хулганаар', 'хуруугаар'));
+  if (isTouch) msg = touchKeys(msg.replace(t('ui.with_the_mouse'), t('ui.with_your_finger')));
   const box = document.getElementById('toasts')!;
   const d = document.createElement('div');
   d.className = 'toast ' + kind;
@@ -149,7 +149,7 @@ function start(boot?: Boot): void {
   }
   const help = document.getElementById('help')!;
   const prompt = document.getElementById('prompt')!;
-  help.innerHTML = `<h3>${t('help.title')}</h3>${isTouch ? t('help.touch') + '\n\n' + touchKeys(t('help.body')) : t('help.body')}<p><b>P</b> — зургийн горим (тоглоом түр зогсоно)</p>`;
+  help.innerHTML = t('ui.p_photo_mode_the', { x: t('help.title'), x2: isTouch ? t('help.touch') + '\n\n' + touchKeys(t('help.body')) : t('help.body') });
   document.title = t('app.title');
 
   // M6.2: автомат хадгалалт. Sim-ийн алхмын дунд бичихгүй — хүсэлт тэмдэглээд кадрын давталт алхмуудын дараа flush хийнэ
@@ -184,30 +184,30 @@ function start(boot?: Boot): void {
       if (now - huntToastT > 4000) {
         huntToastT = now;
         const d = Math.round(Math.hypot(e.x - state.player.x, e.z - state.player.z));
-        toast(`🐺 Чоно ${t('species.' + e.species).toLowerCase()} руу дайрлаа! ${d} м зайд — Q үргээх, морь унаж оч`, 'bad');
+        toast(t('ui.a_wolf_is_attacking', { x: t('species.' + e.species).toLowerCase(), d }), 'bad');
       }
-    } else if (e.type === 'wolfKill') toast(`🐺 Чоно ${t('species.' + e.species).toLowerCase()} барьж авлаа`, 'bad');
-    else if (e.type === 'wolfGiveUp') toast('Чоно ангаа орхилоо', 'good');
+    } else if (e.type === 'wolfKill') toast(t('ui.a_wolf_caught_a', { x: t('species.' + e.species).toLowerCase() }), 'bad');
+    else if (e.type === 'wolfGiveUp') toast(t('ui.the_wolf_gave_up'), 'good');
     else if (e.type === 'town') toast(e.msg, e.good ? 'good' : 'bad');
-    else if (e.type === 'dogFight') toast(e.result === 'wolfKilled' ? `🐕 ${e.dog} чонотой барилдаж аллаа! Нохой шархадсан — хэд хоног амраана` : e.result === 'bothDied' ? `🐕 ${e.dog} чонотой барилдаж хоёулаа үхлээ` : `🐺 Хоёр чоно ${e.dog}-ыг барилаа`, e.result === 'wolfKilled' ? 'good' : 'bad');
-    else if (e.type === 'wolfPups') toast(`🐺 Чонын үүрэнд ${e.n} гөлөг гарлаа — чоно өлсөж, илүү ан хийнэ`, 'bad');
-    else if (e.type === 'wolfArrive') toast(`🐺 Өөр газраас ${e.n} чоно ирж үүрэнд суулаа`, 'bad');
-    else if (e.type === 'leftToMap') toast('🗺 Газрын зураг — очих газраа хулганаар дарна (явж байхдаа сольж болно)', 'good');
-    else if (e.type === 'arrived') toast(e.place === 'sum' ? '🏘 Сумын төвд ирлээ — дэлгүүрүүд шар тойрогтой (E), машин худалдаа ногоон тойрогтой' : '🏠 Гэртээ ирлээ', 'good');
+    else if (e.type === 'dogFight') toast(e.result === 'wolfKilled' ? t('ui.fought_the_wolf_and', { dog: e.dog }) : e.result === 'bothDied' ? t('ui.fought_the_wolf_and_7', { dog: e.dog }) : t('ui.two_wolves_killed', { dog: e.dog }), e.result === 'wolfKilled' ? 'good' : 'bad');
+    else if (e.type === 'wolfPups') toast(t('ui.pups_were_born_in', { n: e.n }), 'bad');
+    else if (e.type === 'wolfArrive') toast(t('ui.wolves_from_elsewhere_settled', { n: e.n }), 'bad');
+    else if (e.type === 'leftToMap') toast(t('ui.map_click_where_you'), 'good');
+    else if (e.type === 'arrived') toast(e.place === 'sum' ? t('ui.you_arrived_at_the') : t('ui.you_are_home'), 'good');
     else if (e.type === 'arriveCamp') panels.showArrive(e.campId);
     else if (e.type === 'season') {
       const msg: Record<string, string> = {
-        summer: '☀️ Зун боллоо — голын бэл, энгэрийн сайхан бэлчээрт мал таргална',
-        autumn: '🍂 Намар боллоо — өвс шарлаж байна. Өвлийн бууц (саравчтай уулын өвөр), боодол өвс бэлтгэ',
-        winter: '❄️ Өвөл боллоо — цас орж эхэллээ. Саравчтай уулын өвөрт өвөлжиж, өвс тэжээлээ бэлд',
-        spring: '🌱 Хавар боллоо — төлийн улирал. Уулын арын цас хайлж, доороос нь хадгалагдсан өвс гарч ирнэ',
+        summer: t('ui.summer_the_herd_fattens'),
+        autumn: t('ui.autumn_the_grass_is'),
+        winter: t('ui.winter_the_snow_has'),
+        spring: t('ui.spring_birthing_season_snow'),
       };
       toast(msg[e.season] ?? '', 'good');
-    } else if (e.type === 'helperQuit') toast(e.reason === 'wage' ? `💸 Цалин хүрэлцээгүй — ${e.names.join(', ')} малаа аваад явлаа` : `${e.names.join(', ')} ажлаас гарлаа`, 'bad');
-    else if (e.type === 'helperTrip') toast(`🚚 ${e.name} сумын төвөөс ирлээ: ${fmtMoney(e.income)} орлого`, 'good');
-    else if (e.type === 'otorLoss') toast(`🐺 Отор дээр (${t('camp.' + e.campId)}) чоно ${t('species.' + e.species).toLowerCase()} барьлаа`, 'bad');
-    else if (e.type === 'wolfRaid') toast(`🌙 Шөнө ${e.n > 1 ? e.n + ' чоно' : 'чоно'} хот руу дөхөж байна — хотоос гадуур хоносон мал аюултай`, 'bad');
-    else if (e.type === 'hour' && e.hour === Math.ceil(Math.min(...Object.values(cfg.time.homeMinute)) / 60)) toast('🌇 Орой боллоо — мал хотондоо харьж байна', '');
+    } else if (e.type === 'helperQuit') toast(e.reason === 'wage' ? t('ui.not_enough_money_for', { x: e.names.join(', ') }) : t('ui.quit', { x: e.names.join(', ') }), 'bad');
+    else if (e.type === 'helperTrip') toast(t('ui.arrived_from_the_sum', { name: e.name, x: fmtMoney(e.income) }), 'good');
+    else if (e.type === 'otorLoss') toast(t('ui.at_the_otor_a', { x: t('camp.' + e.campId), x2: t('species.' + e.species).toLowerCase() }), 'bad');
+    else if (e.type === 'wolfRaid') toast(t('ui.tonight_heading_for_the', { x: e.n > 1 ? e.n + t('ui.wolves') : t('ui.a_wolf') }), 'bad');
+    else if (e.type === 'hour' && e.hour === Math.ceil(Math.min(...Object.values(cfg.time.homeMinute)) / 60)) toast(t('ui.evening_the_animals_are'), '');
   });
 
   let speedIdx = Math.max(0, Math.min(cfg.time.speeds.length - 1, (Number(qs.get('speed')) || 1) - 1));
@@ -218,7 +218,7 @@ function start(boot?: Boot): void {
     onAction: (kind, res) => {
       if (res.ok && (kind === 'shout' || kind === 'scare' || kind === 'call')) view.characters.say(kind);
       if (res.msg) toast(res.msg, res.ok ? 'good' : 'bad');
-      else if (kind === 'deposit' && res.ok) toast('📦 Агуулахад хийлээ', 'good');
+      else if (kind === 'deposit' && res.ok) toast(t('ui.put_in_storage'), 'good');
     },
     onSpeed: (i) => {
       speedIdx = i;
@@ -228,7 +228,7 @@ function start(boot?: Boot): void {
       else if (what === 'photo' && !captureMode) {
         photoMode = !photoMode;
         document.body.classList.toggle('photo-mode', photoMode);
-        if (!photoMode) toast('Зургийн горимоос гарлаа', 'good');
+        if (!photoMode) toast(t('ui.left_photo_mode'), 'good');
       }
       else if (what === 'storage') panels.open('storage');
       else if (what === 'trade') panels.open(state.player.place === 'sum' ? (nearLotSlot(cfg, state) ? 'lot' : nearTownDoor(cfg, state) ? 'town' : nearTeahouse(cfg, state) ? 'teahouse' : 'shop') : 'cargo');
@@ -236,7 +236,7 @@ function start(boot?: Boot): void {
       else if (what === 'dogs') panels.open('dogs');
       else if (what === 'camps') panels.open('camps');
       else if (what === 'cheat') panels.open('cheat');
-      else if (what === 'zones') toast(view.zones.toggle() ? '🛡 Хамгаалалтын бүс харагдаж байна' : 'Хамгаалалтын бүс нуулаа', 'good');
+      else if (what === 'zones') toast(view.zones.toggle() ? t('ui.protection_zones_are_visible') : t('ui.protection_zones_hidden'), 'good');
       else if (help.style.display === 'block') help.style.display = 'none';
       else menu.toggleGame();   // ❓ / F1 → тоглоомын цэс (M6.3); тусламж цэснээс
     },
@@ -255,7 +255,7 @@ function start(boot?: Boot): void {
     let q = quality;
     const helpBody = help.innerHTML;
     const renderHelp = (): void => {
-      help.innerHTML = '<span class="hclose" data-h="close">✕</span>' + helpBody + `<p class="hbtns"><button class="btn" data-h="q">⚙ График: ${QUALITY_NAME[q]}</button> <button class="btn" data-h="perf">📊 FPS: ${showPerf ? 'Асаалттай' : 'Унтраалттай'}</button> <button class="btn" data-h="cheat">🛠 Туршилтын цэс</button> <button class="btn gold" data-h="close">✕ Хаах</button></p>`;
+      help.innerHTML = '<span class="hclose" data-h="close">✕</span>' + helpBody + t('ui.graphics_fps_debug_menu', { x: QUALITY_NAME[q], x2: showPerf ? t('ui.on') : t('ui.off') });
     };
     renderHelp();
     help.addEventListener('click', (e) => {
@@ -329,43 +329,43 @@ function start(boot?: Boot): void {
   const updatePrompt = (): void => {
     const p = state.player;
     let html = '';
-    if (!panels.isOpen && p.place === 'map') html = 'Газрын зураг: очих газраа зүүн товчоор дарна · баруун товч — эргүүлэх · дунд товч — хазайлгах · дугуй — томруулах · <kbd>Shift</kbd> — цаг хурдасгах';
+    if (!panels.isOpen && p.place === 'map') html = t('ui.map_left_click_where');
     else if (!panels.isOpen && p.interior) {
       const name = interiorName(p.interior.door, p.interior.room);
       const svc = interiorService(cfg, state);
       html = atExit(cfg, state) ? t('interior.hint.exit') : svc ? t('interior.hint.' + svc) + t('interior.hint.walk', { name }) : t('interior.hint.walk', { name });
     }
-    else if (!panels.isOpen && p.driving) html = '<kbd>W</kbd><kbd>S</kbd> явах/тоормос · <kbd>A</kbd><kbd>D</kbd> эргэх · <kbd>V</kbd> буух' + (p.place === 'camp' && Math.hypot(p.x - cfg.camps.home.x, p.z - cfg.camps.home.z) < cfg.vehicles.road.loadRange ? ' · <kbd>T</kbd> ачих/буулгах' : '') + ' · захын хязгаар руу явбал эсвэл <kbd>Tab</kbd> — газрын зураг';
+    else if (!panels.isOpen && p.driving) html = t('ui.w_s_drive_brake') + (p.place === 'camp' && Math.hypot(p.x - cfg.camps.home.x, p.z - cfg.camps.home.z) < cfg.vehicles.road.loadRange ? t('ui.t_load_unload') : '') + t('ui.drive_to_the_edge');
     else if (!panels.isOpen && p.place === 'sum') {
       const door = nearTradeDoor(cfg, state);
       const slot = nearLotSlot(cfg, state);
       const nearV = nearestVehicle(cfg, state, cfg.vehicles.road.enterRange);
-      const where = 'Дэлгүүрүүд — шар тойрог · Цайны газар (туслах хөлслөх) — цэнхэр · Машин худалдаа — ногоон';
+      const where = t('ui.shops_yellow_ring_teahouse');
       const lotTxt = (): string => {
         const v = slot && !slot.display ? (cfg.vehicles as unknown as Record<string, { name: string; emoji: string; price: number } | undefined>)[slot.vehicle] : undefined;
-        return v ? `<kbd>E</kbd> ${v.emoji} ${v.name} — ${fmtMoney(v.price)} · Худалдан авах` : `${t('sum3d.lot.' + (slot?.vehicle ?? ''))} — удахгүй`;
+        return v ? t('ui.e_buy', { emoji: v.emoji, name: v.name, x: fmtMoney(v.price) }) : t('ui.coming_soon', { x: t('sum3d.lot.' + (slot?.vehicle ?? '')) });
       };
       const town = nearTownDoor(cfg, state);
-      const townTxt = (): string => town!.role === 'house' ? (state.town.houses[town!.id] ? 'Таны хашаа байшин' : 'Зарагдах хашаа байшин') : town!.role === 'relative' ? 'Хамаатан айл' : t('sum3d.' + town!.id) + (town!.role === 'soon' ? ' — тун удахгүй' : '');
+      const townTxt = (): string => town!.role === 'house' ? (state.town.houses[town!.id] ? t('ui.your_yard_house') : t('ui.yard_house_for_sale')) : town!.role === 'relative' ? t('ui.relatives') : t('sum3d.' + town!.id) + (town!.role === 'soon' ? t('ui.very_soon') : '');
       const enter = !p.driving && !slot ? nearEnterDoor(cfg, state) : null;
-      html = slot && !p.driving ? lotTxt() : enter ? t('interior.hint.enter', { name: interiorName(enter.id, enter.room) }) : door ? `<kbd>E</kbd> ${t('sum3d.' + door.id)}` : town ? `<kbd>E</kbd> ${townTxt()}` : nearTeahouse(cfg, state) ? '<kbd>E</kbd> Цайны газар — туслах малчин хөлслөх' : nearV ? '<kbd>V</kbd> тэрэг/машиндаа суух' : p.mounted ? where + '. Буцахдаа <kbd>Tab</kbd> эсвэл захын хязгаар руу давхи' : where + ' · <kbd>Tab</kbd> газрын зураг';
+      html = slot && !p.driving ? lotTxt() : enter ? t('interior.hint.enter', { name: interiorName(enter.id, enter.room) }) : door ? `<kbd>E</kbd> ${t('sum3d.' + door.id)}` : town ? `<kbd>E</kbd> ${townTxt()}` : nearTeahouse(cfg, state) ? t('ui.e_teahouse_hire_a') : nearV ? t('ui.v_board_your_cart') : p.mounted ? where + t('ui.to_return_press_tab') : where + t('ui.tab_map');
     } else if (!p.away && !panels.isOpen) {
       const home = cfg.camps.home;
       const dHome = Math.hypot(p.x - home.x, p.z - home.z);
       const carried = p.carry.reduce((s, c) => s + c.amount, 0);
       const nearItems = state.items.filter((it) => Math.hypot(it.x - p.x, it.z - p.z) <= cfg.products.pickupRadius * 1.6).length;
       const horse = ridingHorse(state);
-      if (carried >= cfg.products.carryUnits - 1e-9 && dHome > home.storageRadius) html = 'Гар дүүрсэн — майхны дэргэдэх агуулах руу авчир';
-      else if (nearItems) html = `<kbd>E</kbd> түүх (${nearItems})`;
+      if (carried >= cfg.products.carryUnits - 1e-9 && dHome > home.storageRadius) html = t('ui.hands_full_bring_it');
+      else if (nearItems) html = t('ui.e_pick_up', { nearItems });
       else if (!carried && !p.mounted && nearEnterDoor(cfg, state)) html = t('interior.hint.enter', { name: interiorName(nearEnterDoor(cfg, state)!.id, nearEnterDoor(cfg, state)!.room) });
-      else if (dHome <= home.storageRadius * 2) html = `<kbd>B</kbd> агуулах, боловсруулах · <kbd>T</kbd> сумын төвд зарах ачаа · <kbd>M</kbd> нүүх · <kbd>J</kbd> туслахууд · <kbd>Tab</kbd> газрын зураг`;
-      else if (!p.mounted && nearestVehicle(cfg, state, cfg.vehicles.road.enterRange)) html = '<kbd>V</kbd> тэрэг/машиндаа суух';
-      else if (!p.mounted && horse && Math.hypot(horse.x - p.x, horse.z - p.z) <= cfg.player.mountRange) html = '<kbd>F</kbd> морь унах';
-      else if (p.mounted && Math.hypot(p.x, p.z) > cfg.player.worldRadius - 25) html = 'Цааш давхивал (эсвэл <kbd>Tab</kbd>) газрын зураг руу гарна (сумын төв, өөр бууц)';
+      else if (dHome <= home.storageRadius * 2) html = t('ui.b_storage_processing_t');
+      else if (!p.mounted && nearestVehicle(cfg, state, cfg.vehicles.road.enterRange)) html = t('ui.v_board_your_cart');
+      else if (!p.mounted && horse && Math.hypot(horse.x - p.x, horse.z - p.z) <= cfg.player.mountRange) html = t('ui.f_mount_the_horse');
+      else if (p.mounted && Math.hypot(p.x, p.z) > cfg.player.worldRadius - 25) html = t('ui.ride_on_or_press');
     }
     if (isTouch && !panels.isOpen) {
-      if (p.place === 'map') html = 'Очих газраа дарна · ☝️ эргүүлэх · ✌️ томруулах · <kbd>⏩</kbd> цаг хурдасгах';
-      else if (p.driving) html = '🕹 дээш — явах, доош — тоормос, хажуу — эргэх · <kbd>🚚</kbd> буух · захын хязгаар руу явбал эсвэл <kbd>🗺</kbd> — газрын зураг';
+      if (p.place === 'map') html = t('ui.tap_where_to_go');
+      else if (p.driving) html = t('ui.up_go_down_brake');
       html = touchKeys(html);
     }
     prompt.innerHTML = html;
@@ -435,60 +435,60 @@ function start(boot?: Boot): void {
       const carryTxt = p.carry.length ? p.carry.map((c) => `${PRODUCT_EMOJI[c.product]}${fmtNum(c.amount)}`).join(' ') : '—';
       const onGround = state.items.length;
       let status = (p.mounted ? t('hud.mounted') : t('hud.onFoot')) + ' · ' + (p.holdingUurga ? t('hud.uurga') : t('hud.noUurga'));
-      const how = p.driving ? `${cfg.vehicles[p.driving].emoji} ${cfg.vehicles[p.driving].name}` : p.mounted ? '🐎 Морьтой' : '🚶 Явганаар';
+      const how = p.driving ? `${cfg.vehicles[p.driving].emoji} ${cfg.vehicles[p.driving].name}` : p.mounted ? t('ui.mounted') : t('ui.on_foot');
       if (p.place === 'map' && !state.move) {
         const m = state.map;
         const d = Math.hypot(m.tx - m.x, m.tz - m.z);
-        const where = m.dest ? (cfg.worldmap.locations[m.dest]?.kind === 'sum' ? 'Сумын төв' : t('camp.' + m.dest)) : 'зураг дээрх цэг';
-        status = d > 0.01 ? `🗺 ${how} → ${where} · ${d.toFixed(1)} км · ~${fmtMinutes(Math.round(d / partySpeedKmPerMin(cfg, state)))}${p.drove.length ? ` · 🐑 ${p.drove.length} мал тууж явна` : ''}` : `🗺 ${how} · газрын зураг дээр зогсож байна`;
+        const where = m.dest ? (cfg.worldmap.locations[m.dest]?.kind === 'sum' ? t('ui.sum_center') : t('camp.' + m.dest)) : t('ui.a_point_on_the');
+        status = d > 0.01 ? t('ui.km', { how, where, x: d.toFixed(1), x2: fmtMinutes(Math.round(d / partySpeedKmPerMin(cfg, state))), x3: p.drove.length ? t('ui.herding_animals', { length: p.drove.length }) : '' }) : t('ui.stopped_on_the_map', { how });
       } else if (p.interior) status = t('interior.status', { name: interiorName(p.interior.door, p.interior.room) });
-      else if (p.place === 'sum') status = `🏘 Сумын төв · ${how}`;
+      else if (p.place === 'sum') status = t('ui.sum_center_62', { how });
       else if (p.driving) status = how;
-      else if (state.move) status = `🏕 ${t('camp.' + state.move.to)} руу нүүж байна · ${fmtMinutes(state.move.remaining)}`;
+      else if (state.move) status = t('ui.moving_to', { x: t('camp.' + state.move.to), x2: fmtMinutes(state.move.remaining) });
       const hunts = huntingWolves(state);
       let alert = '';
       if (hunts.length) {
         const a = state.animals.find((x) => x.id === hunts[0]!.targetId);
         const d = a ? Math.round(Math.hypot(a.x - p.x, a.z - p.z)) : 0;
-        alert = `<b style="color:#ff6b5a">⚠ Чоно дайрч байна${a ? `: ${t('species.' + a.species).toLowerCase()}, ${d} м` : ''} (Q)</b><br>`;
+        alert = t('ui.wolf_attack_q', { x: a ? t('ui.m', { x: t('species.' + a.species).toLowerCase(), d }) : '' });
       }
       const dogsTxt = state.dogs.length
-        ? `🐕 ${state.dogs.map((d) => `${d.name}: ${d.mode === 'chase' ? 'чоно хөөж байна' : DOG_ORDER_NAME[d.order].toLowerCase()}`).join(' · ')} <small>(K)</small><br>`
+        ? `🐕 ${state.dogs.map((d) => `${d.name}: ${d.mode === 'chase' ? t('ui.wolf_chasing') : DOG_ORDER_NAME[d.order].toLowerCase()}`).join(' · ')} <small>(K)</small><br>`
         : '';
       const hs = state.helpers;
       const helpersTxt = hs.list.length
-        ? `👥 Туслах ${hs.list.length}${hs.otor.length ? ` · 🏕 отор ${hs.otor.length}` : ''}${hs.list.some((h) => h.trip) ? ' · 🚚 замд' : ''} <small>(J)</small><br>`
+        ? t('ui.helpers_j', { length: hs.list.length, x: hs.otor.length ? t('ui.otor', { length: hs.otor.length }) : '', x2: hs.list.some((h) => h.trip) ? t('ui.on_the_road') : '' })
         : '';
       const sp = seasonProgress(cfg, state.time.day);
       const cs = state.camps[state.campId];
-      const snowTxt = cs && cs.snow >= 0.5 ? ` · ❄ ${Math.round(cs.snow)} см (идэх ${Math.round(campAccess(cfg, cs.snow) * 100)}%)` : '';
+      const snowTxt = cs && cs.snow >= 0.5 ? t('ui.cm_grazeable', { x: Math.round(cs.snow), x2: Math.round(campAccess(cfg, cs.snow) * 100) }) : '';
       const hayTxt = cs && (cs.hay > 0 || sp.season === 'winter' || sp.season === 'autumn') ? ` · 🌾 ${fmtNum(Math.round((cs.hay ?? 0) * 10) / 10)}` : '';
       const head =
         `<b>${t('hud.day', { day: state.time.day })}</b> · ${isNight(state.time, cfg.time) ? '🌙' : '☀️'} ${formatTime(state.time)}${paused ? ' · ⏸' : ''}<br>`;
       const full =
         head +
-        `${SEASON_EMOJI[sp.season]} ${SEASON_NAME[sp.season]} ${sp.dayOf}/${sp.days} · ${yearOf(cfg, state.time.day)}-р жил${snowTxt}${hayTxt}<br>` +
+        t('ui.year', { x: SEASON_EMOJI[sp.season], x2: SEASON_NAME[sp.season], dayOf: sp.dayOf, days: sp.days, x3: yearOf(cfg, state.time.day), snowTxt, hayTxt }) +
         `${t('hud.money')}: <b>${fmtMoney(state.money)}</b><br>` +
         `${t('hud.animals')}: ${counts.join(' · ')}<br>` +
-        `📦 ${fmtNum(storage.used(state))}/${storage.capacity(cfg, state)} · ✋ ${carryTxt} (${fmtNum(carried)}/${cfg.products.carryUnits})${onGround ? ` · газарт ${onGround}` : ''}<br>` +
+        `📦 ${fmtNum(storage.used(state))}/${storage.capacity(cfg, state)} · ✋ ${carryTxt} (${fmtNum(carried)}/${cfg.products.carryUnits})${onGround ? t('ui.on_the_ground', { onGround }) : ''}<br>` +
         `${t('hud.camp')}: ${t('camp.' + state.campId)} · ${t('hud.grass')} ${Math.round(grassAvg * 100)}% · ${t('hud.degrade')} ${Math.round(degrade * 100)}%<br>` +
         `${status} · ${t('hud.speed')}: ${speed}×${fast ? ' ⏩' : ''} <small>(1/2/3)</small><br>` +
         dogsTxt +
         helpersTxt +
         alert +
-        `<small>${t('hud.milestone')} · ${t('help.hint')}${view.heatmap ? ' · G: heatmap' : ''}${view.zones.visible ? ' · Z: бүс' : ''}${state.wolves.peaceful ? ' · чоно унтраасан' : ''}</small>`;
+        `<small>${t('hud.milestone')} · ${t('help.hint')}${view.heatmap ? ' · G: heatmap' : ''}${view.zones.visible ? t('ui.z_zones') : ''}${state.wolves.peaceful ? t('ui.wolves_off') : ''}</small>`;
       // Утсанд HUD хураангуй — дарвал бүтэн харагдана
       hud.innerHTML = hudCompact
         ? touchKeys(head) +
           `💰 <b>${fmtMoney(state.money)}</b> · 🐑 ${state.animals.filter((a) => !a.riding).length} · ✋ ${fmtNum(carried)}/${cfg.products.carryUnits}<br>` +
           `${touchKeys(status)}<br>` +
           alert +
-          `<small>▾ дэлгэрэнгүй</small>`
-        : touchKeys(full) + (isTouch ? '<br><small>▴ хураах</small>' : '');
+          t('ui.more')
+        : touchKeys(full) + (isTouch ? t('ui.collapse') : '');
       touchUI?.update(state, panels.isOpen || menu.isOpen || help.style.display === 'block');
       perf.textContent = qs.has('stats') || showPerf
-        ? `${fps.toFixed(0)} FPS · max ${worstShown.toFixed(0)} ms\n${view.drawCalls} draw · ${view.triangleCount.toLocaleString()} tris\n${state.animals.length} мал · ${view.renderer.info.memory.geometries} geo · ${view.renderer.info.memory.textures} tex`
-        : `${fps.toFixed(0)} FPS · max ${worstShown.toFixed(0)} ms · ${view.drawCalls} draw · ${state.animals.length} мал`;
+        ? t('ui.fps_max_ms_draw', { x: fps.toFixed(0), x2: worstShown.toFixed(0), drawCalls: view.drawCalls, x3: view.triangleCount.toLocaleString(), length: state.animals.length, geometries: view.renderer.info.memory.geometries, textures: view.renderer.info.memory.textures })
+        : t('ui.fps_max_ms_draw_78', { x: fps.toFixed(0), x2: worstShown.toFixed(0), drawCalls: view.drawCalls, length: state.animals.length });
     }
     requestAnimationFrame(frame);
   };
@@ -500,9 +500,9 @@ function start(boot?: Boot): void {
 
 // Интернетгүй тоглох: анх нээхэд бүх файл утсанд хадгалагдана (sw-template.js)
 registerServiceWorker((firstTime) =>
-  toast(firstTime ? '📥 Тоглоом төхөөрөмжид хадгалагдлаа — дараа нь интернетгүй ч тоглоно' : '📥 Шинэ хувилбар хадгалагдлаа — дараагийн нээлтээс ажиллана', 'good'),
+  toast(firstTime ? t('ui.the_game_is_saved') : t('ui.a_new_version_is'), 'good'),
 );
-onConnectionChange((online) => toast(online ? '📶 Интернет сэргэлээ' : '📴 Интернет тасарлаа — тоглоом үргэлжилнэ, санаа зовох хэрэггүй', online ? 'good' : ''));
+onConnectionChange((online) => toast(online ? t('ui.internet_is_back') : t('ui.internet_lost_the_game'), online ? 'good' : ''));
 
 /** Туршилтын URL параметртэй (seed, shot, herd, home, door, fresh) бол цэс, хадгалалтгүй — өмнөх шиг шууд тоглоно */
 const TEST_PARAMS = ['seed', 'shot', 'herd', 'home', 'door', 'fresh'];

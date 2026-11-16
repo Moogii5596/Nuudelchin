@@ -193,14 +193,14 @@ export class PlayerController {
     const atStore = Math.hypot(p.x - home.x, p.z - home.z) <= home.storageRadius;
     if (atStore && p.carry.length) {
       const r = this.hooks.dispatch({ type: 'deposit' });
-      if (manual || r.ok || r.msg === 'Агуулах дүүрсэн') this.hooks.onAction('deposit', r);
+      if (manual || r.ok || r.msg === 'Агуулах дүүрсэн' /* i18n-skip: sim-ийн мессеж */) this.hooks.onAction('deposit', r);
       if (!manual && !r.ok) this.autoT = 4; // дүүрсэн бол дахин дахин мэдэгдэхгүй
       return;
     }
     const R = this.cfg.products.pickupRadius;
     const near = st.items.some((it) => Math.hypot(it.x - p.x, it.z - p.z) <= R);
     if (!near) {
-      if (manual) this.hooks.onAction('pickup', { ok: false, msg: atStore ? 'Гарт юм алга' : 'Ойролцоо бүтээгдэхүүн алга' });
+      if (manual) this.hooks.onAction('pickup', { ok: false, msg: atStore ? t('ui.nothing_in_your_hands') : t('ui.no_products_nearby') });
       return;
     }
     const carried = p.carry.reduce((t, c) => t + c.amount, 0);

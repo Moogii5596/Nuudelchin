@@ -5,6 +5,7 @@
  * URL параметр: ?mobile=1 (компьютер дээр утасны горим турших) · ?mobile=0 · ?q=low|mid|high
  * Чанарыг тоглоом дотроос сольж болно (localStorage-д хадгална).
  */
+import { t } from './i18n/i18n';
 const qs = new URLSearchParams(location.search);
 
 const mq = (q: string): boolean => typeof matchMedia === 'function' && matchMedia(q).matches;
@@ -15,7 +16,7 @@ export const isTouch: boolean =
 
 export type Quality = 'low' | 'mid' | 'high';
 export const QUALITIES: Quality[] = ['low', 'mid', 'high'];
-export const QUALITY_NAME: Record<Quality, string> = { low: 'Хөнгөн', mid: 'Дунд', high: 'Өндөр' };
+export const QUALITY_NAME: Record<Quality, string> = { low: t('ui.light'), mid: t('ui.medium_395'), high: t('ui.high_396') };
 
 const QKEY = 'nuudel.quality';
 function stored(): Quality | null {

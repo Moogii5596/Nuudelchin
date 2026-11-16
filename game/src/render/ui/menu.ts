@@ -5,7 +5,7 @@
  */
 import './menu.css';
 import pkg from '../../../package.json';
-import { t, setLang, getLang, type Lang } from '../../i18n/i18n';
+import { t, setLang, getLang, LANG_KEY, type Lang } from '../../i18n/i18n';
 import type { GameConfig } from '../../sim/config';
 import type { GameState } from '../../sim/state';
 import { SAVE_VERSION } from '../../sim/state';
@@ -24,7 +24,7 @@ import { SEASON_EMOJI, SEASON_NAME, fmtMoney } from './names';
 
 export type Intent = { kind: 'new'; slot: number; difficulty: Difficulty; seed: number } | { kind: 'slot'; slot: number };
 const INTENT_KEY = 'nuudel.intent';
-const LANG_KEY = 'nuudel.lang';
+
 
 /** Дахин ачаалах «зорилго»-г нэг удаа уншиж устгана */
 export function takeIntent(): Intent | null {
@@ -339,7 +339,7 @@ export class MenuUI {
     const q = this.d.getQuality(), lang = getLang();
     let h = this.back('⚙ ' + t('menu.settings'));
     h += `<div class="row"><label>${t('menu.graphics')}</label><div class="pick">${QUALITIES.map((x) => `<button class="mb ${x === q ? 'on' : ''}" data-a="quality" data-v="${x}">${esc(QUALITY_NAME[x])}</button>`).join('')}</div></div>`;
-    h += `<div class="row"><label>${t('menu.language')}</label><div class="pick"><button class="mb ${lang === 'mn' ? 'on' : ''}" data-a="lang" data-v="mn">Монгол</button><button class="mb ${lang === 'en' ? 'on' : ''}" data-a="lang" data-v="en">English</button></div></div>`;
+    h += `<div class="row"><label>${t('menu.language')}</label><div class="pick"><button class="mb ${lang === 'mn' ? 'on' : ''}" data-a="lang" data-v="mn">Монгол</button><button class="mb ${lang === 'en' ? 'on' : ''}" data-a="lang" data-v="en">English</button></div></div>`;   // i18n-skip: хэлний нэр өөрийн хэл дээр
     if (this.root === 'game') h += `<h2 style="margin-top:10px">${t('menu.diff.title')}</h2>${this.difficultyHtml(this.d.state.settings.difficulty)}`;
     else h += `<div class="hint">${t('menu.diff.atNew')}</div>`;
     return h;
@@ -447,9 +447,17 @@ export class MenuUI {
       case 'die': this.setDie(v === '1'); this.render(); return;
       case 'quality': this.d.setQuality(v as Quality); this.render(); return;
       case 'lang':
+        // Бүх текст (самбар, нэр томьёо) ачаалах үед тогтдог тул хэл солих = хадгалаад дахин ачаалах
+        if (v === getLang()) return;
         setLang(v as Lang);
         try { localStorage.setItem(LANG_KEY, v!); } catch { /* хадгалахгүй */ }
-        this.render();
+        await this.busyDo(async () => {
+          if (this.root === 'game') {
+            await this.d.autosave?.saveNow('manual');
+            if (this.d.store) putIntent({ kind: 'slot', slot: this.d.getSlot() });
+          }
+          this.d.reload();
+        });
         return;
       case 'fileSlot': this.fileSlot = n; this.render(); return;
       case 'importPick': (this.el.querySelector('#menuFile') as HTMLInputElement | null)?.click(); return;

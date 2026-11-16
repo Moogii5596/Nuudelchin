@@ -213,7 +213,7 @@ export class WorldMapView {
       if (l.kind === 'sum') this.addSum(l.x, l.z, rng);
       else this.addCamp(l.x, l.z);
       if (sumLoc && l.kind === 'camp') this.addPath(l.x, l.z, sumLoc[1].x, sumLoc[1].z);
-      const sp = textSprite(l.kind === 'sum' ? '🏘 Сумын төв · Худалдаачин' : t('camp.' + id));
+      const sp = textSprite(l.kind === 'sum' ? t('ui.sum_center_trader') : t('camp.' + id));
       sp.position.set(l.x * U, this.heightAt(l.x, l.z) + 12, l.z * U);
       this.labels.set(id, sp);
       this.scene.add(sp);
@@ -412,7 +412,7 @@ export class WorldMapView {
       const old = this.labels.get(this.homeId);
       if (old) this.replaceLabel(this.homeId, t('camp.' + this.homeId));
       this.homeId = state.campId;
-      this.replaceLabel(state.campId, `🏠 ${t('camp.' + state.campId)} — таны бууц`);
+      this.replaceLabel(state.campId, t('ui.your_camp', { x: t('camp.' + state.campId) }));
     }
     const model = this.partyModel(state);
     const moving = Math.hypot(m.tx - m.x, m.tz - m.z) > 1e-3 || m.dest !== null;

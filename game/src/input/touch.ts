@@ -6,6 +6,7 @@
  * Товч бүр PlayerController.press(<товчны код>)-ийг дуудна — тоглоомын логик гартай яг адил.
  * Газар дээр дарах (тийш явах), чирэх (камер), хоёр хуруугаар чимхэх (томруулах) — render/camera.ts.
  */
+import { t } from '../i18n/i18n';
 import type { GameConfig } from '../sim/config';
 import type { GameState } from '../sim/state';
 import type { PlayerController } from './controller';
@@ -91,17 +92,17 @@ export class TouchUI {
       this.acts.push({ el: b, show });
     };
     const nearV = (s: GameState): boolean => !!nearestVehicle(this.cfg, s, this.cfg.vehicles.road.enterRange);
-    addAct('📣', 'Хөөе', 'Space', camp);
-    addAct('🐺', 'Үргээх', 'KeyQ', camp);
-    addAct('✋', 'Түүх', 'KeyE', camp);
-    addAct('🏪', 'Худалдаа', 'KeyE', (s) => s.player.place === 'sum' && !s.player.driving && !s.player.interior);
-    addAct('🚪', 'Гарах/Үйлдэл', 'KeyE', (s) => !!s.player.interior);   // V6.1: дотор E — гарах эсвэл лангуунд цонх нээх
-    addAct('🪵', 'Уурга', 'KeyU', camp);
-    addAct('🐎', 'Морь', 'KeyF', (s) => (s.player.place === 'camp' || s.player.place === 'sum') && !s.player.driving && !s.move && !s.player.interior);
-    addAct('🐴', 'Дуудах', 'KeyH', (s) => camp(s) && !s.player.mounted);
-    addAct('🚚', 'Тэрэг', 'KeyV', (s) => s.player.place !== 'map' && !s.move && (!!s.player.driving || (!s.player.mounted && nearV(s))));
-    addAct('🗺', 'Зураг', 'Tab', (s) => s.player.place !== 'map' && !s.move);
-    addAct('⏩', 'Хурдлах', 'ShiftLeft', (s) => s.player.place === 'map' && !s.move, true);
+    addAct('📣', t('ui.shout'), 'Space', camp);
+    addAct('🐺', t('ui.scare'), 'KeyQ', camp);
+    addAct('✋', t('ui.pick_up'), 'KeyE', camp);
+    addAct('🏪', t('ui.trade'), 'KeyE', (s) => s.player.place === 'sum' && !s.player.driving && !s.player.interior);
+    addAct('🚪', t('ui.leave_act'), 'KeyE', (s) => !!s.player.interior);   // V6.1: дотор E — гарах эсвэл лангуунд цонх нээх
+    addAct('🪵', t('ui.switch'), 'KeyU', camp);
+    addAct('🐎', t('ui.horse'), 'KeyF', (s) => (s.player.place === 'camp' || s.player.place === 'sum') && !s.player.driving && !s.move && !s.player.interior);
+    addAct('🐴', t('ui.call'), 'KeyH', (s) => camp(s) && !s.player.mounted);
+    addAct('🚚', t('ui.cart'), 'KeyV', (s) => s.player.place !== 'map' && !s.move && (!!s.player.driving || (!s.player.mounted && nearV(s))));
+    addAct('🗺', t('ui.map'), 'Tab', (s) => s.player.place !== 'map' && !s.move);
+    addAct('⏩', t('ui.gallop'), 'ShiftLeft', (s) => s.player.place === 'map' && !s.move, true);
     document.body.appendChild(actBox);
 
     // --- Цэс ---
@@ -119,18 +120,18 @@ export class TouchUI {
       return b;
     };
     const atCamp = (s: GameState): boolean => s.player.place === 'camp' && !s.move;
-    addMenu('📦', 'Агуулах', () => this.ctl.press('KeyB'), atCamp);
-    addMenu('🧺', 'Ачаа бэлтгэх', () => this.ctl.press('KeyT'), atCamp);
-    addMenu('🏕', 'Бууц сэлгэх', () => this.ctl.press('KeyM'), atCamp);
-    addMenu('👥', 'Туслахууд', () => this.ctl.press('KeyJ'));
-    addMenu('🐕', 'Нохой', () => this.ctl.press('KeyK'), (s) => s.dogs.length > 0);
-    addMenu('🛡', 'Хамгаалалтын бүс', () => this.ctl.press('KeyZ'), atCamp);
-    this.speedBtn = addMenu('1×', 'Хурд', () => {
+    addMenu('📦', t('ui.storage'), () => this.ctl.press('KeyB'), atCamp);
+    addMenu('🧺', t('ui.load_goods'), () => this.ctl.press('KeyT'), atCamp);
+    addMenu('🏕', t('ui.move_camp'), () => this.ctl.press('KeyM'), atCamp);
+    addMenu('👥', t('ui.helpers_319'), () => this.ctl.press('KeyJ'));
+    addMenu('🐕', t('ui.dogs'), () => this.ctl.press('KeyK'), (s) => s.dogs.length > 0);
+    addMenu('🛡', t('ui.zones'), () => this.ctl.press('KeyZ'), atCamp);
+    this.speedBtn = addMenu('1×', t('ui.speed'), () => {
       const n = (this.hooks.speedIdx() + 1) % this.hooks.speeds.length;
       this.ctl.press('Digit' + (n + 1));
     });
-    addMenu('❓', 'Тусламж', () => this.ctl.press('F1'));
-    if (document.fullscreenEnabled) addMenu('⛶', 'Бүтэн дэлгэц', () => void this.fullscreen(!document.fullscreenElement));
+    addMenu('❓', t('ui.help'), () => this.ctl.press('F1'));
+    if (document.fullscreenEnabled) addMenu('⛶', t('ui.fullscreen'), () => void this.fullscreen(!document.fullscreenElement));
     document.body.appendChild(menuBox);
 
     // --- Босоо байрлал: хэвтээ болгох / суулгах ---
@@ -139,16 +140,7 @@ export class TouchUI {
     this.rotateEl = el(
       'div',
       'rotate',
-      `<div class="rot-box">
-        <div class="rot-ico">📱↻</div>
-        <div class="rot-msg">Нүүдэлчин хэвтээ дэлгэцэд тоглогдоно</div>
-        <div class="rot-btns">
-          ${canLockLandscape ? '<button class="btn gold big" data-t="land">⛶ Хэвтээ дэлгэцээр тоглох</button>' : ''}
-          <button class="btn big install" data-t="install">📲 Утсандаа суулгах</button>
-        </div>
-        <div class="rot-hint">${canLockLandscape ? 'эсвэл утсаа хэвтээ эргүүлнэ үү' : 'Утсаа хэвтээ эргүүлнэ үү'}</div>
-        ${inAppBrowser ? '<div class="rot-note">Messenger/Facebook дотроос нээсэн бол ⋮ эсвэл ⋯ цэснээс «Хөтчөөр нээх» (Chrome/Safari) — тэгвэл утсандаа суулгаж болно</div>' : ''}
-      </div>`,
+      t('ui.nuudel_is_played_in', { x: canLockLandscape ? t('ui.play_in_landscape') : '', x2: canLockLandscape ? t('ui.or_turn_your_phone') : t('ui.please_turn_your_phone'), x3: inAppBrowser ? t('ui.if_you_opened_this') : '' }),
     );
     document.body.appendChild(this.rotateEl);
 
@@ -156,22 +148,7 @@ export class TouchUI {
     this.startEl = el(
       'div',
       'tstart',
-      `<div class="tstart-box">
-        <h1>Нүүдэлчин</h1>
-        <p>Малаа өсгөж, бууцаа сэлгэж, чоноос хамгаалж, сумын төвд бүтээгдэхүүнээ зар.</p>
-        <ul>
-          <li>🕹 Зүүн доод джойстик — алхах, захад нь түлхвэл гүйнэ</li>
-          <li>👆 Газар дээр дарах — тийш явах, хоёр удаа дарвал гүйнэ</li>
-          <li>☝️ Чирэх — камер эргүүлэх · ✌️ чимхэх — ойртуулах</li>
-          <li>📣 Хөөе — мал бөөгнөрч танаас холдоно · 🐺 чоно үргээх</li>
-          <li>❓ — бүх тайлбар</li>
-        </ul>
-        <div class="rot-btns">
-          <button class="btn gold big" data-t="play">▶ Тоглох</button>
-          <button class="btn big install" data-t="install">📲 Утсандаа суулгах</button>
-        </div>
-        <p class="muted install-note">Суулгавал нүүр дэлгэцэд Нүүдэлчин дүрс гарч, апп шиг бүтэн дэлгэцээр нээгдэнэ.</p>
-      </div>`,
+      t('ui.mongolian_nomad_simulator_grow'),
     );
     document.body.appendChild(this.startEl);
 
@@ -179,16 +156,7 @@ export class TouchUI {
     this.sheetEl = el(
       'div',
       'tsheet',
-      `<div class="tstart-box">
-        <h1>📲 iPhone-д суулгах</h1>
-        <ol>
-          <li>Safari-ийн доод (iPad-д дээд) талын <b>Хуваалцах</b> <span class="ios-share">⬆︎</span> товчийг дар</li>
-          <li>Доош гүйлгээд <b>«Нүүр дэлгэцэд нэмэх»</b> (Add to Home Screen) сонго</li>
-          <li>Баруун дээд талын <b>«Нэмэх»</b> (Add) товчийг дар</li>
-        </ol>
-        <p class="muted">Дараа нь нүүр дэлгэцэн дээрх <b>Нүүдэлчин</b> дүрсээр орж тоглоно — хаягийн мөргүй, бүтэн дэлгэцээр.</p>
-        <div class="rot-btns"><button class="btn gold big" data-t="sheetClose">Ойлголоо</button></div>
-      </div>`,
+      t('ui.install_on_iphone_tap'),
     );
     document.body.appendChild(this.sheetEl);
 

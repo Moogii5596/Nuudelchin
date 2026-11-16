@@ -44,17 +44,17 @@ interface HelperView {
   counts: Record<string, number>;
 }
 
-const HERD_NAME: Record<string, string> = { sheep: '🐑 Хонь ямаа', cow: '🐄 Үхэр', horse: '🐎 Адуу' };
+const HERD_NAME: Record<string, string> = { sheep: t('ui.sheep_goats'), cow: t('ui.cattle'), horse: t('ui.horses') };
 
 const CHEATS: { act: CheatAction; label: string }[][] = [
-  [{ act: 'money', label: '💰 +1 000 000₮' }, { act: 'fillStorage', label: '🥛 Гарт сүү, ноос' }],
-  [{ act: 'addSheep', label: '🐑 +10 хонь' }, { act: 'addGoats', label: '🐐 +10 ямаа' }, { act: 'addCows', label: '🐄 +5 үхэр' }, { act: 'addHorses', label: '🐎 +5 адуу' }, { act: 'addMixed', label: '+50 холимог' }],
-  [{ act: 'addDog', label: '🐕 +1 нохой' }, { act: 'removeDog', label: '−1 нохой' }],
-  [{ act: 'skipHour', label: '⏩ +1 цаг' }, { act: 'endDay', label: '🌅 Өдрийг дуусгах' }],
-  [{ act: 'thirsty', label: '💧 Бүх мал цангах' }, { act: 'quench', label: 'Бүх мал ус уух' }, { act: 'hungry', label: '🌾 Идэш 0' }, { act: 'fatten', label: 'Бүдүүн тарган' }],
-  [{ act: 'degradeUp', label: '🟫 Доройтол +10%' }, { act: 'degradeReset', label: 'Доройтол 0' }],
-  [{ act: 'nextSeason', label: '🍂 Дараагийн улирал' }, { act: 'addHay', label: '🌾 +20 боодол өвс' }, { act: 'snowUp', label: '❄ Цас +10 см' }, { act: 'snowClear', label: 'Цас арилгах' }],
-  [{ act: 'wolfAttack', label: '🐺 Чоно дайруулах' }, { act: 'scareAll', label: 'Бүх чоно үргээх' }, { act: 'wolvesPeaceful', label: 'Дайралт асаах/унтраах' }],
+  [{ act: 'money', label: '💰 +1 000 000₮' }, { act: 'fillStorage', label: t('ui.milk_wool_in_hand') }],
+  [{ act: 'addSheep', label: t('ui.10_sheep') }, { act: 'addGoats', label: t('ui.10_goats') }, { act: 'addCows', label: t('ui.5_cattle') }, { act: 'addHorses', label: t('ui.5_horses') }, { act: 'addMixed', label: t('ui.50_mixed') }],
+  [{ act: 'addDog', label: t('ui.1_dog') }, { act: 'removeDog', label: t('ui.1_dog_93') }],
+  [{ act: 'skipHour', label: t('ui.1_hour') }, { act: 'endDay', label: t('ui.end_the_day') }],
+  [{ act: 'thirsty', label: t('ui.all_animals_thirsty') }, { act: 'quench', label: t('ui.all_animals_drink') }, { act: 'hungry', label: t('ui.feed_0') }, { act: 'fatten', label: t('ui.very_fat') }],
+  [{ act: 'degradeUp', label: t('ui.degradation_10') }, { act: 'degradeReset', label: t('ui.degradation_0') }],
+  [{ act: 'nextSeason', label: t('ui.next_season') }, { act: 'addHay', label: t('ui.20_hay_bales') }, { act: 'snowUp', label: t('ui.snow_10_cm') }, { act: 'snowClear', label: t('ui.clear_snow') }],
+  [{ act: 'wolfAttack', label: t('ui.trigger_a_wolf_attack') }, { act: 'scareAll', label: t('ui.scare_all_wolves_away') }, { act: 'wolvesPeaceful', label: t('ui.wolf_attacks_on_off') }],
 ];
 
 interface BuyItem {
@@ -65,13 +65,13 @@ interface BuyItem {
 }
 
 const ANIMAL_CATALOG: { key: string; species: Species; sex: Sex; age: number; note: string }[] = [
-  { key: 'ewe', species: 'sheep', sex: 'f', age: 3, note: 'Төллөж, ноос өгнө' },
-  { key: 'ram', species: 'sheep', sex: 'm', age: 3, note: '30 хүртэл эм хонинд үржлийн эр' },
-  { key: 'goatF', species: 'goat', sex: 'f', age: 3, note: 'Ноолуур өгнө' },
-  { key: 'buck', species: 'goat', sex: 'm', age: 3, note: 'Ямааны үржлийн эр' },
-  { key: 'cowF', species: 'cow', sex: 'f', age: 4, note: 'Дараагийн мөчлөгт тугалж, сүү өгнө' },
-  { key: 'bull', species: 'cow', sex: 'm', age: 4, note: 'Бухтай бол хөршийн бух хэрэггүй' },
-  { key: 'mare', species: 'horse', sex: 'f', age: 4, note: 'Адуу' },
+  { key: 'ewe', species: 'sheep', sex: 'f', age: 3, note: t('ui.gives_birth_gives_wool') },
+  { key: 'ram', species: 'sheep', sex: 'm', age: 3, note: t('ui.a_breeding_ram_for') },
+  { key: 'goatF', species: 'goat', sex: 'f', age: 3, note: t('ui.gives_cashmere') },
+  { key: 'buck', species: 'goat', sex: 'm', age: 3, note: t('ui.breeding_buck_for_goats') },
+  { key: 'cowF', species: 'cow', sex: 'f', age: 4, note: t('ui.gives_a_calf_and') },
+  { key: 'bull', species: 'cow', sex: 'm', age: 4, note: t('ui.with_a_bull_you') },
+  { key: 'mare', species: 'horse', sex: 'f', age: 4, note: t('ui.horses_115') },
 ];
 
 interface Draft {
@@ -142,7 +142,7 @@ export class Panels {
       const st = this.state;
       if (kind === 'shop' && st.player.place !== 'sum') return;
       if (kind === 'cargo' && (st.player.place !== 'camp' || st.move)) {
-        this.hooks.toast('Ачаа хотондоо ачна', 'bad');
+        this.hooks.toast(t('ui.loads_goods_at_the'), 'bad');
         return;
       }
       const here = st.fleet.filter((f) => f.place === st.player.place);
@@ -220,45 +220,37 @@ export class Panels {
   private storageHtml(): string {
     const { cfg, state } = this;
     const cap = storage.capacity(cfg, state), used = storage.used(state);
-    const lvlNames = ['Сав суулга (майхны хажууд)', 'Модон амбаар', 'Том агуулах'];
+    const lvlNames = [t('ui.containers_beside_the_tent'), t('ui.wooden_barn'), t('ui.large_storage')];
     const rows = PRODUCTS.map((p) => {
       const batches = state.storage.filter((b) => b.product === p);
       const n = batches.reduce((s, b) => s + b.amount, 0);
       if (n <= 1e-9) return '';
       let note = '';
-      if (p === 'milk') note = 'Маргааш тараг болно — боловсруул эсвэл зар';
+      if (p === 'milk') note = t('ui.becomes_tarag_yogurt_tomorrow');
       if (p === 'tarag') {
         const old = batches.filter((b) => b.ageDays >= cfg.products.storage.milkSpoilDays - 1).reduce((s, b) => s + b.amount, 0);
-        note = old > 0 ? `${fmtNum(old)} л маргааш муудна` : '';
+        note = old > 0 ? t('ui.l_spoil_tomorrow', { x: fmtNum(old) }) : '';
       }
       return `<tr><td>${PRODUCT_EMOJI[p]} ${productName(p)}</td><td class="num">${fmtNum(n)} ${unitOf(p)}</td><td class="num">${fmtMoney(productPrice(cfg, p))}</td><td class="muted">${note}</td></tr>`;
     }).join('');
     const carry = state.player.carry;
     const carryTxt = carry.length
       ? carry.map((c) => `${PRODUCT_EMOJI[c.product]} ${fmtNum(c.amount)}`).join(' · ')
-      : 'хоосон';
+      : t('ui.empty');
     const near = Math.hypot(state.player.x - cfg.camps.home.x, state.player.z - cfg.camps.home.z) <= cfg.camps.home.storageRadius * 2;
     const procs = (Object.keys(PROCESSOR_NAME) as ProcessorKind[]).map((kind) => {
       const r = recipe(cfg, kind);
       const owned = state.processors.filter((p) => p.kind === kind);
-      const recipeTxt = `${Object.entries(r.input).map(([p, n]) => `${n} ${unitOf(p)} ${productName(p).toLowerCase()}`).join(', ')} → ${Object.entries(r.output).map(([p, n]) => `${n} ${unitOf(p)} ${productName(p).toLowerCase()}`).join(', ')} · ${r.hours} цаг`;
-      if (!owned.length) return `<tr><td>${PROCESSOR_NAME[kind]}</td><td class="muted" colspan="2">${recipeTxt}</td><td class="muted">Байхгүй · сумын төвөөс ${fmtMoney(r.price)}</td></tr>`;
+      const recipeTxt = t('ui.h', { x: Object.entries(r.input).map(([p, n]) => `${n} ${unitOf(p)} ${productName(p).toLowerCase()}`).join(', '), x2: Object.entries(r.output).map(([p, n]) => `${n} ${unitOf(p)} ${productName(p).toLowerCase()}`).join(', '), hours: r.hours });
+      if (!owned.length) return t('ui.not_available_buy_in', { x: PROCESSOR_NAME[kind], recipeTxt, x2: fmtMoney(r.price) });
       return owned.map((pr) => {
         const pending = Object.keys(pr.pending).length;
-        const status = pr.remaining > 0 ? `⏳ ${fmtMinutes(pr.remaining)} үлдсэн` : pending ? '⚠ Агуулах дүүрсэн — гаралт хүлээж байна' : 'Сул';
+        const status = pr.remaining > 0 ? t('ui.left', { x: fmtMinutes(pr.remaining) }) : pending ? t('ui.storage_is_full_output') : t('ui.idle');
         const can = pr.remaining <= 0 && !pending && Object.entries(r.input).every(([p, n]) => storage.count(state, p as ProductId) >= n - 1e-9);
-        return `<tr><td>${PROCESSOR_NAME[kind]}</td><td class="muted" colspan="2">${recipeTxt}</td><td>${status} <button class="btn gold" data-act="process:${kind}" ${can && near ? '' : 'disabled'}>Эхлүүлэх</button></td></tr>`;
+        return t('ui.start', { x: PROCESSOR_NAME[kind], recipeTxt, status, kind, x2: can && near ? '' : 'disabled' });
       }).join('');
     }).join('');
-    return `
-      <h2>📦 Агуулах ба боловсруулалт <span class="close" data-act="close">✕</span></h2>
-      <div class="bar"><div style="width:${cap ? Math.min(100, (used / cap) * 100) : 0}%"></div></div>
-      <p>${lvlNames[state.storageLevel] ?? ''}: <b>${fmtNum(used)} / ${cap}</b> нэгж (1 л сүү = 1 кг ноос = 1 нэгж) · Гарт: ${carryTxt} (${fmtNum(carry.reduce((s, c) => s + c.amount, 0))}/${cfg.products.carryUnits})</p>
-      <table>${rows || '<tr><td class="muted">Агуулах хоосон байна. Газарт унасан сав сүү, ноосыг түүж (E) майхны дэргэд авчир.</td></tr>'}</table>
-      <h3>Боловсруулах</h3>
-      <table>${procs}</table>
-      ${near ? '' : '<p class="muted">Боловсруулахын тулд майхныхаа дэргэд оч.</p>'}
-      <p class="muted">Сүү агуулахад 1 өдрийн дараа тараг болж, 2 өдрийн дараа муудна. Ааруул, өрөм, эсгий муудахгүй.</p>`;
+    return t('ui.storage_processing_units_1', { x: cap ? Math.min(100, (used / cap) * 100) : 0, x2: lvlNames[state.storageLevel] ?? '', x3: fmtNum(used), cap, carryTxt, x4: fmtNum(carry.reduce((s, c) => s + c.amount, 0)), carryUnits: cfg.products.carryUnits, x5: rows || t('ui.the_storage_is_empty'), procs, x6: near ? '' : t('ui.go_near_your_tent') });
   }
 
   // ======================= сумын төв =======================
@@ -284,21 +276,21 @@ export class Panels {
     const out: BuyItem[] = [];
     for (const kind of Object.keys(PROCESSOR_NAME) as ProcessorKind[]) {
       if (state.processors.some((p) => p.kind === kind)) continue;
-      out.push({ key: 'proc:' + kind, label: PROCESSOR_NAME[kind]!, note: 'Цагаан идээ, эсгий хийнэ', order: { kind: 'processor', id: kind } });
+      out.push({ key: 'proc:' + kind, label: PROCESSOR_NAME[kind]!, note: t('ui.makes_dairy_products_and'), order: { kind: 'processor', id: kind } });
     }
     const next = cfg.storage.levels[state.storageLevel + 1];
-    if (next) out.push({ key: 'storage', label: state.storageLevel === 0 ? 'Модон амбаар' : 'Том агуулах', note: `Багтаамж ${next.capacity} нэгж`, order: { kind: 'storage' } });
-    if (state.home !== 'ger') out.push({ key: 'ger', label: 'Гэр (4 ханатай)', note: 'Зорилго: гэр + 40 хонин толгой', order: { kind: 'ger' } });
-    if (state.dogs.length < cfg.dogs.maxDogs) out.push({ key: 'dog', label: 'Нохой (банхар)', note: `10 м хамгаалалтын бүс, ойртсон чоныг хөөнө · хоол өдөрт ${fmtMoney(cfg.dogs.foodPerDay)} · K — команд`, order: { kind: 'dog' } });
+    if (next) out.push({ key: 'storage', label: state.storageLevel === 0 ? t('ui.wooden_barn') : t('ui.large_storage'), note: t('ui.capacity_units', { capacity: next.capacity }), order: { kind: 'storage' } });
+    if (state.home !== 'ger') out.push({ key: 'ger', label: t('ui.ger_4_walls'), note: t('ui.goal_a_ger_40'), order: { kind: 'ger' } });
+    if (state.dogs.length < cfg.dogs.maxDogs) out.push({ key: 'dog', label: t('ui.dog_bankhar'), note: t('ui.10_m_protection_zone', { x: fmtMoney(cfg.dogs.foodPerDay) }), order: { kind: 'dog' } });
     const H = cfg.helpers;
-    out.push({ key: 'helperTent', label: '⛺ Туслахын майхан', note: `Ганц бие ${H.housing.helperTent.beds} туслахын ор · одоо ${bedsUsed(state)}/${bedsTotal(cfg, state)}`, order: { kind: 'helperTent' } });
-    out.push({ key: 'helperGer', label: '🛖 Туслахын гэр', note: `Ганц бие ${H.housing.helperGer.beds} туслахын ор`, order: { kind: 'helperGer' } });
-    out.push({ key: 'otorTent', label: '⛺ Отрын майхан', note: `Малчныг отор явуулахад нэг илүү майхан хэрэгтэй (гэртэй болбол хуучин майхан тань илүү болно) · одоо сул ${spareTents(state)}`, order: { kind: 'otorTent' } });
+    out.push({ key: 'helperTent', label: t('ui.helper_tent'), note: t('ui.bed_for_single_helper', { beds: H.housing.helperTent.beds, x: bedsUsed(state), x2: bedsTotal(cfg, state) }), order: { kind: 'helperTent' } });
+    out.push({ key: 'helperGer', label: t('ui.helper_ger'), note: t('ui.bed_for_single_helper_141', { beds: H.housing.helperGer.beds }), order: { kind: 'helperGer' } });
+    out.push({ key: 'otorTent', label: t('ui.otor_tent'), note: t('ui.sending_a_herder_to', { x: spareTents(state) }), order: { kind: 'otorTent' } });
     for (const id of ['horseCart', 'porter', 'amjirgaa'] as const) {
       if (state.vehicles.includes(id)) continue;
       const v = cfg.vehicles[id];
       const kmh = Math.round(cfg.vehicles.sumCenterKm / v.oneWayHours);
-      out.push({ key: id, label: `${v.emoji} ${v.name}${v.truck ? ' (ачааны машин)' : ''}`, note: `${v.capacity} нэгж, ${v.sheepSlots} хонь / ${v.cowSlots} үхэр, ${kmh} км/ц${v.fuelPer100km ? `, ${v.fuelPer100km} л/100 км` : ''} · гэрт тань хүргэнэ`, order: { kind: 'vehicle', id } });
+      out.push({ key: id, label: `${v.emoji} ${v.name}${v.truck ? t('ui.truck') : ''}`, note: t('ui.units_sheep_cattle_km', { capacity: v.capacity, sheepSlots: v.sheepSlots, cowSlots: v.cowSlots, kmh, x: v.fuelPer100km ? t('ui.l_100_km', { fuelPer100km: v.fuelPer100km }) : '' }), order: { kind: 'vehicle', id } });
     }
     return out;
   }
@@ -319,9 +311,9 @@ export class Panels {
     const v = cfg.vehicles[f.id];
     const prod = Object.entries(f.cargo).map(([p, n]) => `${PRODUCT_EMOJI[p as ProductId]} ${fmtNum(n ?? 0)} ${unitOf(p)}`).join(' · ');
     const an = this.animalGroups(f.animals).map((g) => `${g.label} ${g.list.length}`).join(' · ');
-    const ord = f.orders.length ? `${f.orders.length} бараа` : '';
+    const ord = f.orders.length ? t('ui.item_s', { length: f.orders.length }) : '';
     const parts = [prod, an, ord].filter(Boolean).join(' · ');
-    return `<p>Ачаа: <b>${fmtNum(cargoUnits(f))}/${v.capacity}</b> нэгж · мал ${fmtNum(cargoSlots(cfg, f))}/${v.sheepSlots} байр${parts ? ` — ${parts}` : ' — хоосон'}</p>`;
+    return t('ui.cargo_units_animals_slots', { x: fmtNum(cargoUnits(f)), capacity: v.capacity, x2: fmtNum(cargoSlots(cfg, f)), sheepSlots: v.sheepSlots, x3: parts ? ` — ${parts}` : t('ui.empty_148') });
   }
 
   // ======================= ачаа (хотонд, T) =======================
@@ -337,15 +329,9 @@ export class Panels {
       const have = storage.count(state, pr);
       if (have <= 1e-9) return '';
       const n = d.take[pr] ?? 0;
-      return `<tr><td>${PRODUCT_EMOJI[pr]} ${productName(pr)} <span class="muted">(${fmtNum(have)} ${unitOf(pr)})</span></td><td class="num">${fmtMoney(productPrice(cfg, pr))}</td>
-        <td class="ctl"><button class="btn sm" data-act="take-:${pr}">−</button><b>${fmtNum(n)}</b><button class="btn sm" data-act="take+:${pr}">+</button><button class="btn sm" data-act="takeAll:${pr}">бүгд</button></td></tr>`;
+      return t('ui.all', { x: PRODUCT_EMOJI[pr], x2: productName(pr), x3: fmtNum(have), x4: unitOf(pr), x5: fmtMoney(productPrice(cfg, pr)), pr, x6: fmtNum(n), pr2: pr, pr3: pr });
     }).join('');
-    let html = `<h2>🧺 Сумын төв рүү ачаа бэлтгэх <span class="close" data-act="close">✕</span></h2>
-      <p class="muted">Морь унаж эсвэл тэрэг, машиндаа сууж (V) бууцны захын хязгаарт хүрэхэд газрын зураг гарна. Тэндээс сумын төв дээр дарж Худалдаачинд оч.</p>
-      <h3>✋ Гартаа авах (морьтой явахад) — гарт ${fmtNum(carried)}/${cfg.products.carryUnits}</h3>
-      <table>${takeRows || '<tr><td class="muted">Агуулах хоосон</td></tr>'}</table>
-      <p><button class="btn gold" data-act="doTake" ${takeUnits > 0 && takeUnits <= room + 1e-9 && nearStore ? '' : 'disabled'}>Гартаа авах (${fmtNum(takeUnits)})</button>
-      ${!nearStore ? ' <span class="bad">Агуулахын дэргэд оч</span>' : takeUnits > room + 1e-9 ? ` <span class="bad">Гарт ${fmtNum(room)} нэгж л багтана</span>` : ''}</p>`;
+    let html = t('ui.prepare_goods_for_the', { x: fmtNum(carried), carryUnits: cfg.products.carryUnits, x2: takeRows || t('ui.storage_is_empty'), x3: takeUnits > 0 && takeUnits <= room + 1e-9 && nearStore ? '' : 'disabled', x4: fmtNum(takeUnits), x5: !nearStore ? t('ui.go_to_the_storage') : takeUnits > room + 1e-9 ? t('ui.your_hands_only_hold', { x: fmtNum(room) }) : '' });
 
     // Морьтой: мал тууж явах
     const groups = this.animalGroups();
@@ -355,14 +341,13 @@ export class Panels {
         return `<tr><td>${g.label} <span class="muted">(${g.list.length})</span></td><td class="num">~${fmtMoney(salePrice(g.list[0]!, cfg.animals))}</td>
           <td class="ctl"><button class="btn sm" data-act="ag-:${g.key}">−</button><b>${n}</b><button class="btn sm" data-act="ag+:${g.key}">+</button></td></tr>`;
       }).join('');
-      if (!d.vehicle) html += `<h3>🐎 Морьтой: мал араасаа тууж очиж зарах</h3><p class="muted">Мал тууж явбал газрын зураг дээр ${fmtNum(cfg.vehicles.riding.droveKmh)} км/ц болж удаашрна.</p>
-        <table>${rows}</table><p><button class="btn gold" data-act="doDrove">Араасаа тууж явах</button></p>`;
+      if (!d.vehicle) html += t('ui.riding_drive_animals_behind', { x: fmtNum(cfg.vehicles.riding.droveKmh), rows });
     }
     if (!state.fleet.some((f) => f.place === 'camp')) {
-      html += `<p class="muted">Тэрэг, машин алга. Морин тэрэг, Портер, Амжиргаа цагааныг Худалдаачнаас авч болно — илүү их ачаа, мал зөөнө.</p>`;
+      html += t('ui.you_have_no_cart');
       return html;
     }
-    html += `<h3>🚚 Тэрэг, машинд ачих</h3><p>${this.vehicleButtons()}</p>`;
+    html += t('ui.load_onto_cart_vehicle', { x: this.vehicleButtons() });
     const f = d.vehicle ? state.fleet.find((x) => x.id === d.vehicle) : null;
     if (!f) return html;
     const v = cfg.vehicles[f.id];
@@ -372,8 +357,7 @@ export class Panels {
       const have = storage.count(state, pr);
       if (have <= 1e-9) return '';
       const n = d.sell[pr] ?? 0;
-      return `<tr><td>${PRODUCT_EMOJI[pr]} ${productName(pr)} <span class="muted">(${fmtNum(have)} ${unitOf(pr)})</span></td><td class="num">${fmtMoney(productPrice(cfg, pr))}</td>
-        <td class="ctl"><button class="btn sm" data-act="sell-:${pr}">−</button><b>${fmtNum(n)}</b><button class="btn sm" data-act="sell+:${pr}">+</button><button class="btn sm" data-act="sellAll:${pr}">бүгд</button></td></tr>`;
+      return t('ui.all_158', { x: PRODUCT_EMOJI[pr], x2: productName(pr), x3: fmtNum(have), x4: unitOf(pr), x5: fmtMoney(productPrice(cfg, pr)), pr, x6: fmtNum(n), pr2: pr, pr3: pr });
     }).join('');
     const animalRows = groups.map((g) => {
       const n = d.sellGroups[g.key] ?? 0;
@@ -382,15 +366,10 @@ export class Panels {
     }).join('');
     const loadSlots = this.selectedAnimals(groups).reduce((s, a) => s + animalSlots(cfg, f.id, a.species), 0);
     const errs: string[] = [];
-    if (cargoUnits(f) + loadUnits > v.capacity + 1e-9) errs.push(`Ачаа багтахгүй (${v.capacity} нэгж)`);
-    if (cargoSlots(cfg, f) + loadSlots > v.sheepSlots + 1e-9) errs.push(`Мал багтахгүй (${v.sheepSlots} хонь эсвэл ${v.cowSlots} үхэр)`);
-    if (!atSpot) errs.push('Тээврээ майхны дэргэд авчир');
-    html += this.cargoList() + `
-      <table><tr><th>Агуулахаас ачих</th><th class="num">Үнэ</th><th></th></tr>${loadRows || '<tr><td class="muted">Агуулах хоосон</td></tr>'}</table>
-      <table><tr><th>Зарахаар ачих мал</th><th class="num">~Үнэ</th><th></th></tr>${animalRows}</table>
-      ${errs.length ? `<p class="bad">${errs.join(' · ')}</p>` : ''}
-      <p><button class="btn gold" data-act="doLoad" ${errs.length || (!loadUnits && !loadSlots) ? 'disabled' : ''}>Ачих</button>
-      <button class="btn" data-act="doUnload" ${atSpot && (cargoUnits(f) || f.animals.length || f.orders.length) ? '' : 'disabled'}>Бүгдийг буулгах</button></p>`;
+    if (cargoUnits(f) + loadUnits > v.capacity + 1e-9) errs.push(t('ui.cargo_does_not_fit', { capacity: v.capacity }));
+    if (cargoSlots(cfg, f) + loadSlots > v.sheepSlots + 1e-9) errs.push(t('ui.animals_do_not_fit', { sheepSlots: v.sheepSlots, cowSlots: v.cowSlots }));
+    if (!atSpot) errs.push(t('ui.bring_your_vehicle_next'));
+    html += this.cargoList() + t('ui.load_from_storage_price', { x: loadRows || t('ui.storage_is_empty'), animalRows, x2: errs.length ? `<p class="bad">${errs.join(' · ')}</p>` : '', x3: errs.length || (!loadUnits && !loadSlots) ? 'disabled' : '', x4: atSpot && (cargoUnits(f) || f.animals.length || f.orders.length) ? '' : 'disabled' });
     return html;
   }
 
@@ -416,8 +395,7 @@ export class Panels {
       const n0 = have[pr] ?? 0;
       if (n0 <= 1e-9) return '';
       const n = d.sell[pr] ?? 0;
-      return `<tr><td>${PRODUCT_EMOJI[pr]} ${productName(pr)} <span class="muted">(${fmtNum(n0)} ${unitOf(pr)})</span></td><td class="num">${fmtMoney(productPrice(cfg, pr))}</td>
-        <td class="ctl"><button class="btn sm" data-act="sell-:${pr}">−</button><b>${fmtNum(n)}</b><button class="btn sm" data-act="sell+:${pr}">+</button><button class="btn sm" data-act="sellAll:${pr}">бүгд</button></td></tr>`;
+      return t('ui.all_158', { x: PRODUCT_EMOJI[pr], x2: productName(pr), x3: fmtNum(n0), x4: unitOf(pr), x5: fmtMoney(productPrice(cfg, pr)), pr, x6: fmtNum(n), pr2: pr, pr3: pr });
     }).join('');
     const groups = this.animalGroups(sellableAnimals(state));
     const animalRows = groups.map((g) => {
@@ -432,12 +410,11 @@ export class Panels {
         <td class="ctl"><button class="btn sm" data-act="ba-:${c.key}">−</button><b>${n}</b><button class="btn sm" data-act="ba+:${c.key}">+</button></td></tr>`;
     }).join('');
     const hayMax = hayRoom(cfg, state);
-    const hayRow = `<tr><td>🌾 Боодол өвс <span class="muted">өвөл, хавар идэш дутсан малд бууцанд тань автоматаар өгнө · 1 боодол = ${cfg.seasons.hay.sheepDaysPerBale} хонин толгой·өдөр · энэ удаа ${hayMax} хүртэл (${f ? 'тээврийн сул байр' : 'морьтой'}) · бууцанд ${fmtNum(state.camps[state.campId]?.hay ?? 0)}</span></td><td class="num">${fmtMoney(cfg.seasons.hay.price)}</td>
-        <td class="ctl"><button class="btn sm" data-act="hay-:1">−</button><b>${d.hay}</b><button class="btn sm" data-act="hay+:1">+</button><button class="btn sm" data-act="hay+:10">+10</button></td></tr>`;
+    const hayRow = t('ui.hay_bales_fed_automatically', { sheepDaysPerBale: cfg.seasons.hay.sheepDaysPerBale, hayMax, x: f ? t('ui.free_vehicle_slots') : t('ui.riding'), x2: fmtNum(state.camps[state.campId]?.hay ?? 0), x3: fmtMoney(cfg.seasons.hay.price), hay: d.hay });
     const itemRows = (role === 'feed' ? hayRow : '') + this.buyItems().filter((it) => role !== null && orderAllowed(role, it.order)).map((it) => {
       const on = d.buyItems.has(it.key);
       return `<tr><td>${it.label} <span class="muted">${it.note}</span></td><td class="num">${fmtMoney(orderPrice(cfg, state, it.order))}</td>
-        <td class="ctl"><button class="btn sm ${on ? 'gold' : ''}" data-act="bi:${it.key}">${on ? '✓ Авна' : 'Авах'}</button></td></tr>`;
+        <td class="ctl"><button class="btn sm ${on ? 'gold' : ''}" data-act="bi:${it.key}">${on ? t('ui.will_take') : t('ui.take')}</button></td></tr>`;
     }).join('');
     const plan = this.shopPlan();
     const income = Object.entries(plan.sell).reduce((s, [k, n]) => s + (n ?? 0) * productPrice(cfg, k as ProductId), 0)
@@ -447,29 +424,18 @@ export class Panels {
     const buySlots = plan.buy.reduce((s, o) => s + (o.kind === 'animal' ? (f ? animalSlots(cfg, f.id, o.species) : 1) : 0), 0);
     const freed = f ? sellableAnimals(state).filter((a) => plan.sellAnimalIds.includes(a.id)).reduce((s, a) => s + animalSlots(cfg, f.id, a.species), 0) : 0;
     const roomOk = buySlots <= animalRoom(cfg, state) + freed + 1e-9;
-    const how = f ? `${cfg.vehicles[f.id].emoji} ${cfg.vehicles[f.id].name}` : '🐎 Морьтой';
-    const animalNote = f ? `Авсан мал тэвшинд ачигдана (${cfg.vehicles[f.id].sheepSlots} хонь эсвэл ${cfg.vehicles[f.id].cowSlots} үхэр)` : `Морьтой бол авсан малаа араасаа тууж харина — газрын зураг дээр ${fmtNum(cfg.vehicles.riding.droveKmh)} км/ц`;
+    const how = f ? `${cfg.vehicles[f.id].emoji} ${cfg.vehicles[f.id].name}` : t('ui.mounted');
+    const animalNote = f ? t('ui.animals_you_buy_are', { x: cfg.vehicles[f.id].sheepSlots, x2: cfg.vehicles[f.id].cowSlots }) : t('ui.if_riding_you_drive', { x: fmtNum(cfg.vehicles.riding.droveKmh) });
     const empty = !Object.keys(plan.sell).length && !plan.sellAnimalIds.length && !plan.buy.length;
-    const title = door ? t(`sum3d.${door.id}`) : 'Дэлгүүр';
+    const title = door ? t(`sum3d.${door.id}`) : t('ui.shop');
     if (!role) {
-      return `<h2>🏪 ${title} <span class="close" data-act="close">✕</span></h2>
-        <p class="bad">Дэлгүүрийн үүдэнд (шар тойрог) очиж E дарна уу.</p>
-        <p class="muted">Сүү, ноос — хүлээн авах цэг · мал — Малын зах · тэжээл, тоног төхөөрөмж, гэр майхан, тэжээвэр амьтан — тус тусын дэлгүүр · машин — Машин худалдааны талбай (ногоон тойрог)</p>`;
+      return t('ui.go_to_the_shop', { title });
     }
-    const sellSec = canSellProducts(role) ? `<table><tr><th>Зарах</th><th class="num">Үнэ</th><th></th></tr>${sellRows || '<tr><td class="muted">Зарах бүтээгдэхүүн алга — хотондоо гартаа эсвэл тэргэндээ ачиж ир (T)</td></tr>'}</table>` : '';
+    const sellSec = canSellProducts(role) ? t('ui.sell_price', { x: sellRows || t('ui.nothing_to_sell_bring') }) : '';
     const animalSec = canSellAnimals(role)
-      ? `${groups.length ? `<table><tr><th>Мал зарах</th><th class="num">~Үнэ</th><th></th></tr>${animalRows}</table>` : ''}
-      <table><tr><th>Мал авах</th><th class="num">Үнэ</th><th></th></tr>${buyAnimalRows}</table>
-      <p class="muted">${animalNote}</p>` : '';
-    const itemSec = itemRows ? `<table><tr><th>Бараа авах</th><th class="num">Үнэ</th><th></th></tr>${itemRows}</table>` : '';
-    return `<h2>🏪 ${title} <span class="close" data-act="close">✕</span></h2>
-      <p>${how} · Мөнгө: <b>${fmtMoney(state.money)}</b>${f ? ' · ' : ''}${this.cargoList().replace(/^<p>|<\/p>$/g, '')}</p>
-      ${sellSec}${animalSec}${itemSec}
-      <table><tr class="total"><td>Орлого</td><td class="num">+${fmtMoney(income)}</td></tr><tr class="total"><td>Зардал</td><td class="num">−${fmtMoney(cost)}</td></tr>
-      <tr class="total"><td><b>Дараа нь</b></td><td class="num"><b class="${after < 0 ? 'bad' : ''}">${fmtMoney(after)}</b></td></tr></table>
-      ${!roomOk ? '<p class="bad">Авах мал тэвшинд багтахгүй</p>' : ''}${after < 0 ? '<p class="bad">Мөнгө хүрэхгүй — хүрэлцэхгүй бараа авагдахгүй</p>' : ''}
-      <p><button class="btn gold" data-act="doTrade" ${empty || !near ? 'disabled' : ''}>Арилжаа хийх</button>
-      ${role === 'livestock' ? `<label class="muted"><input type="checkbox" data-act="bull" ${state.neighborBull ? 'checked' : ''}> Хөршийн бух тавиулах (үнээ бүрт ${fmtMoney(cfg.economy.neighborBullFee)})</label>` : ''}</p>`;
+      ? t('ui.buy_animals_price', { x: groups.length ? t('ui.sell_animals_price', { animalRows }) : '', buyAnimalRows, animalNote }) : '';
+    const itemSec = itemRows ? t('ui.buy_goods_price', { itemRows }) : '';
+    return t('ui.money_income_expenses_after', { title, how, x: fmtMoney(state.money), x2: f ? ' · ' : '', x3: this.cargoList().replace(/^<p>|<\/p>$/g, ''), sellSec, animalSec, itemSec, x4: fmtMoney(income), x5: fmtMoney(cost), x6: after < 0 ? 'bad' : '', x7: fmtMoney(after), x8: !roomOk ? t('ui.the_animals_you_want') : '', x9: after < 0 ? t('ui.not_enough_money_items') : '', x10: empty || !near ? 'disabled' : '', x11: role === 'livestock' ? t('ui.use_the_neighbor_s', { x: state.neighborBull ? 'checked' : '', x2: fmtMoney(cfg.economy.neighborBullFee) }) : '' });
   }
 
   // ======================= Сумын төвийн амьдрал (V3.4): дуган, ЗДТГ, банк, байшин, хамаатан =======================
@@ -508,17 +474,15 @@ export class Panels {
     const T = state.town;
     const door = nearTownDoor(cfg, state);
     const close = '<span class="close" data-act="close">✕</span>';
-    if (!door) return `<h2>🏘 Сумын төв ${close}</h2><p class="bad">Барилгын үүдэнд (ягаан тойрог) очиж E дарна уу.</p>`;
-    const rep = `Нэр хүнд: <b>${fmtNum(T.reputation)}</b> / ${cfg.town.reputation.max}`;
-    const money = `Мөнгө: <b>${fmtMoney(state.money)}</b>`;
+    if (!door) return t('ui.sum_center_go_to', { close });
+    const rep = t('ui.reputation', { x: fmtNum(T.reputation), max: cfg.town.reputation.max });
+    const money = t('ui.money', { x: fmtMoney(state.money) });
     switch (door.role) {
       case 'soon':
-        return `<h2>🏪 ${t('sum3d.' + door.id)} ${close}</h2><p class="muted">Тун удахгүй нээгдэнэ.</p>`;
+        return t('ui.opening_very_soon', { x: t('sum3d.' + door.id), close });
       case 'temple': {
         const btns = cfg.town.temple.donations.map((a) => `<button class="btn ${state.money >= a ? 'gold' : ''}" data-act="donate:${a}" ${state.money >= a ? '' : 'disabled'}>${fmtMoney(a)}</button>`).join(' ');
-        return `<h2>🙏 ${t('sum3d.' + door.id)} ${close}</h2><p>${money} · ${rep}</p>
-          <p>Дуганд хандив өгвөл нэр хүнд өснө (10 000₮ тутамд +${cfg.town.temple.reputationPer10k}). Нэр хүнд ${cfg.town.zdtgLoan.minReputation}-аас дээш бол Засаг даргаас малаар зээл авч болно.</p>
-          <p>${btns}</p>`;
+        return t('ui.donating_at_the_temple', { x: t('sum3d.' + door.id), close, money, rep, reputationPer10k: cfg.town.temple.reputationPer10k, minReputation: cfg.town.zdtgLoan.minReputation, btns });
       }
       case 'zdtg': {
         const L = T.zdtgLoan, Z = cfg.town.zdtgLoan;
@@ -526,28 +490,23 @@ export class Panels {
         if (L) {
           const have = zdtgRepayable(cfg, state).length;
           const cost = Math.round(L.value * Z.moneyMult);
-          body = `<p>Малын зээл: <b>${L.n} ${t('species.' + L.species).toLowerCase()}</b> · буцаах хугацаа <b>${L.dueDay}</b>-р өдөр ${L.overdue ? '<span class="bad">(хэтэрсэн)</span>' : ''}</p>
-            <p><button class="btn gold" data-act="zdtgRepay:animals" ${have >= L.n ? '' : 'disabled'}>Насанд хүрсэн ${L.n} малаар буцаах (танд ${have})</button>
-            <button class="btn" data-act="zdtgRepay:money" ${state.money >= cost ? '' : 'disabled'}>Мөнгөөр ${fmtMoney(cost)}</button></p>`;
+          body = t('ui.livestock_loan_due_on', { n: L.n, x: t('species.' + L.species).toLowerCase(), dueDay: L.dueDay, x2: L.overdue ? t('ui.overdue') : '', x3: have >= L.n ? '' : 'disabled', n2: L.n, have, x4: state.money >= cost ? '' : 'disabled', x5: fmtMoney(cost) });
         } else if (T.reputation < Z.minReputation) {
-          body = `<p class="bad">Малын зээл авахад нэр хүнд ${Z.minReputation}-аас дээш байх ёстой — дуганд хандив өгч, зээлээ хугацаандаа төлж нэр хүндээ өсгө.</p>`;
+          body = t('ui.you_need_a_reputation', { minReputation: Z.minReputation });
         } else {
-          body = `<p>Малаар зээл авч, ${Z.termDays} өдрийн дотор ижил тооны насанд хүрсэн эм малаар (эсвэл үнэлгээ × ${Z.moneyMult} мөнгөөр) буцаана. Хугацаандаа төлбөл нэр хүнд +${Z.onTimeReputation}.</p>
-            <p>${zdtgPackages(cfg).map((k) => `<button class="btn gold" data-act="zdtgLoan:${k.id}">${k.n} ${t('species.' + k.species).toLowerCase()}</button>`).join(' ')}</p>`;
+          body = t('ui.take_a_loan_in', { termDays: Z.termDays, moneyMult: Z.moneyMult, onTimeReputation: Z.onTimeReputation, x: zdtgPackages(cfg).map((k) => `<button class="btn gold" data-act="zdtgLoan:${k.id}">${k.n} ${t('species.' + k.species).toLowerCase()}</button>`).join(' ') });
         }
-        return `<h2>🏛 ${t('sum3d.' + door.id)} ${close}</h2><p>${money} · ${rep}</p>${body}<p class="muted">Цагдаагийн хэсэг ЗДТГ-т байрладаг.</p>`;
+        return t('ui.the_police_station_is', { x: t('sum3d.' + door.id), close, money, rep, body });
       }
       case 'bank': {
         const L = T.bankLoan, B = cfg.town.bankLoan;
         const lim = bankLimit(cfg, state);
         let body = '';
         if (L) {
-          body = `<p>Зээлийн үлдэгдэл: <b>${fmtMoney(L.owed)}</b> (үндсэн ${fmtMoney(L.principal)}, сард ${Math.round(B.interestPerMonth * 100)}% хүү) · хугацаа <b>${L.dueDay}</b>-р өдөр. Хэтэрвэл барьцаа (байшин, мал) хураагдана.</p>
-            <p>${[L.owed, Math.round(L.owed / 2)].map((a) => `<button class="btn ${state.money >= a ? 'gold' : ''}" data-act="bankRepay:${a}" ${state.money >= a ? '' : 'disabled'}>${fmtMoney(a)} төлөх</button>`).join(' ')}</p>`;
+          body = t('ui.loan_balance_principal_per', { x: fmtMoney(L.owed), x2: fmtMoney(L.principal), x3: Math.round(B.interestPerMonth * 100), dueDay: L.dueDay, x4: [L.owed, Math.round(L.owed / 2)].map((a) => t('ui.pay', { x: state.money >= a ? 'gold' : '', a, x2: state.money >= a ? '' : 'disabled', x3: fmtMoney(a) })).join(' ') });
         } else {
           const opts = [0.25, 0.5, 1].map((k) => Math.floor((lim * k) / 10000) * 10000).filter((a) => a >= B.minAmount);
-          body = `<p>Мал (үнэлгээний ${Math.round(B.animalLtv * 100)}%) ба сумын төвийн байшингаа (${Math.round(B.houseLtv * 100)}%) барьцаалж зээлнэ. Дээд хэмжээ: <b>${fmtMoney(lim)}</b> · хугацаа ${B.termDays} өдөр · сард ${Math.round(B.interestPerMonth * 100)}% хүү.</p>
-            <p>${opts.length ? opts.map((a) => `<button class="btn gold" data-act="bankLoan:${a}">${fmtMoney(a)} зээлэх</button>`).join(' ') : '<span class="muted">Барьцаа хүрэлцэхгүй</span>'}</p>`;
+          body = t('ui.borrow_against_animals_of', { x: Math.round(B.animalLtv * 100), x2: Math.round(B.houseLtv * 100), x3: fmtMoney(lim), termDays: B.termDays, x4: Math.round(B.interestPerMonth * 100), x5: opts.length ? opts.map((a) => t('ui.borrow', { a, x: fmtMoney(a) })).join(' ') : t('ui.not_enough_collateral') });
         }
         return `<h2>🏦 ${t('sum3d.' + door.id)} ${close}</h2><p>${money} · ${rep}</p>${body}`;
       }
@@ -555,14 +514,10 @@ export class Panels {
         const h = housePrice(cfg, door.id)!;
         const own = T.houses[door.id];
         if (!own) {
-          return `<h2>🏠 Зарагдах хашаа байшин ${close}</h2><p>${money}</p>
-            <p>Үнэ: <b>${fmtMoney(h.price)}</b> · түрээслүүлбэл өдөрт ${fmtMoney(h.rentPerDay)} · банкинд барьцаалж болно</p>
-            <p><button class="btn gold" data-act="buyHouse:${door.id}" ${state.money >= h.price ? '' : 'disabled'}>Худалдаж авах</button></p>`;
+          return t('ui.yard_house_for_sale_196', { close, money, x: fmtMoney(h.price), x2: fmtMoney(h.rentPerDay), id: door.id, x3: state.money >= h.price ? '' : 'disabled' });
         }
         const btn = (m: string, label: string, dis = false): string => `<button class="btn ${own.mode === m ? 'gold' : ''}" data-act="houseMode:${door.id},${m}" ${dis ? 'disabled' : ''}>${label}</button>`;
-        return `<h2>🏠 Таны хашаа байшин ${close}</h2>
-          <p>${btn('rent', `Түрээслүүлэх (өдөрт ${fmtMoney(h.rentPerDay)})`)} ${btn('empty', 'Хоосон')} ${btn('child', 'Сургуульд сурдаг хүүхдээ байлгах', true)}</p>
-          <p class="muted">Хүүхдээ байлгах нь үе удмын систем нэмэгдэхэд нээгдэнэ.</p>`;
+        return t('ui.your_yard_house_keeping', { close, x: btn('rent', t('ui.rent_out_per_day', { x: fmtMoney(h.rentPerDay) })), x2: btn('empty', t('ui.empty_198')), x3: btn('child', t('ui.keep_your_schoolchild_here'), true) });
       }
       default: {
         const r = T.relatives[door.id];
@@ -570,12 +525,7 @@ export class Panels {
         const have = sellableAtShop(state);
         const dairy = Object.entries(have).filter(([k, n]) => R.giftProducts.includes(k) && (n ?? 0) > 0).map(([k, n]) => `${PRODUCT_EMOJI[k as ProductId]} ${fmtNum(n ?? 0)}`).join(' ');
         const animals = sellableAnimals(state).length;
-        return `<h2>👪 Хамаатан айл ${close}</h2>
-          <p>Дотно байдал: <b>${fmtNum(r?.relation ?? 0)}</b> / 100</p>
-          <p class="muted">Сүү, тараг, цагаан идээ, мал бэлэглэвэл дотно болно. Хариуд нь хотонд тань ойр ойрхон айлчилж хоол хүнс авчирна (≥ ${R.visitMinRelation}); зун хүүхдүүд нь ирж туслана (≥ ${R.summerHelpMin}); өвөл тэжээл авчирна (≥ ${R.winterHayMin}).</p>
-          <p>Гартаа/тэргэндээ: ${dairy || '<span class="muted">цагаан идээ алга</span>'} · тууж/ачиж ирсэн мал: ${animals}</p>
-          <p><button class="btn gold" data-act="gift:${door.id},dairy" ${dairy ? '' : 'disabled'}>Цагаан идээгээ бэлэглэх</button>
-          <button class="btn gold" data-act="gift:${door.id},animals" ${animals ? '' : 'disabled'}>Малаа бэлэглэх</button></p>`;
+        return t('ui.relatives_closeness_100_gifts', { close, x: fmtNum(r?.relation ?? 0), visitMinRelation: R.visitMinRelation, summerHelpMin: R.summerHelpMin, winterHayMin: R.winterHayMin, x2: dairy || t('ui.no_dairy'), animals, id: door.id, x3: dairy ? '' : 'disabled', id2: door.id, x4: animals ? '' : 'disabled' });
       }
     }
   }
@@ -584,19 +534,15 @@ export class Panels {
   private lotHtml(): string {
     const { cfg, state } = this;
     const s = nearLotSlot(cfg, state);
-    if (!s) return `<h2>🚚 ${t('sum3d.car_dealer')} <span class="close" data-act="close">✕</span></h2><p class="bad">Машин руу ойртоно уу (ногоон тойрог).</p>`;
+    if (!s) return t('ui.move_closer_to_the', { x: t('sum3d.car_dealer') });
     const known = !s.display && s.vehicle in cfg.vehicles;
-    if (!known) return `<h2>🚚 ${t('sum3d.lot.' + s.vehicle)} <span class="close" data-act="close">✕</span></h2><p class="muted">Удахгүй худалдаанд гарна.</p>`;
+    if (!known) return t('ui.going_on_sale_soon', { x: t('sum3d.lot.' + s.vehicle) });
     const id = s.vehicle as VehicleId;
     const v = cfg.vehicles[id];
     const owned = state.vehicles.includes(id);
     const kmh = Math.round(cfg.vehicles.sumCenterKm / v.oneWayHours);
     const can = !owned && state.money >= v.price && !state.player.driving;
-    return `<h2>${v.emoji} ${v.name} <span class="close" data-act="close">✕</span></h2>
-      <p>${v.capacity} нэгж ачаа, ${v.sheepSlots} хонь / ${v.cowSlots} үхэр · ${kmh} км/ц${v.fuelPer100km ? ` · ${v.fuelPer100km} л/100 км` : ''}</p>
-      <table><tr class="total"><td>Үнэ</td><td class="num"><b>${fmtMoney(v.price)}</b></td></tr><tr class="total"><td>Таны мөнгө</td><td class="num">${fmtMoney(state.money)}</td></tr></table>
-      ${owned ? '<p class="muted">Танд аль хэдийн байгаа</p>' : state.money < v.price ? '<p class="bad">Мөнгө хүрэхгүй</p>' : ''}
-      <p><button class="btn gold" data-act="buyLot:${s.id}" ${can ? '' : 'disabled'}>Худалдан авах — шууд суугаад явна</button></p>`;
+    return t('ui.units_of_cargo_sheep', { emoji: v.emoji, name: v.name, capacity: v.capacity, sheepSlots: v.sheepSlots, cowSlots: v.cowSlots, kmh, x: v.fuelPer100km ? t('ui.l_100_km_205', { fuelPer100km: v.fuelPer100km }) : '', x2: fmtMoney(v.price), x3: fmtMoney(state.money), x4: owned ? t('ui.you_already_own_this') : state.money < v.price ? t('ui.not_enough_money') : '', id: s.id, x5: can ? '' : 'disabled' });
   }
 
   private shopPlan(): { sell: Partial<Record<ProductId, number>>; sellAnimalIds: number[]; buy: BuyOrder[] } {
@@ -632,25 +578,10 @@ export class Panels {
       const avg = g.animals.length ? g.animals.reduce((s2, a) => s2 + a.condition, 0) / g.animals.length : 0;
       const items = (g.items ?? []).filter((it) => it.amount > 1e-9);
       const itemsTxt = items.map((it) => `${PRODUCT_EMOJI[it.product]} ${fmtNum(it.amount)} ${unitOf(it.product)}`).join(' · ');
-      otor = `<h3>🏕 Отор: ${h?.name ?? 'малчин'}${col ? ` · цуглуулагч ${col.name}` : ''} · ${g.days} хоног</h3>
-        <p>${cnt || 'мал алга'}<br>Дундаж тарга ${Math.round(avg * 100)}%</p>
-        <p>${itemsTxt ? `Бүтээгдэхүүн: ${itemsTxt}` : '<span class="muted">Цуглуулсан бүтээгдэхүүн алга</span>'}${col ? '' : '<br><span class="muted">Цуглуулагчгүй тул сүү тэр өдөртөө муудаж, ноос 2 хоногт хийсдэг. J — хүүхдийг отор руу цуглуулагчаар явуулна.</span>'}</p>
-        <p><button class="btn gold" data-act="takeOtor:${id}" ${items.length ? '' : 'disabled'}>Бүтээгдэхүүнийг авах (${state.player.driving ? 'тээвэрт' : 'гартаа'})</button></p>`;
+      otor = t('ui.otor_days_average_condition', { x: h?.name ?? t('ui.herder'), x2: col ? t('ui.collector', { name: col.name }) : '', days: g.days, x3: cnt || t('ui.no_animals'), x4: Math.round(avg * 100), x5: itemsTxt ? t('ui.products', { itemsTxt }) : t('ui.no_products_collected'), x6: col ? '' : t('ui.with_no_collector_the'), id, x7: items.length ? '' : 'disabled', x8: state.player.driving ? t('ui.on_the_vehicle') : t('ui.in_hand') });
     }
-    const shed = c.shed ? '🏚 Саравчтай дулаан бууц — шөнө хашаандаа хоносон мал хүйтэнд тарга алдахгүй' : 'Энгийн хашаа (саравчгүй)';
-    return `<h2>🏕 ${t('camp.' + id)} <span class="close" data-act="close">✕</span></h2>
-      <p class="muted">${CAMP_HINT[id] ?? ''}</p>
-      <table>
-      <tr><td>Цас</td><td>${(cs.snow ?? 0) < 0.5 ? 'цасгүй' : `❄ ${Math.round(cs.snow)} см · өвс идэх боломж ${Math.round(campAccess(cfg, cs.snow) * 100)}%`} · өвс ${Math.round((cs.grass ?? 0) * 100)}%</td></tr>
-      <tr><td>Бууц</td><td>${shed}${(cs.hay ?? 0) > 0 ? ` · 🌾 ${fmtNum(cs.hay)} боодол өвс` : ''}</td></tr>
-      <tr><td>Бэлчээр</td><td>${types}</td></tr>
-      <tr><td>Ус</td><td>${WATER_NAME[c.water] ?? c.water}</td></tr>
-      <tr><td>Чоно</td><td>${WOLF_LEVEL_NAME[c.wolfLevel] ?? c.wolfLevel}</td></tr>
-      <tr><td>Доройтол</td><td>${Math.round(cs.degrade * 100)}% · өвс ургах хурд ${Math.round((1 - deg.growthPenalty * cs.degrade) * 100)}%</td></tr>
-      </table>
-      <p>Энд нүүвэл гэр бүл, сүрэг тань араас нүүж ирнэ: ~${fmtMinutes(Math.round(hours * 60))}. Тэр хооронд гэрийн бууцанд газарт үлдсэн бүтээгдэхүүн хаягдана.</p>
-      ${otor}
-      <p><button class="btn gold" data-act="migrate">🏕 Энд нүүх</button> <button class="btn" data-act="close">Үргэлжлүүлэх (газрын зураг, ${Math.round(kmh)} км/ц)</button></p>`;
+    const shed = c.shed ? t('ui.sheltered_warm_camp_animals') : t('ui.plain_pen_no_shelter');
+    return t('ui.snow_grass_camp_pasture', { x: t('camp.' + id), x2: CAMP_HINT[id] ?? '', x3: (cs.snow ?? 0) < 0.5 ? t('ui.no_snow') : t('ui.cm_grazing_access', { x: Math.round(cs.snow), x2: Math.round(campAccess(cfg, cs.snow) * 100) }), x4: Math.round((cs.grass ?? 0) * 100), shed, x5: (cs.hay ?? 0) > 0 ? t('ui.hay_bales', { x: fmtNum(cs.hay) }) : '', types, x6: WATER_NAME[c.water] ?? c.water, x7: WOLF_LEVEL_NAME[c.wolfLevel] ?? c.wolfLevel, x8: Math.round(cs.degrade * 100), x9: Math.round((1 - deg.growthPenalty * cs.degrade) * 100), x10: fmtMinutes(Math.round(hours * 60)), otor, x11: Math.round(kmh) });
   }
 
   // ======================= өдрийн тайлан =======================
@@ -666,44 +597,13 @@ export class Panels {
     const cap = storage.capacity(cfg, this.state);
     const goalSU = cfg.economy.goalSheepUnits;
     const profit = r.moneyEnd - r.moneyStart;
-    return `
-      <h2>🌅 ${r.day}-р өдрийн тайлан <span class="muted">· ${SEASON_EMOJI[r.season]} ${SEASON_NAME[r.season]}, ${yearOf(cfg, r.day)}-р жил</span></h2>
-      <div class="cols">
-        <div>
-          <h3>Мөнгө</h3>
-          <table>
-            ${inc.map(([k, n]) => `<tr><td>${k === 'animals' ? '🐑 Мал зарсан' : k === 'rent' ? '🏠 Байшингийн түрээс' : k === 'loan' ? '🏦 Банкны зээл' : `${PRODUCT_EMOJI[k] ?? ''} ${productName(k)}`}</td><td class="num good">+${fmtMoney(n ?? 0)}</td></tr>`).join('') || '<tr><td class="muted">Өнөөдөр орлого ороогүй</td><td></td></tr>'}
-            ${exp.map(([k, n]) => `<tr><td>${expenseName(k)}</td><td class="num bad">${fmtMoney(-(n ?? 0))}</td></tr>`).join('')}
-            <tr class="total"><td>Өдрийн дүн</td><td class="num ${profit >= 0 ? 'good' : 'bad'}">${profit >= 0 ? '+' : ''}${fmtMoney(profit)}</td></tr>
-            <tr><td>Одоо байгаа мөнгө</td><td class="num"><b>${fmtMoney(r.moneyEnd)}</b></td></tr>
-          </table>
-          <p class="muted">Орлого ${fmtMoney(totalInc)} · зардал ${fmtMoney(totalExp)}</p>
-        </div>
-        <div>
-          <h3>Бүтээгдэхүүн</h3>
-          <table><tr class="muted"><td></td><td class="num">унасан</td><td class="num">түүсэн</td><td class="num">муудсан</td></tr>
-          ${prodRows || '<tr><td class="muted" colspan="4">—</td></tr>'}</table>
-          <p>📦 Агуулах: ${fmtNum(r.storageUsed)} / ${cap}</p>
-        </div>
-      </div>
-      <h3>Мал ба бэлчээр</h3>
-      <p>Мал ${r.animals} · хонин толгой <b>${fmtNum(r.sheepUnits)}</b>${r.births ? ` · 🐣 төл ${r.births}` : ''}${r.deaths ? ` · <span class="bad">үхсэн ${r.deaths}</span>` : ''}<br>
-      Дундаж тарга ${Math.round(r.avgCondition * 100)}% · өнөөдрийн идэш ${Math.round(r.avgGutFill * 100)}% · эм хонины жин ${fmtNum(Math.round(r.avgEweKg * 10) / 10)} кг<br>
-      ${this.wolfKillsHtml(r)}</p>
-      <h3>Бууц: ${t('camp.' + this.state.campId)} · ${r.campDays} дахь өдөр</h3>
-      <p>${r.snow >= 0.5 ? `❄ Цас ${Math.round(r.snow)} см · өвс идэх боломж ${Math.round(campAccess(cfg, r.snow) * 100)}% · ` : ''}${r.hayFed > 0 ? `🌾 ${fmtNum(Math.round(r.hayFed * 10) / 10)} боодол өвс өгсөн, үлдсэн ${fmtNum(Math.round(r.hay * 10) / 10)} · ` : r.season === 'winter' || r.season === 'spring' ? `<span class="${r.hay > 0 ? '' : 'bad'}">🌾 өвс тэжээл ${fmtNum(Math.round(r.hay * 10) / 10)} боодол</span> · ` : ''}${r.coldHit > 0 ? `<span class="bad">🥶 ${r.coldHit} мал гадуур хүйтэнд хонож тарга алдсан</span>` : ''}<br>Бэлчээрийн өвс ${Math.round(r.grass * 100)}% · доройтол <span class="${r.campDegrade > 0.3 ? 'bad' : ''}">${Math.round(r.campDegrade * 100)}%</span> · өвс ургах хурд <span class="${r.regrowthMult < 0.8 ? 'bad' : ''}">${Math.round(r.regrowthMult * 100)}%</span>
-      ${r.campDegrade > 0.6 ? '<br><b class="bad">Бэлчээр доройтож өвс бараг ургахгүй байна — мал турна. M — нүүх</b>' : r.campDegrade > 0.3 ? '<br><span class="bad">Бууцаа сэлгэх цаг боллоо (M — нүүх)</span>' : ''}
-      <br><span class="muted">Бусад бууц (амарч сэргэж байна): ${Object.entries(r.camps).filter(([id]) => id !== this.state.campId).map(([id, c]) => `${t('camp.' + id)} ${Math.round(c.degrade * 100)}%`).join(' · ')}</span></p>
-      <h3>Зорилго: гэр + ${goalSU} хонин толгой</h3>
-      <div class="bar"><div style="width:${Math.min(100, (r.sheepUnits / goalSU) * 100)}%"></div></div>
-      <p>${this.state.home === 'ger' ? '✅ Гэртэй' : `Гэр: ${fmtMoney(cfg.economy.gerPrice)}`} · хонин толгой ${fmtNum(r.sheepUnits)} / ${goalSU}${r.goalReached ? ' · <b class="good">🎉 Зорилгодоо хүрлээ!</b>' : ''}</p>
-      <p><button class="btn gold big" data-act="close">Маргааш өглөө ▶</button> <span class="muted">Enter</span></p>`;
+    return t('ui.daily_report_year_money', { day: r.day, x: SEASON_EMOJI[r.season], x2: SEASON_NAME[r.season], x3: yearOf(cfg, r.day), x4: inc.map(([k, n]) => `<tr><td>${k === 'animals' ? t('ui.animals_sold') : k === 'rent' ? t('ui.house_rent') : k === 'loan' ? t('ui.bank_loan') : `${PRODUCT_EMOJI[k] ?? ''} ${productName(k)}`}</td><td class="num good">+${fmtMoney(n ?? 0)}</td></tr>`).join('') || t('ui.no_income_today'), x5: exp.map(([k, n]) => `<tr><td>${expenseName(k)}</td><td class="num bad">${fmtMoney(-(n ?? 0))}</td></tr>`).join(''), x6: profit >= 0 ? 'good' : 'bad', x7: profit >= 0 ? '+' : '', x8: fmtMoney(profit), x9: fmtMoney(r.moneyEnd), x10: fmtMoney(totalInc), x11: fmtMoney(totalExp), x12: prodRows || '<tr><td class="muted" colspan="4">—</td></tr>', x13: fmtNum(r.storageUsed), cap, animals: r.animals, x14: fmtNum(r.sheepUnits), x15: r.births ? t('ui.born', { births: r.births }) : '', x16: r.deaths ? t('ui.died', { deaths: r.deaths }) : '', x17: Math.round(r.avgCondition * 100), x18: Math.round(r.avgGutFill * 100), x19: fmtNum(Math.round(r.avgEweKg * 10) / 10), x20: this.wolfKillsHtml(r), x21: t('camp.' + this.state.campId), campDays: r.campDays, x22: r.snow >= 0.5 ? t('ui.snow_cm_grazing_access', { x: Math.round(r.snow), x2: Math.round(campAccess(cfg, r.snow) * 100) }) : '', x23: r.hayFed > 0 ? t('ui.hay_bales_fed_left', { x: fmtNum(Math.round(r.hayFed * 10) / 10), x2: fmtNum(Math.round(r.hay * 10) / 10) }) : r.season === 'winter' || r.season === 'spring' ? t('ui.hay_feed_bales', { x: r.hay > 0 ? '' : 'bad', x2: fmtNum(Math.round(r.hay * 10) / 10) }) : '', x24: r.coldHit > 0 ? t('ui.animals_lost_condition_sleeping', { coldHit: r.coldHit }) : '', x25: Math.round(r.grass * 100), x26: r.campDegrade > 0.3 ? 'bad' : '', x27: Math.round(r.campDegrade * 100), x28: r.regrowthMult < 0.8 ? 'bad' : '', x29: Math.round(r.regrowthMult * 100), x30: r.campDegrade > 0.6 ? t('ui.the_pasture_is_degraded') : r.campDegrade > 0.3 ? t('ui.time_to_change_camp') : '', x31: Object.entries(r.camps).filter(([id]) => id !== this.state.campId).map(([id, c]) => `${t('camp.' + id)} ${Math.round(c.degrade * 100)}%`).join(' · '), goalSU, x32: Math.min(100, (r.sheepUnits / goalSU) * 100), x33: this.state.home === 'ger' ? t('ui.has_a_ger') : t('ui.ger', { x: fmtMoney(cfg.economy.gerPrice) }), x34: fmtNum(r.sheepUnits), goalSU2: goalSU, x35: r.goalReached ? t('ui.goal_reached') : '' });
   }
 
   private wolfKillsHtml(r: DayReport): string {
     const k = Object.entries(r.wolfKills).filter(([, n]) => (n ?? 0) > 0);
     if (!k.length) return '';
-    return `<br><b class="bad">🐺 Чонод барьдсан: ${k.map(([sp, n]) => `${speciesEmoji(sp as Species)} ${t('species.' + sp).toLowerCase()} ${n}`).join(', ')}</b> <span class="muted">— сүргээ чонын нутгаас хол байлга, нохой ав, дэргэд нь бай</span>`;
+    return t('ui.taken_by_wolves_keep', { x: k.map(([sp, n]) => `${speciesEmoji(sp as Species)} ${t('species.' + sp).toLowerCase()} ${n}`).join(', ') });
   }
 
   // ======================= нохой (K) =======================
@@ -711,27 +611,22 @@ export class Panels {
     const { cfg, state } = this;
     const p = state.player;
     if (!state.dogs.length) {
-      return `<h2>🐕 Нохой <span class="close" data-act="close">✕</span></h2>
-        <p>Танд нохой алга. Сумын төвөөс (T) авна: <b>${fmtMoney(cfg.dogs.price)}</b>, хоол өдөрт ${fmtMoney(cfg.dogs.foodPerDay)}.</p>
-        <p class="muted">Нохой бүр ${cfg.wolves.protectRadius.dog} м хамгаалалтын бүстэй: чоно бүс рүү нь орохгүй, доторх малд дайрахгүй. Ойртсон чоныг хуцаж хөөнө.</p>`;
+      return t('ui.dogs_you_have_no', { x: fmtMoney(cfg.dogs.price), x2: fmtMoney(cfg.dogs.foodPerDay), dog: cfg.wolves.protectRadius.dog });
     }
     const keys = [...new Set(state.animals.filter((a) => !a.riding).map((a) => flockKey(a.species)))];
     const buttons = (target: string) => {
       const base = (['follow', 'stay', 'patrol', 'patrolCamp'] as DogOrderKind[])
         .map((o) => `<button class="btn sm" data-act="dog:${target}|${o}">${DOG_ORDER_NAME[o]}</button>`).join(' ');
       const herd = keys.map((k) => `<button class="btn sm" data-act="dog:${target}|guardHerd|${k}">${HERD_NAME[k]}</button>`).join(' ');
-      return `${base}<br><span class="muted">Сүргийг хамгаал:</span> ${herd || '<span class="muted">мал алга</span>'}`;
+      return t('ui.guard_the_herd', { base, x: herd || t('ui.no_animals_242') });
     };
     const rows = state.dogs.map((d) => {
       const dist = Math.round(Math.hypot(d.x - p.x, d.z - p.z));
       const cur = d.order === 'guardHerd' ? `${DOG_ORDER_NAME.guardHerd} (${HERD_NAME[d.herd]})` : DOG_ORDER_NAME[d.order];
-      const status = d.mode === 'chase' ? '<b class="bad">🐺 Чоно хөөж байна</b>' : cur;
-      return `<tr><td><b>🐕 ${d.name}</b><br><span class="muted">${dist} м зайд${(d.health ?? 100) < 100 ? ` · 🩹 ${Math.round(d.health ?? 100)}%` : ''}</span></td><td>${status}</td><td>${buttons(String(d.id))}</td></tr>`;
+      const status = d.mode === 'chase' ? t('ui.chasing_a_wolf') : cur;
+      return t('ui.m_away', { name: d.name, dist, x: (d.health ?? 100) < 100 ? ` · 🩹 ${Math.round(d.health ?? 100)}%` : '', status, x2: buttons(String(d.id)) });
     }).join('');
-    return `<h2>🐕 Нохойн команд <span class="close" data-act="close">✕</span></h2>
-      <p class="muted">«Энд» = таны одоо зогсож буй газар. Нохой бүр ${cfg.wolves.protectRadius.dog} м хамгаалалтын бүстэй, ${cfg.dogs.alertRadius} м-т ойртсон чоныг хөөнө (харуулын цэгээсээ ${cfg.dogs.leash} м-ээс холгүй). <kbd>N</kbd> — бүх нохой намайг дага.</p>
-      <table>${rows}
-      ${state.dogs.length > 1 ? `<tr class="total"><td><b>Бүх нохой</b></td><td></td><td>${buttons('all')}</td></tr>` : ''}</table>`;
+    return t('ui.dog_commands_here_where', { dog: cfg.wolves.protectRadius.dog, alertRadius: cfg.dogs.alertRadius, leash: cfg.dogs.leash, rows, x: state.dogs.length > 1 ? t('ui.all_dogs', { x: buttons('all') }) : '' });
   }
 
   // ======================= бууц сэлгэх (M) =======================
@@ -756,29 +651,13 @@ export class Panels {
       const growth = 1 - deg.growthPenalty * cs.degrade;
       const dCls = cs.degrade > 0.3 ? 'bad' : cs.degrade < 0.1 ? 'good' : '';
       const action = here
-        ? `<b>📍 Энд байна</b><br><span class="muted">${cs.daysSpent} өдөр · өдөрт +${fmtNum(Math.round(gainPerDay * 1000) / 10)}%</span>`
-        : `<button class="btn gold" data-act="move:${id}" ${!near || busy ? 'disabled' : ''}>Нүүх</button>`;
-      const snowTxt = (cs.snow ?? 0) < 0.5 ? '' : `❄ ${Math.round(cs.snow)} см (${Math.round(campAccess(cfg, cs.snow) * 100)}%)`;
-      return `<tr><td><b>${t('camp.' + id)}</b>${c.shed ? ' 🏚' : ''}<br><span class="muted">${CAMP_HINT[id] ?? types}</span></td>
-        <td>${snowTxt || '—'}<br><span class="muted">өвс ${Math.round((here ? r120 : cs.grass ?? 0) * 100)}%${(cs.hay ?? 0) > 0 ? ` · 🌾${fmtNum(cs.hay)}` : ''}</span></td>
-        <td>${WATER_NAME[c.water] ?? c.water}</td>
-        <td class="${c.wolfLevel === 'high' ? 'bad' : ''}">${WOLF_LEVEL_NAME[c.wolfLevel] ?? c.wolfLevel}</td>
-        <td><span class="${dCls}">${Math.round(cs.degrade * 100)}%</span><div class="bar"><div style="width:${Math.round(cs.degrade * 100)}%;background:#b8873a"></div></div></td>
-        <td class="num">${Math.round(growth * 100)}%</td>
-        <td>${action}</td></tr>`;
+        ? t('ui.you_are_here_days', { daysSpent: cs.daysSpent, x: fmtNum(Math.round(gainPerDay * 1000) / 10) })
+        : t('ui.move', { id, x: !near || busy ? 'disabled' : '' });
+      const snowTxt = (cs.snow ?? 0) < 0.5 ? '' : t('ui.cm', { x: Math.round(cs.snow), x2: Math.round(campAccess(cfg, cs.snow) * 100) });
+      return t('ui.grass', { x: t('camp.' + id), x2: c.shed ? ' 🏚' : '', x3: CAMP_HINT[id] ?? types, x4: snowTxt || '—', x5: Math.round((here ? r120 : cs.grass ?? 0) * 100), x6: (cs.hay ?? 0) > 0 ? ` · 🌾${fmtNum(cs.hay)}` : '', x7: WATER_NAME[c.water] ?? c.water, x8: c.wolfLevel === 'high' ? 'bad' : '', x9: WOLF_LEVEL_NAME[c.wolfLevel] ?? c.wolfLevel, dCls, x10: Math.round(cs.degrade * 100), x11: Math.round(cs.degrade * 100), x12: Math.round(growth * 100), action });
     }).join('');
     const lost = state.items.reduce((s, it) => s + it.amount, 0);
-    return `<h2>🏕 Бууц сэлгэх <span class="close" data-act="close">✕</span></h2>
-      <p class="muted">Нэг бууцанд удах тусам бэлчээр доройтож өвс удаан ургана, чанар нь муудна. Доройтол 60%-иас дээш бол мал турж эхэлнэ. Орхисон бууц өдөрт ${Math.round(deg.recoverPerDayWhenAway * 100)}% сэргэнэ.</p>
-      <p>${SEASON_EMOJI[sp.season]} <b>${SEASON_NAME[sp.season]}</b> (${sp.dayOf}/${sp.days}). Өвөл саравчтай уулын өвөрт, хавар ар руу, зун голын бэл, намар энгэрт. 🏚 = саравчтай дулаан бууц.</p>
-      <table><tr class="muted"><td>Бууц</td><td>Цас, өвс</td><td>Ус</td><td>Чоно</td><td>Доройтол</td><td class="num">Өвс ургалт</td><td></td></tr>${rows}</table>
-      <div class="sum">
-        <div>Нүүх хугацаа: <b>${fmtNum(hours)} цаг</b> ${byTruck ? '🚚 машинаар' : '🐴 тэргээр'} (${state.home === 'ger' ? 'гэртэй' : 'майхантай'})</div>
-        ${fuel ? `<div>Бензин: <b class="bad">${fmtMoney(-fuel)}</b></div>` : ''}
-        <div>Сүрэг: ${fmtNum(su)} хонин толгой</div>
-      </div>
-      <p class="muted">Нүүх хугацаанд малчин завгүй — тэр зуур чоно, муудал таныг хүлээхгүй. Мал, нохой, агуулах хамт нүүнэ.${lost > 0 ? ` <span class="bad">Газарт унасан ${fmtNum(lost)} нэгж бүтээгдэхүүн хаягдана — эхлээд түүж ав.</span>` : ''}</p>
-      ${busy ? '<p class="bad">Малчин завгүй байна (сумын төвд эсвэл нүүж байна).</p>' : !near ? '<p class="bad">Нүүхийн тулд майхандаа оч (ачаа бараагаа ачина).</p>' : ''}`;
+    return t('ui.change_camp_the_longer', { x: Math.round(deg.recoverPerDayWhenAway * 100), x2: SEASON_EMOJI[sp.season], x3: SEASON_NAME[sp.season], dayOf: sp.dayOf, days: sp.days, rows, x4: fmtNum(hours), x5: byTruck ? t('ui.by_truck') : t('ui.by_cart'), x6: state.home === 'ger' ? t('ui.with_a_ger') : t('ui.with_tents'), x7: fuel ? t('ui.fuel', { x: fmtMoney(-fuel) }) : '', x8: fmtNum(su), x9: lost > 0 ? t('ui.units_of_products_lying', { x: fmtNum(lost) }) : '', x10: busy ? t('ui.the_herder_is_busy') : !near ? t('ui.go_to_your_tent') : '' });
   }
 
   // ======================= туршилтын цэс (`) =======================
@@ -786,11 +665,7 @@ export class Panels {
     const { cfg, state } = this;
     const rows = CHEATS.map((row) => `<p>${row.map((c) => `<button class="btn sm" data-act="cheat:${c.act}">${c.label}</button>`).join(' ')}</p>`).join('');
     const camps = Object.keys(cfg.camps.camps).map((id) => `<button class="btn sm ${id === state.campId ? 'gold' : ''}" data-act="cheat:camp:${id}">${t('camp.' + id)}</button>`).join(' ');
-    return `<h2>🛠 Туршилтын цэс <span class="close" data-act="close">✕</span></h2>
-      ${rows}
-      <p>Шууд нүүх: ${camps}</p>
-      <p><button class="btn sm" data-act="zones">🛡 Хамгаалалтын бүс харуулах (Z)</button> <span class="muted">Чонын дайралт: ${state.wolves.peaceful ? 'унтраасан' : 'асаалттай'} · нохой ${state.dogs.length} · мал ${state.animals.length}</span></p>
-      <p class="muted">Энэ цэс тоглоомын дүрмийг турших зорилготой. \` — хаах.</p>`;
+    return t('ui.debug_menu_jump_to', { rows, camps, x: state.wolves.peaceful ? t('ui.off_261') : t('ui.on_262'), length: state.dogs.length, length2: state.animals.length });
   }
 
 
@@ -804,17 +679,12 @@ export class Panels {
     const used = bedsUsed(state);
     const icon = (m: { kind: string; sex: string }) => (m.kind === 'child' ? '🧒' : m.sex === 'f' ? '👩' : '👨');
     const rows = state.helpers.candidates.map((c) => {
-      const who = c.members.map((m) => `${icon(m)} ${m.name}${m.kind === 'child' ? ' <span class="muted">(хүүхэд — цуглуулагч)</span>' : ''}`).join('<br>');
-      const type = c.family ? 'Айл · өөрийн гэртэй ирнэ' : 'Ганц бие · байр хэрэгтэй';
+      const who = c.members.map((m) => `${icon(m)} ${m.name}${m.kind === 'child' ? t('ui.child_collector') : ''}`).join('<br>');
+      const type = c.family ? t('ui.family_comes_with_their') : t('ui.single_needs_a_bed');
       const noBed = !c.family && used + 1 > beds;
-      return `<tr><td>${who}<br><span class="muted">${type}</span></td><td class="num">${fmtMoney(c.wage * per)}<br><span class="muted">${per} хоног тутам</span></td>
-        <td><button class="btn gold" data-act="hire:${c.id}" ${near && !noBed ? '' : 'disabled'}>Хөлслөх</button>${noBed ? '<br><span class="bad">байр алга</span>' : ''}</td></tr>`;
+      return t('ui.days_hire', { who, type, x: fmtMoney(c.wage * per), per, id: c.id, x2: near && !noBed ? '' : 'disabled', x3: noBed ? t('ui.no_bed') : '' });
     }).join('');
-    return `<h2>☕ Цайны газар <span class="close" data-act="close">✕</span></h2>
-      <p class="muted">Ажил хайж буй малчид энд цай ууж сууна. Туслах өөрийн малгүй ирнэ. Айл өөрийн гэртэй, хүүхэд нь сүү, ноос түүнэ. Ганц биед Худалдаачнаас туслахын майхан/гэр авч өгнө (ор ${used}/${beds}). Цалинг ${per} хоног тутам мөнгөөр, эсвэл малаар урьдчилж өгнө (<kbd>J</kbd> — туслахууд).</p>
-      ${rows ? `<table><tr><th>Хүн</th><th class="num">Цалин</th><th></th></tr>${rows}</table>` : '<p>Өнөөдөр ажил хайсан хүн алга. Хэд хоногийн дараа дахин ирээрэй.</p>'}
-      ${near ? '' : '<p class="bad">Цайны газрын цэнхэр тойрог дотор оч.</p>'}
-      <p class="muted">Нэр дэвшигчид ${H.teahouse.refreshDays} хоног тутам солигдоно.</p>`;
+    return t('ui.teahouse_herders_looking_for', { used, beds, per, x: rows ? t('ui.person_wage', { rows }) : t('ui.nobody_is_looking_for'), x2: near ? '' : t('ui.step_inside_the_teahouse'), refreshDays: H.teahouse.refreshDays });
   }
 
   // ======================= туслахууд (M5) =======================
@@ -824,14 +694,13 @@ export class Panels {
     const { cfg, state } = this;
     const hs = state.helpers;
     const per = cfg.helpers.payEveryDays;
-    const head = `<h2>👥 Туслахууд <span class="close" data-act="close">✕</span></h2>`;
+    const head = t('ui.helpers');
     if (!hs.list.length)
-      return head + `<p>Туслах алга. Сумын төвийн <b>Цайны газар</b>-аас (цэнхэр тойрог, <kbd>E</kbd>) малчин айл эсвэл ганц бие туслах хөлслөнө.</p>
-        <p class="muted">Малчин өглөө сүргээ сайн бэлчээрт тууж гаргаад гэртээ ирнэ, өдөр 11, 15 цагт очиж тасарсан, чонын нутагт ойртсон малыг эргүүлж, орой тууж ирнэ (өдөржин мал дээрээ байхгүй). Адуучин майхнаа аваад уулын ойролцоо бууж, орой адуугаа майхан руугаа дөхүүлж манаж хононо. Хүүхэд сүү, ноос түүнэ. Малчинг жолооч болгож сумын төв явуулах, эсвэл мал тасалж өөр бууцанд отор гаргаж болно.</p>`;
+      return head + t('ui.you_have_no_helpers');
     const total = hs.list.reduce((s, h) => s + h.wage, 0) * per;
     const md = cfg.time.monthDays;
     const left = (md - (state.time.day % md)) % md;
-    const nextPay = left === 0 ? 'өнөөдөр 20:00-д' : `${left} хоногийн дараа`;
+    const nextPay = left === 0 ? t('ui.today_at_20_00') : t('ui.in_days', { left });
     const owned = (h: Helper) => state.animals.filter((a) => a.ownerId === h.id).length + hs.otor.reduce((s, g) => s + g.animals.filter((a) => a.ownerId === h.id).length, 0);
     const icon = (h: Helper) => (h.kind === 'child' ? '🧒' : h.sex === 'f' ? '👩' : '👨');
     const herdBtn = (h: Helper, g: HerdGroup) => `<button class="btn sm ${h.task === 'herd' && h.herd === g ? 'gold' : ''}" data-act="task:${h.id}|herd|${g}">${HERD_NAME[g]}</button>`;
@@ -840,33 +709,30 @@ export class Panels {
       let btns = '';
       if (h.kind === 'child' && h.task === 'otor') {
         const g = hs.otor.find((x) => x.collectorId === h.id);
-        what = `🧺 Отор дээр цуглуулагч${g ? `: ${t('camp.' + g.campId)}` : ''}`;
-        btns = `<button class="btn sm" data-act="collector:${h.id}|">Гэрт буцаах</button>`;
+        what = t('ui.collector_at_the_otor', { x: g ? `: ${t('camp.' + g.campId)}` : '' });
+        btns = t('ui.send_home', { id: h.id });
       } else if (h.kind === 'child') {
-        what = '🧺 Цуглуулагч — сүү, ноос түүж агуулахад хийнэ';
-        btns = hs.otor.filter((g) => g.collectorId === undefined).map((g) => `<button class="btn sm" data-act="collector:${h.id}|${g.campId}">🏕 Отор руу: ${t('camp.' + g.campId)}</button>`).join(' ');
+        what = t('ui.collector_collects_milk_and');
+        btns = hs.otor.filter((g) => g.collectorId === undefined).map((g) => t('ui.to_the_otor', { id: h.id, campId: g.campId, x: t('camp.' + g.campId) })).join(' ');
       }
       else if (h.task === 'otor') {
         const g = hs.otor.find((x) => x.helperId === h.id);
         const it = g ? (g.items ?? []).reduce((s2, x) => s2 + x.amount, 0) : 0;
-        what = g ? `🏕 Отор: ${t('camp.' + g.campId)} · ${g.animals.length} мал · ${g.days} хоног${it > 0 ? ` · 🧺 ${fmtNum(it)} нэгж бүтээгдэхүүн (очиж ав)` : ''}` : '🏕 Отор';
-        btns = `<button class="btn sm gold" data-act="recall:${h.id}">Отроос буцаах</button>`;
+        what = g ? t('ui.otor_animals_days', { x: t('camp.' + g.campId), length: g.animals.length, days: g.days, x2: it > 0 ? t('ui.units_of_products_go', { x: fmtNum(it) }) : '' }) : t('ui.otor_283');
+        btns = t('ui.recall_from_otor', { id: h.id });
       } else if (h.trip) {
-        what = `${cfg.vehicles[h.trip.vehicle].emoji} Сумын төв явж байна · ~${fmtMinutes(Math.round(h.trip.remaining))}`;
+        what = t('ui.heading_to_the_sum', { x: cfg.vehicles[h.trip.vehicle].emoji, x2: fmtMinutes(Math.round(h.trip.remaining)) });
       } else {
-        what = h.task === 'drive' ? `🚚 Жолооч — ${cfg.helpers.driver.departHour}:00-д агуулахын ачааг сумын төвд зарна` : `${HERD_NAME[h.herd]} хариулж байна`;
-        btns = `${herdBtn(h, 'sheep')} ${herdBtn(h, 'cow')} ${herdBtn(h, 'horse')} <button class="btn sm ${h.task === 'drive' ? 'gold' : ''}" data-act="task:${h.id}|drive">🚚 Жолооч</button>
-          <button class="btn sm" data-act="otorOpen:${h.id}">🏕 Отор…</button>`;
+        what = h.task === 'drive' ? t('ui.driver_sells_the_storage', { departHour: cfg.helpers.driver.departHour }) : t('ui.herding', { x: HERD_NAME[h.herd] });
+        btns = t('ui.driver_otor', { x: herdBtn(h, 'sheep'), x2: herdBtn(h, 'cow'), x3: herdBtn(h, 'horse'), x4: h.task === 'drive' ? 'gold' : '', id: h.id, id2: h.id });
       }
-      const pay = h.task === 'otor' || h.trip ? '' : `<button class="btn sm" data-act="payOpen:${h.id}">🐑 Малаар цалинжуулах</button> <button class="btn sm" data-act="fire:${h.id}">Халах</button>`;
+      const pay = h.task === 'otor' || h.trip ? '' : t('ui.pay_in_animals_fire', { id: h.id, id2: h.id });
       const own = owned(h);
-      return `<tr><td>${icon(h)} <b>${h.name}</b>${h.family ? ' <span class="muted">(айл)</span>' : ''}<br><span class="muted">${what}</span></td>
-        <td class="num">${fmtMoney(h.wage * per)}<br><span class="muted">${h.prepaid > 0 ? `урьдчилгаа ${fmtMoney(h.prepaid)}` : h.prepaid < 0 ? `өр ${fmtMoney(-h.prepaid)}` : ''}${own ? ` · 🟤 ${own} мал` : ''}</span></td>
+      return `<tr><td>${icon(h)} <b>${h.name}</b>${h.family ? t('ui.family') : ''}<br><span class="muted">${what}</span></td>
+        <td class="num">${fmtMoney(h.wage * per)}<br><span class="muted">${h.prepaid > 0 ? t('ui.advance', { x: fmtMoney(h.prepaid) }) : h.prepaid < 0 ? t('ui.debt', { x: fmtMoney(-h.prepaid) }) : ''}${own ? t('ui.animals', { own }) : ''}</span></td>
         <td>${btns}<br>${pay}</td></tr>`;
     }).join('');
-    return head + `<p class="muted">Цалин ${per} хоног тутам: нийт <b>${fmtMoney(total)}</b> · дараагийн цалин ${nextPay} · ганц биеийн ор ${bedsUsed(state)}/${bedsTotal(cfg, state)} · сул отрын майхан ${spareTents(state)}</p>
-      <table><tr><th>Туслах</th><th class="num">Цалин</th><th>Үүрэг</th></tr>${rows}</table>
-      <p class="muted">Мөнгө хүрэхгүй бол туслах айлаараа (малаа авч) явна. Малаар өгсөн мал хүрэн өнгөтэй, туслахынх боловч сүү, ноос нь танд үлдэнэ.</p>`;
+    return head + t('ui.wages_every_days_total', { per, x: fmtMoney(total), nextPay, x2: bedsUsed(state), x3: bedsTotal(cfg, state), x4: spareTents(state), rows });
   }
 
   private otorHtml(): string {
@@ -880,19 +746,13 @@ export class Panels {
     const groups = this.animalGroups();
     const rows = groups.map((g) => {
       const n = v.counts[g.key] ?? 0;
-      return `<tr><td>${g.label} <span class="muted">(${g.list.length})</span></td>
-        <td class="ctl"><button class="btn sm" data-act="oa-:${g.key}">−</button><b>${n}</b><button class="btn sm" data-act="oa+:${g.key}">+</button><button class="btn sm" data-act="oaAll:${g.key}">бүгд</button></td></tr>`;
+      return t('ui.all_295', { label: g.label, length: g.list.length, key: g.key, n, key2: g.key, key3: g.key });
     }).join('');
     const n = Object.values(v.counts).reduce((s, x) => s + x, 0);
     const errs: string[] = [];
-    if (spare <= 0) errs.push('Илүү майхан алга — гэртэй болох эсвэл Худалдаачнаас отрын майхан ав');
-    if (state.player.place !== 'camp') errs.push('Бууцандаа байх үед явуулна');
-    return `<h2>🏕 ${h.name}-г отор гаргах <span class="close" data-act="close">✕</span></h2>
-      <p class="muted">Тасалсан мал өөр бууцны бэлчээрт бэлчинэ: энэ бууцны бэлчээр амарна, тэр бууц доройтоно. Отор дээр бага зэрэг чонын эрсдэлтэй. Сул отрын майхан: <b>${spare}</b>.</p>
-      <h3>Бууц</h3><p>${camps}</p>
-      <h3>Мал (${n})</h3><table>${rows}</table>
-      ${errs.length ? `<p class="bad">${errs.join(' · ')}</p>` : ''}
-      <p><button class="btn gold" data-act="doOtor" ${errs.length || !n || !v.camp ? 'disabled' : ''}>Отор явуулах</button> <button class="btn" data-act="hvBack">← Буцах</button></p>`;
+    if (spare <= 0) errs.push(t('ui.no_spare_tent_get'));
+    if (state.player.place !== 'camp') errs.push(t('ui.can_be_sent_while'));
+    return t('ui.send_to_otor_split', { name: h.name, spare, camps, n, rows, x: errs.length ? `<p class="bad">${errs.join(' · ')}</p>` : '', x2: errs.length || !n || !v.camp ? 'disabled' : '' });
   }
 
   private payHtml(): string {
@@ -905,13 +765,9 @@ export class Panels {
     const prepaid = fam.reduce((s, x) => s + x.prepaid, 0);
     const rows = this.animalGroups().map((g) => {
       const price = salePrice(g.list[0]!, cfg.animals);
-      return `<tr><td>${g.label} <span class="muted">(${g.list.length})</span></td><td class="num">${fmtMoney(price)}</td>
-        <td><button class="btn sm" data-act="pa:${g.key}">1 өгөх</button></td></tr>`;
+      return t('ui.give_1', { label: g.label, length: g.list.length, x: fmtMoney(price), key: g.key });
     }).join('');
-    return `<h2>🐑 ${h.name}-д малаар цалин өгөх <span class="close" data-act="close">✕</span></h2>
-      <p class="muted">Мал туслахынх болж хүрэн өнгөтэй болно. Үнэ нь урьдчилгаа болж, ${per} хоног тутмын цалингаас (айлын ${fmtMoney(due)}) хасагдана. Одоогийн урьдчилгаа: <b>${fmtMoney(prepaid)}</b> (~${due ? Math.floor(prepaid / due) : 0} удаагийн цалин). Туслахын малын сүү, ноос танд үлдэнэ; туслах явахдаа малаа авч явна.</p>
-      <table><tr><th>Мал</th><th class="num">Үнэ</th><th></th></tr>${rows}</table>
-      <p><button class="btn" data-act="hvBack">← Буцах</button></p>`;
+    return t('ui.pay_in_animals_the', { name: h.name, per, x: fmtMoney(due), x2: fmtMoney(prepaid), x3: due ? Math.floor(prepaid / due) : 0, rows });
   }
 
   // ======================= үйлдлүүд =======================
@@ -925,7 +781,7 @@ export class Panels {
         return;
       case 'process': {
         const r = this.hooks.dispatch({ type: 'process', kind: arg as ProcessorKind });
-        this.hooks.toast(r.ok ? `${PROCESSOR_NAME[arg]} ажиллаж эхэллээ` : r.msg ?? '', r.ok ? 'good' : 'bad');
+        this.hooks.toast(r.ok ? t('ui.started_working', { x: PROCESSOR_NAME[arg] }) : r.msg ?? '', r.ok ? 'good' : 'bad');
         break;
       }
       case 'veh':
@@ -1075,7 +931,7 @@ export class Panels {
       }
       case 'move': {
         const r = this.hooks.dispatch({ type: 'moveCamp', to: arg });
-        this.hooks.toast(r.ok ? `🏕 ${t('camp.' + arg)} руу нүүж байна` : r.msg ?? '', r.ok ? 'good' : 'bad');
+        this.hooks.toast(r.ok ? t('ui.moving_to_302', { x: t('camp.' + arg) }) : r.msg ?? '', r.ok ? 'good' : 'bad');
         if (r.ok) {
           this.close();
           return;
@@ -1092,7 +948,7 @@ export class Panels {
       }
       case 'zones': {
         const on = this.hooks.toggleZones?.();
-        this.hooks.toast(on ? 'Хамгаалалтын бүс харагдаж байна (Z)' : 'Хамгаалалтын бүс нуулаа', 'good');
+        this.hooks.toast(on ? t('ui.protection_zones_are_visible_303') : t('ui.protection_zones_hidden'), 'good');
         break;
       }
       case 'hire': {
@@ -1152,7 +1008,7 @@ export class Panels {
         const groups = this.animalGroups();
         const ids = groups.flatMap((g) => g.list.slice(0, this.hv.counts[g.key] ?? 0).map((a) => a.id));
         const r = this.hooks.dispatch({ type: 'sendOtor', helper: this.hv.helper, animalIds: ids, camp: this.hv.camp });
-        this.hooks.toast(r.ok ? `🏕 Отор ${t('camp.' + this.hv.camp)} руу явлаа (${ids.length} мал)` : r.msg ?? '', r.ok ? 'good' : 'bad');
+        this.hooks.toast(r.ok ? t('ui.otor_sent_to_animals', { x: t('camp.' + this.hv.camp), length: ids.length }) : r.msg ?? '', r.ok ? 'good' : 'bad');
         if (r.ok) this.hv = { mode: 'list', helper: 0, camp: '', counts: {} };
         break;
       }
