@@ -41,7 +41,8 @@ export class TouchUI {
   private started = false;
   private sheetEl: HTMLElement;
 
-  constructor(private cfg: GameConfig, private ctl: PlayerController, private hooks: TouchHooks) {
+  /** opts.menuGate: «▶ Тоглох» хаалгыг эхлэлийн цэс (render/ui/menu.ts) орлоно — цэсний эхний товшилт нь хэвтээ/бүтэн дэлгэцийн зөвшөөрөл болно (M6.3) */
+  constructor(private cfg: GameConfig, private ctl: PlayerController, private hooks: TouchHooks, opts: { menuGate?: boolean } = {}) {
     document.body.classList.add('touch');
 
     // --- Джойстик ---
@@ -215,6 +216,12 @@ export class TouchUI {
     for (const box of [this.rotateEl, this.startEl, this.sheetEl]) box.addEventListener('click', onTap);
     pwa.onChange(() => this.refreshInstall());
     this.refreshInstall();
+    if (opts.menuGate) this.start();
+  }
+
+  /** Хэрэглэгчийн товшилтоор (цэснээс) бүтэн дэлгэц + хэвтээ түгжих (Android) */
+  enterLandscape(): void {
+    if (canLockLandscape) void landscapeFullscreen();
   }
 
   private start(): void {

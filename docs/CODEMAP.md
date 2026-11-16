@@ -35,21 +35,22 @@ SYM game/src/input/controller.ts:213 method PlayerController.isDown
 SYM game/src/input/controller.ts:218 method PlayerController.moveTo
 SYM game/src/input/controller.ts:223 method PlayerController.update
 SYM game/src/input/controller.ts:320 method PlayerController.drive
-FILE game/src/input/touch.ts 13.9KB 292L exports: TouchHooks,TouchUI
+FILE game/src/input/touch.ts 14.4KB 299L exports: TouchHooks,TouchUI
 SYM game/src/input/touch.ts:15 interface TouchHooks
 SYM game/src/input/touch.ts:32 class TouchUI
-SYM game/src/input/touch.ts:220 method TouchUI.start
-SYM game/src/input/touch.ts:226 method TouchUI.refreshInstall
-SYM game/src/input/touch.ts:233 method TouchUI.install
-SYM game/src/input/touch.ts:242 method TouchUI.bind
-SYM game/src/input/touch.ts:260 method TouchUI.fullscreen
-SYM game/src/input/touch.ts:273 method TouchUI.paused
-SYM game/src/input/touch.ts:277 method TouchUI.portrait
-SYM game/src/input/touch.ts:282 method TouchUI.update
-FILE game/src/main.ts 34.4KB 536L
+SYM game/src/input/touch.ts:223 method TouchUI.enterLandscape
+SYM game/src/input/touch.ts:227 method TouchUI.start
+SYM game/src/input/touch.ts:233 method TouchUI.refreshInstall
+SYM game/src/input/touch.ts:240 method TouchUI.install
+SYM game/src/input/touch.ts:249 method TouchUI.bind
+SYM game/src/input/touch.ts:267 method TouchUI.fullscreen
+SYM game/src/input/touch.ts:280 method TouchUI.paused
+SYM game/src/input/touch.ts:284 method TouchUI.portrait
+SYM game/src/input/touch.ts:289 method TouchUI.update
+FILE game/src/main.ts 34.5KB 537L
 SYM game/src/main.ts:41 fn toast
 SYM game/src/main.ts:64 fn start
-SYM game/src/main.ts:509 fn boot
+SYM game/src/main.ts:510 fn boot
 FILE game/src/persist/autosave.ts 4.7KB 102L exports: SaveReason,AutosaveDeps,Autosave,attachSimEvents,attachPageEvents
 SYM game/src/persist/autosave.ts:11 type SaveReason
 SYM game/src/persist/autosave.ts:13 interface AutosaveDeps
@@ -525,41 +526,41 @@ SYM game/src/render/terrain.ts:1214 method TerrainView.buildPostAndFire
 SYM game/src/render/terrain.ts:1238 method TerrainView.syncHay
 SYM game/src/render/terrain.ts:1264 method TerrainView.buildDens
 SYM game/src/render/terrain.ts:1301 method TerrainView.buildHome
-FILE game/src/render/ui/menu.ts 18.8KB 393L exports: Intent,takeIntent,putIntent,storedLang,MenuDeps,MenuUI
+FILE game/src/render/ui/menu.ts 19.3KB 399L exports: Intent,takeIntent,putIntent,storedLang,MenuDeps,MenuUI
 SYM game/src/render/ui/menu.ts:23 type Intent
 SYM game/src/render/ui/menu.ts:28 fn takeIntent
 SYM game/src/render/ui/menu.ts:40 fn putIntent
 SYM game/src/render/ui/menu.ts:45 fn storedLang
 SYM game/src/render/ui/menu.ts:54 interface MenuDeps
-SYM game/src/render/ui/menu.ts:74 fn esc
-SYM game/src/render/ui/menu.ts:76 class MenuUI
-SYM game/src/render/ui/menu.ts:107 method MenuUI.showStart
-SYM game/src/render/ui/menu.ts:112 method MenuUI.toggleGame
-SYM game/src/render/ui/menu.ts:118 method MenuUI.close
-SYM game/src/render/ui/menu.ts:124 method MenuUI.showIntro
-SYM game/src/render/ui/menu.ts:131 method MenuUI.go
-SYM game/src/render/ui/menu.ts:143 method MenuUI.refreshSlots
-SYM game/src/render/ui/menu.ts:153 method MenuUI.onKey
-SYM game/src/render/ui/menu.ts:164 method MenuUI.render
-SYM game/src/render/ui/menu.ts:170 method MenuUI.ver
-SYM game/src/render/ui/menu.ts:174 method MenuUI.back
-SYM game/src/render/ui/menu.ts:178 method MenuUI.rStart
-SYM game/src/render/ui/menu.ts:194 method MenuUI.rGame
-SYM game/src/render/ui/menu.ts:208 method MenuUI.slotInfoHtml
-SYM game/src/render/ui/menu.ts:217 method MenuUI.rSlots
-SYM game/src/render/ui/menu.ts:231 method MenuUI.rangeRow
-SYM game/src/render/ui/menu.ts:236 method MenuUI.difficultyHtml
-SYM game/src/render/ui/menu.ts:242 method MenuUI.rNew
-SYM game/src/render/ui/menu.ts:257 method MenuUI.firstFreeSlot
-SYM game/src/render/ui/menu.ts:262 method MenuUI.rFile
-SYM game/src/render/ui/menu.ts:272 method MenuUI.rSettings
-SYM game/src/render/ui/menu.ts:282 method MenuUI.rIntro
-SYM game/src/render/ui/menu.ts:292 method MenuUI.finishIntro
-SYM game/src/render/ui/menu.ts:299 method MenuUI.onInput
-SYM game/src/render/ui/menu.ts:309 method MenuUI.onChange
-SYM game/src/render/ui/menu.ts:323 method MenuUI.setDie
-SYM game/src/render/ui/menu.ts:328 method MenuUI.onClick
-SYM game/src/render/ui/menu.ts:389 method MenuUI.busyDo
+SYM game/src/render/ui/menu.ts:76 fn esc
+SYM game/src/render/ui/menu.ts:78 class MenuUI
+SYM game/src/render/ui/menu.ts:110 method MenuUI.showStart
+SYM game/src/render/ui/menu.ts:115 method MenuUI.toggleGame
+SYM game/src/render/ui/menu.ts:121 method MenuUI.close
+SYM game/src/render/ui/menu.ts:128 method MenuUI.showIntro
+SYM game/src/render/ui/menu.ts:135 method MenuUI.go
+SYM game/src/render/ui/menu.ts:148 method MenuUI.refreshSlots
+SYM game/src/render/ui/menu.ts:158 method MenuUI.onKey
+SYM game/src/render/ui/menu.ts:169 method MenuUI.render
+SYM game/src/render/ui/menu.ts:175 method MenuUI.ver
+SYM game/src/render/ui/menu.ts:179 method MenuUI.back
+SYM game/src/render/ui/menu.ts:183 method MenuUI.rStart
+SYM game/src/render/ui/menu.ts:199 method MenuUI.rGame
+SYM game/src/render/ui/menu.ts:213 method MenuUI.slotInfoHtml
+SYM game/src/render/ui/menu.ts:222 method MenuUI.rSlots
+SYM game/src/render/ui/menu.ts:236 method MenuUI.rangeRow
+SYM game/src/render/ui/menu.ts:241 method MenuUI.difficultyHtml
+SYM game/src/render/ui/menu.ts:247 method MenuUI.rNew
+SYM game/src/render/ui/menu.ts:262 method MenuUI.firstFreeSlot
+SYM game/src/render/ui/menu.ts:267 method MenuUI.rFile
+SYM game/src/render/ui/menu.ts:277 method MenuUI.rSettings
+SYM game/src/render/ui/menu.ts:287 method MenuUI.rIntro
+SYM game/src/render/ui/menu.ts:297 method MenuUI.finishIntro
+SYM game/src/render/ui/menu.ts:304 method MenuUI.onInput
+SYM game/src/render/ui/menu.ts:314 method MenuUI.onChange
+SYM game/src/render/ui/menu.ts:328 method MenuUI.setDie
+SYM game/src/render/ui/menu.ts:333 method MenuUI.onClick
+SYM game/src/render/ui/menu.ts:395 method MenuUI.busyDo
 FILE game/src/render/ui/names.ts 4.7KB 111L exports: stageName,speciesEmoji,PRODUCT_EMOJI,productName,unitOf,expenseName,PROCESSOR_NAME,fmtMoney,fmtNum,fmtMinutes,PASTURE_NAME,SEASON_NAME,SEASON_EMOJI,CAMP_HINT,+2
 SYM game/src/render/ui/names.ts:22 fn stageName
 SYM game/src/render/ui/names.ts:33 fn speciesEmoji
@@ -1212,22 +1213,22 @@ FILE game/tests/sumtown.test.ts 4.5KB 90L
 FILE game/tests/town.test.ts 6.1KB 127L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 18.9KB 107L
+FILE docs/CONTEXT.md 19.5KB 108L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-28 ## 2. Стек ба командууд
-DOC docs/CONTEXT.md:29-81 ## 3. Файлын зураглал (`game/src/`)
-DOC docs/CONTEXT.md:82-84 ## 4. `data/*.json` → аль файл хэрэглэдэг
-DOC docs/CONTEXT.md:85-93 ## 5. Архитектурын дүрэм ([[architecture]])
-DOC docs/CONTEXT.md:94-97 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
-DOC docs/CONTEXT.md:98-100 ## 7. Нээлттэй асуултууд
-DOC docs/CONTEXT.md:101-107 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
+DOC docs/CONTEXT.md:29-82 ## 3. Файлын зураглал (`game/src/`)
+DOC docs/CONTEXT.md:83-85 ## 4. `data/*.json` → аль файл хэрэглэдэг
+DOC docs/CONTEXT.md:86-94 ## 5. Архитектурын дүрэм ([[architecture]])
+DOC docs/CONTEXT.md:95-98 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
+DOC docs/CONTEXT.md:99-101 ## 7. Нээлттэй асуултууд
+DOC docs/CONTEXT.md:102-108 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
 FILE docs/INDEX.md 13.9KB 135L
 DOC docs/INDEX.md:16-30 ## 1. Унших дараалал ба давуу эрх
 DOC docs/INDEX.md:31-106 ## 2. Баримтууд
 DOC docs/INDEX.md:107-110 ## 3. Гол тоо
 DOC docs/INDEX.md:111-129 ## 4. Нэр томьёо
 DOC docs/INDEX.md:130-135 ## 5. Баримт засах дүрэм
-FILE docs/architecture.md 18.8KB 236L
+FILE docs/architecture.md 19.1KB 236L
 DOC docs/architecture.md:16-29 ## 1. Технологи
 DOC docs/architecture.md:30-68 ## 2. Хавтасны бүтэц
 DOC docs/architecture.md:69-138 ## 3. Гол зарчмууд
@@ -1396,7 +1397,7 @@ DOC docs/night-transport.md:45-68 ## 3. Сүү, ноос хоносон газр
 DOC docs/night-transport.md:69-87 ## 4. Шөнийн чоно (хэрэглэгчийн дүрэм)
 DOC docs/night-transport.md:88-103 ## 5. Тээвэр
 DOC docs/night-transport.md:104-106 ## 6. Хэрэглэгчийн шийдвэр 🙋
-FILE docs/plan/M6.md 17.4KB 66L
+FILE docs/plan/M6.md 17.5KB 66L
 DOC docs/plan/M6.md:15-17 ## Зорилго
 DOC docs/plan/M6.md:18-34 ## MVP «дууссан» шалгуур (D1–D10 — M6 ба M7-ийн нийт)
 DOC docs/plan/M6.md:35-37 ## Одоогийн байдал
@@ -1407,15 +1408,15 @@ FILE docs/plan/M7.md 7.6KB 31L
 DOC docs/plan/M7.md:12-22 ## Блокууд
 DOC docs/plan/M7.md:23-27 ## Асуулга (10 асуулт)
 DOC docs/plan/M7.md:28-31 ## Эрсдэл
-FILE docs/plan/V.md 37.3KB 85L
+FILE docs/plan/V.md 52.4KB 176L
 DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
-DOC docs/plan/V.md:24-79 ## Блокууд ба чеклист (2026-11-15)
-DOC docs/plan/V.md:80-85 ## Зогссон цэг
-FILE docs/plan/playtest.md 9.9KB 66L
+DOC docs/plan/V.md:24-170 ## Блокууд ба чеклист (2026-11-15)
+DOC docs/plan/V.md:171-176 ## Зогссон цэг
+FILE docs/plan/playtest.md 10.8KB 71L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
 DOC docs/plan/playtest.md:19-39 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
-DOC docs/plan/playtest.md:40-66 ## C. Мэдрэмж, үе шат бүрээр
+DOC docs/plan/playtest.md:40-71 ## C. Мэдрэмж, үе шат бүрээр
 FILE docs/seasons-camps.md 10.2KB 104L
 DOC docs/seasons-camps.md:17-40 ## 1. Хэрэглэгчийн шийдвэрүүд
 DOC docs/seasons-camps.md:41-54 ## 2. Улирал

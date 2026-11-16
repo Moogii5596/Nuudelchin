@@ -67,10 +67,11 @@ TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `gam
 | `sumcenter.ts` · `labelAtlas.ts` · `sumlayout.ts` · `worldmap.ts` | Сумын төвийн view (шошго — нэг атлас, тойрог — нэг mesh, оршин суугч — `crowd.nearR` LOD, хэвтээ нохой — нэгтгэсэн, айлын гэр — `sumlayout` `gers` байрлалаар `makeGer` → нэг mesh, улирлаар, худалдаанд байгаа машин; draw call high ≈ 84) · олон бичигтэй самбарыг 1 текстур, 1 mesh болгох `LabelAtlas` · `data/sumcenter.json`-ийг low-poly merged mesh болгох бүтээгч (V3.3 Могод сум) · газрын зураг (дээрээс харсан) |
 | `camera.ts` · `camclip.ts` · `style.ts` · `util.ts` | Дагах камер · камерын мөргөлдөөн (барилга/гэрийн хайрцаг, цилиндр; цэвэр) · `data/visuals.json`-ийн шалгалт, `visualStyle` · туслах |
 | `ui/panels.ts` · `ui/names.ts` | Бүх цонх: агуулах, тайлан, Худалдаачин, нүүх, нохой, туслах · нэрс, форматлагч |
+| `ui/menu.ts` · `ui/menu.css` | M6.3 эхлэлийн дэлгэц (▶ Үргэлжлүүлэх, 🆕 Шинэ, 📂 Слот, 📄 Файл, ⚙, 📲, 📥 Код — M6.4 идэвхгүй), шинэ тоглоом (слот + тайван тохиргоо), оршил (3 дэлгэц), тоглоомын цэс (❓/Esc/F1). Өөр тоглоом (шинэ, өөр слот, файл) эхлэхэд `Intent`-ийг sessionStorage-д бичиж хуудас дахин ачаалж `main.ts boot()` уншина; «Үргэлжлүүлэх» дахин ачаалахгүй |
 ### Бусад
 | Файл | Үүрэг |
 |---|---|
-| `main.ts` | Эхлэл: тохиргоо, sim, render, input холбох; HUD, ❓ цэс, тоглоомын давталт. M6.2: `boot()` хамгийн сүүлийн слотыг ачаална (туршилтын URL параметртэй бол үгүй), `Autosave`-ийг холбоно (эхлэлийн дэлгэц M6.3) |
+| `main.ts` | Эхлэл: тохиргоо, sim, render, input холбох; HUD, ❓ цэс, тоглоомын давталт. M6.2: `boot()`: Intent (шинэ/слот) эсвэл хамгийн сүүлийн слот + эхлэлийн дэлгэц (туршилтын URL параметртэй бол цэсгүй), `Autosave`, `MenuUI` холбоно; цагийн хурд = `settings.difficulty.timeSpeed` |
 | `persist/idb.ts` | M6.2 IndexedDB: `SaveStore` — 3 слот, A/B хуулбар (нэг гүйлгээнд хуучныг нь шинэчилнэ, нийлбэр шалгана), `list`/`load`/`latest`/`remove`, `requestPersistence()` |
 | `persist/autosave.ts` | `Autosave` (request → алхмуудын дараа flush; hidden/manual шууд), `attachSimEvents` (dayReport 20:00, leftToMap, arrived), `attachPageEvents` (visibilitychange, pagehide) |
 | `persist/file.ts` | `.nuudel` gzip экспорт/импорт: `exportBytes`/`importBytes`, `downloadFile`/`readFile` (UI — M6.3) |
