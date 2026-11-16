@@ -27,6 +27,9 @@ import { bedsTotal, bedsUsed } from '../../game/src/sim/systems/helpers';
 import { campAccess, seasonOf, seasonProgress } from '../../game/src/sim/systems/seasons';
 import type { Season } from '../../game/src/sim/config';
 
+/** Гэр худалдаж авсны дараа үлдээх мөнгө (тоглогч бүх мөнгөө үргүй зарахгүй; «тэг орчим» гацалт бот л биш) */
+const GER_RESERVE = 150_000;
+
 /** Зорилгын гэр (5+ ханат) хүртэл дараагийн хэмжээг шатаар худалдан авна; захиалга замд яваа бол дахиж авахгүй */
 function nextGerOrder(sim: Sim): BuyOrder | null {
   const st = sim.state;
@@ -205,7 +208,7 @@ function buyPlan(sim: Sim, reserve: number, maxSU: number, dogs = 0): BuyOrder[]
     }
     return false;
   };
-  if (su >= cfg.economy.goalSheepUnits) { const g = nextGerOrder(sim); if (g) tryBuy(g, 0); }   // зорилго: том гэр (5+ ханат) + 40 хонин толгой — шатаар томсгоно
+  if (su >= cfg.economy.goalSheepUnits) { const g = nextGerOrder(sim); if (g) tryBuy(g, GER_RESERVE); }   // зорилго: том гэр (5+ ханат) + 40 хонин толгой — шатаар томсгоно
   // M4.6: эхлэлд тээвэргүй — морин тэрэг эхэнд авна (их ачаа, мал зөөнө)
   if (!state.vehicles.length) tryBuy({ kind: 'vehicle', id: 'horseCart' }, reserve / 2);
   if (!state.processors.some((p) => p.kind === 'pot')) tryBuy({ kind: 'processor', id: 'pot' }, reserve);
@@ -275,7 +278,7 @@ const lazy: Strategy = {
     if (hour === 10 || hour === 17) collectAll(sim);
     if (hour === 11 && sim.state.time.day % 3 === 0) {
       const orders: BuyOrder[] = [];
-      if (herdSheepUnits(sim.state, sim.cfg.animals) >= sim.cfg.economy.goalSheepUnits) { const g = nextGerOrder(sim); if (g) orders.push(g); }
+      if (herdSheepUnits(sim.state, sim.cfg.animals) >= sim.cfg.economy.goalSheepUnits) { const g = nextGerOrder(sim); if (g && sim.state.money >= orderPrice(sim.cfg, sim.state, g) + GER_RESERVE) orders.push(g); }
       tripIfUseful(sim, orders, 1, surplusMales(sim));
     }
   },
@@ -328,7 +331,15 @@ interface RunResult {
   wages: number;
   bySeason: Record<string, { inc: number; days: number; cond: number; hay: number; births: number }>;
   driverIncome: number;
+  /** M6.6: тогтвортой амьдрах — 10-р өдрөөс хойших хонин толгойн доод цэг, мөнгө «тэг орчим» (< LOW_MONEY) дараалсан хамгийн урт өдөр, сүйрсэн эсэх */
+  minSU: number;
+  longestLow: number;
+  collapsed: boolean;
 }
+
+/** «Тэг орчим мөнгө» ба «сүрэг сүйрсэн» босго (mvp-spec §10.3, M6.6) */
+const LOW_MONEY = 30_000;
+const COLLAPSE_SU = 10;
 
 function run(cfg: GameConfig, strat: Strategy, seed: number): RunResult {
   const sim = new Sim(cfg, createInitialState(cfg, seed));
@@ -370,7 +381,12 @@ function run(cfg: GameConfig, strat: Strategy, seed: number): RunResult {
     b.births += r.births;
   }
   if (process.env.DEBUG_RUN && seed === 1000) for (const r of reports) if (r.day % 3 === 0) console.log(`${r.day} ${r.season} ${sim.state.campId.slice(0, 5)} milk ${(r.dropped.milk ?? 0).toFixed(0)} cond ${(r.avgCondition * 100).toFixed(0)} gut ${(r.avgGutFill * 100).toFixed(0)} su ${r.sheepUnits.toFixed(0)} snow ${r.snow.toFixed(0)} hay ${r.hay.toFixed(0)} fed ${r.hayFed.toFixed(1)} cold ${r.coldHit} inc ${Object.values(r.income).reduce((a2, n) => a2 + (n ?? 0), 0)}`);
-  return { goalDay: sim.state.goalReachedDay, reports, wolfKills, killsBySp, helpers: sim.state.helpers.list.length, wages, driverIncome, bySeason };
+  const late = reports.filter((r) => r.day >= 10);
+  const minSU = late.length ? Math.min(...late.map((r) => r.sheepUnits)) : 0;
+  let longestLow = 0, cur = 0;
+  for (const r of reports) { cur = r.moneyEnd < LOW_MONEY ? cur + 1 : 0; longestLow = Math.max(longestLow, cur); }
+  const collapsed = minSU < COLLAPSE_SU || (reports[reports.length - 1]?.sheepUnits ?? 0) < COLLAPSE_SU;
+  return { goalDay: sim.state.goalReachedDay, reports, wolfKills, killsBySp, helpers: sim.state.helpers.list.length, wages, driverIncome, bySeason, minSU, longestLow, collapsed };
 }
 
 /** Бүх seed-ийн нийт: төрлөөр */
@@ -400,6 +416,11 @@ for (const strat of [active, medium, stayer, lazy, manager].filter((s) => !only 
   const goalDays = results.map((r) => r.goalDay).filter((d): d is number => d !== null);
   console.log(`## ${strat.name}  (${((performance.now() - t0) / 1000).toFixed(1)} сек)`);
   console.log(`Зорилгод хүрсэн: ${goalDays.length}/${SEEDS}` + (goalDays.length ? ` · медиан ${median(goalDays)}-р өдөр (1× хурдаар ~${(median(goalDays) * dayHours).toFixed(1)} цаг)` : '') + ` · чонод барьдсан (медиан) ${median(results.map((r) => r.wolfKills))} мал` + killsTxt(results));
+  {
+    const need = Math.ceil(SEEDS * 7 / 8), ok = results.filter((r) => !r.collapsed).length, worstLow = Math.max(...results.map((r) => r.longestLow));
+    const pass = ok >= need && worstLow < 10;
+    console.log(`Тогтвортой амьдрах: сүйрээгүй ${ok}/${SEEDS} (шаардлага ≥ ${need}) · хонин толгойн доод цэг (seed бүр) ${results.map((r) => r.minSU.toFixed(0)).join(', ')} · мөнгө < ${fmt(LOW_MONEY)}₮ байсан хамгийн урт ${results.map((r) => r.longestLow).join(', ')} өдөр (шаардлага < 10) · сүйрсэн seed ${SEEDS - ok} → ${pass ? '✅ ТЭНЦСЭН' : '❌ ТЭНЦЭЭГҮЙ'}`);
+  }
   if (strat === manager)
     console.log(`Туслах (эцэст, медиан) ${median(results.map((r) => r.helpers))} · нийт цалин ${fmt(median(results.map((r) => r.wages)))}₮ · жолоочийн орлого ${fmt(median(results.map((r) => r.driverIncome)))}₮`);
   {
