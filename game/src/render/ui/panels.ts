@@ -16,7 +16,7 @@ import type { DayReport } from '../../sim/sim';
 import * as storage from '../../sim/systems/storage';
 import { recipe } from '../../sim/systems/processing';
 import { animalSlots, bestTruck, orderPrice, productPrice } from '../../sim/systems/trip';
-import { animalRoom, atLoadingSpot, cargoSlots, cargoUnits, partySpeedKmPerMin, sellableAnimals, sellableAtShop } from '../../sim/systems/travel';
+import { animalRoom, atLoadingSpot, cargoSlots, cargoUnits, nearestVehicle, partySpeedKmPerMin, sellableAnimals, sellableAtShop } from '../../sim/systems/travel';
 import { salePrice } from '../../sim/systems/animals';
 import { DOG_ORDER_NAME, type DogOrderKind } from '../../sim/systems/dogs';
 import { flockKey } from '../../sim/systems/herds';
@@ -24,7 +24,7 @@ import { moveHours } from '../../sim/systems/camps';
 import { averageBiomass } from '../../sim/systems/pasture';
 import { herdSheepUnits } from '../../sim/systems/animals';
 import type { CheatAction } from '../../sim/systems/cheats';
-import { bedsTotal, bedsUsed, nearTeahouse, playerOwned, spareTents, type Helper, type HerdGroup } from '../../sim/systems/helpers';
+import { bedsTotal, bedsUsed, hasDriver, nearTeahouse, playerOwned, spareTents, type Helper, type HerdGroup } from '../../sim/systems/helpers';
 import { campAccess, seasonProgress, yearOf } from '../../sim/systems/seasons';
 import { hayRoom } from '../../sim/systems/travel';
 import { closedMsg, isOpen } from '../../sim/systems/shops';
@@ -83,6 +83,8 @@ const ANIMAL_CATALOG: { key: string; species: Species; sex: Sex; age: number; no
 
 interface Draft {
   vehicle: VehicleId | null;    // ачих тээвэр (null = гартаа/морьтой)
+  /** Тэрэг/машины дэргэд нээсэн: зөвхөн тэрэгт ачих, буулгах, сум руу явуулах (гарт авах хэсэггүй) */
+  atVehicle?: boolean;
   take: Partial<Record<ProductId, number>>;   // агуулахаас гартаа
   sell: Partial<Record<ProductId, number>>;   // ачих (хотонд) эсвэл зарах (сумын төвд)
   sellGroups: Record<string, number>;
@@ -159,7 +161,9 @@ export class Panels {
       }
       const here = st.fleet.filter((f) => f.place === st.player.place);
       const v = st.player.driving ?? here.sort((a, b) => this.cfg.vehicles[b.id].capacity - this.cfg.vehicles[a.id].capacity)[0]?.id ?? null;
-      this.draft = { vehicle: v, take: {}, sell: {}, sellGroups: {}, buyAnimals: {}, buyItems: new Set(), hay: 0 };
+      const nearV = kind === 'cargo' && !st.player.driving ? nearestVehicle(this.cfg, st, this.cfg.vehicles.road.enterRange) : null;
+      const atV = kind === 'cargo' && (!!st.player.driving || nearV?.place === 'camp');
+      this.draft = { vehicle: atV && nearV ? nearV.id : v, atVehicle: atV, take: {}, sell: {}, sellGroups: {}, buyAnimals: {}, buyItems: new Set(), hay: 0 };
     }
     if (kind === 'teahouse') {
       if (this.state.player.place !== 'sum') return;
@@ -390,11 +394,11 @@ export class Panels {
       const n = d.take[pr] ?? 0;
       return t('ui.all', { x: PRODUCT_EMOJI[pr], x2: productName(pr), x3: fmtNum(have), x4: unitOf(pr), x5: fmtMoney(productPrice(cfg, pr)), pr, x6: fmtNum(n), pr2: pr, pr3: pr });
     }).join('');
-    let html = t('ui.prepare_goods_for_the', { x: fmtNum(carried), carryUnits: cfg.products.carryUnits, x2: takeRows || t('ui.storage_is_empty'), x3: takeUnits > 0 && takeUnits <= room + 1e-9 && nearStore ? '' : 'disabled', x4: fmtNum(takeUnits), x5: !nearStore ? t('ui.go_to_the_storage') : takeUnits > room + 1e-9 ? t('ui.your_hands_only_hold', { x: fmtNum(room) }) : '' });
+    let html = d.atVehicle ? t('ui.cart_cargo_head') : t('ui.prepare_goods_for_the', { x: fmtNum(carried), carryUnits: cfg.products.carryUnits, x2: takeRows || t('ui.storage_is_empty'), x3: takeUnits > 0 && takeUnits <= room + 1e-9 && nearStore ? '' : 'disabled', x4: fmtNum(takeUnits), x5: !nearStore ? t('ui.go_to_the_storage') : takeUnits > room + 1e-9 ? t('ui.your_hands_only_hold', { x: fmtNum(room) }) : '' });
 
     // Морьтой: мал тууж явах
     const groups = this.animalGroups();
-    if (p.mounted) {
+    if (p.mounted && !d.atVehicle) {
       const rows = groups.map((g) => {
         const n = d.sellGroups[g.key] ?? 0;
         return `<tr><td>${g.label} <span class="muted">(${g.list.length})</span></td><td class="num">~${fmtMoney(salePrice(g.list[0]!, cfg.animals))}</td>
@@ -406,7 +410,7 @@ export class Panels {
       html += t('ui.you_have_no_cart');
       return html;
     }
-    html += t('ui.load_onto_cart_vehicle', { x: this.vehicleButtons() });
+    html += d.atVehicle ? `<p>${this.vehicleButtons()}</p>` : t('ui.load_onto_cart_vehicle', { x: this.vehicleButtons() });
     const f = d.vehicle ? state.fleet.find((x) => x.id === d.vehicle) : null;
     if (!f) return html;
     const v = cfg.vehicles[f.id];
@@ -429,6 +433,10 @@ export class Panels {
     if (cargoSlots(cfg, f) + loadSlots > v.sheepSlots + 1e-9) errs.push(t('ui.animals_do_not_fit', { sheepSlots: v.sheepSlots, cowSlots: v.cowSlots }));
     if (!atSpot) errs.push(t('ui.bring_your_vehicle_next'));
     html += this.cargoList() + t('ui.load_from_storage_price', { x: loadRows || t('ui.storage_is_empty'), animalRows, x2: errs.length ? `<p class="bad">${errs.join(' · ')}</p>` : '', x3: errs.length || (!loadUnits && !loadSlots) ? 'disabled' : '', x4: atSpot && (cargoUnits(f) || f.animals.length || f.orders.length) ? '' : 'disabled' });
+    if (d.atVehicle) {
+      const ready = hasDriver(state) && cargoUnits(f) > 1e-9 && !f.animals.length && !f.orders.length && state.player.driving !== f.id;
+      html += t('ui.cart_send', { x: ready ? '' : 'disabled', x2: hasDriver(state) ? '' : t('ui.cart_send_no_driver') });
+    }
     return html;
   }
 
@@ -929,6 +937,13 @@ export class Panels {
           d.sell = {};
           d.sellGroups = {};
         }
+        break;
+      }
+      case 'doSend': {
+        if (!d || !d.vehicle) break;
+        const r = this.hooks.dispatch({ type: 'sendDriver', vehicle: d.vehicle });
+        this.hooks.toast(r.msg ?? '', r.ok ? 'good' : 'bad');
+        if (r.ok) { this.close(); return; }
         break;
       }
       case 'doUnload': {
