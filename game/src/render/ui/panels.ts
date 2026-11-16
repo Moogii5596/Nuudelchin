@@ -27,6 +27,7 @@ import type { CheatAction } from '../../sim/systems/cheats';
 import { bedsTotal, bedsUsed, nearTeahouse, playerOwned, spareTents, type Helper, type HerdGroup } from '../../sim/systems/helpers';
 import { campAccess, seasonProgress, yearOf } from '../../sim/systems/seasons';
 import { hayRoom } from '../../sim/systems/travel';
+import { closedMsg, isOpen } from '../../sim/systems/shops';
 import { canSellAnimals, canSellProducts, nearLotSlot, nearTradeDoor, orderAllowed } from '../../sim/systems/sumtown';
 import { bankLimit, housePrice, nearTownDoor, zdtgPackages, zdtgRepayable } from '../../sim/systems/town';
 import {
@@ -146,6 +147,7 @@ export class Panels {
     if (kind === 'cargo' || kind === 'shop') {
       const st = this.state;
       if (kind === 'shop' && st.player.place !== 'sum') return;
+      if (kind === 'shop' && this.closedShop(nearTradeDoor(this.cfg, st)?.id)) return;
       if (kind === 'cargo' && (st.player.place !== 'camp' || st.move)) {
         this.hooks.toast(t('ui.loads_goods_at_the'), 'bad');
         return;
@@ -156,6 +158,7 @@ export class Panels {
     }
     if (kind === 'teahouse') {
       if (this.state.player.place !== 'sum') return;
+      if (this.closedShop('teahouse')) return;
       this.hooks.dispatch({ type: 'teahouse' });
     }
     if (kind === 'trader') {
@@ -166,6 +169,14 @@ export class Panels {
     this.kind = kind;
     this.root.style.display = 'flex';
     this.render();
+  }
+
+  /** Хаалттай бол мэдэгдэл гаргаад true (data/shops.json) */
+  private closedShop(id: string | undefined): boolean {
+    if (!id || isOpen(this.cfg, id, this.state.time.minute)) return false;
+    const msg = closedMsg(this.cfg, id);
+    this.hooks.toast(t(msg.key, msg.params), 'bad');
+    return true;
   }
 
   close(): void {

@@ -24,6 +24,7 @@ import { salePrice, dailyConditionDelta, sheepUnits } from './animals';
 import * as storage from './storage';
 import { parkingSpot, productPrice, vehicleCfg } from './trip';
 import { teahouseDoor } from './sumtown';
+import { closedMsg, isOpen } from './shops';
 import { mapSpeedKmPerMin, sumId } from './travel';
 import { waterDistance } from '../terrain';
 import { scareWolf } from './wolves';
@@ -201,6 +202,7 @@ export function nearTeahouse(cfg: GameConfig, state: GameState): boolean {
 export function hire(cfg: GameConfig, state: GameState, candidateId: number, proximity: boolean): Msg | null {
   const hs = state.helpers;
   if (proximity && !nearTeahouse(cfg, state)) return m('sim.go_to_the_teahouse');
+  if (proximity && !isOpen(cfg, 'teahouse', state.time.minute)) return closedMsg(cfg, 'teahouse');
   const c = hs.candidates.find((x) => x.id === candidateId);
   if (!c) return m('sim.no_such_person');
   if (!c.family && bedsUsed(state) + 1 > bedsTotal(cfg, state)) return m('sim.a_single_helper_needs');
@@ -597,6 +599,9 @@ function driverStep(cfg: GameConfig, state: GameState, h: Helper): HelperEvent[]
   const D = cfg.helpers.driver;
   if (h.trip) {
     h.trip.remaining -= 1;
+    // Сумын төвд (аяллын дунд) хүрэхэд Худалдаачин хаалттай бол нээгдэхийг хүлээнэ
+    const atSum = Math.ceil(h.trip.total / 2);
+    if (h.trip.remaining < atSum && !isOpen(cfg, 'buyer', state.time.minute)) h.trip.remaining = atSum;
     if (h.trip.remaining > 0) return [];
     // Буцаж ирлээ — зарсан мөнгө
     let income = 0;
