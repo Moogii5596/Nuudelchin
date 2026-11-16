@@ -71,6 +71,7 @@ tags: [index, docs]
 | [[CHANGELOG]] | Дууссан үе шат бүрийн «хийгдсэн зүйл», тэнцвэрийн дүн, лог (root) | 📜 Log |
 | [[lessons_learned]] | Зөвхөн 2 дахь удаагаа давтагдсан алдааны сургамж (root) | 📜 Log |
 | `PROGRESS.md` (root) | Зөвхөн `docs/plan/` руу заагч | — |
+| [[LEAD]] (`docs/plan/LEAD.md`) | Ахлах хөгжүүлэгчийн дамжуулах тэмдэглэл: session-ууд, явц, хүлээгдэж буй шийдвэр | Active |
 | [[prototype-rules]] | Прототип v1.2-ийн дүрэм (насны шат §8, бүс §6 — одоо ч лавлагаа) | 📜 Archived — `docs/_archive/` |
 | [[economy-mvp]] | «Гэр + 40 хонин толгой»-н үндэслэл, хонин толгой | 📜 Archived — `docs/_archive/` |
 | [[balance-m1]] | M1–M1.5 симуляцын дүн | 📜 Archived — `docs/_archive/` |
