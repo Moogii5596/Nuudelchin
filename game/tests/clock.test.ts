@@ -37,6 +37,11 @@ describe('Цаг (шөнөтэй, M4.5)', () => {
     expect(realSecondsPerMinute(cfg, cfg.sleepMinute + 10)).toBeLessThan(realSecondsPerMinute(cfg, 600));
     expect(realSecondsPerDay(cfg)).toBeGreaterThan(((cfg.sleepMinute - cfg.dayStartMinute) * cfg.realSecondsPerGameHour) / 60);
   });
+  it('M6.11: бүтэн өдөр 1× хурдаар 330 ± 30 бодит сек (5–6 мин); өдөр 20 сек/цаг, шөнө 3 сек/цаг', () => {
+    expect(cfg.realSecondsPerGameHour).toBe(20);
+    expect(cfg.nightRealSecondsPerGameHour).toBe(3);
+    expect(Math.abs(realSecondsPerDay(cfg) - 330)).toBeLessThanOrEqual(30);
+  });
   it('сар ба малын жил тохиргооны давтамжаар', () => {
     const t = newTime(cfg);
     const events: ClockEvent[] = [];

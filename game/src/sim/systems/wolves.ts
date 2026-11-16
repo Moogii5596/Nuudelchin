@@ -29,7 +29,6 @@ import type { GameConfig, Species } from '../config';
 import { Rng } from '../rng';
 import type { Animal, GameState } from '../state';
 import { waterDistance } from '../terrain';
-import { realSecondsPerMinute } from '../clock';
 import { flockKey } from './herds';
 import { guardingHelpers, helperGuardRadius } from './helpers';
 import { liveWeightKg } from './animals';
@@ -261,7 +260,7 @@ export function scareWolf(cfg: GameConfig, o: Wolf): void {
   o.mode = 'flee';
   o.targetId = 0;
   o.forced = false;
-  o.scared = cfg.wolves.scaredSeconds / realSecondsPerMinute(cfg.time);
+  o.scared = cfg.wolves.scaredMinutes;   // тоглоомын минут (sim бодит цагаас хамааралгүй, M6.11)
 }
 
 /** Нэг тоглоомын минут. Ан, барьсан мал зэрэг үйл явдлыг буцаана */

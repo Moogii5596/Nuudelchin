@@ -29,7 +29,7 @@
     "onFoot": 45,
     "mounted": 60
   },
-  "scaredSeconds": 45,
+  "scaredMinutes": 270,
   "speed": {
     "roam": 0.4,
     "flee": 2.5,
