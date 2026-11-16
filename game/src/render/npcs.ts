@@ -35,6 +35,8 @@ interface Entry {
   placed: boolean;
   lineNo: number;
   scale: number;
+  /** тоглогчийг тойрох зөөлөн шилжилт (м) */
+  ox: number; oz: number;
 }
 
 export class NpcView {
@@ -45,10 +47,12 @@ export class NpcView {
   private talkWith: { e: Entry; t: number; line: number } | null = null;
   private speech: HTMLDivElement | null = null;
   private readonly maxLive = MAX_LIVE[quality] ?? 5;
+  /** Камерын байрлал (scene тавина): камер дүрийн биед орвол тэр дүрийг нууна */
+  camera: THREE.Vector3 | null = null;
 
   constructor(private readonly cfg: GameConfig) {
     this.group.name = 'npcs';
-    this.entries = cfg.npcs.npcs.map((def) => ({ def, rig: null, far: null, yaw: 0, px: 0, pz: 0, speed: 0, placed: false, lineNo: 0, scale: def.look.figure?.stature ?? 1 }));
+    this.entries = cfg.npcs.npcs.map((def) => ({ def, rig: null, far: null, yaw: 0, px: 0, pz: 0, speed: 0, placed: false, lineNo: 0, scale: def.look.figure?.stature ?? 1, ox: 0, oz: 0 }));
   }
 
   // ---------- төрх ----------
@@ -106,6 +110,13 @@ export class NpcView {
   private drive(e: Entry, n: NpcNow, x: number, y: number, z: number, dt: number, playerX: number, playerZ: number, talking: boolean): void {
     const rig = this.ensureRig(e);
     if (!e.yaw && !e.placed) e.yaw = n.heading;
+    // тоглогчийн биеэс (1.15 м) түлхэгдэж зөөлөн тойрно — тоглогчийн дэргэд, биед нь зогсохгүй
+    const dx = x - playerX, dz = z - playerZ, d = Math.hypot(dx, dz), MINP = 1.15;
+    let tx = 0, tz = 0;
+    if (d < MINP) { const nx = d > 1e-3 ? dx / d : Math.cos(n.heading + Math.PI / 2), nz = d > 1e-3 ? dz / d : -Math.sin(n.heading + Math.PI / 2); tx = nx * MINP - dx; tz = nz * MINP - dz; }
+    const kk = Math.min(1, dt * 7);
+    e.ox += (tx - e.ox) * kk; e.oz += (tz - e.oz) * kk;
+    x += e.ox; z += e.oz;
     this.measure(e, x, z, dt);
     const target = talking ? Math.atan2(playerX - x, playerZ - z) : n.heading;
     e.yaw = turnToward(e.yaw, target, talking ? characters.talk.turnRate : 8, dt);
@@ -113,6 +124,7 @@ export class NpcView {
     rig.root.rotation.y = e.yaw;
     const bob = animateCharacter(rig, { dt, speed: talking ? 0 : e.speed, mode: 'foot', raise: false, uurga: false, talk: talking, emotion: 'neutral' });
     rig.root.position.y = y + bob * e.scale;
+    if (this.camera && Math.hypot(this.camera.x - x, this.camera.y - (rig.root.position.y + 0.9 * e.scale), this.camera.z - z) < 1.5 * e.scale) rig.root.visible = false;   // камер биед орвол нууна
   }
 
   /** Ярилцлага: хамгийн ойр, зогсож буй NPC (амьд дүр) руу; тоглогч бас зогсож байх ёстой */

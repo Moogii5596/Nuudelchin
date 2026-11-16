@@ -293,7 +293,7 @@ export class GameView {
     this.place = p.place;
     this.skyUniforms.cloudTime.value += Math.max(0, dt);
     const look = seasonLook(this.cfg, state);
-    if (import.meta.env.DEV) (window as unknown as { __state?: GameState }).__state = state;   // dev: туршилтын зураг авахад (цаг, өдөр, байрлал өөрчлөх)
+    if (import.meta.env.DEV) { (window as unknown as { __state?: GameState; __cam?: FollowCamera }).__state = state; (window as unknown as { __cam?: FollowCamera }).__cam = this.cam; }   // dev: туршилтын зураг авахад (цаг, өдөр, байрлал өөрчлөх)
     const season = seasonOf(this.cfg, state.time.day);
     this.applyDaylight(state.time.minute, season, p.x, p.z);
     this.characters.setSeason(season);
@@ -350,6 +350,8 @@ export class GameView {
     const ty = this.heightAt(cx, cz) + (p.mounted || p.driving ? 2.4 : 1.6);
     this.cam.solids = camp ? this.campSolids(state) : p.place === 'sum' ? this.sum.solids : null;   // V4.5 R7: камер барилга, гэрт орохгүй
     this.cam.update(cx, cz, ty, this.heightAt, dt);
+    this.sum.npcs.camera = this.cam.camera.position;
+    this.hideHerderIfCameraInside(cx, ty - 0.6, cz);
     this.terrain.updateGrassCenter(cx, cz, (this.scene.fog as THREE.Fog).far);
     this.skyDome.position.copy(this.cam.camera.position);
     this.stars.position.copy(this.cam.camera.position);
@@ -357,6 +359,13 @@ export class GameView {
     this.renderer.render(this.scene, this.cam.camera);
   }
 
+  private herderHid = false;
+  /** Камер малчны биед (1.5 м дотор) орвол малчныг түр нууна */
+  private hideHerderIfCameraInside(x: number, y: number, z: number): void {
+    const hv = this.characters.herderObject, c = this.cam.camera.position;
+    const near = Math.hypot(c.x - x, c.y - y, c.z - z) < 1.5;
+    if (near) { hv.visible = false; this.herderHid = true; } else if (this.herderHid) { hv.visible = true; this.herderHid = false; }
+  }
   private inPrev = { x: 0, z: 0 };
   private campKey = '';
   private campSol: CamSolids = { boxes: [], cyls: [] };

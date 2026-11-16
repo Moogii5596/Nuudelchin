@@ -9,6 +9,9 @@ import * as THREE from 'three';
 import { clamp } from './util';
 import { clipThroughSolids, type CamSolids } from './camclip';
 
+/** Мөргөлдөөнөөс болж камер малчинд ойртох хамгийн бага зай (м) */
+const MIN_CAM = 1.7;
+
 export class FollowCamera {
   readonly camera: THREE.PerspectiveCamera;
   yaw = 0.6;
@@ -120,17 +123,34 @@ export class FollowCamera {
   }
 
   update(tx: number, tz: number, ty: number, heightAt: (x: number, z: number) => number, dt = 1 / 60): void {
-    const cx = tx + Math.sin(this.yaw) * Math.cos(this.pitch) * this.dist;
-    const cz = tz + Math.cos(this.yaw) * Math.cos(this.pitch) * this.dist;
-    let cy = ty + Math.sin(this.pitch) * this.dist;
-    cy = Math.max(cy, heightAt(cx, cz) + 1.2);
+    const trial = (pitch: number, yaw = this.yaw): { cx: number; cy: number; cz: number; t: number } => {
+      const cx = tx + Math.sin(yaw) * Math.cos(pitch) * this.dist, cz = tz + Math.cos(yaw) * Math.cos(pitch) * this.dist;
+      const cy = Math.max(ty + Math.sin(pitch) * this.dist, heightAt(cx, cz) + 1.2);
+      return { cx, cy, cz, t: this.solids ? clipThroughSolids([tx, ty, tz], [cx, cy, cz], this.solids) : 1 };
+    };
+    // Мөргөлдөөн: малчин → камер сегментийг саадад тулгана. Саад ойр бол камер дээш өргөгдөж барилгын дээгүүрээс харна
+    // (малчны биед наалдахгүй); хэрэв тэгэхэд ч болохгүй бол ойртоно. Ойртох нь хурдан (~0.08 с), холдох нь аажим (~0.4 с)
+    let best = trial(this.pitch);
+    if (this.solids && best.t < 0.85) {
+      for (let pp = this.pitch + 0.15; pp <= Math.min(1.38, this.pitch + 0.31); pp += 0.15) {
+        const r = trial(Math.min(pp, 1.38));
+        if (r.t > best.t + 1e-6) best = r;
+        if (r.t >= 0.85) break;
+      }
+    }
+    // Саад ойр бөгөөд өргөгдсөн ч чөлөөгүй бол (хананд наалдсан) камер аажим эргэж чөлөөтэй тал руу гарна (чирж байхад эргүүлэхгүй)
+    if (this.solids && !this.mapMode && !this.ptr?.drag && dt > 0 && best.t * this.dist < Math.min(6, this.dist)) {
+      for (let i = 1; i <= 9; i++) {
+        const off = Math.ceil(i / 2) * 0.35 * (i % 2 ? 1 : -1);
+        if (trial(this.pitch, this.yaw + off).t >= 0.85) { this.yaw += off * Math.min(1, dt * 3); best = trial(this.pitch); break; }
+      }
+    }
+    const { cx, cy, cz, t } = best;
     this.desiredTarget.set(tx, ty, tz);
-    // Мөргөлдөөн: малчин → камер сегментийг саадад тулгана. Ойртох нь хурдан (~0.08 с), холдох нь аажим (~0.4 с)
-    let t = 1;
-    if (this.solids) t = clipThroughSolids([tx, ty, tz], [cx, cy, cz], this.solids);
     if (!this.cameraReady || dt <= 0 || t < this.clipT) this.clipT = t < this.clipT ? this.clipT + (t - this.clipT) * (this.cameraReady && dt > 0 ? 1 - Math.exp(-dt * 25) : 1) : t;
     else this.clipT += (t - this.clipT) * (1 - Math.exp(-dt * 2.5));
-    const k = Math.min(this.clipT, t);                  // зөөлрүүлсэн ч хана руу орохгүй (t-ээс их болохгүй)
+    const L0 = Math.hypot(cx - tx, cy - ty, cz - tz) || 1, kMin = Math.min(1, MIN_CAM / L0);   // малчны биед наалдахгүй (ойр дүрийг scene нууна)
+    const k = Math.max(kMin, Math.min(this.clipT, t));     // зөөлрүүлсэн ч хана руу орохгүй (t-ээс их болохгүй)
     this.desiredPosition.set(tx + (cx - tx) * k, ty + (cy - ty) * k, tz + (cz - tz) * k);
     if (!this.cameraReady || dt <= 0) {
       this.smoothPosition.copy(this.desiredPosition);
@@ -145,7 +165,8 @@ export class FollowCamera {
     if (this.solids) {
       const sp = this.smoothPosition, st = this.smoothTarget;
       const k2 = clipThroughSolids([st.x, st.y, st.z], [sp.x, sp.y, sp.z], this.solids);
-      if (k2 < 1) sp.set(st.x + (sp.x - st.x) * k2, st.y + (sp.y - st.y) * k2, st.z + (sp.z - st.z) * k2);
+      const kMin2 = Math.min(1, MIN_CAM / (Math.hypot(sp.x - st.x, sp.y - st.y, sp.z - st.z) || 1));
+      if (k2 < 1) sp.set(st.x + (sp.x - st.x) * Math.max(k2, kMin2), st.y + (sp.y - st.y) * Math.max(k2, kMin2), st.z + (sp.z - st.z) * Math.max(k2, kMin2));
     }
     this.camera.position.copy(this.smoothPosition);
     this.camera.lookAt(this.smoothTarget);
