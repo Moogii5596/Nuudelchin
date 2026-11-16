@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Симуляцын үндсэн давталт. Нэг step = 1 тоглоомын минут (architecture.md §3.2).
  */
 import type { GameConfig } from './config';
@@ -55,7 +55,6 @@ export class Sim {
   readonly state: GameState;
   private rng: Rng;
   private listeners: ((e: SimEvent) => void)[] = [];
-  private moneyAtDayStart: number;
   private quality: Record<string, number>;
   private centers = new Map<number, FlockCenter>();
   /** Сүүлд гаргасан сүргийн шийдвэрүүд (тест, дүрслэл) */
@@ -65,7 +64,8 @@ export class Sim {
     this.cfg = cfg;
     this.state = state;
     this.rng = Rng.fromState(state.rngState);
-    this.moneyAtDayStart = state.money;
+    state.dayStartMoney ??= state.money;
+    this.centers = new Map(state.flockCenters);
     this.quality = typeQualities(cfg, state.camps[state.campId]?.degrade ?? 0, seasonOf(cfg, state.time.day));
     applyAccess(cfg, state.grass, state.camps[state.campId]?.snow ?? 0);
     ensureInteriorValid(cfg, state);   // ачаалсан хадгалалтад орсон хаалга алга болсон байж болно (V6.1)
@@ -84,6 +84,7 @@ export class Sim {
 
   command(cmd: Command, proximity = true): CommandResult {
     const r = applyCommand(this, cmd, proximity);
+    this.state.rngState = this.rng.state;   // командууд sim.random ашиглаж болно — хадгалалт яг одоогийн төлөвийг авна (M6.1)
     syncAway(this.state);
     ensureInteriorValid(this.cfg, this.state);   // туслах халах, нүүх г.м. дараа хаалга алга болсон бол гаргана
     return r;
@@ -103,6 +104,7 @@ export class Sim {
     if (state.step % hc.decideEverySteps === 0) {
       herds = findHerds(state, hc.linkRadius);
       this.centers = cohesionCenters(herds, hc.rejoinDistance);
+      state.flockCenters = [...this.centers];
       this.herdDecisions = herdDecide(cfg, state, rng, this.quality, herds);
     }
     herderStep(cfg, state);
@@ -117,6 +119,7 @@ export class Sim {
     if (moveStep(cfg, state, rng)) {
       this.refreshQuality();
       this.centers = new Map();
+      state.flockCenters = [];
       this.emit({ type: 'arrived', place: 'camp' });
     }
     syncAway(state);
@@ -204,7 +207,7 @@ export class Sim {
     const report: DayReport = {
       ...t,
       day,
-      moneyStart: this.moneyAtDayStart,
+      moneyStart: state.dayStartMoney ?? state.money,
       moneyEnd: state.money,
       animals: state.animals.length,
       sheepUnits: su,
@@ -223,7 +226,7 @@ export class Sim {
       storageUsed: storage.used(state),
       goalReached: goal,
     };
-    this.moneyAtDayStart = state.money;
+    state.dayStartMoney = state.money;
     state.today = emptyDayStats();
     this.emit({ type: 'dayReport', report });
   }

@@ -5,6 +5,7 @@
 import type { GameConfig, Sex, Species } from './config';
 import { newTime, type TimeState } from './clock';
 import { Rng } from './rng';
+import type { FlockCenter } from './systems/herds';
 import { buildGrid, type GrassGrid } from './systems/pasture';
 import { spawnWolves, type WolfState } from './systems/wolves';
 import type { Dog } from './systems/dogs';
@@ -12,7 +13,7 @@ import { initFleetVehicle } from './systems/travel';
 import { newHelpersState, type HelpersState } from './systems/helpers';
 import { newTownState, type TownState } from './systems/town';
 
-export const SAVE_VERSION = 12;   // 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих · 6: нохой, чонын дайралт, сүргийн нүүдэл (M4) · 7: шөнө, хотлох, өглөөний бүтээгдэхүүн, Портер/Амжиргаа, шөнийн чоно (M4.5) · 8: газрын зураг, тээвэр жолоодох, ачаа, Худалдаачин (M4.6) · 9: туслах малчид, цайны газар, отор, туслахын мал (M5) · 10: улирал, цас, боодол өвс, 4 бууц, отрын бүтээгдэхүүн (M5.5) · 11: сумын төвийн амьдрал — байшин, нэр хүнд, зээл, хамаатан (V3.4) · 12: орж болдог барилга — player.interior (V6.1)
+export const SAVE_VERSION = 13;   // 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих · 6: нохой, чонын дайралт, сүргийн нүүдэл (M4) · 7: шөнө, хотлох, өглөөний бүтээгдэхүүн, Портер/Амжиргаа, шөнийн чоно (M4.5) · 8: газрын зураг, тээвэр жолоодох, ачаа, Худалдаачин (M4.6) · 9: туслах малчид, цайны газар, отор, туслахын мал (M5) · 10: улирал, цас, боодол өвс, 4 бууц, отрын бүтээгдэхүүн (M5.5) · 11: сумын төвийн амьдрал — байшин, нэр хүнд, зээл, хамаатан (V3.4) · 12: орж болдог барилга — player.interior (V6.1) · 13: Sim-ийн нуугдмал төлөв state-д — dayStartMoney, flockCenters (M6.1)
 
 export type ProductId = 'milk' | 'tarag' | 'aaruul' | 'urum' | 'wool' | 'felt' | 'cashmere';
 export const PRODUCTS: readonly ProductId[] = ['milk', 'tarag', 'aaruul', 'urum', 'wool', 'felt', 'cashmere'];
@@ -193,6 +194,10 @@ export interface GameState {
   goalReachedDay: number | null;
   /** V3.4: сумын төвийн амьдрал (байшин, нэр хүнд, зээл, хамаатан) */
   town: TownState;
+  /** M6.1: өдрийн эхэн дэх мөнгө (өдрийн тайлан). null = Sim-ийг үүсгэхэд `money`-оор тохируулна */
+  dayStartMoney: number | null;
+  /** M6.1: малын нэгдэх төв (systems/herds.ts cohesionCenters): [малын id, төв]. Сүүлийн шийдвэрийн алхмын үр дүн — ачаалсны дараа ч үргэлжилнэ */
+  flockCenters: [number, FlockCenter][];
 }
 
 export function emptyDayStats(): DayStats {
@@ -279,6 +284,8 @@ export function createInitialState(cfg: GameConfig, seed: number): GameState {
     town: newTownState(cfg),
     today: emptyDayStats(),
     goalReachedDay: null,
+    dayStartMoney: null,
+    flockCenters: [],
   };
   const loc = cfg.worldmap.locations[cfg.start.camp];
   if (loc) st.map = { x: loc.x, z: loc.z, tx: loc.x, tz: loc.z, dest: null };
@@ -287,12 +294,24 @@ export function createInitialState(cfg: GameConfig, seed: number): GameState {
 }
 
 /**
- * Хадгалсан төлөвийг одоогийн хувилбар руу шилжүүлнэ (M6 ачаалалт ашиглана). Ирээдүйд хувилбар бүр энд нэмэгдэнэ.
- * 12: player.interior нэмэгдсэн (хуучин хадгалалтад байхгүй → null).
+ * Нэг хувилбарын алхам: `raw`-г өөрчилнө (migrateState гинжээр дуудна).
+ * 11 → 12: player.interior (хуучин хадгалалтад байхгүй → null) · 12 → 13: dayStartMoney, flockCenters.
  */
+export const MIGRATIONS: Record<number, (s: GameState) => void> = {
+  11: (s) => { if (!s.player.interior) s.player.interior = null; },
+  12: (s) => { s.dayStartMoney ??= null; s.flockCenters ??= []; },
+};
+/** Хамгийн эртний дэмжих хувилбар (түүнээс өмнөх нь прототип — шилжүүлэхгүй) */
+export const MIN_SAVE_VERSION = 11;
+
+/** Хадгалсан төлөвийг одоогийн хувилбар руу шилжүүлнэ. Дэлгэрэнгүй шалгалт: sim/save.ts */
 export function migrateState(raw: unknown): GameState {
   const s = raw as GameState;
-  if (!s.player.interior) s.player.interior = null;
+  for (let v = s.version; v < SAVE_VERSION; v++) {
+    const m = MIGRATIONS[v];
+    if (!m) throw new Error(`хадгалалтын хувилбар ${s.version}-ийг шилжүүлэх алхам ${v} алга`);
+    m(s);
+  }
   s.version = SAVE_VERSION;
   return s;
 }

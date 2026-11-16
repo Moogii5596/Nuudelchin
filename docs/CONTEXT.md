@@ -30,8 +30,9 @@ TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `gam
 ### sim/ — Three.js, DOM-гүй (тест, тэнцвэрийн бот ашиглана)
 | Файл | Үүрэг |
 |---|---|
-| `sim.ts` | Үндсэн давталт: 1 алхам = 1 тоглоомын минут; `DayReport`, `SimEvent` |
-| `state.ts` | `GameState`, `createInitialState`, `SAVE_VERSION`, төрлүүд (Animal, Batch, Place, FleetVehicle) |
+| `sim.ts` | Үндсэн давталт: 1 алхам = 1 тоглоомын минут; `DayReport`, `SimEvent`. Sim-д GameState-ээс гадуур төлөв хадгалахгүй (M6.1): өдрийн эхний мөнгө `state.dayStartMoney`, малын нэгдэх төв `state.flockCenters`, RNG `state.rngState` (команд бүрийн дараа шинэчлэгдэнэ) |
+| `state.ts` | `GameState`, `createInitialState`, `SAVE_VERSION` (13), `MIGRATIONS` (хувилбар бүрийн шилжүүлэх алхам), `migrateState`, төрлүүд (Animal, Batch, Place, FleetVehicle) |
+| `save.ts` | M6.1 хадгалалтын цөм (DOM-гүй): `serialize`/`deserialize` (задлах → хувилбар → migrate → `validateState`), `SaveError`, `saveMeta`. Шинэ талбар нэмбэл `SAVE_VERSION`++ ба `MIGRATIONS`; `tests/save.test.ts` нуугдмал төлөвийг барина. Хадгалах газар (IndexedDB) — M6.2 |
 | `config.ts` | `data/*.json` ачаалж шалгана (`loadConfig`, `validateConfig`), тохиргооны төрлүүд |
 | `clock.ts` · `rng.ts` | Цаг, үе (өдөр/орой/шөнө) · seed-тэй RNG (mulberry32; `Math.random()` хориотой) |
 | `commands.ts` | `Command` union, `applyCommand` — тоглогч ба бот sim-ийг зөвхөн эндээс өөрчилнө |

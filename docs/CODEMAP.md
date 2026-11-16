@@ -628,45 +628,60 @@ SYM game/src/sim/rng.ts:32 method Rng.range
 SYM game/src/sim/rng.ts:37 method Rng.int
 SYM game/src/sim/rng.ts:41 method Rng.chance
 SYM game/src/sim/rng.ts:45 method Rng.pick
-FILE game/src/sim/sim.ts 10.8KB 240L exports: DayReport,SimEvent,Sim
+FILE game/src/sim/save.ts 12.8KB 204L exports: SAVE_FORMAT,SaveMeta,SaveFile,SaveError,saveMeta,serialize,deserialize,migrationChainComplete,validateState
+SYM game/src/sim/save.ts:11 const SAVE_FORMAT
+SYM game/src/sim/save.ts:14 interface SaveMeta
+SYM game/src/sim/save.ts:24 interface SaveFile
+SYM game/src/sim/save.ts:31 class SaveError
+SYM game/src/sim/save.ts:38 fn saveMeta
+SYM game/src/sim/save.ts:43 fn serialize
+SYM game/src/sim/save.ts:52 fn deserialize
+SYM game/src/sim/save.ts:80 fn migrationChainComplete
+SYM game/src/sim/save.ts:89 fn isObj
+SYM game/src/sim/save.ts:90 fn fin
+SYM game/src/sim/save.ts:91 fn u32
+SYM game/src/sim/save.ts:96 fn validateState
+FILE game/src/sim/sim.ts 11.0KB 243L exports: DayReport,SimEvent,Sim
 SYM game/src/sim/sim.ts:29 interface DayReport
 SYM game/src/sim/sim.ts:51 type SimEvent
 SYM game/src/sim/sim.ts:53 class Sim
 SYM game/src/sim/sim.ts:74 method Sim.on
 SYM game/src/sim/sim.ts:81 method Sim.emit
 SYM game/src/sim/sim.ts:85 method Sim.command
-SYM game/src/sim/sim.ts:93 method Sim.emitTravel
-SYM game/src/sim/sim.ts:98 method Sim.step
-SYM game/src/sim/sim.ts:157 method Sim.refreshQuality
-SYM game/src/sim/sim.ts:162 method Sim.runDays
-SYM game/src/sim/sim.ts:167 method Sim.endDay
-SYM game/src/sim/sim.ts:231 method Sim.spend
-SYM game/src/sim/sim.ts:237 method Sim.random
-FILE game/src/sim/state.ts 12.8KB 298L exports: SAVE_VERSION,ProductId,PRODUCTS,AnimalMode,Animal,GroundItem,Batch,ProcessorKind,ProcessorState,VehicleId,VEHICLES,BuyOrder,Place,InteriorState,+10
-SYM game/src/sim/state.ts:15 const SAVE_VERSION
-SYM game/src/sim/state.ts:17 type ProductId
-SYM game/src/sim/state.ts:18 const PRODUCTS
-SYM game/src/sim/state.ts:22 type AnimalMode
-SYM game/src/sim/state.ts:24 interface Animal
-SYM game/src/sim/state.ts:52 interface GroundItem
-SYM game/src/sim/state.ts:61 interface Batch
-SYM game/src/sim/state.ts:67 type ProcessorKind
-SYM game/src/sim/state.ts:69 interface ProcessorState
-SYM game/src/sim/state.ts:75 type VehicleId
-SYM game/src/sim/state.ts:76 const VEHICLES
-SYM game/src/sim/state.ts:78 type BuyOrder
-SYM game/src/sim/state.ts:91 type Place
-SYM game/src/sim/state.ts:97 interface InteriorState
-SYM game/src/sim/state.ts:109 interface FleetVehicle
-SYM game/src/sim/state.ts:121 interface MapState
-SYM game/src/sim/state.ts:129 interface CampState
-SYM game/src/sim/state.ts:137 interface DayStats
-SYM game/src/sim/state.ts:150 interface PlayerState
-SYM game/src/sim/state.ts:166 interface GameState
-SYM game/src/sim/state.ts:198 fn emptyDayStats
-SYM game/src/sim/state.ts:202 fn newAnimal
-SYM game/src/sim/state.ts:235 fn createInitialState
-SYM game/src/sim/state.ts:293 fn migrateState
+SYM game/src/sim/sim.ts:94 method Sim.emitTravel
+SYM game/src/sim/sim.ts:99 method Sim.step
+SYM game/src/sim/sim.ts:160 method Sim.refreshQuality
+SYM game/src/sim/sim.ts:165 method Sim.runDays
+SYM game/src/sim/sim.ts:170 method Sim.endDay
+SYM game/src/sim/sim.ts:234 method Sim.spend
+SYM game/src/sim/sim.ts:240 method Sim.random
+FILE game/src/sim/state.ts 14.1KB 317L exports: SAVE_VERSION,ProductId,PRODUCTS,AnimalMode,Animal,GroundItem,Batch,ProcessorKind,ProcessorState,VehicleId,VEHICLES,BuyOrder,Place,InteriorState,+12
+SYM game/src/sim/state.ts:16 const SAVE_VERSION
+SYM game/src/sim/state.ts:18 type ProductId
+SYM game/src/sim/state.ts:19 const PRODUCTS
+SYM game/src/sim/state.ts:23 type AnimalMode
+SYM game/src/sim/state.ts:25 interface Animal
+SYM game/src/sim/state.ts:53 interface GroundItem
+SYM game/src/sim/state.ts:62 interface Batch
+SYM game/src/sim/state.ts:68 type ProcessorKind
+SYM game/src/sim/state.ts:70 interface ProcessorState
+SYM game/src/sim/state.ts:76 type VehicleId
+SYM game/src/sim/state.ts:77 const VEHICLES
+SYM game/src/sim/state.ts:79 type BuyOrder
+SYM game/src/sim/state.ts:92 type Place
+SYM game/src/sim/state.ts:98 interface InteriorState
+SYM game/src/sim/state.ts:110 interface FleetVehicle
+SYM game/src/sim/state.ts:122 interface MapState
+SYM game/src/sim/state.ts:130 interface CampState
+SYM game/src/sim/state.ts:138 interface DayStats
+SYM game/src/sim/state.ts:151 interface PlayerState
+SYM game/src/sim/state.ts:167 interface GameState
+SYM game/src/sim/state.ts:203 fn emptyDayStats
+SYM game/src/sim/state.ts:207 fn newAnimal
+SYM game/src/sim/state.ts:240 fn createInitialState
+SYM game/src/sim/state.ts:300 const MIGRATIONS
+SYM game/src/sim/state.ts:305 const MIN_SAVE_VERSION
+SYM game/src/sim/state.ts:308 fn migrateState
 FILE game/src/sim/systems/animals.ts 5.2KB 123L exports: AnimalBody,frameKg,liveWeightKg,salePrice,buyPrice,sheepUnits,herdSheepUnits,grazingSheepUnits,dailyConditionDelta,dailyAnimals
 SYM game/src/sim/systems/animals.ts:8 interface AnimalBody
 SYM game/src/sim/systems/animals.ts:21 fn frameKg
@@ -1078,6 +1093,7 @@ FILE game/tests/pasture.test.ts 3.8KB 72L
 FILE game/tests/playthrough.test.ts 6.3KB 133L
 FILE game/tests/products.test.ts 3.0KB 56L
 FILE game/tests/rng.test.ts 0.8KB 26L
+FILE game/tests/save.test.ts 11.7KB 233L
 FILE game/tests/seasons.test.ts 7.2KB 140L
 FILE game/tests/sim.test.ts 1.4KB 32L
 FILE game/tests/staff.test.ts 12.0KB 229L
@@ -1086,32 +1102,32 @@ FILE game/tests/sumtown.test.ts 4.5KB 90L
 FILE game/tests/town.test.ts 6.1KB 127L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 16.0KB 102L
+FILE docs/CONTEXT.md 16.8KB 103L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-28 ## 2. Стек ба командууд
-DOC docs/CONTEXT.md:29-76 ## 3. Файлын зураглал (`game/src/`)
-DOC docs/CONTEXT.md:77-79 ## 4. `data/*.json` → аль файл хэрэглэдэг
-DOC docs/CONTEXT.md:80-88 ## 5. Архитектурын дүрэм ([[architecture]])
-DOC docs/CONTEXT.md:89-92 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
-DOC docs/CONTEXT.md:93-95 ## 7. Нээлттэй асуултууд
-DOC docs/CONTEXT.md:96-102 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
+DOC docs/CONTEXT.md:29-77 ## 3. Файлын зураглал (`game/src/`)
+DOC docs/CONTEXT.md:78-80 ## 4. `data/*.json` → аль файл хэрэглэдэг
+DOC docs/CONTEXT.md:81-89 ## 5. Архитектурын дүрэм ([[architecture]])
+DOC docs/CONTEXT.md:90-93 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
+DOC docs/CONTEXT.md:94-96 ## 7. Нээлттэй асуултууд
+DOC docs/CONTEXT.md:97-103 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
 FILE docs/INDEX.md 13.9KB 135L
 DOC docs/INDEX.md:16-30 ## 1. Унших дараалал ба давуу эрх
 DOC docs/INDEX.md:31-106 ## 2. Баримтууд
 DOC docs/INDEX.md:107-110 ## 3. Гол тоо
 DOC docs/INDEX.md:111-129 ## 4. Нэр томьёо
 DOC docs/INDEX.md:130-135 ## 5. Баримт засах дүрэм
-FILE docs/architecture.md 17.4KB 234L
+FILE docs/architecture.md 18.2KB 236L
 DOC docs/architecture.md:16-29 ## 1. Технологи
 DOC docs/architecture.md:30-68 ## 2. Хавтасны бүтэц
 DOC docs/architecture.md:69-138 ## 3. Гол зарчмууд
 DOC docs/architecture.md:139-179 ## 4. Өгөгдлийн загвар (товч)
 DOC docs/architecture.md:180-189 ## 5. Дүрслэл
-DOC docs/architecture.md:190-197 ## 6. Хадгалалт (M6)
-DOC docs/architecture.md:198-205 ## 7. Хэл
-DOC docs/architecture.md:206-216 ## 8. Тест ба тэнцвэр
-DOC docs/architecture.md:217-222 ## 9. Туршилтын цэс
-DOC docs/architecture.md:223-234 ## 10. Ажиллуулах
+DOC docs/architecture.md:190-199 ## 6. Хадгалалт (M6)
+DOC docs/architecture.md:200-207 ## 7. Хэл
+DOC docs/architecture.md:208-218 ## 8. Тест ба тэнцвэр
+DOC docs/architecture.md:219-224 ## 9. Туршилтын цэс
+DOC docs/architecture.md:225-236 ## 10. Ажиллуулах
 FILE docs/character-design.md 20.8KB 157L
 DOC docs/character-design.md:13-27 ## 1. Хэрэглэгчийн баталсан шийдвэр (2026-11-15)
 DOC docs/character-design.md:28-52 ## 2. Үндсэн дүр — хэрэгжилт (V4.4, кодонд)
