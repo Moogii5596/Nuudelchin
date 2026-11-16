@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import type { GameState } from '../sim/state';
 import type { Dwelling, Helper } from '../sim/systems/helpers';
-import { quality as activeQuality, type Quality } from '../device';
+import type { Quality } from '../device';
 import { animalLook } from './animal/config';
 import { gaitFor } from './animal/pose';
 import { saddleDims } from './animal/shapes';
@@ -65,7 +65,7 @@ export class StaffView {
   readonly group = new THREE.Group();
   private views = new Map<number, HelperView>();
   private models: ModelAnimals;
-  private quality: Quality = activeQuality;
+  private quality: Quality = 'high';   // scene.setQuality() жинхэнэ чанарыг тавина (device-ийг энд импортлохгүй: тест node-д ажиллана)
   private readonly saddle = saddleDims(animalLook.species.horse.d);
 
   constructor() {

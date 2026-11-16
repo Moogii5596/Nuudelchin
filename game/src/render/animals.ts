@@ -31,7 +31,7 @@ export class AnimalsView {
   private frameNo = 0;
 
   constructor(private cfg: GameConfig) {
-    this.models = new ModelAnimals(this.group, this.quality);
+    this.models = new ModelAnimals(this.group, this.quality, true);
   }
 
   setQuality(quality: Quality): void {

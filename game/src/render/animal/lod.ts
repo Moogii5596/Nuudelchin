@@ -6,14 +6,15 @@
  */
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { animalLook, type DLook, type LookSpecies } from './config';
+import { animalLook, type DLook, type LookSpecies, type Pair, type SpeciesLook } from './config';
 import { bodyGeo, markGeo, neckGeo, patchK, prep, skirtGeo, smooth01, tailGeo, triOf } from './geo';
 import { cowTailGeo, dewlapGeo, longTailGeo, maneGeo, patchCyl, ruffGeo, saddleGeo, udderGeo } from './shapes';
-import { headGeo, Q_DETAIL, Q_LIGHT } from './head';
+import { headGeo, Q_DETAIL, Q_FAR, Q_LIGHT } from './head';
 import { legLower, legUpper } from './legs';
 import { makeRig, settle, type Action, type Rig } from './pose';
 
-export type Level = 'light' | 'detail';
+/** far — алс малын хамгийн бүдүүвч хувилбар (far.ts: 3 байрлалын morph, төрөл бүр 1 draw call) */
+export type Level = 'light' | 'detail' | 'far';
 /** Мал бүрийн instance-ийн шинж (хэсгийн сонголт, өнгө) */
 export interface Rec { male: boolean; ageIdx: number; patch: boolean; mark: boolean; /** үхэр: эвэргүй */ polled?: boolean; /** адуу: эмээлтэй */ saddle?: boolean }
 export interface Colors { wool: number; head: number; leg: number; legLow: number; mane: number; tail: number }
@@ -48,7 +49,11 @@ LMAT.onBeforeCompile = (sh) => {      // three r187: vColor = vec4. aSlot: 0 т�
 // ---------------------------------------------------------------- хэсгүүд
 /** Төрөл бүрийн геометрийн хэсгүүд (model.ts дуудна). Бүтэц нь хөнгөн/дэлгэрэнгүйд ижил (кэш хоёуланд таарна) */
 export function buildParts(species: LookSpecies, level: Level): PartDef[] {
-  const sp = animalLook.species[species], d = sp.d, G = sp[level], Q = level === 'light' ? Q_LIGHT : Q_DETAIL, lite = level === 'light';
+  const sp = animalLook.species[species], d = sp.d, lite = level !== 'detail';
+  const L0 = sp.light, G: SpeciesLook['light'] = level === 'far'
+    ? { bodySeg: Math.max(6, Math.round(L0.bodySeg * 0.5)), bodyRows: Math.max(3, Math.round(L0.bodyRows * 0.5)), tail: [4, 2], neck: [4, 2], ...(L0.skirt ? { skirt: [3, 2] as Pair } : {}), ...(L0.mane ? { mane: [4, 2] as Pair } : {}) }
+    : sp[level], Q = level === 'far' ? Q_FAR : level === 'light' ? Q_LIGHT : Q_DETAIL;
+  const legLevel = lite ? 'light' : 'detail';
   const adultIdx = animalLook.age.adultIdx;
   const adultM = (r: Rec): boolean => r.male && r.ageIdx >= adultIdx;
   const bullLike = (r: Rec): boolean => !!sp.sexBody && adultM(r);
@@ -121,8 +126,8 @@ export function buildParts(species: LookSpecies, level: Level): PartDef[] {
     );
   } else parts.push({ name: 'толгой', geo: headOf(0), mult: 1, node: (r) => [r.head], col: (c) => c.head });
   parts.push(
-    { name: 'хөл дээд ×4', geo: legUpper(d, level), mult: 4, node: (r) => r.legs.map((l) => l.up), col: (c) => c.leg },
-    { name: 'хөл доод+туурай ×4', geo: legLower(d, level), mult: 4, node: (r) => r.legs.map((l) => l.low), col: (c) => c.legLow },
+    { name: 'хөл дээд ×4', geo: legUpper(d, legLevel), mult: 4, node: (r) => r.legs.map((l) => l.up), col: (c) => c.leg },
+    { name: 'хөл доод+туурай ×4', geo: legLower(d, legLevel), mult: 4, node: (r) => r.legs.map((l) => l.low), col: (c) => c.legLow },
   );
   if (d.saddle) parts.push({ name: 'эмээл', geo: saddleGeo(d).geo, mult: 1, node: (r) => [r.saddle], col: () => 0xffffff, use: (r) => !!r.saddle, alt: true });
   return parts;
@@ -215,6 +220,7 @@ export class AnimalSet {
       m.boundingSphere = null;
     });
   }
-  get drawCalls(): number { return this.meshes.length; }
+  /** Зурагдаж буй (хоосон биш) mesh-ийн тоо */
+  get drawCalls(): number { return this.meshes.filter((m) => m.visible).length; }
   dispose(): void { this.meshes.forEach((m) => { m.removeFromParent(); m.geometry.dispose(); m.dispose(); }); }
 }

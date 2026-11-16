@@ -14,6 +14,9 @@ type Pair2 = [number, number];
 export const Q_DETAIL: HeadQ = { seg: 28, rows: 18, eyeSeg: 20, noseSeg: 8, tube: [6, 5], ear: [14, 10], innerSeg: 14, horn: [16, 10], beard: [10, 6] };
 export const Q_LIGHT: HeadQ = { seg: 8, rows: 5, eyeSeg: 6, noseSeg: 4, tube: [2, 3], ear: [5, 3], innerSeg: 5, horn: [4, 3], beard: [5, 3] };
 
+/** Алс мал: хамгийн бүдүүвч (far.ts) */
+export const Q_FAR: HeadQ = { seg: 6, rows: 3, eyeSeg: 0, noseSeg: 3, tube: [1, 3], ear: [4, 2], innerSeg: 3, horn: [3, 3], beard: [3, 3] };
+
 const pos = (g: THREE.BufferGeometry): THREE.BufferAttribute => g.attributes.position as THREE.BufferAttribute;
 /** Хөндлөн огтлолын дөрвөлжин хэлбэр (superellipse); square байхгүй бол дугуй */
 const sqK = (h: HeadLook, a: number): number => (h.square ? Math.pow(Math.pow(Math.abs(Math.cos(a)), h.square) + Math.pow(Math.abs(Math.sin(a)), h.square), -1 / h.square) : 1);
@@ -96,7 +99,9 @@ export function headGeo(d: DLook, h: HeadLook, q: HeadQ, hornK: number, opt: Hea
   }
   parts.push(skull);
   const M = new THREE.Matrix4(), M2 = new THREE.Matrix4(), pk = h.pupil ?? [0.55, 0.7];
+  const far = q.eyeSeg === 0;   // алс: нүд, хамар, ам, чихний дотор, толгойн жижиг тэмдэг байхгүй (бүдүүвч)
   for (const sx of [-1, 1]) {
+    if (!far) {
     const phi = h.eyePhi ?? 0.38, at = surf(h, h.eyeT, phi, sx, 0.0015), tilt = new THREE.Matrix4().makeRotationZ(-(h.eyeTilt ?? 0));
     M.makeRotationZ(sx * phi).multiply(M2.makeRotationY((sx * Math.PI) / 2));
     const nrm = new THREE.Vector3(sx * Math.cos(phi), Math.sin(phi), 0);
@@ -109,24 +114,25 @@ export function headGeo(d: DLook, h: HeadLook, q: HeadQ, hornK: number, opt: Hea
     parts.push(prep(nose, 0, P.nose));
     const curve = new THREE.CatmullRomCurve3([0.965, 0.915, 0.86].map((t) => surf(h, t, -0.5, sx, 0.0015)));
     parts.push(prep(new THREE.TubeGeometry(curve, q.tube[0], 0.0035, q.tube[1], false), 0, P.nose));
+    }
     const e = h.ear, ep = surf(h, e.t ?? 0.13, e.phi ?? 0.85, sx, -0.004);
     const outer = ellipsoid(0.011, e.l / 2, e.w / 2, [0, -e.l * 0.45, 0], q.ear[0], q.ear[1]), op = pos(outer);
     for (let i = 0; i < op.count; i++) { const u = -op.getY(i) / e.l; op.setZ(i, op.getZ(i) * (1 - (e.taper ?? 0.55) * smooth01(e.taper ? 0 : 0.3, 1.0, u))); }
-    const inner = new THREE.CircleGeometry(1, q.innerSeg); inner.scale(e.w * 0.3, e.l * 0.34, 1);
+    const inner = new THREE.CircleGeometry(1, Math.max(3, q.innerSeg)); inner.scale(e.w * 0.3, e.l * 0.34, 1);
     inner.applyMatrix4(M2.makeRotationY(-sx * Math.PI / 2)); inner.translate(-sx * 0.0125, -e.l * 0.45, 0);
     if (e.face) { const R = new THREE.Matrix4().makeRotationY(sx * e.face); outer.applyMatrix4(R); inner.applyMatrix4(R); }
     if (e.fwd) { const R = new THREE.Matrix4().makeRotationX(e.fwd); outer.applyMatrix4(R); inner.applyMatrix4(R); }
-    for (const g of [prep(outer, 1), prep(inner, 0, P.earInner)]) { g.applyMatrix4(new THREE.Matrix4().makeRotationZ(sx * e.droop)); g.translate(ep.x, ep.y, ep.z); parts.push(g); }
+    for (const g of far ? [prep(outer, 1)] : [prep(outer, 1), prep(inner, 0, P.earInner)]) { g.applyMatrix4(new THREE.Matrix4().makeRotationZ(sx * e.droop)); g.translate(ep.x, ep.y, ep.z); parts.push(g); }
   }
   if (h.horn && hornK > 0.05) for (const sx of [-1, 1]) parts.push(prep(hornGeo(h, sx, hornK, q), 0, P.horn));
   if (h.beard) parts.push(prep(beardGeo(h, q), 1));
-  if (h.noseBall) parts.push(prep(ellipsoid(h.rn * 0.72, h.rn * 0.52, h.rn * 0.5, [0, h.rn * 0.3 - dropAt(h, 1), (1 - h.zb) * h.L - h.rn * 0.38], opt.detail ? 14 : 5, opt.detail ? 10 : 3), 0, h.tip ?? P.nose));
+  if (h.noseBall && !far) parts.push(prep(ellipsoid(h.rn * 0.72, h.rn * 0.52, h.rn * 0.5, [0, h.rn * 0.3 - dropAt(h, 1), (1 - h.zb) * h.L - h.rn * 0.38], opt.detail ? 14 : 5, opt.detail ? 10 : 3), 0, h.tip ?? P.nose));
   if (h.cheek && opt.detail) for (const sx of [-1, 1]) {   // хацрын сэвсгэр үс (чоно)
     const C = h.cheek, at = surf(h, C.t, C.phi, sx, -0.01);
     parts.push(prep(ellipsoid(C.r[0], C.r[1], C.r[2], [at.x, at.y, at.z], q.ear[0] + 2, q.ear[1] + 2), 0, new THREE.Color(C.c).lerp(new THREE.Color(0x888888), 0.0).getHex()));
   }
   const browC = opt.tan === undefined ? h.brows?.c : opt.tan ?? undefined;
-  if (h.brows && browC !== undefined) for (const sx of [-1, 1]) {   // банхарын «дөрвөн нүд»: нүдний дээрх шар толбо
+  if (h.brows && browC !== undefined && !far) for (const sx of [-1, 1]) {   // банхарын «дөрвөн нүд»: нүдний дээрх шар толбо
     const phi = (h.eyePhi ?? 0.38) + h.brows.dPhi, at = surf(h, h.eyeT - h.brows.dT, phi, sx, 0.0025);
     const c = new THREE.CircleGeometry(1, q.eyeSeg); c.scale(h.brows.r * 1.2, h.brows.r, 1);
     c.applyMatrix4(new THREE.Matrix4().makeRotationZ(sx * phi).multiply(new THREE.Matrix4().makeRotationY(sx * Math.PI / 2))); c.translate(at.x, at.y, at.z);

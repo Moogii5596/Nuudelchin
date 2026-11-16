@@ -299,7 +299,7 @@ SYM game/src/render/building/civic.ts:211 fn buildMarket
 SYM game/src/render/building/civic.ts:237 fn floodlight
 SYM game/src/render/building/civic.ts:245 fn buildStadium
 SYM game/src/render/building/civic.ts:276 fn buildWrestle
-FILE game/src/render/building/config.ts 8.4KB 108L exports: BuildingConfig,TownEntry,TownConfig,buildingConfigErrors,validateBuildingData,BUILDING_CONFIG,TOWN
+FILE game/src/render/building/config.ts 8.5KB 108L exports: BuildingConfig,TownEntry,TownConfig,buildingConfigErrors,validateBuildingData,BUILDING_CONFIG,TOWN
 SYM game/src/render/building/config.ts:9 fn isObj
 SYM game/src/render/building/config.ts:14 type BuildingConfig
 SYM game/src/render/building/config.ts:16 interface TownEntry
@@ -717,7 +717,7 @@ SYM game/src/render/scene.ts:445 method GameView.applyDaylight
 SYM game/src/render/scene.ts:505 method GameView.updateFlakes
 SYM game/src/render/scene.ts:521 method GameView.drawCalls
 SYM game/src/render/scene.ts:525 method GameView.triangleCount
-FILE game/src/render/staff.ts 8.8KB 187L exports: makeDwelling,StaffView
+FILE game/src/render/staff.ts 8.9KB 187L exports: makeDwelling,StaffView
 SYM game/src/render/staff.ts:27 fn helperRole
 SYM game/src/render/staff.ts:36 fn makeDwelling
 SYM game/src/render/staff.ts:64 class StaffView
@@ -770,7 +770,7 @@ SYM game/src/render/sumcenter.ts:347 method SumCenterView.syncCrowd
 SYM game/src/render/sumcenter.ts:372 method SumCenterView.takeLive
 SYM game/src/render/sumcenter.ts:389 method SumCenterView.releaseLive
 SYM game/src/render/sumcenter.ts:396 method SumCenterView.syncLot
-FILE game/src/render/sumlayout.ts 46.1KB 836L exports: Rect,VehicleSlotView,HomeDoor,SumPlotView,SumGer,SumCenterBuild,buildSumCenter
+FILE game/src/render/sumlayout.ts 46.2KB 839L exports: Rect,VehicleSlotView,HomeDoor,SumPlotView,SumGer,SumCenterBuild,buildSumCenter
 SYM game/src/render/sumlayout.ts:19 interface Rect
 SYM game/src/render/sumlayout.ts:21 interface VehicleSlotView
 SYM game/src/render/sumlayout.ts:23 interface HomeDoor
@@ -1568,7 +1568,7 @@ SYM tools/codemap.ts:195 fn main
 FILE game/tests/animalLook.test.ts 9.6KB 171L
 FILE game/tests/animals.test.ts 2.3KB 39L
 FILE game/tests/breeding.test.ts 1.4KB 33L
-FILE game/tests/buildings.test.ts 11.7KB 168L
+FILE game/tests/buildings.test.ts 11.8KB 167L
 FILE game/tests/camclip.test.ts 3.9KB 68L
 FILE game/tests/characters.test.ts 26.1KB 438L
 FILE game/tests/clock.test.ts 2.7KB 52L
@@ -1603,7 +1603,7 @@ FILE game/tests/town.test.ts 6.1KB 127L
 FILE game/tests/transfer.test.ts 14.2KB 255L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 26.2KB 119L
+FILE docs/CONTEXT.md 27.0KB 119L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-29 ## 2. Стек ба командууд
 DOC docs/CONTEXT.md:30-93 ## 3. Файлын зураглал (`game/src/`)
@@ -1798,16 +1798,17 @@ FILE docs/plan/M7.md 7.6KB 31L
 DOC docs/plan/M7.md:12-22 ## Блокууд
 DOC docs/plan/M7.md:23-27 ## Асуулга (10 асуулт)
 DOC docs/plan/M7.md:28-31 ## Эрсдэл
-FILE docs/plan/V.md 63.6KB 216L
+FILE docs/plan/V.md 65.2KB 222L
 DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
 DOC docs/plan/V.md:24-204 ## Блокууд ба чеклист (2026-11-15)
-DOC docs/plan/V.md:205-216 ## Зогссон цэг
-FILE docs/plan/playtest.md 16.1KB 98L
+DOC docs/plan/V.md:205-222 ## Зогссон цэг
+FILE docs/plan/playtest.md 16.7KB 104L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
 DOC docs/plan/playtest.md:19-39 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
 DOC docs/plan/playtest.md:40-95 ## C. Мэдрэмж, үе шат бүрээр
-DOC docs/plan/playtest.md:96-98 ## V4.6 хонь, ямаа (🧑 мэдрэмж)
+DOC docs/plan/playtest.md:96-99 ## V4.6 хонь, ямаа (🧑 мэдрэмж)
+DOC docs/plan/playtest.md:100-104 ## V4.6 S2 үхэр, адуу, нохой, чоно (🧑 мэдрэмж)
 FILE docs/seasons-camps.md 10.2KB 104L
 DOC docs/seasons-camps.md:17-40 ## 1. Хэрэглэгчийн шийдвэрүүд
 DOC docs/seasons-camps.md:41-54 ## 2. Улирал

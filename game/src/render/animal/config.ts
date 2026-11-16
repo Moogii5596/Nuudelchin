@@ -60,7 +60,8 @@ export interface AnimalLook {
   palette: Record<'hair' | 'hoof' | 'eyeWhite' | 'eyeInk' | 'nose' | 'earInner' | 'muzzleTip' | 'horn' | 'patch' | 'mark' | 'udder', number>;
   saddle: Record<'felt' | 'pad' | 'seat' | 'wood' | 'metal' | 'strap', number>;
   motion: { kneeWalk: number; walkAmp: number; fleeAmp: number; stepLen: number; stepGap: Pair; stepRepeat: Pair; stepDur: number; headNod: number; chewHz: number; walkFollow: number };
-  quality: Record<'high' | 'mid' | 'low', { detail: number; detailR: number }>;
+  /** detail — дэлгэрэнгүй малын тоо (detailR м дотор); lightR — хөдөлгөөнтэй хөнгөн хувилбарын зай (м), цааш нь far.ts (ганц draw call). low: бүгд far */
+  quality: Record<'high' | 'mid' | 'low', { detail: number; detailR: number; lightR: number }>;
   species: Record<LookSpecies, SpeciesLook>;
 }
 
@@ -175,7 +176,7 @@ export function parseAnimalLook(raw: unknown): AnimalLook {
   const pal = {} as AnimalLook['palette'];
   for (const k of ['hair', 'hoof', 'eyeWhite', 'eyeInk', 'nose', 'earInner', 'muzzleTip', 'horn', 'patch', 'mark', 'udder'] as const) pal[k] = hex(p[k], `palette.${k}`);
   const quality = {} as AnimalLook['quality'];
-  for (const k of ['high', 'mid', 'low'] as const) { const e = obj(q[k], `quality.${k}`); quality[k] = { detail: num(e.detail, `quality.${k}.detail`, 0, 64), detailR: num(e.detailR, `quality.${k}.detailR`, 0, 500) }; }
+  for (const k of ['high', 'mid', 'low'] as const) { const e = obj(q[k], `quality.${k}`); quality[k] = { detail: num(e.detail, `quality.${k}.detail`, 0, 64), detailR: num(e.detailR, `quality.${k}.detailR`, 0, 500), lightR: num(e.lightR, `quality.${k}.lightR`, 0, 500) }; }
   return {
     lightCap: num(r.lightCap, 'lightCap', 100, 20000),
     age: {

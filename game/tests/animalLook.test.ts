@@ -11,6 +11,8 @@ import { horseModel } from '../src/render/animal/horse';
 import { dogModel } from '../src/render/animal/dog';
 import { wolfModel } from '../src/render/animal/wolf';
 import { makeRig, poseAnimal, settle } from '../src/render/animal/pose';
+import { buildFarGeometry, FarSet } from '../src/render/animal/far';
+import { LOOK_SPECIES } from '../src/render/animal/config';
 
 const clone = (): Record<string, any> => JSON.parse(JSON.stringify(lookJson));
 
@@ -80,6 +82,35 @@ describe('render/animal — хөнгөн, дэлгэрэнгүй хэсгүүд'
     set.end();
     const bm = new THREE.Matrix4(); byName('бие').getMatrixAt(0, bm);
     expect(bm.elements[12]).toBeCloseTo(10, 5);
+    set.dispose();
+  });
+});
+
+describe('render/animal — алс мал (far.ts)', () => {
+  for (const sp of LOOK_SPECIES) {
+    it(`${sp}: бүгд нэг геометр, ≤ 450 гурвалжин, 3 байрлал + үүрэг`, () => {
+      const g = buildFarGeometry(sp), n = g.attributes.position!.count;
+      expect(n / 3).toBeLessThanOrEqual(450);
+      expect(g.index).toBeNull();
+      for (const a of ['position', 'normal', 'color', 'aTag', 'aPos1', 'aPos2']) expect(g.attributes[a], a).toBeDefined();
+      expect(g.attributes.aPos1!.count).toBe(n);
+      expect(g.attributes.aPos2!.count).toBe(n);
+      // хэвтэх байрлал зогсохоос доогуур (орой нь буурна)
+      let top0 = -1e9, top2 = -1e9;
+      for (let i = 0; i < n; i++) { top0 = Math.max(top0, g.attributes.position!.getY(i)); top2 = Math.max(top2, g.attributes.aPos2!.getY(i)); }
+      expect(top2).toBeLessThan(top0);
+    });
+  }
+  it('FarSet: нэг mesh, instance бүр өөрийн өнгө, байрлал', () => {
+    const set = new FarSet('goat', new THREE.Group(), 10), cols = goatModel.colors(0, false);
+    set.begin();
+    set.push(new THREE.Matrix4(), cols, false, false, 0);
+    set.push(new THREE.Matrix4().makeTranslation(5, 0, 0), cols, true, true, 2);
+    set.end();
+    expect(set.mesh.count).toBe(2);
+    expect(set.drawCalls).toBe(1);
+    expect(set.mesh.geometry.attributes.iPose!.getX(1)).toBe(2);
+    expect(set.mesh.geometry.attributes.iFlags!.getY(1)).toBe(1);
     set.dispose();
   });
 });

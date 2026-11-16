@@ -52,15 +52,18 @@
  "quality": {
   "high": {
    "detail": 6,
-   "detailR": 40
+   "detailR": 40,
+   "lightR": 28
   },
   "mid": {
    "detail": 3,
-   "detailR": 30
+   "detailR": 30,
+   "lightR": 20
   },
   "low": {
    "detail": 0,
-   "detailR": 0
+   "detailR": 0,
+   "lightR": 0
   }
  },
  "species": {
