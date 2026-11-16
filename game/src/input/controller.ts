@@ -12,7 +12,7 @@ import { nearLotSlot, worldLimit } from '../sim/systems/sumtown';
 import { atExit, currentRoom, interiorService, nearEnterDoor } from '../sim/systems/interior';
 import { m } from '../sim/msg';
 import { gerRadiusFor } from '../sim/systems/gerLayout';
-import { nearestFreeSpot, pushOut, stuckStep, type StuckState, type WalkSolids } from '../sim/systems/sumwalk';
+import { nearestFreeSpot, pushOut, slideMove, stuckStep, type StuckState, type WalkSolids } from '../sim/systems/sumwalk';
 
 export type ActionKind = 'shout' | 'scare' | 'call' | 'mount' | 'uurga' | 'pickup' | 'deposit' | 'dog' | 'vehicle' | 'map' | 'interior';
 
@@ -302,7 +302,7 @@ export class PlayerController {
     // Сумын төв: барилга, хашааг нэвтлэхгүй (саадыг дагаж гулсана); N сек хөдлөхгүй бол чөлөөт цэг рүү түлхэнэ
     if (p.place === 'sum' && this.walk) {
       const W = this.cfg.worldmap.sum3d.walk;
-      const r = p.mounted ? W.mountedR : W.bodyR, q = pushOut(this.walk, x, z, r);
+      const r = p.mounted ? W.mountedR : W.bodyR, q = slideMove(this.walk, p.x, p.z, x, z, r, W);
       x = q.x; z = q.z;
       // гацалт: оролт байхад нүүхгүй мөртлөө биед нь саад давхцсан (булан, гэнэт гарч ирсэн саад) — ойрын чөлөөт цэг рүү
       if (stuckStep(this.stuck, true, Math.hypot(x - p.x, z - p.z) / Math.max(dt, 1e-3), dt, W) && pushOut(this.walk, p.x, p.z, r * 0.9).hit) {

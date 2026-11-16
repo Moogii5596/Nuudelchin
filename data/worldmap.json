@@ -152,6 +152,6 @@
     "radius": 420,
     "shopR": 6,
     "lotR": 3.5,
-    "walk": { "bodyR": 0.35, "mountedR": 0.9, "vehicleR": 1.6, "npcR": 0.35, "plotGateW": 4.4, "fenceT": 0.3, "enterablePlotRoles": ["relative", "forSale"], "gateOpenSec": 0.4, "stuckSec": 1.0, "stuckSpeed": 0.3, "unstickStep": 0.8 }
+    "walk": { "bodyR": 0.35, "mountedR": 0.9, "vehicleR": 1.6, "npcR": 0.35, "plotGateW": 4.4, "fenceT": 0.3, "enterablePlotRoles": ["relative", "forSale"], "gateOpenSec": 0.4, "stuckSec": 1.0, "stuckSpeed": 0.3, "unstickStep": 0.8, "slideMin": 0.85, "slideAngle": 0.25 }
   }
 }

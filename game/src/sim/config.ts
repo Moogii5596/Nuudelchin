@@ -402,7 +402,7 @@ export function validateSumLayout(cfg: GameConfig): string[] {
   if (!L || !S) return ['data/sumcenter.json, worldmap.sum3d хэрэгтэй'];
   if (!(S.radius > 50 && S.shopR > 0 && S.lotR > 0)) e.push('worldmap.sum3d: radius > 50, shopR > 0, lotR > 0');
   const W = S.walk;
-  if (!W || !(W.bodyR > 0 && W.mountedR >= W.bodyR && W.vehicleR > 0 && W.npcR > 0 && W.plotGateW > 0 && W.fenceT > 0 && W.stuckSec > 0 && W.stuckSpeed >= 0 && W.unstickStep > 0 && W.gateOpenSec > 0 && Array.isArray(W.enterablePlotRoles))) e.push('worldmap.sum3d.walk: радиус, хаалга, зузаан, гацалтын утга эерэг; enterablePlotRoles жагсаалт, gateOpenSec > 0');
+  if (!W || !(W.bodyR > 0 && W.mountedR >= W.bodyR && W.vehicleR > 0 && W.npcR > 0 && W.plotGateW > 0 && W.fenceT > 0 && W.stuckSec > 0 && W.stuckSpeed >= 0 && W.unstickStep > 0 && W.slideMin >= 0 && W.slideMin <= 1 && W.slideAngle > 0 && W.slideAngle <= 1 && W.gateOpenSec > 0 && Array.isArray(W.enterablePlotRoles))) e.push('worldmap.sum3d.walk: радиус, хаалга, зузаан, гацалтын утга эерэг; enterablePlotRoles жагсаалт, gateOpenSec > 0');
   const [tw, td] = L.terrain.size;
   if (Math.min(tw, td) / 2 < S.radius) e.push('sumcenter.terrain.size: газар 3D-ийн хязгаарыг (radius) бүрхэх ёстой');
   if (Math.hypot(L.entry.x, L.entry.z) > S.radius - 6) e.push('sumcenter.entry: хязгаараас дотор байх ёстой');
