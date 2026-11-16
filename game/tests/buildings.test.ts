@@ -78,8 +78,8 @@ describe('сумын төв ↔ лабораторийн барилга (sim х�
     }
   });
 
-  it('нүүр: rot → front (0 урагш, 90 баруун, 180 хойд)', () => {
-    const want: Record<number, string> = { 0: 's', 90: 'w', 180: 'n' };
+  it('нүүр: rot → front (0 урагш, 90 баруун, 180 хойд, 270 зүүн)', () => {
+    const want: Record<number, string> = { 0: 's', 90: 'w', 180: 'n', 270: 'e' };
     for (const [id, e] of single) expect(byId.get(id)!.front ?? 's', id).toBe(want[e.rot ?? 0]);
   });
 

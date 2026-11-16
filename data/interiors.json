@@ -21,7 +21,7 @@
     "teahouse": "teahouse",
     "house": "houseA"
   },
-  "idRoom": { "buyer": "milk", "plot_sale_1": "houseB", "plot_sale_2": "houseB", "plot_sale_1:owned": "houseBf", "plot_sale_2:owned": "houseBf", "plot_rel_1": "houseA", "plot_rel_2": "houseC" },
+  "idRoom": { "buyer": "milk", "plot_sale_1": "houseB", "plot_sale_2": "houseB", "plot_sale_1:owned": "houseBf", "plot_sale_2:owned": "houseBf", "plot_rel_1": "houseA", "plot_rel_2": "houseC", "plot_rel_3": "houseA" },
   "gerRooms": { "home": "ger", "familyGer": "ger", "helperGer": "helperGer" },
   "rooms": {
     "ger": {
