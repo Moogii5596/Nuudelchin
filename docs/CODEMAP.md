@@ -558,7 +558,7 @@ SYM game/src/render/character/rig.ts:142 fn applyFigure
 SYM game/src/render/character/rig.ts:162 fn wearOf
 SYM game/src/render/character/rig.ts:169 fn showOutfit
 SYM game/src/render/character/rig.ts:178 fn dressCharacter
-FILE game/src/render/character/spec.ts 21.5KB 343L exports: BootPalette,BodyForm,ToortsogLook,FoxHatLook,HairStyle,HAIR_STYLES,Beard,BEARDS,EyeShape,EYE_SHAPES,BrowShape,BROW_SHAPES,CharacterHat,CHARACTER_HATS,+22
+FILE game/src/render/character/spec.ts 21.7KB 344L exports: BootPalette,BodyForm,ToortsogLook,FoxHatLook,HairStyle,HAIR_STYLES,Beard,BEARDS,EyeShape,EYE_SHAPES,BrowShape,BROW_SHAPES,CharacterHat,CHARACTER_HATS,+22
 SYM game/src/render/character/spec.ts:10 interface BootPalette
 SYM game/src/render/character/spec.ts:11 interface BodyForm
 SYM game/src/render/character/spec.ts:12 interface ToortsogLook
@@ -606,10 +606,10 @@ SYM game/src/render/character/spec.ts:189 fn parseWear
 SYM game/src/render/character/spec.ts:201 fn parseSpec
 SYM game/src/render/character/spec.ts:244 fn merge
 SYM game/src/render/character/spec.ts:251 fn validateCharacters
-SYM game/src/render/character/spec.ts:322 const characters
-SYM game/src/render/character/spec.ts:325 fn characterSpec
-SYM game/src/render/character/spec.ts:332 fn withColors
-SYM game/src/render/character/spec.ts:340 fn helperSpec
+SYM game/src/render/character/spec.ts:323 const characters
+SYM game/src/render/character/spec.ts:326 fn characterSpec
+SYM game/src/render/character/spec.ts:333 fn withColors
+SYM game/src/render/character/spec.ts:341 fn helperSpec
 FILE game/src/render/character/talk.ts 1.9KB 43L exports: TalkBus,talkBus,postTalkEvent,EmotionQueue,turnToward
 SYM game/src/render/character/talk.ts:9 interface TalkBus
 SYM game/src/render/character/talk.ts:16 const talkBus
@@ -716,37 +716,37 @@ SYM game/src/render/labelAtlas.ts:50 method LabelAtlas.add
 SYM game/src/render/labelAtlas.ts:58 method LabelAtlas.build
 SYM game/src/render/labelAtlas.ts:76 method LabelAtlas.setText
 SYM game/src/render/labelAtlas.ts:82 method LabelAtlas.setCell
-FILE game/src/render/npcs.ts 15.3KB 280L exports: NpcView
+FILE game/src/render/npcs.ts 16.2KB 292L exports: NpcView
 SYM game/src/render/npcs.ts:28 fn hex
 SYM game/src/render/npcs.ts:43 class NpcView
-SYM game/src/render/npcs.ts:64 method NpcView.spec
-SYM game/src/render/npcs.ts:73 method NpcView.ensureRig
-SYM game/src/render/npcs.ts:83 method NpcView.ensureFar
-SYM game/src/render/npcs.ts:94 method NpcView.syncSeason
-SYM game/src/render/npcs.ts:105 method NpcView.now
-SYM game/src/render/npcs.ts:109 method NpcView.measure
-SYM game/src/render/npcs.ts:116 method NpcView.drive
-SYM game/src/render/npcs.ts:138 method NpcView.pickTalk
-SYM game/src/render/npcs.ts:153 method NpcView.showSpeech
-SYM game/src/render/npcs.ts:205 method NpcView.hideEntry
-SYM game/src/render/npcs.ts:213 method NpcView.hideOutdoor
-SYM game/src/render/npcs.ts:246 method NpcView.leaveIndoor
-SYM game/src/render/npcs.ts:254 method NpcView.syncAwaySign
-FILE game/src/render/scene.ts 26.0KB 531L exports: GameView
+SYM game/src/render/npcs.ts:65 method NpcView.spec
+SYM game/src/render/npcs.ts:74 method NpcView.ensureRig
+SYM game/src/render/npcs.ts:84 method NpcView.ensureFar
+SYM game/src/render/npcs.ts:95 method NpcView.syncSeason
+SYM game/src/render/npcs.ts:106 method NpcView.now
+SYM game/src/render/npcs.ts:110 method NpcView.measure
+SYM game/src/render/npcs.ts:117 method NpcView.drive
+SYM game/src/render/npcs.ts:139 method NpcView.pickTalk
+SYM game/src/render/npcs.ts:165 method NpcView.showSpeech
+SYM game/src/render/npcs.ts:217 method NpcView.hideEntry
+SYM game/src/render/npcs.ts:225 method NpcView.hideOutdoor
+SYM game/src/render/npcs.ts:258 method NpcView.leaveIndoor
+SYM game/src/render/npcs.ts:266 method NpcView.syncAwaySign
+FILE game/src/render/scene.ts 27.3KB 546L exports: GameView
 SYM game/src/render/scene.ts:29 fn flakeTexture
 SYM game/src/render/scene.ts:42 class GameView
-SYM game/src/render/scene.ts:242 method GameView.applyQuality
-SYM game/src/render/scene.ts:274 method GameView.snapshot
-SYM game/src/render/scene.ts:288 method GameView.toggleHeatmap
-SYM game/src/render/scene.ts:294 method GameView.frame
-SYM game/src/render/scene.ts:368 method GameView.hideHerderIfCameraInside
-SYM game/src/render/scene.ts:377 method GameView.campSolids
-SYM game/src/render/scene.ts:406 method GameView.frameInterior
-SYM game/src/render/scene.ts:432 method GameView.leaveInterior
-SYM game/src/render/scene.ts:448 method GameView.applyDaylight
-SYM game/src/render/scene.ts:508 method GameView.updateFlakes
-SYM game/src/render/scene.ts:524 method GameView.drawCalls
-SYM game/src/render/scene.ts:528 method GameView.triangleCount
+SYM game/src/render/scene.ts:246 method GameView.applyQuality
+SYM game/src/render/scene.ts:278 method GameView.snapshot
+SYM game/src/render/scene.ts:292 method GameView.toggleHeatmap
+SYM game/src/render/scene.ts:298 method GameView.frame
+SYM game/src/render/scene.ts:373 method GameView.hideHerderIfCameraInside
+SYM game/src/render/scene.ts:382 method GameView.campSolids
+SYM game/src/render/scene.ts:411 method GameView.frameInterior
+SYM game/src/render/scene.ts:437 method GameView.leaveInterior
+SYM game/src/render/scene.ts:453 method GameView.applyDaylight
+SYM game/src/render/scene.ts:523 method GameView.updateFlakes
+SYM game/src/render/scene.ts:539 method GameView.drawCalls
+SYM game/src/render/scene.ts:543 method GameView.triangleCount
 FILE game/src/render/staff.ts 8.9KB 187L exports: makeDwelling,StaffView
 SYM game/src/render/staff.ts:28 fn helperRole
 SYM game/src/render/staff.ts:37 fn makeDwelling
@@ -755,7 +755,7 @@ SYM game/src/render/staff.ts:76 method StaffView.setQuality
 SYM game/src/render/staff.ts:84 method StaffView.setSeason
 SYM game/src/render/staff.ts:90 method StaffView.update
 SYM game/src/render/staff.ts:166 method StaffView.syncDwellings
-FILE game/src/render/style.ts 25.4KB 613L exports: TimeVisual,SeasonVisual,GrassVisual,WaterVisual,SmokeVisual,DogRestVisual,HerderEmotion,HerderEvent,HerderAnimVisual,SumResidentsVisual,OutfitBody,OutfitHat,HelperRole,OutfitsVisual,+10
+FILE game/src/render/style.ts 28.1KB 658L exports: TimeVisual,SeasonVisual,GrassVisual,WaterVisual,SmokeVisual,DogRestVisual,HerderEmotion,HerderEvent,HerderAnimVisual,SumResidentsVisual,OutfitBody,OutfitHat,HelperRole,OutfitsVisual,+11
 SYM game/src/render/style.ts:5 interface TimeVisual
 SYM game/src/render/style.ts:17 interface SeasonVisual
 SYM game/src/render/style.ts:24 interface GrassVisual
@@ -776,49 +776,53 @@ SYM game/src/render/style.ts:109 interface CloudShadowVisual
 SYM game/src/render/style.ts:118 interface FlowersVisual
 SYM game/src/render/style.ts:125 interface MountainLayerVisual
 SYM game/src/render/style.ts:135 interface VisualPalette
-SYM game/src/render/style.ts:168 interface VisualStyle
-SYM game/src/render/style.ts:194 fn isRecord
-SYM game/src/render/style.ts:196 fn isColor
-SYM game/src/render/style.ts:197 fn isPositive
-SYM game/src/render/style.ts:200 fn parseMapPaper
-SYM game/src/render/style.ts:219 fn parseVehicleFx
-SYM game/src/render/style.ts:240 fn parseHerderAnim
-SYM game/src/render/style.ts:267 fn parseSumResidents
-SYM game/src/render/style.ts:285 fn parseOutfits
-SYM game/src/render/style.ts:315 fn validateVisualStyle
-SYM game/src/render/style.ts:609 const visualStyle
-SYM game/src/render/style.ts:611 fn paletteHex
-FILE game/src/render/sumcenter.ts 22.5KB 403L exports: SumCenterView
-SYM game/src/render/sumcenter.ts:42 fn residentMatrix
-SYM game/src/render/sumcenter.ts:46 fn residents
-SYM game/src/render/sumcenter.ts:71 class SumCenterView
-SYM game/src/render/sumcenter.ts:232 method SumCenterView.syncTown
-SYM game/src/render/sumcenter.ts:247 method SumCenterView.buildTown
-SYM game/src/render/sumcenter.ts:272 method SumCenterView.buildGers
-SYM game/src/render/sumcenter.ts:310 method SumCenterView.syncTalk
-SYM game/src/render/sumcenter.ts:351 method SumCenterView.syncCrowd
-SYM game/src/render/sumcenter.ts:376 method SumCenterView.takeLive
-SYM game/src/render/sumcenter.ts:393 method SumCenterView.releaseLive
-SYM game/src/render/sumcenter.ts:400 method SumCenterView.syncLot
-FILE game/src/render/sumlayout.ts 47.2KB 852L exports: Rect,VehicleSlotView,HomeDoor,SumPlotView,SumGer,SumCenterBuild,buildSumCenter
+SYM game/src/render/style.ts:169 interface NightVisual
+SYM game/src/render/style.ts:181 interface VisualStyle
+SYM game/src/render/style.ts:208 fn isRecord
+SYM game/src/render/style.ts:210 fn isColor
+SYM game/src/render/style.ts:211 fn isPositive
+SYM game/src/render/style.ts:214 fn parseMapPaper
+SYM game/src/render/style.ts:233 fn parseVehicleFx
+SYM game/src/render/style.ts:254 fn parseHerderAnim
+SYM game/src/render/style.ts:281 fn parseSumResidents
+SYM game/src/render/style.ts:299 fn parseOutfits
+SYM game/src/render/style.ts:329 fn parseNight
+SYM game/src/render/style.ts:359 fn validateVisualStyle
+SYM game/src/render/style.ts:654 const visualStyle
+SYM game/src/render/style.ts:656 fn paletteHex
+FILE game/src/render/sumcenter.ts 25.8KB 474L exports: SumCenterView
+SYM game/src/render/sumcenter.ts:43 fn residentMatrix
+SYM game/src/render/sumcenter.ts:47 fn residents
+SYM game/src/render/sumcenter.ts:72 class SumCenterView
+SYM game/src/render/sumcenter.ts:232 method SumCenterView.buildLamps
+SYM game/src/render/sumcenter.ts:265 method SumCenterView.syncLamps
+SYM game/src/render/sumcenter.ts:298 method SumCenterView.syncTown
+SYM game/src/render/sumcenter.ts:313 method SumCenterView.buildTown
+SYM game/src/render/sumcenter.ts:338 method SumCenterView.buildGers
+SYM game/src/render/sumcenter.ts:376 method SumCenterView.syncTalk
+SYM game/src/render/sumcenter.ts:422 method SumCenterView.syncCrowd
+SYM game/src/render/sumcenter.ts:447 method SumCenterView.takeLive
+SYM game/src/render/sumcenter.ts:464 method SumCenterView.releaseLive
+SYM game/src/render/sumcenter.ts:471 method SumCenterView.syncLot
+FILE game/src/render/sumlayout.ts 47.5KB 857L exports: Rect,VehicleSlotView,HomeDoor,SumPlotView,SumGer,SumCenterBuild,buildSumCenter
 SYM game/src/render/sumlayout.ts:20 interface Rect
 SYM game/src/render/sumlayout.ts:22 interface VehicleSlotView
 SYM game/src/render/sumlayout.ts:24 interface HomeDoor
 SYM game/src/render/sumlayout.ts:25 interface SumPlotView
 SYM game/src/render/sumlayout.ts:26 interface SumGer
 SYM game/src/render/sumlayout.ts:27 interface SumCenterBuild
-SYM game/src/render/sumlayout.ts:52 fn rng
-SYM game/src/render/sumlayout.ts:68 fn mat
-SYM game/src/render/sumlayout.ts:74 class Batch
-SYM game/src/render/sumlayout.ts:76 method Batch.add
-SYM game/src/render/sumlayout.ts:89 method Batch.box
-SYM game/src/render/sumlayout.ts:92 method Batch.cyl
-SYM game/src/render/sumlayout.ts:95 method Batch.mesh
-SYM game/src/render/sumlayout.ts:110 fn gableGeometry
-SYM game/src/render/sumlayout.ts:126 fn nearestOnPolyline
-SYM game/src/render/sumlayout.ts:139 fn rectsOverlap
-SYM game/src/render/sumlayout.ts:142 fn rectNearPolyline
-SYM game/src/render/sumlayout.ts:159 fn buildSumCenter
+SYM game/src/render/sumlayout.ts:54 fn rng
+SYM game/src/render/sumlayout.ts:70 fn mat
+SYM game/src/render/sumlayout.ts:76 class Batch
+SYM game/src/render/sumlayout.ts:78 method Batch.add
+SYM game/src/render/sumlayout.ts:91 method Batch.box
+SYM game/src/render/sumlayout.ts:94 method Batch.cyl
+SYM game/src/render/sumlayout.ts:97 method Batch.mesh
+SYM game/src/render/sumlayout.ts:112 fn gableGeometry
+SYM game/src/render/sumlayout.ts:128 fn nearestOnPolyline
+SYM game/src/render/sumlayout.ts:141 fn rectsOverlap
+SYM game/src/render/sumlayout.ts:144 fn rectNearPolyline
+SYM game/src/render/sumlayout.ts:161 fn buildSumCenter
 FILE game/src/render/terrain.ts 61.6KB 1393L exports: TerrainView
 SYM game/src/render/terrain.ts:31 fn typeLookup
 SYM game/src/render/terrain.ts:62 fn grassClumpGeometry
@@ -1703,7 +1707,7 @@ FILE game/tests/staff.test.ts 13.5KB 248L
 FILE game/tests/stuck.test.ts 4.4KB 80L
 FILE game/tests/style.test.ts 8.9KB 165L
 FILE game/tests/sumtown.test.ts 4.5KB 90L
-FILE game/tests/sumwalk.test.ts 3.4KB 63L
+FILE game/tests/sumwalk.test.ts 4.9KB 91L
 FILE game/tests/town.test.ts 6.1KB 127L
 FILE game/tests/trader.test.ts 8.4KB 164L
 FILE game/tests/transfer.test.ts 14.2KB 255L
@@ -1911,18 +1915,20 @@ FILE docs/plan/M7.md 7.6KB 31L
 DOC docs/plan/M7.md:12-22 ## Блокууд
 DOC docs/plan/M7.md:23-27 ## Асуулга (10 асуулт)
 DOC docs/plan/M7.md:28-31 ## Эрсдэл
-FILE docs/plan/V.md 78.3KB 287L
+FILE docs/plan/V.md 78.8KB 287L
 DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
 DOC docs/plan/V.md:24-265 ## Блокууд ба чеклист (2026-11-15)
 DOC docs/plan/V.md:266-287 ## Зогссон цэг
-FILE docs/plan/playtest.md 19.5KB 123L
+FILE docs/plan/playtest.md 21.6KB 134L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
 DOC docs/plan/playtest.md:19-39 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
 DOC docs/plan/playtest.md:40-111 ## C. Мэдрэмж, үе шат бүрээр
 DOC docs/plan/playtest.md:112-115 ## V4.6 хонь, ямаа (🧑 мэдрэмж)
 DOC docs/plan/playtest.md:116-121 ## V4.6 S2 үхэр, адуу, нохой, чоно (🧑 мэдрэмж)
-DOC docs/plan/playtest.md:122-123 ## Хүний масштаб 1.7 м (characters.json scale 0.70) (🧑 мэдрэмж)
+DOC docs/plan/playtest.md:122-124 ## Хүний масштаб 1.7 м (characters.json scale 0.70) (🧑 мэдрэмж)
+DOC docs/plan/playtest.md:125-131 ## Сумын төвийн NPC жигд алхалт ба мөргөлдөөн (🧑 мэдрэмж, 2026-11-16)
+DOC docs/plan/playtest.md:132-134 ## Мэдэгдэж буй дутагдал: NPC хашаа гаталгах (sumwalk, 2026-11-16)
 FILE docs/seasons-camps.md 10.2KB 104L
 DOC docs/seasons-camps.md:17-40 ## 1. Хэрэглэгчийн шийдвэрүүд
 DOC docs/seasons-camps.md:41-54 ## 2. Улирал
@@ -1933,7 +1939,7 @@ DOC docs/seasons-camps.md:81-86 ## 6. Төллөлт
 DOC docs/seasons-camps.md:87-92 ## 7. Отор (M5-ын үргэлжлэл)
 DOC docs/seasons-camps.md:93-99 ## 8. Дүрслэл, UI
 DOC docs/seasons-camps.md:100-104 ## 9. Тэнцвэр ба 🙋
-FILE docs/visuals-plan.md 28.4KB 277L
+FILE docs/visuals-plan.md 28.3KB 277L
 DOC docs/visuals-plan.md:19-31 ## 1. Зорилго
 DOC docs/visuals-plan.md:32-40 ## 2. Зарчим
 DOC docs/visuals-plan.md:41-96 ## 3. Хэв маяг (V0-д батлах)
