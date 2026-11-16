@@ -7,3 +7,5 @@ Thumbs.db
 .idea/
 .claudeignore
 .playwright-mcp/
+*.zip
+tools/character-lab/buildings/ger.js.txt
