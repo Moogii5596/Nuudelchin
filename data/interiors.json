@@ -21,7 +21,7 @@
     "teahouse": "teahouse",
     "house": "houseA"
   },
-  "idRoom": { "plot_sale_1": "houseB", "plot_sale_2": "houseB", "plot_sale_1:owned": "houseBf", "plot_sale_2:owned": "houseBf", "plot_rel_1": "houseA", "plot_rel_2": "houseC" },
+  "idRoom": { "buyer": "milk", "plot_sale_1": "houseB", "plot_sale_2": "houseB", "plot_sale_1:owned": "houseBf", "plot_sale_2:owned": "houseBf", "plot_rel_1": "houseA", "plot_rel_2": "houseC" },
   "gerRooms": { "home": "ger", "familyGer": "ger", "helperGer": "helperGer" },
   "rooms": {
     "ger": {
@@ -117,7 +117,7 @@
       ]
     },
     "admin": {
-      "shape": "box", "w": 12, "d": 8, "h": 2.9,
+      "shape": "box", "w": 12, "d": 8, "h": 2.9, "publicInterior": "admin",
       "floor": "#a89c86", "wall": "#e4e0d4", "trim": "#2f5d8a",
       "light": { "color": "#fff1d0", "intensity": 11 },
       "entry": [0, 2.8], "exit": [0, 3.7], "counter": [0, -1.8],
@@ -126,19 +126,30 @@
         { "id": "desk_w", "kind": "desk", "x": -4.0, "z": -2.6, "rot": 0 },
         { "id": "desk_e", "kind": "desk", "x": 4.0, "z": -2.6, "rot": 0 },
         { "id": "bench_w", "kind": "bench", "x": -4.0, "z": 1.0, "rot": 0 },
-        { "id": "bench_e", "kind": "bench", "x": 4.0, "z": 1.0, "rot": 0 }
+        { "id": "bench_e", "kind": "bench", "x": 4.0, "z": 1.0, "rot": 0 },
+        { "id": "governor", "kind": "work", "x": -4, "z": -3.25, "rot": 0 },
+        { "id": "clerk", "kind": "work", "x": 0, "z": -3.2, "rot": 0 },
+        { "id": "police", "kind": "work", "x": 4, "z": -3.15, "rot": 0 },
+        { "id": "visitor", "kind": "work", "x": 0, "z": -1.8, "rot": 3.14 },
+        { "id": "flag", "kind": "flag", "x": -5.35, "z": -3.55, "rot": 0 },
+        { "id": "notice", "kind": "board", "x": 3.2, "z": 3.98, "rot": 3.14 }
       ]
     },
     "bank": {
-      "shape": "box", "w": 10, "d": 7, "h": 2.9,
+      "shape": "box", "w": 10, "d": 7, "h": 2.9, "publicInterior": "bank",
       "floor": "#9aa09a", "wall": "#e9e6dc", "trim": "#2a6a4a",
       "light": { "color": "#fff1d0", "intensity": 11 },
       "entry": [0, 2.3], "exit": [0, 3.2], "counter": [0, -1.5],
       "spots": [
         { "id": "counter", "kind": "counter", "x": 0, "z": -2.3, "rot": 0 },
-        { "id": "safe", "kind": "chest", "x": 3.8, "z": -2.6, "rot": 0 },
+        { "id": "safe", "kind": "chest", "x": 3.8, "z": -3.105, "rot": 0 },
         { "id": "bench_w", "kind": "bench", "x": -3.4, "z": 0.8, "rot": 0 },
-        { "id": "bench_e", "kind": "bench", "x": 3.4, "z": 0.8, "rot": 0 }
+        { "id": "bench_e", "kind": "bench", "x": 3.4, "z": 0.8, "rot": 0 },
+        { "id": "teller_1", "kind": "work", "x": -1.0, "z": -2.95, "rot": 0 },
+        { "id": "teller_2", "kind": "work", "x": 1.0, "z": -2.95, "rot": 0 },
+        { "id": "customer", "kind": "work", "x": 0, "z": -1.5, "rot": 3.14 },
+        { "id": "queue", "kind": "queue", "x": 0, "z": -0.4, "rot": 0 },
+        { "id": "form_desk", "kind": "desk", "x": -4.65, "z": -1.6, "rot": 1.57 }
       ]
     },
     "culture": {
@@ -179,6 +190,25 @@
         { "id": "table_2", "kind": "table", "x": 3.2, "z": -1.6, "rot": 0 },
         { "id": "table_3", "kind": "table", "x": 0.94, "z": 0.8, "rot": 0 },
         { "id": "table_4", "kind": "table", "x": 3.2, "z": 0.8, "rot": 0 }
+      ]
+    },
+    "milk": {
+      "shape": "box", "w": 6.4, "d": 5.4, "h": 3.0, "publicInterior": "milk",
+      "floor": "#9A8A72", "wall": "#ECE6D6", "trim": "#2E5E9E",
+      "light": { "color": "#fff1d0", "intensity": 10 },
+      "entry": [0, 1.6], "exit": [0, 2.5], "counter": [0, -0.55],
+      "spots": [
+        { "id": "counter", "kind": "counter", "x": 0, "z": -1.25, "rot": 0 },
+        { "id": "price_board", "kind": "board", "x": -0.6, "z": -2.7, "rot": 0 },
+        { "id": "milk_vat", "kind": "vat", "x": 2.25, "z": -2.15, "rot": 0 },
+        { "id": "wool_scale", "kind": "scale", "x": 2.0, "z": 0.35, "rot": 0 },
+        { "id": "wool_pile", "kind": "pile", "x": 2.6, "z": 1.9, "rot": 0 },
+        { "id": "strainer", "kind": "table", "x": -2.6, "z": 1.6, "rot": 0 },
+        { "id": "bench", "kind": "bench", "x": -1.85, "z": 2.35, "rot": 0 },
+        { "id": "receiver", "kind": "work", "x": 0, "z": -1.95, "rot": 0 },
+        { "id": "weigher", "kind": "work", "x": 1.15, "z": 0.35, "rot": 1.57 },
+        { "id": "seller", "kind": "work", "x": 0, "z": -0.65, "rot": 3.14 },
+        { "id": "milk_drop", "kind": "work", "x": -2.2, "z": -0.2, "rot": -1.57 }
       ]
     },
     "shop": {

@@ -43,6 +43,36 @@ export function publicBlockers(kind: string, room: RoomLike): LayoutBox[] {
     const P = T.pillars, s2 = P.size / 2 + 0.05;
     for (const sx of [-1, 1]) for (const z of P.z) box(sx * P.x - s2, z - s2, sx * P.x + s2, z + s2);   // багана
     const w = spot('prayer_wheel'); box(w.x - 0.5, w.z - 0.5, w.x + 0.5, w.z + 0.5);       // хүрд
+  } else if (kind === 'admin') {
+    const hw = (room.w ?? 0) / 2;
+    const g = spot('desk_w'), K = T.govDesk;
+    box(g.x - K.w / 2, g.z - K.d / 2 - 0.8, g.x + K.w / 2, g.z + K.d / 2);                  // засаг даргын ширээ + сандал
+    box(g.x - 1.55, -hd + 0.25, g.x - 1.15, -hd + 0.65);                                     // төрийн далбаа
+    const c = spot('counter'), C = T.counter;
+    box(c.x - C.w / 2 - 0.03, -hd, c.x + C.w / 2 + 0.03, c.z + C.d / 2 + 0.06);             // зээлийн лангуу + ажилтны тал (шүүгээ, сандал)
+    const e = spot('desk_e'), P = T.policeDesk;
+    box(e.x - P.w / 2, e.z - P.d / 2 - 0.75, e.x + P.w / 2, e.z + P.d / 2);                 // цагдаагийн ширээ + сандал
+    for (const id of ['bench_w', 'bench_e']) { const b = spot(id); box(b.x - 1.04, b.z - 0.3, b.x + 1.04, b.z + 0.3); }   // хүлээлгийн сандал (4)
+    for (const sx of [-1, 1]) box(sx * hw - (sx > 0 ? 0.6 : -0.6) , hd - 0.7, sx * hw - (sx > 0 ? 0.2 : -0.2), hd - 0.1);   // булангийн мод
+  } else if (kind === 'bank') {
+    const hw = (room.w ?? 0) / 2;
+    const c = spot('counter'), C = T.counter;
+    box(c.x - C.w / 2 - 0.03, -hd, c.x + C.w / 2 + 0.03, c.z + C.d / 2 + 0.06);             // шилэн кассын лангуу + ажилтны тал
+    const s = spot('safe'), S = T.safe, sx = Math.min(s.x, hw - S.w / 2 - 0.05);
+    box(sx - S.w / 2, -hd, sx + S.w / 2, -hd + S.d + 0.05);                                  // сейф
+    for (const id of ['bench_w', 'bench_e']) { const b = spot(id); box(b.x - 0.78, b.z - 0.3, b.x + 0.78, b.z + 0.3); }   // хүлээлгийн сандал (3)
+    for (const [x, z] of [[-0.9, -1.0], [-0.9, 0.2], [0.9, 0.2], [0.9, -1.0]] as [number, number][]) box(x - 0.14, z - 0.14, x + 0.14, z + 0.14);   // дарааллын шон
+    const f = spot('form_desk'); box(f.x - 0.3, f.z - 0.6, f.x + 0.3, f.z + 0.6);           // маягт бөглөх ширээ
+    for (const sgn of [-1, 1]) box(sgn * hw - (sgn > 0 ? 0.6 : -0.6), hd - 0.7, sgn * hw - (sgn > 0 ? 0.2 : -0.2), hd - 0.1);   // булангийн мод
+  } else if (kind === 'milk') {
+    const K = T.counter;
+    box(K.x - K.w / 2 - 0.03, -hd, K.x + K.w / 2 + 0.03, K.z + K.d / 2 + 0.03);             // хүлээн авагчийн лангуу + ажилтны тал
+    const V = T.vat; box(V.x - V.r - 0.03, V.z - V.r - 0.03, V.x + V.r + 0.03, V.z + V.r + 0.2);   // сүүний сав
+    const F = T.floorScale; box(F.x - F.w / 2, F.z - F.d / 2 - 0.1, F.x + F.w / 2, F.z + F.d / 2);   // ноосны шалны жин
+    for (const [x = 0, z = 0] of T.sacks as number[][]) box(x - 0.4, z - 0.4, x + 0.4, z + 0.4);    // ноосны шуудай
+    box(T.cans.x - 0.2, T.cans.z[0] - 0.2, T.cans.x + 0.2, T.cans.z[T.cans.z.length - 1] + 0.2);   // бидон
+    const st = T.strainer; box(st.x - 0.4, st.z - 0.35, st.x + 0.4, st.z + 0.35);           // сүү шүүх ширээ
+    const b = spot('bench'); box(b.x - 0.55, b.z - 0.28, b.x + 0.55, b.z + 0.28);           // хүлээлгийн сандал (2)
   }
   return boxes;
 }

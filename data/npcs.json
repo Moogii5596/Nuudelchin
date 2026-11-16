@@ -62,7 +62,7 @@
    "inside": {
     "buyer": [
      0,
-     -1.8,
+     -1.95,
      0
     ],
     "teahouse": [
@@ -234,8 +234,8 @@
    "work": "zdtg",
    "inside": {
     "zdtg": [
-     0,
-     -2.5,
+     -4,
+     -3.25,
      0
     ]
    },
@@ -245,6 +245,74 @@
     ["10:30", "at:flagpole"],
     ["10:50", "in:zdtg"],
     ["18:30", "home"]
+   ]
+  },
+  {
+   "id": "baatarsukh",
+   "name": "Баатарсүх",
+   "age": 35,
+   "sex": "m",
+   "role": "police",
+   "look": {
+    "preset": "man",
+    "colors": {
+     "deel": "#2a3a5a",
+     "hem": "#1d2a42"
+    }
+   },
+   "speed": 3,
+   "home": {
+    "x": 245,
+    "z": -100
+   },
+   "work": "zdtg",
+   "inside": {
+    "zdtg": [
+     4,
+     -3.15,
+     0
+    ]
+   },
+   "schedule": [
+    ["06:00", "home"],
+    ["08:50", "in:zdtg"],
+    ["12:30", "door:zdtg"],
+    ["12:50", "in:zdtg"],
+    ["18:00", "home"]
+   ]
+  },
+  {
+   "id": "sarnai",
+   "name": "Сарнай",
+   "age": 29,
+   "sex": "f",
+   "role": "teller",
+   "look": {
+    "preset": "woman_plait",
+    "colors": {
+     "deel": "#2a6a4a",
+     "hem": "#1d4a34"
+    }
+   },
+   "speed": 3,
+   "home": {
+    "x": 285,
+    "z": -35
+   },
+   "work": "bank",
+   "inside": {
+    "bank": [
+     -1,
+     -2.95,
+     0
+    ]
+   },
+   "schedule": [
+    ["06:00", "home"],
+    ["08:50", "in:bank"],
+    ["12:30", "door:bank"],
+    ["12:50", "in:bank"],
+    ["17:30", "home"]
    ]
   },
   {

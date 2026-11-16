@@ -184,7 +184,7 @@ export class InteriorView {
   }
 
   /**
-   * V6.2 нийтийн барилга (сургуулийн анги, дуган): лабораторийн makePublicInterior — хана (доод тос будаг), банзан шал, цонх, хаалга, тааз, чийдэн,
+   * V6.2 нийтийн барилга (сургуулийн анги, дуган, ЗДТГ, банк, сүү/ноос хүлээн авах цэг): лабораторийн makePublicInterior — хана (доод тос будаг), банзан шал, цонх, хаалга, тааз, чийдэн,
    * тавилга. Бүгд нэг Geo + атлас (шөнө чийдэн гэрэлтэнэ), бэхэн хүрээ зөвхөн тавилгад. Ороход л ачаална. Саад — sim/systems/publicLayout (room.blockers).
    */
   private buildPublic(room: RoomSpec): THREE.Group {
@@ -204,6 +204,14 @@ export class InteriorView {
     const ol = new THREE.Mesh(furnGeo, outline);
     ol.name = 'public:furniture-outline';
     g.add(body, ol);
+    if (it.glass.triangles) {   // банкны шилэн касс: тунгалаг тусдаа mesh (3 дахь draw call)
+      const gg = it.glass.build(), gm = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, opacity: 0.28, depthWrite: false });
+      this.disposers.push(() => { gg.dispose(); gm.dispose(); });
+      const gl = new THREE.Mesh(gg, gm);
+      gl.name = 'public:glass';
+      gl.renderOrder = 1;
+      g.add(gl);
+    }
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(room.w ?? 6, room.d ?? 6).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ visible: false }));
     floor.name = 'ground';
     g.add(floor);

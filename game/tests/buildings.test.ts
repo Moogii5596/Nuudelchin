@@ -204,3 +204,47 @@ describe('нийтийн барилгын дотор тал (V6.2, S2 батла
     }
   });
 });
+
+describe('нийтийн барилгын дотор тал (V6.2, S2 батлагдсан): ЗДТГ, банк, сүү/ноос хүлээн авах цэг', () => {
+  const rooms = [['admin', 'zdtg', 2650, 4, 0], ['bank', 'bank', 2200, 4, 1], ['milk', 'buyer', 3800, 3, 0]] as const;   // [өрөө, барилгын id, гурвалжингийн дээд, чийдэн, шилний mesh]
+  it('geometr: лабораторийн хэмжилттэй ойролцоо; банкны шил — тусдаа тунгалаг mesh (3 дахь draw call)', () => {
+    for (const [id, , lim, lamps, glass] of rooms) {
+      const room = roomSpec(cfg, id)!, it = makePublicInterior(id, room)!;
+      const tri = it.shell.triangles + it.ceil.triangles + it.furn.triangles;
+      expect(tri, id).toBeGreaterThan(1500); expect(tri, id).toBeLessThanOrEqual(lim);
+      expect(it.shell.p.every(Number.isFinite) && it.furn.p.every(Number.isFinite), id).toBe(true);
+      expect(it.lights.length, id).toBe(lamps);
+      expect(it.glass.triangles > 0, id).toBe(glass === 1);
+    }
+  });
+  it('idRoom: сүү, ноос хүлээн авах цэг → milk өрөө; өрөөний хэмжээ барилгын дотор өрөөнд багтана (validateInteriors)', () => {
+    expect(cfg.interiors.idRoom.buyer).toBe('milk');
+    expect(validateInteriors(cfg)).toEqual([]);
+  });
+  it('саад: орох цэгээс E лангуу, E зогсох цэг, гарах цэгт хүрч болно; лангууны ард орохгүй', () => {
+    for (const [id] of rooms) {
+      const room = roomSpec(cfg, id)!, step = 0.1, seen = new Set<string>(), key = (x: number, z: number): string => Math.round(x * 1000) + ',' + Math.round(z * 1000);
+      const free = (x: number, z: number): boolean => { const c = clampToRoom(cfg, room, x, z); return Math.abs(c.x - x) < 1e-6 && Math.abs(c.z - z) < 1e-6; };
+      expect(room.blockers!.length, id).toBeGreaterThan(4);
+      expect(free(room.entry[0], room.entry[1]), id + ' entry').toBe(true);
+      const q: [number, number][] = [[room.entry[0], room.entry[1]]]; seen.add(key(q[0]![0], q[0]![1]));
+      while (q.length) { const [x, z] = q.pop()!; for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) { const nx = x + dx * step, nz = z + dz * step, k = key(nx, nz); if (!seen.has(k) && free(nx, nz)) { seen.add(k); q.push([nx, nz]); } } }
+      const near = (p: [number, number]): boolean => [...seen].some((s) => { const [a, b] = s.split(',').map(Number) as [number, number]; return Math.hypot(a / 1000 - p[0], b / 1000 - p[1]) < 0.3; });
+      expect(near(room.counter!), id + ' counter').toBe(true);
+      expect(near(room.exit), id + ' exit').toBe(true);
+      for (const s of room.spots.filter((p) => ['visitor', 'customer', 'seller'].includes(p.id))) expect(near([s.x, s.z]), `${id} ${s.id}`).toBe(true);
+      for (const s of room.spots.filter((p) => ['governor', 'clerk', 'police', 'teller_1', 'teller_2', 'receiver'].includes(p.id))) expect(near([s.x, s.z]), `${id} ${s.id} ажилтны тал`).toBe(false);   // ажилтны цэгт тоглогч орохгүй
+    }
+  });
+  it('NPC-ийн дотор байрлал (npcs.json inside): засаг дарга, кассчин, хүлээн авагч өрөөний ажлын цэг дээр, өрөөний хүрээнд', () => {
+    for (const [id, bld] of rooms) {
+      const room = roomSpec(cfg, id)!, who = cfg.npcs.npcs.filter((n) => n.inside[bld]);
+      expect(who.length, id).toBeGreaterThan(0);
+      for (const n of who) {
+        const p = n.inside[bld]!;
+        expect(Math.abs(p[0]) <= room.w! / 2 && Math.abs(p[1]) <= room.d! / 2, `${n.id} ${id}`).toBe(true);
+        if (n.role === 'governor' || n.role === 'teller' || n.role === 'police' || (n.role === 'buyer' && id === 'milk')) expect(room.spots.some((s) => s.kind === 'work' && Math.hypot(s.x - p[0], s.z - p[1]) < 0.12), `${n.id} ${id} ажлын цэг`).toBe(true);
+      }
+    }
+  });
+});

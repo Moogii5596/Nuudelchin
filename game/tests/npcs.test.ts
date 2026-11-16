@@ -12,9 +12,9 @@ const at = (id: string, hh: string, day = 1) => npcAt(cfg, npcById(cfg, id)!, da
 const dayOf = (season: string): number => { for (let d = 1; d < 800; d++) if (seasonOf(cfg, d) === season) return d; throw new Error(season); };
 
 describe('V6.3 NPC — тохиргоо', () => {
-  it('data/npcs.json шалгалтад тэнцнэ; 8 гол + 6 сурагч + 2 цэцэрлэг + 4 гудамж', () => {
+  it('data/npcs.json шалгалтад тэнцнэ; 9 гол (кассчин, цагдаа нэмэгдсэн) + 6 сурагч + 2 цэцэрлэг + 4 гудамж', () => {
     expect(npcConfigErrors(cfg)).toEqual([]);
-    expect(N.npcs.length).toBe(20);
+    expect(N.npcs.length).toBe(22);
     expect(N.npcs.filter((n) => n.role === 'pupil').length).toBe(6);
     expect(N.npcs.filter((n) => n.role === 'kinder').length).toBe(2);
     const key = ['buyer', 'grocery', 'cook', 'vet', 'teacher', 'governor', 'fuel', 'lama'];
@@ -50,7 +50,7 @@ describe('V6.3 NPC — npcAt (цэвэр функц)', () => {
     const noon = at('ganbaatar', '09:45');
     expect(noon.mode).toBe('in');
     expect(noon.building).toBe('buyer');
-    expect(noon.room).toBe('shop');
+    expect(noon.room).toBe('milk');
     expect(at('ganbaatar', '22:30').mode).toBe('hidden');
       });
 
@@ -88,10 +88,10 @@ describe('V6.3 NPC — npcAt (цэвэр функц)', () => {
     expect(pupils.filter((p) => npcAt(cfg, p, winter, hhmm('11:30')).mode === 'in' && npcAt(cfg, p, winter, hhmm('11:30')).room === 'school').length).toBeGreaterThanOrEqual(5);
   });
 
-  it('нэгэн зэрэг харагдах NPC ≤ 20 (өдрийн бүх минутад)', () => {
+  it('нэгэн зэрэг харагдах NPC ≤ 22 (өдрийн бүх минутад)', () => {
     let peak = 0;
     for (const day of [dayOf('summer'), dayOf('winter')]) for (let m = 360; m <= 1320; m += 5) peak = Math.max(peak, npcsAt(cfg, day, m).filter((s) => s.mode === 'out' || s.mode === 'in').length);
-    expect(peak).toBeLessThanOrEqual(20);
+    expect(peak).toBeLessThanOrEqual(22);
     expect(peak).toBeGreaterThan(6);           // зорилготой хүмүүс сумын төвд харагдана
   });
 
