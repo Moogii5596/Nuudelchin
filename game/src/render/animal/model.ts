@@ -16,6 +16,8 @@ export interface AnimalModel {
   /** instanceColor-ууд (хөгшин нь бүдэг) */
   colors(variant: number, old: boolean): Colors;
   isPatched(variant: number): boolean;
+  /** үхэр: эвэргүй (id-аас тогтмол, ~30%) */
+  isPolled(id: number): boolean;
 }
 
 const mixHex = (a: number, b: number, k: number): number => new THREE.Color(a).lerp(new THREE.Color(b), k).getHex();
@@ -34,8 +36,10 @@ export function createModel(species: LookSpecies): AnimalModel {
     colors(variant, old) {
       const V = look.variants[variant % look.variants.length]!;
       const wool = old ? mixHex(V.wool, O.woolTo, O.woolK) : V.wool, head = old ? mixHex(V.head, O.headTo, O.headK) : V.head;
-      return { wool, head, leg: mixHex(head, wool, 0.5) };
+      const leg = V.leg !== undefined ? (old ? mixHex(V.leg, O.woolTo, O.woolK) : V.leg) : mixHex(head, wool, 0.5);
+      return { wool, head, leg, legLow: V.legLow ?? leg, mane: V.mane ?? head, tail: V.mane ?? wool };
     },
+    isPolled: (id) => !!look.polledOption && hash(id * 7.31 + 3) < 0.3,
     isPatched: (variant) => look.variants[variant % look.variants.length]!.patch === true,
   };
 }

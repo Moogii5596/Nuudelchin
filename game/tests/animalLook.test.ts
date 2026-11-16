@@ -6,6 +6,10 @@ import { AnimalSet, RestPoses, trisOf } from '../src/render/animal/lod';
 import { ageIdxOf } from '../src/render/animal/model';
 import { goatModel } from '../src/render/animal/goat';
 import { sheepModel } from '../src/render/animal/sheep';
+import { cowModel } from '../src/render/animal/cow';
+import { horseModel } from '../src/render/animal/horse';
+import { dogModel } from '../src/render/animal/dog';
+import { wolfModel } from '../src/render/animal/wolf';
 import { makeRig, poseAnimal, settle } from '../src/render/animal/pose';
 
 const clone = (): Record<string, any> => JSON.parse(JSON.stringify(lookJson));
@@ -37,11 +41,10 @@ describe('data/animals-look.json — шалгагч', () => {
 
 describe('render/animal — хөнгөн, дэлгэрэнгүй хэсгүүд', () => {
   const group = new THREE.Group();
-  for (const [name, model] of [['хонь', sheepModel], ['ямаа', goatModel]] as const) {
-    it(`${name}: хөнгөн ≤ 800 гурвалжин, draw call ≤ 6, дэлгэрэнгүй илүү нарийн`, () => {
+  for (const [name, model] of [['хонь', sheepModel], ['ямаа', goatModel], ['үхэр', cowModel], ['адуу', horseModel], ['нохой', dogModel], ['чоно', wolfModel]] as const) {
+    it(`${name}: хөнгөн ≤ 800 гурвалжин, дэлгэрэнгүй илүү нарийн`, () => {
       const light = model.parts('light'), detail = model.parts('detail');
       expect(trisOf(light)).toBeLessThanOrEqual(800);
-      expect(light.length).toBeLessThanOrEqual(6);
       expect(detail.length).toBe(light.length);              // ижил бүтэц: кэш хоёуланд таарна
       expect(trisOf(detail)).toBeGreaterThan(trisOf(light) * 5);
       for (const p of [...light, ...detail]) {

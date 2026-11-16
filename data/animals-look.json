@@ -1,76 +1,1051 @@
 {
-  "_doc": "V4.6: хонь, ямааны ДҮРСЛЭЛ (tools/character-lab/animals.html-ийн LAB, SHEEP, GOAT — хэрэглэгч баталсан). Sim-ийн тоо (жин, нас) data/animals.json. render/animal/config.ts шалгана. age.growth/oldSize нь data/animals.json-тай ижил; young — нярай, хурга/ишгийн хөл, биеийн харьцаа; old — хөгшин (туранхай, нуруу хонхойно, цайвар өнгө). palette — тогтмол өнгө (туурай, нүд, хамар, чихний дотор, хошуу, эвэр, алаг толбо, туслахын тэмдэг mark). motion — хөдөлгөөний нийтлэг тоо: stepLen/stepGap/stepRepeat/stepDur — бэлчих үеийн хагас алхам, kneeWalk — алхахад өвдөг нугалах, chewHz, headNod. quality.<high|mid|low>.detail — тоглогчоос ойрын хэдэн малыг дэлгэрэнгүй хувилбараар зурах (0 = хөнгөн л), detailR — тэр зай (м). lightCap — төрөл тус бүрийн instance-ийн дээд хэмжээ. species.<sheep|goat>: d — бие, хүзүү, толгойн холбоос, хөл (legSplit дээд/доод хувь, hock хойд шагайн амралтын өнцөг, hoofH/hoofK туурай), сүүл (tail, tailAt, tailRaise, wag), skirt — ямааны ноолууран хормой; head — толгой (L урт, r/rn арын/хошууны радиус, hx хажуугийн нарийсалт, zb эргэх цэг, eye*, pupil, ear {l,w,droop}, horn {len,r0,t,phi,fk эмийн харьцаа,pts}, beard); motion — fatX/fatY (тарга → өргөн/өндөр), pitch/neckGraze/headGraze (бэлчих), browse* (ямаа бут зулгаах); light/detail — геометрийн хуваалт; stride — нэг бүтэн алхмын урт (м); variants — зүс: wool, head, patch (алаг), weight (санамсаргүй сонголтын жин)",
-  "version": 1,
-  "lightCap": 3000,
-  "age": {
-    "growth": [0.5, 0.72, 0.86, 0.95, 1.0],
-    "oldSize": 0.95,
-    "young": { "legK": 1.2, "bodyShort": 0.4, "headGrow": 0.9, "max": 0.5 },
-    "old": { "fat": -0.32, "sag": 0.035, "neckDown": 0.28, "headDown": 0.3, "woolTo": "#8f8a82", "woolK": 0.5, "headTo": "#8a8480", "headK": 0.3 },
-    "hornK": [0, 0.35, 0.65, 0.9, 1, 1],
-    "adultIdx": 3
+ "_doc": "V4.6: хонь, ямааны ДҮРСЛЭЛ (tools/character-lab/animals.html-ийн LAB, SHEEP, GOAT — хэрэглэгч баталсан). Sim-ийн тоо (жин, нас) data/animals.json. render/animal/config.ts шалгана. age.growth/oldSize нь data/animals.json-тай ижил; young — нярай, хурга/ишгийн хөл, биеийн харьцаа; old — хөгшин (туранхай, нуруу хонхойно, цайвар өнгө). palette — тогтмол өнгө (туурай, нүд, хамар, чихний дотор, хошуу, эвэр, алаг толбо, туслахын тэмдэг mark). motion — хөдөлгөөний нийтлэг тоо: stepLen/stepGap/stepRepeat/stepDur — бэлчих үеийн хагас алхам, kneeWalk — алхахад өвдөг нугалах, chewHz, headNod. quality.<high|mid|low>.detail — тоглогчоос ойрын хэдэн малыг дэлгэрэнгүй хувилбараар зурах (0 = хөнгөн л), detailR — тэр зай (м). lightCap — төрөл тус бүрийн instance-ийн дээд хэмжээ. species.<sheep|goat>: d — бие, хүзүү, толгойн холбоос, хөл (legSplit дээд/доод хувь, hock хойд шагайн амралтын өнцөг, hoofH/hoofK туурай), сүүл (tail, tailAt, tailRaise, wag), skirt — ямааны ноолууран хормой; head — толгой (L урт, r/rn арын/хошууны радиус, hx хажуугийн нарийсалт, zb эргэх цэг, eye*, pupil, ear {l,w,droop}, horn {len,r0,t,phi,fk эмийн харьцаа,pts}, beard); motion — fatX/fatY (тарга → өргөн/өндөр), pitch/neckGraze/headGraze (бэлчих), browse* (ямаа бут зулгаах); light/detail — геометрийн хуваалт; stride — нэг бүтэн алхмын урт (м); variants — зүс: wool, head, patch (алаг), weight (санамсаргүй сонголтын жин)",
+ "version": 1,
+ "lightCap": 3000,
+ "age": {
+  "growth": [0.5, 0.72, 0.86, 0.95, 1],
+  "oldSize": 0.95,
+  "young": {
+   "legK": 1.2,
+   "bodyShort": 0.4,
+   "headGrow": 0.9,
+   "max": 0.5
   },
-  "palette": {
-    "hair": "#6b5e50", "hoof": "#2a2018", "eyeWhite": "#f3ead6", "eyeInk": "#1c1410", "nose": "#1c1410",
-    "earInner": "#b7a09a", "muzzleTip": "#bab0a8", "horn": "#cfc3a6", "patch": "#1b1715", "mark": "#2a4f8a"
+  "old": {
+   "fat": -0.32,
+   "sag": 0.035,
+   "neckDown": 0.28,
+   "headDown": 0.3,
+   "woolTo": "#8f8a82",
+   "woolK": 0.5,
+   "headTo": "#8a8480",
+   "headK": 0.3
   },
-  "motion": {
-    "kneeWalk": 0.9, "walkAmp": 0.5, "fleeAmp": 0.85, "stepLen": 0.244, "stepGap": [3, 6], "stepRepeat": [5, 9], "stepDur": 0.9,
-    "headNod": 0.03, "chewHz": 5.5, "walkFollow": 5
+  "hornK": [0, 0.35, 0.65, 0.9, 1, 1],
+  "adultIdx": 3
+ },
+ "palette": {
+  "hair": "#6b5e50",
+  "hoof": "#2a2018",
+  "eyeWhite": "#f3ead6",
+  "eyeInk": "#1c1410",
+  "nose": "#1c1410",
+  "earInner": "#b7a09a",
+  "muzzleTip": "#bab0a8",
+  "horn": "#cfc3a6",
+  "patch": "#1b1715",
+  "mark": "#2a4f8a",
+  "udder": "#d9a59c"
+ },
+ "motion": {
+  "kneeWalk": 0.9,
+  "walkAmp": 0.5,
+  "fleeAmp": 0.85,
+  "stepLen": 0.244,
+  "stepGap": [3, 6],
+  "stepRepeat": [5, 9],
+  "stepDur": 0.9,
+  "headNod": 0.03,
+  "chewHz": 5.5,
+  "walkFollow": 5
+ },
+ "quality": {
+  "high": {
+   "detail": 6,
+   "detailR": 40
   },
-  "quality": {
-    "high": { "detail": 6, "detailR": 40 },
-    "mid": { "detail": 3, "detailR": 30 },
-    "low": { "detail": 0, "detailR": 0 }
+  "mid": {
+   "detail": 3,
+   "detailR": 30
   },
-  "species": {
-    "sheep": {
-      "stride": 1.0,
-      "d": {
-        "body": { "L": 0.92, "R": 0.30, "wide": 1.1, "p": 2.5 }, "bodyY": 0.47,
-        "neckAt": [0, 0.53, 0.36], "neckRest": 0.02, "neckLen": 0.29, "neckR": 1, "headAt": [0, 0, 0.30], "headTilt": 0.5,
-        "legLen": 0.3, "legY": 0.3, "legR0": 0.072, "legR1": 0.04, "legX": 0.13, "legZ": 0.27, "legSplit": 0.5, "hock": 0.08,
-        "tail": { "w": 0.2, "h": 0.17, "d": 0.09 }, "tailAt": [0, 0.455, -0.4], "tailRaise": 0, "wag": 0.05
-      },
-      "head": { "L": 0.30, "r": 0.105, "rn": 0.052, "bridge": 0, "eyeT": 0.41, "ea": 0.022, "eb": 0.030, "hx": 0.92, "zb": 0.22, "ear": { "l": 0.15, "w": 0.09, "droop": 0.8 } },
-      "motion": { "fatX": [0.8, 0.4], "fatY": [0.84, 0.3], "pitch": 0.19, "neckGraze": 1.15, "headGraze": 1.25 },
-      "light": { "bodySeg": 18, "bodyRows": 9, "tail": [8, 4], "neck": [6, 2] },
-      "detail": { "bodySeg": 44, "bodyRows": 44, "tail": [28, 20], "neck": [24, 5] },
-      "variants": [
-        { "wool": "#f3eee1", "head": "#2a2420", "weight": 0.3 },
-        { "wool": "#f3eee1", "head": "#6b4a32", "weight": 0.1 },
-        { "wool": "#f3eee1", "head": "#e9ddc6", "weight": 0.3 },
-        { "wool": "#b89a74", "head": "#5a4430", "weight": 0.15 },
-        { "wool": "#5a5350", "head": "#241f1c", "weight": 0.15 }
-      ]
-    },
-    "goat": {
-      "stride": 1.2,
-      "d": {
-        "body": { "L": 0.92, "R": 0.285, "wide": 1.05, "p": 2.8 }, "bodyY": 0.62,
-        "neckAt": [0, 0.78, 0.36], "neckRest": -0.65, "neckLen": 0.26, "neckR": 0.95, "headAt": [0, 0, 0.27], "headTilt": 0.8,
-        "legLen": 0.36, "legY": 0.36, "legR0": 0.068, "legR1": 0.042, "legX": 0.125, "legZ": 0.29, "hoofH": 0.06, "hoofK": 1.3, "legSplit": 0.5, "hock": 0.1,
-        "tail": { "w": 0.035, "h": 0.075, "d": 0.03 }, "tailAt": [0, 0.8, -0.43], "tailRaise": 2.5, "wag": 0.14,
-        "skirt": { "lieK": 0.6, "hair": 0.14, "amp": 0.04, "attach": 0.15, "knee": -0.95, "off": 0.03, "flare": 0.03 }
-      },
-      "head": {
-        "L": 0.37, "r": 0.08, "rn": 0.036, "bridge": 0.012, "eyeT": 0.36, "ea": 0.024, "eb": 0.018, "hx": 0.8, "zb": 0.22,
-        "pupil": [0.9, 0.3], "pupilFwd": 0.02, "eyeC": "#e3c070", "tip": "#c09c98",
-        "ear": { "l": 0.17, "w": 0.065, "droop": 0.55 },
-        "horn": { "len": 0.26, "r0": 0.019, "t": 0.14, "phi": 1.2, "fk": 0.45, "pts": [[0, 0, 0], [0.1, 0.6, -0.2], [0.25, 1.0, -0.7], [0.4, 1.0, -1.3], [0.55, 0.7, -1.9]] },
-        "beard": { "len": 0.12, "w": 0.015, "t": 0.8 }
-      },
-      "motion": { "fatX": [0.88, 0.24], "fatY": [0.9, 0.16], "pitch": 0.3, "neckGraze": 1.2, "headGraze": 1.4, "browse": true, "browsePitch": -0.52, "neckBrowse": -0.75, "headBrowse": 0.0, "browseLeg": 0.85, "browseKnee": 1.1 },
-      "light": { "bodySeg": 16, "bodyRows": 8, "tail": [5, 3], "neck": [6, 2], "skirt": [4, 2] },
-      "detail": { "bodySeg": 44, "bodyRows": 44, "tail": [28, 20], "neck": [24, 5], "skirt": [20, 8] },
-      "patchMask": true,
-      "variants": [
-        { "wool": "#f3eee1", "head": "#e9ddc6", "weight": 0.3 },
-        { "wool": "#2f2a28", "head": "#1e1a18", "weight": 0.2 },
-        { "wool": "#8a5a38", "head": "#5e3a24", "weight": 0.2 },
-        { "wool": "#f3eee1", "head": "#2a2420", "patch": true, "weight": 0.15 },
-        { "wool": "#8d8984", "head": "#5d5753", "weight": 0.15 }
-      ]
-    }
+  "low": {
+   "detail": 0,
+   "detailR": 0
   }
+ },
+ "species": {
+  "sheep": {
+   "stride": 1,
+   "d": {
+    "body": {
+     "L": 0.92,
+     "R": 0.3,
+     "wide": 1.1,
+     "p": 2.5
+    },
+    "bodyY": 0.47,
+    "neckAt": [0, 0.53, 0.36],
+    "neckRest": 0.02,
+    "neckLen": 0.29,
+    "neckR": 1,
+    "headAt": [0, 0, 0.3],
+    "headTilt": 0.5,
+    "legLen": 0.3,
+    "legY": 0.3,
+    "legR0": 0.072,
+    "legR1": 0.04,
+    "legX": 0.13,
+    "legZ": 0.27,
+    "legSplit": 0.5,
+    "hock": 0.08,
+    "tail": {
+     "w": 0.2,
+     "h": 0.17,
+     "d": 0.09
+    },
+    "tailAt": [0, 0.455, -0.4],
+    "tailRaise": 0,
+    "wag": 0.05
+   },
+   "head": {
+    "L": 0.3,
+    "r": 0.105,
+    "rn": 0.052,
+    "bridge": 0,
+    "eyeT": 0.41,
+    "ea": 0.022,
+    "eb": 0.03,
+    "hx": 0.92,
+    "zb": 0.22,
+    "ear": {
+     "l": 0.15,
+     "w": 0.09,
+     "droop": 0.8
+    }
+   },
+   "motion": {
+    "fatX": [0.8, 0.4],
+    "fatY": [0.84, 0.3],
+    "pitch": 0.19,
+    "neckGraze": 1.15,
+    "headGraze": 1.25
+   },
+   "light": {
+    "bodySeg": 18,
+    "bodyRows": 9,
+    "tail": [8, 4],
+    "neck": [6, 2]
+   },
+   "detail": {
+    "bodySeg": 44,
+    "bodyRows": 44,
+    "tail": [28, 20],
+    "neck": [24, 5]
+   },
+   "variants": [
+    {
+     "wool": "#f3eee1",
+     "head": "#2a2420",
+     "weight": 0.3
+    },
+    {
+     "wool": "#f3eee1",
+     "head": "#6b4a32",
+     "weight": 0.1
+    },
+    {
+     "wool": "#f3eee1",
+     "head": "#e9ddc6",
+     "weight": 0.3
+    },
+    {
+     "wool": "#b89a74",
+     "head": "#5a4430",
+     "weight": 0.15
+    },
+    {
+     "wool": "#5a5350",
+     "head": "#241f1c",
+     "weight": 0.15
+    }
+   ]
+  },
+  "goat": {
+   "stride": 1.2,
+   "d": {
+    "body": {
+     "L": 0.92,
+     "R": 0.285,
+     "wide": 1.05,
+     "p": 2.8
+    },
+    "bodyY": 0.62,
+    "neckAt": [0, 0.78, 0.36],
+    "neckRest": -0.65,
+    "neckLen": 0.26,
+    "neckR": 0.95,
+    "headAt": [0, 0, 0.27],
+    "headTilt": 0.8,
+    "legLen": 0.36,
+    "legY": 0.36,
+    "legR0": 0.068,
+    "legR1": 0.042,
+    "legX": 0.125,
+    "legZ": 0.29,
+    "hoofH": 0.06,
+    "hoofK": 1.3,
+    "legSplit": 0.5,
+    "hock": 0.1,
+    "tail": {
+     "w": 0.035,
+     "h": 0.075,
+     "d": 0.03
+    },
+    "tailAt": [0, 0.8, -0.43],
+    "tailRaise": 2.5,
+    "wag": 0.14,
+    "skirt": {
+     "lieK": 0.6,
+     "hair": 0.14,
+     "amp": 0.04,
+     "attach": 0.15,
+     "knee": -0.95,
+     "off": 0.03,
+     "flare": 0.03
+    }
+   },
+   "head": {
+    "L": 0.37,
+    "r": 0.08,
+    "rn": 0.036,
+    "bridge": 0.012,
+    "eyeT": 0.36,
+    "ea": 0.024,
+    "eb": 0.018,
+    "hx": 0.8,
+    "zb": 0.22,
+    "pupil": [0.9, 0.3],
+    "pupilFwd": 0.02,
+    "eyeC": "#e3c070",
+    "tip": "#c09c98",
+    "ear": {
+     "l": 0.17,
+     "w": 0.065,
+     "droop": 0.55
+    },
+    "horn": {
+     "len": 0.26,
+     "r0": 0.019,
+     "t": 0.14,
+     "phi": 1.2,
+     "fk": 0.45,
+     "pts": [
+      [0, 0, 0],
+      [0.1, 0.6, -0.2],
+      [0.25, 1, -0.7],
+      [0.4, 1, -1.3],
+      [0.55, 0.7, -1.9]
+     ]
+    },
+    "beard": {
+     "len": 0.12,
+     "w": 0.015,
+     "t": 0.8
+    }
+   },
+   "motion": {
+    "fatX": [0.88, 0.24],
+    "fatY": [0.9, 0.16],
+    "pitch": 0.3,
+    "neckGraze": 1.2,
+    "headGraze": 1.4,
+    "browse": true,
+    "browsePitch": -0.52,
+    "neckBrowse": -0.75,
+    "headBrowse": 0,
+    "browseLeg": 0.85,
+    "browseKnee": 1.1
+   },
+   "light": {
+    "bodySeg": 16,
+    "bodyRows": 8,
+    "tail": [5, 3],
+    "neck": [6, 2],
+    "skirt": [4, 2]
+   },
+   "detail": {
+    "bodySeg": 44,
+    "bodyRows": 44,
+    "tail": [28, 20],
+    "neck": [24, 5],
+    "skirt": [20, 8]
+   },
+   "patchMask": true,
+   "variants": [
+    {
+     "wool": "#f3eee1",
+     "head": "#e9ddc6",
+     "weight": 0.3
+    },
+    {
+     "wool": "#2f2a28",
+     "head": "#1e1a18",
+     "weight": 0.2
+    },
+    {
+     "wool": "#8a5a38",
+     "head": "#5e3a24",
+     "weight": 0.2
+    },
+    {
+     "wool": "#f3eee1",
+     "head": "#2a2420",
+     "patch": true,
+     "weight": 0.15
+    },
+    {
+     "wool": "#8d8984",
+     "head": "#5d5753",
+     "weight": 0.15
+    }
+   ]
+  },
+  "cow": {
+   "stride": 1.6,
+   "light": {
+    "bodySeg": 14,
+    "bodyRows": 8,
+    "tail": [5, 3],
+    "neck": [6, 2]
+   },
+   "detail": {
+    "bodySeg": 44,
+    "bodyRows": 44,
+    "tail": [28, 20],
+    "neck": [24, 5]
+   },
+   "sexBody": true,
+   "polledOption": true,
+   "d": {
+    "body": {
+     "L": 1.25,
+     "R": 0.33,
+     "wide": 0.97,
+     "p": 3.3
+    },
+    "bodyY": 0.72,
+    "neckAt": [0, 0.76, 0.52],
+    "neckRest": 0.1,
+    "neckLen": 0.34,
+    "neckR": 1.45,
+    "headAt": [0, 0, 0.3],
+    "headTilt": 0.72,
+    "legLen": 0.42,
+    "legY": 0.42,
+    "legR0": 0.1,
+    "legR1": 0.04,
+    "kneeR": 0.054,
+    "thigh": 1.16,
+    "legX": 0.18,
+    "legZ": 0.46,
+    "legSplit": 0.5,
+    "hock": 0.22,
+    "hoofH": 0.06,
+    "hoofK": 1.3,
+    "tail": {
+     "w": 0,
+     "h": 0,
+     "d": 0
+    },
+    "tailLong": {
+     "len": 0.62,
+     "r": 0.022,
+     "tuft": 0.06
+    },
+    "tailAt": [0, 0.9, -0.62],
+    "tailRaise": 0.08,
+    "wag": 0.1,
+    "crest": {
+     "h": 0.022,
+     "wide": 0.06,
+     "zm": 0.3,
+     "zw": 0.5,
+     "neck": 1.1
+    },
+    "udder": {
+     "r": [0.1, 0.085, 0.11],
+     "y": 0.88,
+     "z": -0.42
+    },
+    "dewlap": {
+     "r": [0.022, 0.09, 0.15],
+     "y": 0.1,
+     "z": 0.12
+    }
+   },
+   "head": {
+    "L": 0.33,
+    "r": 0.14,
+    "rn": 0.12,
+    "bridge": 0,
+    "hx": 1.2,
+    "square": 2.7,
+    "zb": 0.24,
+    "eyeT": 0.33,
+    "eyePhi": 0.1,
+    "ea": 0.034,
+    "eb": 0.029,
+    "pupil": [0.72, 0.8],
+    "pupilFwd": 0.1,
+    "eyeC": "#6a4a32",
+    "tip": "#dccab6",
+    "tipT": [0.58, 0.84],
+    "ear": {
+     "l": 0.16,
+     "w": 0.095,
+     "droop": 1.45,
+     "t": 0.12,
+     "phi": 0.32
+    },
+    "horn": {
+     "len": 0.15,
+     "r0": 0.026,
+     "t": 0.1,
+     "phi": 0.95,
+     "fk": 0.6,
+     "pts": [
+      [0, 0, 0],
+      [0.5, 0.15, 0.02],
+      [0.85, 0.55, 0.12],
+      [0.95, 1.05, 0.2]
+     ]
+    }
+   },
+   "motion": {
+    "fatX": [0.9, 0.2],
+    "fatY": [0.9, 0.2],
+    "pitch": 0.22,
+    "neckGraze": 1.05,
+    "headGraze": 1.35
+   },
+   "patchMask": true,
+   "patchMap": [
+    [0.15, 0.32, 0.75, 0.32],
+    [-0.55, -0.4, 0.6, 0.3],
+    [0.9, -0.15, 0.45, 0.25],
+    [2.95, 0.05, 0.8, 0.38],
+    [-2.4, -0.55, 0.55, 0.28],
+    [2.2, 0.7, 0.4, 0.2],
+    [1.6, -0.75, 0.5, 0.18]
+   ],
+   "variants": [
+    {
+     "wool": "#171312",
+     "head": "#100d0c",
+     "weight": 1
+    },
+    {
+     "wool": "#8c3416",
+     "head": "#6c260f",
+     "weight": 1
+    },
+    {
+     "wool": "#f5f1e7",
+     "head": "#171312",
+     "leg": "#ddd6ca",
+     "patch": true,
+     "weight": 1
+    },
+    {
+     "wool": "#7a2c12",
+     "head": "#f2ece0",
+     "leg": "#6a2610",
+     "weight": 1
+    },
+    {
+     "wool": "#c4782a",
+     "head": "#9c5a1e",
+     "weight": 1
+    }
+   ]
+  },
+  "horse": {
+   "stride": 2.2,
+   "light": {
+    "bodySeg": 12,
+    "bodyRows": 8,
+    "tail": [5, 3],
+    "neck": [6, 2],
+    "mane": [6, 2]
+   },
+   "detail": {
+    "bodySeg": 44,
+    "bodyRows": 44,
+    "tail": [28, 20],
+    "neck": [24, 5],
+    "mane": [24, 6]
+   },
+   "d": {
+    "body": {
+     "L": 1.24,
+     "R": 0.36,
+     "wide": 0.88,
+     "p": 2.2
+    },
+    "bodyY": 0.91,
+    "withers": {
+     "h": 0.04,
+     "wide": 0,
+     "zm": 0.52,
+     "zw": 0.2
+    },
+    "neckAt": [0, 1.04, 0.52],
+    "neckRest": -0.7,
+    "neckLen": 0.47,
+    "neckR": 1.72,
+    "neckX": 0.8,
+    "headAt": [0, 0, 0.47],
+    "headTilt": 1.65,
+    "legLen": 0.58,
+    "legY": 0.58,
+    "legR0": 0.095,
+    "legR1": 0.04,
+    "kneeR": 0.05,
+    "thigh": 1.1,
+    "legX": 0.15,
+    "legZ": 0.5,
+    "legSplit": 0.5,
+    "hock": 0.3,
+    "hoofH": 0.07,
+    "hoofK": 1.4,
+    "tail": {
+     "w": 0,
+     "h": 0,
+     "d": 0
+    },
+    "tailHorse": {
+     "len": 0.88,
+     "r": 0.07
+    },
+    "tailAt": [0, 1.07, -0.6],
+    "tailRaise": 0.22,
+    "wag": 0.05,
+    "mane": {
+     "depth": 0.27,
+     "lift": 0.04,
+     "z0": 0,
+     "z1": 0.97
+    },
+    "stallion": {
+     "neck": 1.12,
+     "mane": 1.3
+    },
+    "saddle": {
+     "z": 0.2,
+     "drop": 0.5
+    }
+   },
+   "head": {
+    "L": 0.64,
+    "r": 0.15,
+    "rn": 0.106,
+    "bridge": 0.008,
+    "hx": 0.8,
+    "square": 2.2,
+    "zb": 0.2,
+    "eyeT": 0.26,
+    "eyePhi": 0.32,
+    "ea": 0.028,
+    "eb": 0.026,
+    "pupil": [0.86, 0.86],
+    "pupilFwd": 0.05,
+    "eyeC": "#2a1c14",
+    "tip": "#4a3c34",
+    "tipT": [0.86, 1],
+    "ear": {
+     "l": 0.13,
+     "w": 0.06,
+     "droop": 2.75,
+     "t": 0.07,
+     "phi": 0.8
+    },
+    "forelock": {
+     "len": 0.17,
+     "w": 0.038
+    }
+   },
+   "motion": {
+    "fatX": [0.9, 0.2],
+    "fatY": [0.92, 0.16],
+    "pitch": 0.1,
+    "neckGraze": 1.05,
+    "headGraze": 1.5,
+    "gaits": {
+     "walk": {
+      "hz": 0.95,
+      "amp": 0.3,
+      "knee": 0.75,
+      "duty": 0.62,
+      "off": [0.75, 0.25, 0, 0.5],
+      "bob": 0.014,
+      "beats": 2,
+      "nod": 0.08
+     },
+     "trot": {
+      "hz": 1.45,
+      "amp": 0.42,
+      "knee": 1.05,
+      "duty": 0.42,
+      "off": [0, 0.5, 0.5, 0],
+      "bob": 0.045,
+      "beats": 2,
+      "nod": 0.03
+     },
+     "gallop": {
+      "hz": 1.9,
+      "amp": 0.62,
+      "knee": 1.05,
+      "duty": 0.36,
+      "off": [0.56, 0.68, 0.88, 0],
+      "bob": 0.03,
+      "beats": 1,
+      "nod": 0.14,
+      "rock": 0.045
+     }
+    },
+    "speeds": {
+     "walk": 1.4,
+     "trot": 3.2,
+     "gallop": 7.5
+    },
+    "gallopNeck": 0.35,
+    "gallopTail": 0.42
+   },
+   "patchMask": true,
+   "patchMap": [
+    [0.3, 0.25, 0.7, 0.3],
+    [-0.9, -0.45, 0.6, 0.28],
+    [2.8, 0.1, 0.7, 0.35],
+    [-2.3, -0.5, 0.5, 0.25],
+    [1.57, -0.1, 0.45, 0.22]
+   ],
+   "variants": [
+    {
+     "wool": "#7a3a1a",
+     "head": "#6c3318",
+     "mane": "#15110f",
+     "legLow": "#1a1512",
+     "weight": 1
+    },
+    {
+     "wool": "#a2481a",
+     "head": "#944018",
+     "mane": "#7a3010",
+     "weight": 1
+    },
+    {
+     "wool": "#1c1816",
+     "head": "#171311",
+     "mane": "#0e0b0a",
+     "weight": 1
+    },
+    {
+     "wool": "#cfcac2",
+     "head": "#bdb7ae",
+     "mane": "#eeeae2",
+     "legLow": "#8a857e",
+     "weight": 1
+    },
+    {
+     "wool": "#b88f52",
+     "head": "#a07a46",
+     "mane": "#2a201a",
+     "legLow": "#2a201a",
+     "weight": 1
+    },
+    {
+     "wool": "#f2eee6",
+     "head": "#1c1816",
+     "mane": "#2a1e18",
+     "leg": "#e6e0d6",
+     "legLow": "#e6e0d6",
+     "patch": true,
+     "weight": 1
+    }
+   ]
+  },
+  "dog": {
+   "stride": 1,
+   "light": {
+    "bodySeg": 12,
+    "bodyRows": 7,
+    "tail": [5, 3],
+    "neck": [6, 2],
+    "skirt": [4, 2]
+   },
+   "detail": {
+    "bodySeg": 44,
+    "bodyRows": 44,
+    "tail": [28, 20],
+    "neck": [24, 5],
+    "skirt": [20, 8]
+   },
+   "actions": ["stand", "walk", "run", "lie", "bark", "catch"],
+   "d": {
+    "body": {
+     "L": 0.78,
+     "R": 0.21,
+     "wide": 0.95,
+     "p": 2.4
+    },
+    "bodyY": 0.5,
+    "neckAt": [0, 0.58, 0.3],
+    "neckRest": -0.55,
+    "neckLen": 0.2,
+    "neckR": 1.3,
+    "headAt": [0, 0, 0.2],
+    "headTilt": 0.72,
+    "legLen": 0.38,
+    "legY": 0.38,
+    "legR0": 0.062,
+    "legR1": 0.03,
+    "kneeR": 0.036,
+    "thigh": 1.12,
+    "legX": 0.12,
+    "legZ": 0.29,
+    "legSplit": 0.52,
+    "hock": 0.38,
+    "hoofH": 0.035,
+    "hoofK": 1.3,
+    "paw": true,
+    "tail": {
+     "w": 0,
+     "h": 0,
+     "d": 0
+    },
+    "tailBushy": {
+     "len": 0.42,
+     "r": 0.065,
+     "pts": [
+      [0, 0, 0],
+      [0, 0.35, -0.2],
+      [0, 0.72, -0.08],
+      [0, 0.82, 0.22],
+      [0, 0.66, 0.45]
+     ]
+    },
+    "tailAt": [0, 0.62, -0.36],
+    "tailRaise": 0,
+    "wag": 0.22,
+    "skirt": {
+     "lieK": 0.6,
+     "hair": 0.06,
+     "amp": 0.025,
+     "attach": 0.15,
+     "knee": -0.95,
+     "off": 0.02,
+     "flare": 0.02
+    }
+   },
+   "head": {
+    "L": 0.3,
+    "r": 0.12,
+    "rn": 0.052,
+    "bridge": 0,
+    "hx": 0.95,
+    "zb": 0.3,
+    "taperT": [0.38, 0.62],
+    "eyeT": 0.4,
+    "eyePhi": 0.42,
+    "ea": 0.024,
+    "eb": 0.021,
+    "pupil": [0.62, 0.66],
+    "pupilFwd": 0.12,
+    "eyeC": "#8a5a30",
+    "tip": "#141010",
+    "tipT": [0.93, 1],
+    "muzzle": {
+     "c": "#a8702e",
+     "t": [0.55, 0.72],
+     "low": true
+    },
+    "brows": {
+     "c": "#b27a34",
+     "r": 0.017,
+     "dT": 0.03,
+     "dPhi": 0.27
+    },
+    "ear": {
+     "l": 0.11,
+     "w": 0.075,
+     "droop": 1.15,
+     "t": 0.1,
+     "phi": 0.95
+    }
+   },
+   "motion": {
+    "fatX": [0.92, 0.16],
+    "fatY": [0.92, 0.16],
+    "pitch": 0,
+    "neckGraze": 0.6,
+    "headGraze": 1,
+    "lieFront": "forward",
+    "gaits": {
+     "walk": {
+      "hz": 1.4,
+      "amp": 0.36,
+      "knee": 0.8,
+      "duty": 0.6,
+      "off": [0.75, 0.25, 0, 0.5],
+      "bob": 0.01,
+      "beats": 2,
+      "nod": 0.04
+     },
+     "run": {
+      "hz": 2.6,
+      "amp": 0.75,
+      "knee": 1.25,
+      "duty": 0.3,
+      "off": [0.5, 0.62, 0, 0.9],
+      "bob": 0.05,
+      "beats": 1,
+      "nod": 0.08,
+      "rock": 0.14
+     },
+     "stalk": {
+      "hz": 0.45,
+      "amp": 0.26,
+      "knee": 0.7,
+      "duty": 0.72,
+      "off": [0.75, 0.25, 0, 0.5],
+      "bob": 0.004,
+      "beats": 2,
+      "nod": 0
+     }
+    },
+    "speeds": {
+     "walk": 1.3,
+     "run": 6,
+     "stalk": 0.4
+    },
+    "crouch": 0.13
+   },
+   "variants": [
+    {
+     "wool": "#231d19",
+     "head": "#231d19",
+     "legLow": "#9a6428",
+     "tan": "#a8702e",
+     "weight": 1
+    },
+    {
+     "wool": "#1f1a17",
+     "head": "#1f1a17",
+     "weight": 1,
+     "noTan": true
+    },
+    {
+     "wool": "#8a5a2a",
+     "head": "#7a4e24",
+     "legLow": "#b08048",
+     "tan": "#c89a5a",
+     "weight": 1
+    }
+   ]
+  },
+  "wolf": {
+   "stride": 1,
+   "light": {
+    "bodySeg": 12,
+    "bodyRows": 8,
+    "tail": [5, 3],
+    "neck": [6, 2]
+   },
+   "detail": {
+    "bodySeg": 44,
+    "bodyRows": 44,
+    "tail": [28, 20],
+    "neck": [24, 5]
+   },
+   "actions": ["stand", "walk", "run", "lie", "howl", "stalk", "catch"],
+   "d": {
+    "body": {
+     "L": 0.92,
+     "R": 0.2,
+     "wide": 0.76,
+     "p": 2.2,
+     "chest": 0.24,
+     "tuck": 0.6,
+     "slope": 0.035
+    },
+    "bodyY": 0.62,
+    "neckAt": [0, 0.7, 0.38],
+    "neckRest": -0.4,
+    "neckLen": 0.22,
+    "neckR": 1.2,
+    "neckX": 0.9,
+    "headAt": [0, 0, 0.21],
+    "headTilt": 0.5,
+    "ruff": {
+     "k": 1.3,
+     "len": 0.9,
+     "jag": 0.045,
+     "hang": 0.18,
+     "back": 0.12
+    },
+    "legLen": 0.52,
+    "legY": 0.52,
+    "legR0": 0.07,
+    "legR1": 0.027,
+    "kneeR": 0.033,
+    "thigh": 1.28,
+    "legX": 0.1,
+    "legZ": 0.34,
+    "legSplit": 0.5,
+    "hock": 0.42,
+    "hoofH": 0.038,
+    "hoofK": 1.35,
+    "paw": true,
+    "pawK": 1.35,
+    "tail": {
+     "w": 0,
+     "h": 0,
+     "d": 0
+    },
+    "tailBushy": {
+     "len": 0.5,
+     "r": 0.078,
+     "pts": [
+      [0, 0, 0],
+      [0, -0.26, -0.24],
+      [0, -0.6, -0.32],
+      [0, -0.94, -0.26]
+     ]
+    },
+    "tailAt": [0, 0.71, -0.44],
+    "tailRaise": 0,
+    "wag": 0.05,
+    "tailStalk": -0.3
+   },
+   "head": {
+    "L": 0.32,
+    "r": 0.125,
+    "rn": 0.034,
+    "bridge": 0,
+    "hx": 1.12,
+    "zb": 0.3,
+    "taperT": [0.26, 0.92],
+    "taperLin": true,
+    "drop": 0.045,
+    "noseBall": true,
+    "eyeT": 0.43,
+    "eyePhi": 0.44,
+    "ea": 0.022,
+    "eb": 0.012,
+    "eyeTilt": 0.35,
+    "pupil": [0.4, 0.6],
+    "pupilFwd": 0.12,
+    "eyeC": "#d8a030",
+    "tip": "#141010",
+    "tipT": [0.94, 1],
+    "muzzle": {
+     "c": "#e2d8c4",
+     "t": [0.5, 0.78],
+     "low": true
+    },
+    "ear": {
+     "l": 0.13,
+     "w": 0.1,
+     "droop": 2.95,
+     "t": 0.1,
+     "phi": 0.9,
+     "taper": 0.97,
+     "fwd": -0.22,
+     "face": 1.15
+    },
+    "cheek": {
+     "r": [0.028, 0.045, 0.05],
+     "t": 0.14,
+     "phi": -0.55,
+     "c": "#e2d8c4",
+     "mix": 0.3
+    }
+   },
+   "motion": {
+    "fatX": [0.92, 0.16],
+    "fatY": [0.92, 0.16],
+    "pitch": 0,
+    "neckGraze": 0.6,
+    "headGraze": 1,
+    "lieFront": "forward",
+    "gaits": {
+     "walk": {
+      "hz": 1.4,
+      "amp": 0.36,
+      "knee": 0.8,
+      "duty": 0.6,
+      "off": [0.75, 0.25, 0, 0.5],
+      "bob": 0.01,
+      "beats": 2,
+      "nod": 0.04
+     },
+     "run": {
+      "hz": 2.6,
+      "amp": 0.75,
+      "knee": 1.25,
+      "duty": 0.3,
+      "off": [0.5, 0.62, 0, 0.9],
+      "bob": 0.05,
+      "beats": 1,
+      "nod": 0.08,
+      "rock": 0.14
+     },
+     "stalk": {
+      "hz": 0.45,
+      "amp": 0.26,
+      "knee": 0.7,
+      "duty": 0.72,
+      "off": [0.75, 0.25, 0, 0.5],
+      "bob": 0.004,
+      "beats": 2,
+      "nod": 0
+     }
+    },
+    "speeds": {
+     "walk": 1.3,
+     "run": 6,
+     "stalk": 0.4
+    },
+    "crouch": 0.13,
+    "stalkNeck": 0.32
+   },
+   "variants": [
+    {
+     "wool": "#9a8a72",
+     "head": "#8f806a",
+     "back": "#4e463e",
+     "belly": "#e2d8c4",
+     "legLow": "#cabca0",
+     "tan": "#e2d8c4",
+     "weight": 1
+    },
+    {
+     "wool": "#6e665e",
+     "head": "#666058",
+     "back": "#34302c",
+     "belly": "#c8c0b2",
+     "legLow": "#a8a094",
+     "tan": "#d0c8ba",
+     "weight": 1
+    },
+    {
+     "wool": "#c0b6a4",
+     "head": "#b6ac9a",
+     "back": "#7a7064",
+     "belly": "#eee8dc",
+     "legLow": "#e0d8c8",
+     "tan": "#eee8dc",
+     "weight": 1
+    }
+   ]
+  }
+ },
+ "saddle": {
+  "felt": "#2a4f8a",
+  "pad": "#a8282a",
+  "seat": "#3a2a20",
+  "wood": "#9b2a1a",
+  "metal": "#d8c27a",
+  "strap": "#3a2618"
+ }
 }

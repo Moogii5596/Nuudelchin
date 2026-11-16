@@ -5,7 +5,8 @@
  * 1..2 = алаг толбо (iPatch = 1 бол бараан), 3 = туслахын тэмдэг (iMark = 1 бол хөх). render/animal/lod.ts-ийн shader.
  */
 import * as THREE from 'three';
-import type { BodyLook, DLook, SkirtLook } from './config';
+import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import type { BodyLook, Bump, DLook, SkirtLook } from './config';
 
 export const smooth01 = (a: number, b: number, x: number): number => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
@@ -28,7 +29,7 @@ export function ellipsoid(rx: number, ry: number, rz: number, at: [number, numbe
 }
 
 /** Бие: нэг цэвэр торх (superellipse профайлтай lathe, урт нь z тэнхлэгт); шинжилгээний нормал — цөөн хуваалттай ч бөөрөнхий */
-export function bodyGeo({ L, R, wide, p }: BodyLook, seg: number, rows: number, sag = 0): THREE.BufferGeometry {
+export function bodyGeo({ L, R, wide, p, chest = 0, tuck = 0, slope = 0 }: BodyLook, seg: number, rows: number, sag = 0, crest: Bump | null = null): THREE.BufferGeometry {
   const pts: THREE.Vector2[] = [];
   for (let i = 0; i <= rows; i++) {
     const t = -Math.cos((Math.PI * i) / rows);
@@ -46,15 +47,28 @@ export function bodyGeo({ L, R, wide, p }: BodyLook, seg: number, rows: number, 
     if (sag) { const y = ps.getY(i), uu = ps.getZ(i) / (L / 2); if (y > 0) ps.setY(i, y - sag * (1 - uu * uu) * (y / R)); }   // хөгшин: нуруу бага зэрэг хонхойно
   }
   g.setAttribute('normal', new THREE.Float32BufferAttribute(an, 3));
-  return g;
+  if (!crest && !chest && !tuck && !slope) return g;
+  /* Бухын мөр/адууны сэрвээ (crest): урд хагас дээш, хажуу тийш; махчин (чоно): цээж гүн, хэвлий татагдсан, нуруу ар руугаа доош */
+  for (let i = 0; i < ps.count; i++) {
+    const x = ps.getX(i), u = ps.getZ(i) / (L / 2); let y = ps.getY(i);
+    if (crest) { const w = Math.exp(-(((u - crest.zm) / crest.zw) ** 2)), top = Math.max(0, y / R); y += crest.h * w * Math.pow(top, 1.3); ps.setX(i, x * (1 + crest.wide * w * (0.35 + 0.65 * top))); }
+    if (y < 0) y *= 1 + chest * smooth01(-0.3, 0.55, u) - tuck * smooth01(0.15, -0.75, u);
+    y += slope * u;
+    ps.setY(i, y);
+  }
+  g.deleteAttribute('uv');
+  const mg = mergeVertices(g);
+  mg.computeVertexNormals();
+  return mg;
 }
 
 /** Хүзүү: богино бүдүүн хоолой (+z руу), урт нь len */
 const NECK_PROF: [number, number][] = [[0.12, -0.02], [0.125, 0.05], [0.104, 0.17], [0.082, 0.27]];
-export function neckGeo(len: number, seg: number, rows: number, rk: number): THREE.BufferGeometry {
-  const curve = new THREE.SplineCurve(NECK_PROF.map(([r, y]) => new THREE.Vector2(r * rk, y * (len / 0.26))));
-  const g = new THREE.LatheGeometry(curve.getPoints(rows), seg);
+export const neckCurve = (len: number, rk: number): THREE.SplineCurve => new THREE.SplineCurve(NECK_PROF.map(([r, y]) => new THREE.Vector2(r * rk, y * (len / 0.26))));
+export function neckGeo(len: number, seg: number, rows: number, rk: number, xk = 1): THREE.BufferGeometry {
+  const g = new THREE.LatheGeometry(neckCurve(len, rk).getPoints(rows), seg);
   g.applyMatrix4(new THREE.Matrix4().makeRotationX(Math.PI / 2));
+  if (xk !== 1) g.scale(xk, 1, 1);
   g.computeVertexNormals();
   return g;
 }
@@ -107,9 +121,19 @@ export const patchK = (x0: number, y0: number, z0: number, sc = 1): number => {
   return smooth01(0.58, 0.68, v);
 };
 
-/** Туслахын тэмдэг: нурууны будаг — биеийн орой дээр хавтгай эллипс (aSlot 3) */
-export function markGeo(body: BodyLook, seg: number, rows: number): THREE.BufferGeometry {
-  return ellipsoid(body.R * 0.34, 0.016, body.L * 0.16, [0, body.R - 0.006, body.L * 0.05], seg, rows);
+/** Биеийн орой дээрх өндөр (биеийн локал): суперэллипс торх + мөр/налуу. Тэмдгийг гадаргуугаар нь дагуулахад */
+export function bodyTopY({ L, R, wide, p, slope = 0 }: BodyLook, crest: Bump | null, x: number, z: number): number {
+  const u = z / (L / 2), f = Math.pow(Math.max(0, 1 - Math.pow(Math.abs(u), p)), 1 / p), rx = Math.max(1e-4, wide * R * f);
+  let y = R * f * Math.sqrt(Math.max(0, 1 - (x / rx) ** 2));
+  if (crest) { const w = Math.exp(-(((u - crest.zm) / crest.zw) ** 2)); y += crest.h * w * Math.pow(Math.max(0, y / R), 1.3); }
+  return y + slope * u;
+}
+
+/** Туслахын тэмдэг: нурууны будаг — биеийн гадаргууг дагасан нимгэн хавтан (aSlot 3) */
+export function markGeo(body: BodyLook, seg: number, rows: number, crest: Bump | null = null): THREE.BufferGeometry {
+  const g = ellipsoid(body.R * 0.34 * body.wide, 0.016, body.L * 0.16, [0, 0, 0], seg, rows), p = pos(g), z0 = body.L * 0.05;
+  for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i) + z0; p.setXYZ(i, x, bodyTopY(body, crest, x, z) + p.getY(i) * 0.35 - 0.003, z); }
+  return g;
 }
 
 /** Геометрт оройн өнгө ба aSlot тавина (uv-гүй) */
