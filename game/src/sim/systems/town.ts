@@ -13,6 +13,7 @@ import { productPrice } from './trip';
 import { fleetOf } from './travel';
 import { plotHouse, sumDoors, type SumDoor } from './sumtown';
 import { seasonOf } from './seasons';
+import { relativeAtBuilding } from './npc';
 import type { Helper } from './helpers';
 
 export type HouseMode = 'empty' | 'rent' | 'child';
@@ -65,6 +66,7 @@ export function nearTownDoor(cfg: GameConfig, state: GameState): { id: string; r
   };
   for (const d of sumDoors(cfg)) {
     if (d.role === 'temple' || d.role === 'zdtg' || d.role === 'bank') consider(d.id, d.role, d.x, d.z);
+    else if (d.role === 'grocery' && relativeAtBuilding(cfg, state, d.id)) consider(relativeAtBuilding(cfg, state, d.id)!, 'relative', d.x, d.z);   // V6.3: хамаатан худалдагч (Сарангэрэл) дэлгүүрт ч бэлэг авна
     else if (SOON_ROLES.includes(d.role)) consider(d.id, 'soon', d.x, d.z);
   }
   for (const d of plotDoors(cfg)) consider(d.id, d.role as TownRole, d.x, d.z);

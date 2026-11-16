@@ -1,0 +1,668 @@
+{
+ "_doc": "V6.3 (хэрэглэгч батласан 2026-11-16): сумын төвийн NPC. Байрлал = цаг + өдөр + seed-ийн ЦЭВЭР функц (sim/systems/npc.ts npcAt), төлөв хадгалахгүй. schedule: [цаг, байрлал] — тэр цагт ТЭНД ХҮРЧ ИРСЭН байх (хөдөлгөөн өмнөх байрлалаас автоматаар эрт гарна). Байрлал: home (харагдахгүй, гэрт) | door:<барилгын id> (хаалганы гадна) | in:<барилгын id> (дотор өрөөнд, inside[id] = [x, z, чиглэл] өрөөний координат) | at:<places> (гадаах нэрлэсэн цэг) | away (харагдахгүй, away барилгын хаалганд «Айлд явсан» шошго). home: {x,z} | door:<id> | plot:<id>. holiday — зуны амралтын хуваарь (calendar.holiday улирал). speed м/с (бодит секундээр); тоглоомын 1 цаг = time.realSecondsPerGameHour бодит секунд тул алхалтын хугацаа тоглоомын минутаар = зам / (speed × realSecondsPerGameHour / 60). maxLegMin — гэрээс/гэр рүү явах хамгийн урт зам (тоглоомын мин), jitterMin — өдөр бүр цагийг ±хазайлгана, gridCell — чиглүүлэх торны хэмжээ (м). relative — town.relatives-ийн хамаатан (бэлэг ажлын байранд ч өгнө).",
+ "version": 1,
+ "jitterMin": 6,
+ "maxLegMin": 220,
+ "gridCell": 4,
+ "calendar": {
+  "holiday": [
+   "summer"
+  ]
+ },
+ "places": {
+  "plaza": {
+   "x": 253,
+   "z": -47
+  },
+  "flagpole": {
+   "x": 247,
+   "z": -48
+  },
+  "gazebo": {
+   "x": 96,
+   "z": -26
+  },
+  "playground": {
+   "x": 315,
+   "z": -6
+  },
+  "fuel": {
+   "x": 378,
+   "z": -26
+  },
+  "fuel_bench": {
+   "x": 372,
+   "z": -24
+  },
+  "buyer_yard": {
+   "x": 190,
+   "z": -3
+  }
+ },
+ "npcs": [
+  {
+   "id": "ganbaatar",
+   "name": "Ганбаатар",
+   "age": 48,
+   "sex": "m",
+   "role": "buyer",
+   "look": {
+    "preset": "man",
+    "colors": {
+     "deel": "#7a4a2b",
+     "hem": "#5b341c"
+    }
+   },
+   "speed": 3.2,
+   "home": {
+    "x": 224,
+    "z": 33
+   },
+   "work": "buyer",
+   "inside": {
+    "buyer": [
+     0,
+     -1.8,
+     0
+    ],
+    "teahouse": [
+     2.5,
+     0.5,
+     3.14
+    ]
+   },
+   "schedule": [
+    ["06:00", "home"],
+    ["08:30", "in:buyer"],
+    ["10:30", "door:buyer"],
+    ["10:40", "in:buyer"],
+    ["12:00", "in:teahouse"],
+    ["13:45", "in:buyer"],
+    ["18:30", "home"]
+   ]
+  },
+  {
+   "id": "sarangerel",
+   "name": "Сарангэрэл",
+   "age": 34,
+   "sex": "f",
+   "role": "grocery",
+   "look": {
+    "preset": "woman_braids",
+    "colors": {
+     "deel": "#3f7a4a",
+     "hem": "#2c5a36"
+    }
+   },
+   "speed": 3,
+   "home": "plot:plot_rel_1",
+   "work": "shop_1_4",
+   "relative": "plot_rel_1",
+   "inside": {
+    "shop_1_4": [
+     0,
+     -1.8,
+     0
+    ]
+   },
+   "schedule": [
+    ["06:00", "home"],
+    ["08:45", "in:shop_1_4"],
+    ["12:30", "door:shop_1_4"],
+    ["12:50", "in:shop_1_4"],
+    ["19:00", "home"]
+   ]
+  },
+  {
+   "id": "oyuntsetseg",
+   "name": "Оюунцэцэг",
+   "age": 41,
+   "sex": "f",
+   "role": "cook",
+   "look": {
+    "preset": "cook"
+   },
+   "speed": 3,
+   "home": {
+    "x": 238,
+    "z": 34
+   },
+   "work": "teahouse",
+   "inside": {
+    "teahouse": [
+     -3,
+     -2.3,
+     0
+    ]
+   },
+   "schedule": [
+    ["06:00", "home"],
+    ["07:50", "in:teahouse"],
+    ["10:30", "door:teahouse"],
+    ["10:40", "in:teahouse"],
+    ["15:30", "door:teahouse"],
+    ["16:00", "in:teahouse"],
+    ["19:45", "home"]
+   ]
+  },
+  {
+   "id": "dorjpalam",
+   "name": "Доржпалам",
+   "age": 52,
+   "sex": "m",
+   "role": "vet",
+   "look": {
+    "preset": "horseman",
+    "colors": {
+     "deel": "#2f5d9b",
+     "hem": "#244a7c"
+    }
+   },
+   "speed": 3.2,
+   "home": {
+    "x": 89,
+    "z": 79
+   },
+   "work": "vet",
+   "away": "vet",
+   "inside": {},
+   "schedule": [
+    ["06:00", "home"],
+    ["08:20", "door:vet"],
+    ["11:00", "away"],
+    ["15:00", "door:vet"],
+    ["17:45", "home"]
+   ]
+  },
+  {
+   "id": "tsetsegmaa",
+   "name": "Цэцэгмаа",
+   "age": 37,
+   "sex": "f",
+   "role": "teacher",
+   "look": {
+    "preset": "teacher_glasses",
+    "colors": {
+     "deel": "#6b4a2e",
+     "hem": "#4e3520"
+    }
+   },
+   "speed": 3,
+   "home": {
+    "x": 207,
+    "z": -109
+   },
+   "work": "school",
+   "inside": {
+    "school": [
+     0,
+     -3.6,
+     0
+    ]
+   },
+   "schedule": [
+    ["06:00", "home"],
+    ["08:10", "in:school"],
+    ["10:00", "door:school"],
+    ["10:20", "in:school"],
+    ["17:30", "home"]
+   ],
+   "holiday": [
+    ["06:00", "home"],
+    ["10:00", "in:school"],
+    ["14:00", "home"]
+   ]
+  },
+  {
+   "id": "batsukh",
+   "name": "Батсүх",
+   "age": 58,
+   "sex": "m",
+   "role": "governor",
+   "look": {
+    "preset": "elder_goatee",
+    "colors": {
+     "deel": "#1f4f7a",
+     "hem": "#173b5c"
+    }
+   },
+   "speed": 2.6,
+   "home": {
+    "x": 259,
+    "z": -108
+   },
+   "work": "zdtg",
+   "inside": {
+    "zdtg": [
+     0,
+     -2.5,
+     0
+    ]
+   },
+   "schedule": [
+    ["06:00", "home"],
+    ["09:15", "in:zdtg"],
+    ["10:30", "at:flagpole"],
+    ["10:50", "in:zdtg"],
+    ["18:30", "home"]
+   ]
+  },
+  {
+   "id": "lkhagvasuren",
+   "name": "Лхагвасүрэн",
+   "age": 29,
+   "sex": "m",
+   "role": "fuel",
+   "look": {
+    "preset": "driver"
+   },
+   "speed": 3.4,
+   "home": {
+    "x": 378,
+    "z": -26
+   },
+   "work": "fuel",
+   "inside": {},
+   "schedule": [
+    ["06:00", "home"],
+    ["07:00", "at:fuel"],
+    ["12:30", "at:fuel_bench"],
+    ["13:15", "at:fuel"],
+    ["20:00", "home"]
+   ]
+  },
+  {
+   "id": "luvsan",
+   "name": "Лувсан",
+   "age": 63,
+   "sex": "m",
+   "role": "lama",
+   "look": {
+    "preset": "lama"
+   },
+   "speed": 2.2,
+   "home": "door:temple",
+   "work": "temple",
+   "inside": {
+    "temple": [
+     0,
+     -3.2,
+     0
+    ]
+   },
+   "schedule": [
+    ["06:00", "in:temple"],
+    ["12:30", "home"],
+    ["14:20", "door:temple"],
+    ["15:30", "in:temple"],
+    ["17:00", "home"]
+   ]
+  },
+  {
+   "id": "khuslen",
+   "name": "Хүслэн",
+   "age": 10,
+   "sex": "m",
+   "role": "pupil",
+   "look": {
+    "preset": "boy_shorthair"
+   },
+   "speed": 3.4,
+   "home": "door:dorm",
+   "work": "school",
+   "inside": {
+    "school": [
+     -3,
+     0.2,
+     3.14
+    ]
+   },
+   "schedule": [
+    ["06:00", "home"],
+    ["08:20", "in:school"],
+    ["10:00", "door:school"],
+    ["10:20", "in:school"],
+    ["15:00", "door:school"],
+    ["18:30", "home"]
+   ],
+   "holiday": [
+    ["06:00", "home"],
+    ["10:00", "at:gazebo"],
+    ["12:30", "home"],
+    ["15:00", "at:gazebo"],
+    ["18:30", "home"]
+   ]
+  },
+  {
+   "id": "erdenebat",
+   "name": "Эрдэнэбат",
+   "age": 10,
+   "sex": "m",
+   "role": "pupil",
+   "look": {
+    "preset": "boy_shaved"
+   },
+   "speed": 3.4,
+   "home": "door:dorm",
+   "work": "school",
+   "inside": {
+    "school": [
+     3,
+     0.2,
+     3.14
+    ]
+   },
+   "schedule": [
+    ["06:00", "home"],
+    ["08:30", "in:school"],
+    ["10:10", "door:school"],
+    ["10:30", "in:school"],
+    ["15:10", "door:school"],
+    ["18:40", "home"]
+   ],
+   "holiday": [
+    ["06:00", "home"]
+   ]
+  },
+  {
+   "id": "tenuun",
+   "name": "Тэнүүн",
+   "age": 10,
+   "sex": "m",
+   "role": "pupil",
+   "look": {
+    "preset": "boy"
+   },
+   "speed": 3.4,
+   "home": "door:dorm",
+   "work": "school",
+   "inside": {
+    "school": [
+     -3,
+     2.2,
+     3.14
+    ]
+   },
+   "schedule": [
+    ["06:00", "home"],
+    ["08:40", "in:school"],
+    ["10:20", "door:school"],
+    ["10:40", "in:school"],
+    ["15:20", "door:school"],
+    ["18:50", "home"]
+   ],
+   "holiday": [
+    ["06:00", "home"]
+   ]
+  },
+  {
+   "id": "uyanga",
+   "name": "Уянга",
+   "age": 10,
+   "sex": "f",
+   "role": "pupil",
+   "look": {
+    "preset": "girl_braids"
+   },
+   "speed": 3.4,
+   "home": "door:dorm",
+   "work": "school",
+   "inside": {
+    "school": [
+     3,
+     2.2,
+     3.14
+    ]
+   },
+   "schedule": [
+    ["06:00", "home"],
+    ["08:25", "in:school"],
+    ["10:05", "door:school"],
+    ["10:25", "in:school"],
+    ["15:05", "door:school"],
+    ["18:35", "home"]
+   ],
+   "holiday": [
+    ["06:00", "home"],
+    ["10:05", "at:gazebo"],
+    ["12:35", "home"],
+    ["15:05", "at:gazebo"],
+    ["18:35", "home"]
+   ]
+  },
+  {
+   "id": "michidmaa",
+   "name": "Мичидмаа",
+   "age": 10,
+   "sex": "f",
+   "role": "pupil",
+   "look": {
+    "preset": "girl_bun"
+   },
+   "speed": 3.4,
+   "home": "door:dorm",
+   "work": "school",
+   "inside": {
+    "school": [
+     0,
+     1.2,
+     3.14
+    ]
+   },
+   "schedule": [
+    ["06:00", "home"],
+    ["08:35", "in:school"],
+    ["10:15", "door:school"],
+    ["10:35", "in:school"],
+    ["15:15", "door:school"],
+    ["18:45", "home"]
+   ],
+   "holiday": [
+    ["06:00", "home"]
+   ]
+  },
+  {
+   "id": "zolboo",
+   "name": "Золбоо",
+   "age": 10,
+   "sex": "f",
+   "role": "pupil",
+   "look": {
+    "preset": "girl"
+   },
+   "speed": 3.4,
+   "home": "door:dorm",
+   "work": "school",
+   "inside": {
+    "school": [
+     0,
+     3.2,
+     3.14
+    ]
+   },
+   "schedule": [
+    ["06:00", "home"],
+    ["08:45", "in:school"],
+    ["10:25", "door:school"],
+    ["10:45", "in:school"],
+    ["15:25", "door:school"],
+    ["18:55", "home"]
+   ],
+   "holiday": [
+    ["06:00", "home"],
+    ["10:25", "at:gazebo"],
+    ["12:55", "home"],
+    ["15:25", "at:gazebo"],
+    ["18:55", "home"]
+   ]
+  },
+  {
+   "id": "bilgee",
+   "name": "Билгээ",
+   "age": 5,
+   "sex": "f",
+   "role": "kinder",
+   "look": {
+    "preset": "girl",
+    "figure": {
+     "stature": 0.6
+    }
+   },
+   "speed": 2.4,
+   "home": {
+    "x": 238,
+    "z": 34
+   },
+   "work": "kinder",
+   "inside": {
+    "kinder": [
+     -2,
+     1,
+     0
+    ]
+   },
+   "schedule": [
+    ["06:00", "home"],
+    ["09:00", "in:kinder"],
+    ["10:30", "at:playground"],
+    ["11:30", "in:kinder"],
+    ["17:00", "home"]
+   ]
+  },
+  {
+   "id": "ganzorig",
+   "name": "Ганзориг",
+   "age": 5,
+   "sex": "m",
+   "role": "kinder",
+   "look": {
+    "preset": "boy",
+    "figure": {
+     "stature": 0.6
+    }
+   },
+   "speed": 2.4,
+   "home": {
+    "x": 238,
+    "z": 34
+   },
+   "work": "kinder",
+   "inside": {
+    "kinder": [
+     2,
+     1.5,
+     0
+    ]
+   },
+   "schedule": [
+    ["06:00", "home"],
+    ["09:10", "in:kinder"],
+    ["10:35", "at:playground"],
+    ["11:35", "in:kinder"],
+    ["17:05", "home"]
+   ]
+  },
+  {
+   "id": "damdin",
+   "name": "Дамдин",
+   "age": 71,
+   "sex": "m",
+   "role": "elder",
+   "look": {
+    "preset": "elder_beard"
+   },
+   "speed": 2,
+   "home": {
+    "x": 224,
+    "z": 33
+   },
+   "work": null,
+   "inside": {},
+   "schedule": [
+    ["06:00", "home"],
+    ["10:30", "door:teahouse"],
+    ["13:00", "home"],
+    ["16:00", "door:teahouse"],
+    ["19:00", "home"]
+   ]
+  },
+  {
+   "id": "tserendulam",
+   "name": "Цэрэндулам",
+   "age": 68,
+   "sex": "f",
+   "role": "granny",
+   "look": {
+    "preset": "granny_plait"
+   },
+   "speed": 2,
+   "home": {
+    "x": 238,
+    "z": 34
+   },
+   "work": null,
+   "inside": {
+    "temple": [
+     -2.5,
+     1.5,
+     3.14
+    ]
+   },
+   "schedule": [
+    ["06:00", "home"],
+    ["11:30", "in:temple"],
+    ["16:30", "home"]
+   ]
+  },
+  {
+   "id": "munkhbat",
+   "name": "Мөнхбат",
+   "age": 33,
+   "sex": "m",
+   "role": "herder",
+   "look": {
+    "preset": "herder"
+   },
+   "speed": 3.4,
+   "home": {
+    "x": 345,
+    "z": -20
+   },
+   "work": null,
+   "inside": {},
+   "schedule": [
+    ["06:00", "home"],
+    ["10:00", "at:fuel_bench"],
+    ["11:30", "home"],
+    ["16:00", "at:fuel_bench"],
+    ["17:30", "home"]
+   ]
+  },
+  {
+   "id": "nyamaa",
+   "name": "Нямаа",
+   "age": 44,
+   "sex": "m",
+   "role": "driver",
+   "look": {
+    "preset": "driver",
+    "colors": {
+     "deel": "#5a5a5a",
+     "hem": "#444444"
+    }
+   },
+   "speed": 3.4,
+   "home": {
+    "x": 171,
+    "z": 69
+   },
+   "work": null,
+   "inside": {},
+   "schedule": [
+    ["06:00", "home"],
+    ["10:00", "at:buyer_yard"],
+    ["13:00", "home"]
+   ]
+  }
+ ]
+}
