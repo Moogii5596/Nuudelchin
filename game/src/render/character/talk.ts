@@ -35,6 +35,26 @@ export class EmotionQueue {
   }
 }
 
+/**
+ * Тоглогчийн жигдрүүлсэн хурд (EMA, talk.speedRate): кадр бүрийн шуугианаар «зогсож байна» босго орчим анивчихгүй.
+ * Сумын гадна (sumcenter.ts) болон барилга дотор (scene.ts → NpcView.updateIndoor) нэг механизм. still() — hysteresis: ярилцаж
+ * байгаа үед босго talk.exitScale дахин томорно.
+ */
+export class SpeedSmoother {
+  private prev: { x: number; z: number } | null = null;
+  speed = 0;
+  /** Шинэ байрлал; dt <= 0 бол хурд өөрчлөгдөхгүй. Жигдрүүлсэн хурдыг буцаана */
+  step(x: number, z: number, dt: number): number {
+    const raw = this.prev && dt > 0 ? Math.min(9, Math.hypot(x - this.prev.x, z - this.prev.z) / dt) : 0;
+    this.speed += (raw - this.speed) * Math.min(1, dt * characters.talk.speedRate);
+    this.prev = { x, z };
+    return this.speed;
+  }
+  /** Орчин солигдоход (гадна ↔ дотор) өмнөх байрлалыг март — үсрэлт хурд болохгүй */
+  reset(): void { this.prev = null; this.speed = 0; }
+  still(talking: boolean): boolean { return this.speed < characters.talk.stillSpeed * (talking ? characters.talk.exitScale : 1); }
+}
+
 /** Өнцгийг зорилт руу жигд эргүүлнэ (рад/с хурдтай харьцаа) */
 export function turnToward(cur: number, target: number, rate: number, dt: number): number {
   let d = target - cur;

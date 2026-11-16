@@ -19,6 +19,7 @@ import * as storage from './storage';
 import { animalSlots, deliver, orderPrice, parkingSpot, productPrice, vehicleCfg } from './trip';
 import { canSellAnimals, canSellProducts, lotSlots, nearTradeDoor, orderAllowed, worldLimit } from './sumtown';
 import { startMove } from './camps';
+import { closedMsg, isOpen } from './shops';
 
 export type TravelEvent =
   | { type: 'leftToMap' }
@@ -455,6 +456,7 @@ export function trade(cfg: GameConfig, state: GameState, rng: Rng, plan: TradePl
   const door = proximity ? nearTradeDoor(cfg, state) : null;
   if (proximity && !door) return m('sim.go_to_the_shop');
   if (door) {
+    if (!isOpen(cfg, door.id, state.time.minute)) return closedMsg(cfg, door.id);
     const selling = Object.values(plan.sell).some((n) => (n ?? 0) > 0);
     if (selling && !canSellProducts(door.role)) return m('sim.milk_and_wool_are');
     if (plan.sellAnimalIds.length && !canSellAnimals(door.role)) return m('sim.animals_are_sold_at');

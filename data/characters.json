@@ -344,7 +344,7 @@
   "talk": {
     "partnerR": 6,
     "turnRate": 5,
-    "stillSpeed": 0.3,
+    "stillSpeed": 0.3, "speedRate": 10,
     "exitScale": 1.5,
     "holdSec": 0.35,
     "wolfSeeR": 28,
@@ -359,6 +359,7 @@
     "shadowParts": 2,
     "nearR": 14,
     "liveShadow": true,
+    "night": { "from": 1200, "to": 360, "jitterMin": 60 },
     "looks": [
       { "preset": "elder_goatee", "body": "deel", "hat": "toortsog" },
       { "preset": "woman_braids", "body": "terleg", "hat": "scarf" },

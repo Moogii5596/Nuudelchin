@@ -4,7 +4,7 @@
  "jitterMin": 6,
  "maxLegMin": 220,
  "gridCell": 4,
- "render": { "_doc": "Зөвхөн render (sim-ийн үр дүн өөрчлөгдөхгүй): shiftMin [min, max] — NPC бүр id-аас гаргасан тогтмол хазайлттай (± тоглоомын минут, бүх шилжилтэд: өглөө, үд, орой) гэрлүүгээ явна; lingerSec — sim-д орчихсон ч хашааны хаалгаар тойрч яваа NPC зорилтдоо хүртэл харагдах дээд хугацаа (бодит сек)", "shiftMin": [10, 30], "lingerSec": 45 },
+ "render": { "_doc": "Зөвхөн render (sim-ийн үр дүн өөрчлөгдөхгүй): shiftMin [min, max] — NPC бүр id-аас гаргасан тогтмол хазайлттай (± тоглоомын минут) гэрлүүгээ явна. route — NPC-ийн нэг алхалтыг барилга/хашааны хана/хаалгыг тойруулан зурах зам (sim/systems/sumwalk.ts planLegPath): cell — явган замын торны нүд (м); clearances — ханаас барих зай (м), том нь түрүүлж оролдоно; turnR — булан дугуйлах радиус (м); doorReach — үүднээс шулуун гарах/орох зай (м); sampleMin — sim-ийн алхалтыг дээжлэх алхам (тоглоомын мин); catchUp — зам sim-ийнхээс урт үед хурдсах дээд коэффициент; doorTol — үүдэнд саадыг үл тооцох радиус (м)", "shiftMin": [10, 30], "route": { "cell": 0.5, "clearances": [1.1, 0.75, 0.5], "turnR": 2.4, "doorReach": 2.8, "sampleMin": 1.5, "catchUp": 1.3, "doorTol": 1.3 } },
  "calendar": {
   "holiday": [
    "summer"
@@ -297,8 +297,8 @@
    },
    "speed": 3,
    "home": {
-    "x": 285,
-    "z": -35
+    "x": 260,
+    "z": -107
    },
    "work": "bank",
    "inside": {
@@ -326,10 +326,7 @@
     "preset": "driver"
    },
    "speed": 3.4,
-   "home": {
-    "x": 378,
-    "z": -26
-   },
+   "home": "plot:plot_rel_3",
    "work": "fuel",
    "inside": {},
    "schedule": [
@@ -693,10 +690,7 @@
     "preset": "herder"
    },
    "speed": 3.4,
-   "home": {
-    "x": 345,
-    "z": -20
-   },
+   "home": "plot:plot_rel_3",
    "work": null,
    "inside": {},
    "schedule": [
@@ -722,8 +716,8 @@
    },
    "speed": 3.4,
    "home": {
-    "x": 171,
-    "z": 69
+    "x": 194,
+    "z": 71
    },
    "work": null,
    "inside": {},

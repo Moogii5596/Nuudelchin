@@ -621,6 +621,7 @@
   "sim.roam_around_the_camp": "Хот орчимд сэлгүүц",
   "sim.guard_the_herd": "Сүргийг хамгаал",
   "sim.go_to_the_teahouse": "Цайны газарт оч",
+  "sim.shop_closed": "Хаалттай — {time}-д нээнэ",
   "sim.no_such_person": "Ийм хүн алга",
   "sim.a_single_helper_needs": "Ганц бие туслахад байр хэрэгтэй — Худалдаачнаас туслахын майхан/гэр ав",
   "sim.no_helper": "Туслах алга",

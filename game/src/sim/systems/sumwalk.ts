@@ -6,8 +6,9 @@
 export interface WalkBox { x: number; z: number; hw: number; hd: number }
 export interface WalkCyl { x: number; z: number; r: number }
 /** Хаалгатай хашаа (wallRing-ийн бүртгэл): NPC хаалгаар орж гарахад зам заана. off — хаалганы нүхийн төвөөс зөөлт, gw — нүхний өргөн */
-export interface WalkYard { x: number; z: number; w: number; d: number; gate: 'n' | 's' | 'e' | 'w'; off: number; gw: number }
-export interface WalkSolids { boxes: WalkBox[]; cyls: WalkCyl[]; yards?: WalkYard[] }
+export interface WalkYard { x: number; z: number; w: number; d: number; gate: 'n' | 's' | 'e' | 'w'; off: number; gw: number; /** хашаан доторх гол байшин/гэрийн үүд (чиглэлтэй) */ door?: { x: number; z: number; dx: number; dz: number } }
+/** boxes/cyls — тоглогч ба NPC-д нийтлэг. playerBoxes — зөвхөн тоглогч/тээвэрт: орж болдоггүй айлын хаалттай хаалга (NPC-д нөлөөлөхгүй) */
+export interface WalkSolids { boxes: WalkBox[]; cyls: WalkCyl[]; yards?: WalkYard[]; playerBoxes?: WalkBox[] }
 
 export interface WalkConfig {
   /** Явган хүний биеийн радиус (м) */ bodyR: number;
@@ -16,9 +17,13 @@ export interface WalkConfig {
   /** Гаднах NPC-ийн радиус (м) */ npcR: number;
   /** Айлын хашааны хаалганы нүхний өргөн (м) */ plotGateW: number;
   /** Хашааны хананы зузаан (м) */ fenceT: number;
+  /** Тоглогч орж болох айлын үүрэг (specialPlots.role): хаалга нь нээгддэг, бусад айлын хаалга тоглогчид хаалттай */ enterablePlotRoles: string[];
+  /** Хаалганы навч бүрэн эргэх/хаагдах хугацаа (сек) */ gateOpenSec: number;
   /** Хөдөлгөөн хүссэн мөртлөө N сек нүүхгүй бол гацсан гэж үзнэ */ stuckSec: number;
   /** Нэг кадрт энэ зайгаас бага шилжвэл «хөдлөөгүй» (м/с) */ stuckSpeed: number;
   /** Гацсан үед түлхэх зай (м) */ unstickStep: number;
+  /** Ханыг налуу шахахад ханын дагуух хурд (хүссэн хурдны хувь) энэ хэмжээнээс буурахгүй (0–1) */ slideMin: number;
+  /** slideMin бүрэн үйлчлэх налуугийн босго: ханын дагуух бүрэлдэхүүн / хурд (0–1); бага бол шууд шахалтад удаан */ slideAngle: number;
 }
 
 export interface Pushed { x: number; z: number; hit: boolean }
@@ -52,6 +57,27 @@ export function pushOut(s: WalkSolids, x: number, z: number, r: number): Pushed 
     if (!moved) break;
   }
   return { x, z, hit };
+}
+
+/**
+ * Хөдөлгөөн: (px, pz) → (x, z) хүссэн байрлал. pushOut нь зөвхөн хананд ЦОГЦ бүрэлдэхүүнийг арилгадаг тул налуу шахахад
+ * ханын дагуух хурд нь cos(өнцөг)-өөр буурна. Энд тангенциал хурдыг хадгалж (хүссэн хурдны ≥ slideMin хувь, налуу өнцөг
+ * босгоос бага үед пропорциональ), дахин саадаас гаргана. Шууд (перпендикуляр) шахалтад гулсахгүй.
+ */
+export function slideMove(s: WalkSolids, px: number, pz: number, x: number, z: number, r: number, cfg: Pick<WalkConfig, 'slideMin' | 'slideAngle'>): Pushed {
+  const q = pushOut(s, x, z, r);
+  if (!q.hit) return q;
+  const dx = x - px, dz = z - pz, dl = Math.hypot(dx, dz);
+  const cx = q.x - x, cz = q.z - z, cl = Math.hypot(cx, cz);
+  if (dl < 1e-9 || cl < 1e-9) return q;
+  const nx = cx / cl, nz = cz / cl, dn = dx * nx + dz * nz;     // нормал (хананаас гадагш), хүссэн хөдөлгөөний нормал бүрэлдэхүүн
+  const tx = dx - dn * nx, tz = dz - dn * nz, tl = Math.hypot(tx, tz);
+  if (tl < 1e-9) return q;
+  const want = Math.max(tl, cfg.slideMin * dl * Math.min(1, tl / (cfg.slideAngle * dl)));
+  if (want <= tl * 1.0001) return q;
+  const k = want / tl;
+  const r2 = pushOut(s, px + tx * k, pz + tz * k, r);
+  return { x: r2.x, z: r2.z, hit: true };
 }
 
 /** Хашааны хана — 4 талын тусдаа хайрцаг; gateSide талд хаалганы нүх (gateOff — төвөөс зөөлт). fence()-тэй ижил томьёо */
@@ -91,79 +117,284 @@ export function nearestFreeSpot(s: WalkSolids, x: number, z: number, r: number, 
   return { x, z };
 }
 
-// ======================= Хашааны хаалгаар дамжуулах (render) =======================
-const GATE_N: Record<WalkYard['gate'], { x: number; z: number }> = { n: { x: 0, z: -1 }, s: { x: 0, z: 1 }, w: { x: -1, z: 0 }, e: { x: 1, z: 0 } };
+// ======================= Хашаа, зам: NPC-ийн гудамжны зам (render) =======================
+// Зарчим: NPC-ийн нэг алхалтыг (sim-ийн шулуун/торлосон зам) дээжлэж аваад, барилга, хашааны хана, хаалгыг мэддэг
+// «явган замын торон» дээр хаалгаар дамжуулан шулуунасан, булан нь дугуйрсан зам болгоно (нэг алхалтад нэг удаа).
+// NPC энэ зам дээр sim-ийн хугацаатай нийцүүлэн явна — хаалга руу огцом эргэх, ханыг нэвтлэх, байшинд ойртоод алга болох үгүй.
+export interface Pt { x: number; z: number }
+/** Байшин/гэр/барилгын үүд: гаднах цэг ба гадагш чиглэх нэгж вектор */
+export interface Anchor { x: number; z: number; dx: number; dz: number }
+
+/** data/npcs.json render.route */
+export interface RouteCfg {
+  /** Явган замын торны нүдний хэмжээ (м) */ cell: number;
+  /** Ханаас барих зай (м), том нь түрүүлж оролдоно — явах зай олдохгүй бол дараагийнх */ clearances: number[];
+  /** Булан дугуйлах радиус (м) */ turnR: number;
+  /** Үүднээс шулуун гарах/орох зай (м) */ doorReach: number;
+  /** Алхалтыг дээжлэх алхам (тоглоомын мин) */ sampleMin: number;
+  /** Зам sim-ийнхээс урт бол хурдсах дээд коэффициент */ catchUp: number;
+  /** Үүдэнд хүрэхэд саадыг үл тооцох радиус (м) */ doorTol: number;
+}
+
+export interface Poly { pts: Pt[]; cum: number[]; len: number }
+export function polyOf(pts: Pt[]): Poly {
+  const cum = [0];
+  for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1]! + Math.hypot(pts[i]!.x - pts[i - 1]!.x, pts[i]!.z - pts[i - 1]!.z));
+  return { pts, cum, len: cum[cum.length - 1]! };
+}
+/** Зам дээрх `s` метрийн цэг ба чиглэл (heading = atan2(dx, dz)) */
+export function polyAt(p: Poly, s: number): { x: number; z: number; heading: number } {
+  const n = p.pts.length;
+  if (n === 1) return { ...p.pts[0]!, heading: 0 };
+  const d = Math.min(p.len, Math.max(0, s));
+  let k = 1;
+  while (k < n - 1 && p.cum[k]! < d) k++;
+  const a = p.pts[k - 1]!, b = p.pts[k]!, span = Math.max(1e-9, p.cum[k]! - p.cum[k - 1]!), u = Math.min(1, Math.max(0, (d - p.cum[k - 1]!) / span));
+  return { x: a.x + (b.x - a.x) * u, z: a.z + (b.z - a.z) * u, heading: Math.atan2(b.x - a.x, b.z - a.z) };
+}
 
 /** Хашааны доторх эсэх (хананы төв шугамаар) */
 export const inYard = (y: WalkYard, x: number, z: number): boolean => Math.abs(x - y.x) < y.w / 2 && Math.abs(z - y.z) < y.d / 2;
 
-/** Хаалганы нүхний гаднах ба дотоох цэг (хананаас `reach` метр), хананд перпендикуляр зай (nrm, + гадагш), хаалганы төвөөс хажуугийн зай (lat) */
-export function yardGate(y: WalkYard, reach: number): { out: { x: number; z: number }; in: { x: number; z: number }; nrm: (x: number, z: number) => number; lat: (x: number, z: number) => number } {
-  const n = GATE_N[y.gate], horiz = y.gate === 'n' || y.gate === 's', half = horiz ? y.d / 2 : y.w / 2;
-  const cx = y.x + (horiz ? y.off : 0) + n.x * half, cz = y.z + (horiz ? 0 : y.off) + n.z * half;   // хаалганы төв (ханан дээр)
-  return {
-    out: { x: cx + n.x * reach, z: cz + n.z * reach },
-    in: { x: cx - n.x * reach, z: cz - n.z * reach },
-    nrm: (x, z) => (x - cx) * n.x + (z - cz) * n.z,
-    lat: (x, z) => (horiz ? x - cx : z - cz),
+/** Явган замын тор: саад (хайрцаг, тойрог)-ыг clearance-ээр зузаалсан нүдний давхарга бүрээр A* */
+export class NavMap {
+  readonly x0: number; readonly z0: number; readonly nx: number; readonly nz: number;
+  private readonly layers = new Map<number, Uint8Array>();
+  private readonly g: Float32Array; private readonly prev: Int32Array; private readonly mark: Uint32Array; private gen = 0;
+  constructor(private readonly s: WalkSolids, readonly cell = 0.5, pad = 6) {
+    let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
+    for (const k of s.boxes) { a = Math.min(a, k.x - k.hw); c = Math.max(c, k.x + k.hw); b = Math.min(b, k.z - k.hd); d = Math.max(d, k.z + k.hd); }
+    for (const k of s.cyls) { a = Math.min(a, k.x - k.r); c = Math.max(c, k.x + k.r); b = Math.min(b, k.z - k.r); d = Math.max(d, k.z + k.r); }
+    if (!isFinite(a)) { a = b = 0; c = d = 1; }
+    this.x0 = a - pad; this.z0 = b - pad;
+    this.nx = Math.ceil((c + pad - this.x0) / cell); this.nz = Math.ceil((d + pad - this.z0) / cell);
+    const N = this.nx * this.nz;
+    this.g = new Float32Array(N); this.prev = new Int32Array(N); this.mark = new Uint32Array(N);
+  }
+  /** clearance-ийн давхарга (хайрцаг/тойргоос c метрээс ойр нүд = 1) */
+  layer(c: number): Uint8Array {
+    const hit = this.layers.get(c);
+    if (hit) return hit;
+    const { nx, nz, cell, x0, z0 } = this, L = new Uint8Array(nx * nz);
+    const rng = (lo: number, hi: number, o: number, n: number): [number, number] => [Math.max(0, Math.floor((lo - c - o) / cell)), Math.min(n - 1, Math.ceil((hi + c - o) / cell))];
+    for (const b of this.s.boxes) {
+      const [i0, i1] = rng(b.x - b.hw, b.x + b.hw, x0, nx), [j0, j1] = rng(b.z - b.hd, b.z + b.hd, z0, nz);
+      for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+        const dx = Math.max(Math.abs(x0 + (i + 0.5) * cell - b.x) - b.hw, 0), dz = Math.max(Math.abs(z0 + (j + 0.5) * cell - b.z) - b.hd, 0);
+        if (dx * dx + dz * dz < c * c) L[j * nx + i] = 1;
+      }
+    }
+    for (const k of this.s.cyls) {
+      const [i0, i1] = rng(k.x - k.r, k.x + k.r, x0, nx), [j0, j1] = rng(k.z - k.r, k.z + k.r, z0, nz);
+      for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) if (Math.hypot(x0 + (i + 0.5) * cell - k.x, z0 + (j + 0.5) * cell - k.z) < k.r + c) L[j * nx + i] = 1;
+    }
+    this.layers.set(c, L);
+    return L;
+  }
+  /** (x, z) нүд c зайтай чөлөөтэй эсэх */
+  free(c: number, p: Pt): boolean { return !this.blockedAt(this.layer(c), p.x, p.z); }
+  private blockedAt(L: Uint8Array, x: number, z: number): boolean {
+    const i = Math.floor((x - this.x0) / this.cell), j = Math.floor((z - this.z0) / this.cell);
+    return i >= 0 && j >= 0 && i < this.nx && j < this.nz && L[j * this.nx + i] === 1;
+  }
+  /** a→b шулуун c зайтай чөлөөтэй эсэх; a-ийн `tolA`, b-ийн `tolB` радиус дахь саадыг үл тооцно (үүд ханын дэргэд байдаг) */
+  clear(c: number, a: Pt, b: Pt, tolA = 0, tolB = 0): boolean {
+    const L = this.layer(c), len = Math.hypot(b.x - a.x, b.z - a.z), n = Math.max(1, Math.ceil(len / (this.cell * 0.5)));
+    for (let k = 0; k <= n; k++) {
+      const x = a.x + ((b.x - a.x) * k) / n, z = a.z + ((b.z - a.z) * k) / n;
+      if ((tolA > 0 && Math.hypot(x - a.x, z - a.z) < tolA) || (tolB > 0 && Math.hypot(x - b.x, z - b.z) < tolB)) continue;
+      if (this.blockedAt(L, x, z)) return false;
+    }
+    return true;
+  }
+  private snap(L: Uint8Array, p: Pt): number {
+    const ci = Math.min(this.nx - 1, Math.max(0, Math.floor((p.x - this.x0) / this.cell))), cj = Math.min(this.nz - 1, Math.max(0, Math.floor((p.z - this.z0) / this.cell)));
+    if (!L[cj * this.nx + ci]) return cj * this.nx + ci;
+    for (let r = 1; r <= 12; r++) {
+      let best = -1, bd = Infinity;
+      for (let dj = -r; dj <= r; dj++) for (let di = -r; di <= r; di++) {
+        if (Math.max(Math.abs(di), Math.abs(dj)) !== r) continue;
+        const i = ci + di, j = cj + dj;
+        if (i < 0 || j < 0 || i >= this.nx || j >= this.nz || L[j * this.nx + i]) continue;
+        const d = di * di + dj * dj;
+        if (d < bd) { bd = d; best = j * this.nx + i; }
+      }
+      if (best >= 0) return best;
+    }
+    return -1;
+  }
+  /** A*: a→b чөлөөт нүднүүдийн төвүүд (a, b өөрсдийгөө оруулахгүй); зам олдохгүй бол null */
+  astar(c: number, a: Pt, b: Pt, maxNodes = 600000): Pt[] | null {
+    const L = this.layer(c), { nx, nz, cell, x0, z0 } = this, si = this.snap(L, a), gi = this.snap(L, b);
+    if (si < 0 || gi < 0) return null;
+    const gen = ++this.gen, { g, prev, mark } = this, gx = gi % nx, gz = (gi - gx) / nx;
+    const open: [number, number][] = [];
+    const push = (f: number, id: number): void => { open.push([f, id]); let q = open.length - 1; while (q > 0) { const p = (q - 1) >> 1; if (open[p]![0] <= open[q]![0]) break; [open[p], open[q]] = [open[q]!, open[p]!]; q = p; } };
+    const pop = (): number => { const top = open[0]!, last = open.pop()!; if (open.length) { open[0] = last; let q = 0; for (;;) { const l = 2 * q + 1, r = l + 1; let m = q; if (l < open.length && open[l]![0] < open[m]![0]) m = l; if (r < open.length && open[r]![0] < open[m]![0]) m = r; if (m === q) break; [open[m], open[q]] = [open[q]!, open[m]!]; q = m; } } return top[1]; };
+    const h = (i: number, j: number): number => { const dx = Math.abs(i - gx), dz = Math.abs(j - gz); return Math.max(dx, dz) + 0.414 * Math.min(dx, dz); };
+    mark[si] = gen; g[si] = 0; prev[si] = -1; push(h(si % nx, Math.floor(si / nx)), si);
+    const closed = new Set<number>();
+    let found = false, nodes = 0;
+    while (open.length && nodes++ < maxNodes) {
+      const cur = pop();
+      if (closed.has(cur)) continue;
+      closed.add(cur);
+      if (cur === gi) { found = true; break; }
+      const ci = cur % nx, cj = (cur - ci) / nx;
+      for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+        if (!di && !dj) continue;
+        const ni = ci + di, nj = cj + dj;
+        if (ni < 0 || nj < 0 || ni >= nx || nj >= nz || L[nj * nx + ni]) continue;
+        if (di && dj && (L[cj * nx + ni] || L[nj * nx + ci])) continue;   // булан огтлохгүй
+        const id = nj * nx + ni, cost = g[cur]! + (di && dj ? 1.414 : 1);
+        if (mark[id] !== gen || cost < g[id]!) { mark[id] = gen; g[id] = cost; prev[id] = cur; push(cost + h(ni, nj), id); }
+      }
+    }
+    if (!found) return null;
+    const out: Pt[] = [];
+    for (let k = gi; k >= 0; k = prev[k]!) out.push({ x: x0 + ((k % nx) + 0.5) * cell, z: z0 + (Math.floor(k / nx) + 0.5) * cell });
+    return out.reverse();
+  }
+}
+
+/** Sim-ийн нэг алхалт (хөдөлж эхлэхээс зогсох хүртэл): цаг (render-ийн минут) ба дээжилсэн цэгүүд */
+export interface LegSample { t0: number; t1: number; pts: Pt[]; simLen: number }
+export interface LegProbe { moving: boolean; out: boolean; x: number; z: number }
+
+/** minute `m`-д алхаж байгаа NPC-ийн алхалтыг олно (хөдөлгөөн эхэлсэн/зогссон мөчийг хоёртын хайлтаар), үгүй бол null */
+export function findLeg(probe: (m: number) => LegProbe, m: number, step: number, span = 300): LegSample | null {
+  const walking = (t: number): boolean => { const p = probe(t); return p.out && p.moving; };
+  if (!walking(m)) return null;
+  const edge = (dir: 1 | -1): number => {
+    let ok = m, bad: number | null = null;
+    for (let k = 1; k * step <= span; k++) { const t = m + dir * k * step; if (walking(t)) ok = t; else { bad = t; break; } }
+    if (bad === null) return ok;
+    let lo = ok, hi: number = bad;
+    for (let i = 0; i < 18; i++) { const mid: number = (lo + hi) / 2; if (walking(mid)) lo = mid; else hi = mid; }
+    ok = lo;
+    return ok;
   };
+  const t0 = edge(-1), t1 = edge(1);
+  const pts: Pt[] = [], n = Math.max(1, Math.ceil((t1 - t0) / step));
+  for (let k = 0; k <= n; k++) { const p = probe(t0 + (k * (t1 - t0)) / n); pts.push({ x: p.x, z: p.z }); }
+  let simLen = 0;
+  for (let i = 1; i < pts.length; i++) simLen += Math.hypot(pts[i]!.x - pts[i - 1]!.x, pts[i]!.z - pts[i - 1]!.z);
+  return { t0, t1, pts, simLen };
+}
+
+export interface LegPlanOpts {
+  anchors: Anchor[];
+  /** NPC-ийн гэрийн цэг (sim), гэрийн үүд: алхалт тэр цэгээс эхэлж/тэнд дуусвал үүднээс эхлүүлж/үүдэнд дуусгана */
+  home?: { pt: Pt; door: Anchor } | null;
+}
+
+const near = (a: Pt, b: Pt, r: number): boolean => Math.hypot(a.x - b.x, a.z - b.z) < r;
+const anchorAt = (list: Anchor[], p: Pt, r = 0.6): Anchor | null => { let best: Anchor | null = null, bd = r; for (const a of list) { const d = Math.hypot(a.x - p.x, a.z - p.z); if (d < bd) { bd = d; best = a; } } return best; };
+
+/** Шулуун замын булан дугуйлах (квадрат Безье): радиус R, хоёр талын хагасаас хэтрэхгүй */
+export function fillet(pts: Pt[], R: number): Pt[] {
+  if (R <= 0 || pts.length < 3) return pts;
+  const out: Pt[] = [pts[0]!];
+  for (let i = 1; i < pts.length - 1; i++) {
+    const a = pts[i - 1]!, p = pts[i]!, b = pts[i + 1]!;
+    const l1 = Math.hypot(p.x - a.x, p.z - a.z), l2 = Math.hypot(b.x - p.x, b.z - p.z);
+    if (l1 < 1e-6 || l2 < 1e-6) continue;
+    const ux = (p.x - a.x) / l1, uz = (p.z - a.z) / l1, vx = (b.x - p.x) / l2, vz = (b.z - p.z) / l2;
+    const turn = Math.acos(Math.max(-1, Math.min(1, ux * vx + uz * vz)));
+    if (turn < 0.03) { out.push(p); continue; }
+    const d = Math.min(R, l1 / 2, l2 / 2), s = { x: p.x - ux * d, z: p.z - uz * d }, e = { x: p.x + vx * d, z: p.z + vz * d }, k = Math.max(3, Math.ceil(turn * 5));
+    for (let q = 0; q <= k; q++) { const t = q / k, w0 = (1 - t) * (1 - t), w1 = 2 * t * (1 - t), w2 = t * t; out.push({ x: w0 * s.x + w1 * p.x + w2 * e.x, z: w0 * s.z + w1 * p.z + w2 * e.z }); }
+  }
+  out.push(pts[pts.length - 1]!);
+  return out;
 }
 
 /**
- * `from` → `to` шулуун хашааны хана огтлох (нэг тал хашааны дотор, нөгөө тал гадна) бол хаалганы дундуур орох дараагийн цэг; үгүй бол null.
- * Төлөвгүй: хаалганы нүхний зэрэгцээ бүсэд байвал шууд нөгөө талын цэг рүү, үгүй бол ойрын талын цэг рүү.
+ * NPC-ийн нэг алхалтын явган зам: барилга, хашааны хана, хаалгыг тойрсон, үүднээс шулуун гарч/орсон, булан нь дугуйрсан.
+ * Хашаанаас гарч өөр хашаанд орох (хоёр хаалга) зам нэг дор шийдэгдэнэ.
  */
-export function yardWaypoint(yards: WalkYard[] | undefined, from: { x: number; z: number }, to: { x: number; z: number }, reach = 1.2): { x: number; z: number } | null {
-  if (!yards) return null;
-  for (const y of yards) {
-    const fi = inYard(y, from.x, from.z), ti = inYard(y, to.x, to.z);
-    if (fi === ti) continue;
-    const g = yardGate(y, reach), nr = g.nrm(from.x, from.z), lt = Math.abs(g.lat(from.x, from.z)), okLat = lt < Math.max(0.2, y.gw / 2 - 0.45);
-    if (!fi) return okLat && nr > -0.4 && nr < reach + 0.6 ? g.in : g.out;
-    return okLat && nr < 0.4 && nr > -(reach + 0.6) ? g.out : g.in;
+export function planLegPath(nav: NavMap, solids: WalkSolids, leg: LegSample, o: LegPlanOpts, cfg: RouteCfg, npcR: number): Poly {
+  let S = leg.pts.slice();
+  let aS = anchorAt(o.anchors, S[0]!), aE = anchorAt(o.anchors, S[S.length - 1]!);
+  if (o.home) {
+    if (near(S[0]!, o.home.pt, 1)) { S = [o.home.door, ...S.slice(1)]; aS = o.home.door; }
+    if (near(S[S.length - 1]!, o.home.pt, 1)) { S = [...S.slice(0, -1), o.home.door]; aE = o.home.door; }
   }
-  return null;
-}
-
-/** NPC-ийн харуулах байрлал `p` нь sim-ийн зорилт `to` руу хашааны хаалгаар дамжин хөөнө (алхам ≤ maxStep). Хол зөрвөл шууд очино */
-export function chaseVia(yards: WalkYard[] | undefined, p: { x: number; z: number }, to: { x: number; z: number }, maxStep: number, snapDist = 40): { x: number; z: number } {
-  if (Math.hypot(to.x - p.x, to.z - p.z) > snapDist) return { x: to.x, z: to.z };
-  const wp = yardWaypoint(yards, p, to) ?? yardDetour(yards, p, to), g = wp ?? to, dx = g.x - p.x, dz = g.z - p.z, d = Math.hypot(dx, dz);
-  if (!wp && d <= maxStep) return { x: to.x, z: to.z };
-  if (d <= maxStep || d < 1e-6) return { x: g.x, z: g.z };
-  return { x: p.x + (dx / d) * maxStep, z: p.z + (dz / d) * maxStep };
-}
-
-/** a→b шулуун тэгш өнцөгтийг (hw, hd, төв cx, cz) огтлох эсэх (slab) */
-function segHitsRect(a: { x: number; z: number }, b: { x: number; z: number }, cx: number, cz: number, hw: number, hd: number): boolean {
-  let t0 = 0, t1 = 1;
-  for (const [p, q, c, h] of [[a.x, b.x, cx, hw], [a.z, b.z, cz, hd]] as const) {
-    const d = q - p, lo = c - h - p, hi = c + h - p;
-    if (Math.abs(d) < 1e-9) { if (lo > 0 || hi < 0) return false; continue; }
-    let u0 = lo / d, u1 = hi / d;
-    if (u0 > u1) [u0, u1] = [u1, u0];
-    t0 = Math.max(t0, u0); t1 = Math.min(t1, u1);
-    if (t0 > t1) return false;
-  }
-  return true;
-}
-
-/** Хоёр цэг хоёулаа хашааны гадна, гэвч шулуун нь хашааг хөндлөн гатлах бол хашааны булангаар тойрох дараагийн цэг; үгүй бол null */
-export function yardDetour(yards: WalkYard[] | undefined, from: { x: number; z: number }, to: { x: number; z: number }, margin = 0.9): { x: number; z: number } | null {
-  if (!yards) return null;
-  for (const y of yards) {
-    const hw = y.w / 2 + margin, hd = y.d / 2 + margin;
-    if (Math.abs(from.x - y.x) < hw && Math.abs(from.z - y.z) < hd) continue;
-    if (Math.abs(to.x - y.x) < hw && Math.abs(to.z - y.z) < hd) continue;
-    if (!segHitsRect(from, to, y.x, y.z, hw - 0.05, hd - 0.05)) continue;
-    let best: { x: number; z: number } | null = null, bestC = Infinity;
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
-      const c = { x: y.x + sx * hw, z: y.z + sz * hd };
-      if (segHitsRect(from, c, y.x, y.z, hw - 0.05, hd - 0.05)) continue;
-      const cost = Math.hypot(c.x - from.x, c.z - from.z) + Math.hypot(to.x - c.x, to.z - c.z) + (segHitsRect(c, to, y.x, y.z, hw - 0.05, hd - 0.05) ? 1000 : 0);
-      if (cost < bestC) { bestC = cost; best = c; }
+  const start = S[0]!, end = S[S.length - 1]!, tol = cfg.doorTol;
+  // үүдэнд ойртох/гарах шулуун хэсэг: тухайн талаас (урд тал) ирж яваа бол л; саад (хана) байвал богиносгоно
+  const ahead = (a: Anchor, p: Pt, pts: Pt[]): boolean => {
+    const ref = pts.find((q) => Math.hypot(q.x - p.x, q.z - p.z) >= 4) ?? pts[pts.length - 1]!, d = Math.hypot(ref.x - p.x, ref.z - p.z);
+    return d > 0.5 && ((ref.x - p.x) * a.dx + (ref.z - p.z) * a.dz) / d > 0.35;
+  };
+  const useS = aS !== null && ahead(aS, start, S.slice(1)), useE = aE !== null && ahead(aE, end, S.slice(0, -1).reverse());
+  const reach = (a: Anchor, p: Pt, c: number): Pt | null => {
+    for (const k of [1, 0.7, 0.5]) { const q = { x: p.x + a.dx * cfg.doorReach * k, z: p.z + a.dz * cfg.doorReach * k }; if (nav.free(c, q) && nav.clear(c, p, q, tol, 0)) return q; }
+    return null;
+  };
+  const valid = (poly: Pt[]): boolean => poly.every((p) => near(p, start, tol) || near(p, end, tol) || !pushOut(solids, p.x, p.z, npcR - 0.06).hit);
+  const mids = S.slice(1, -1);
+  let fallback: Pt[] = [start, ...mids, end];
+  for (const c of cfg.clearances) {
+    const preS = useS ? reach(aS!, start, c) : null, preE = useE ? reach(aE!, end, c) : null, base = preS ?? start, goal = preE ?? end;
+    // 1) саадтай хэсгийг A*-аар тойруулна
+    const chain: Pt[] = [base];
+    let prev = base, ok = true;
+    const targets = [...mids, goal];
+    for (let k = 0; k < targets.length; k++) {
+      const t = targets[k]!, tolA = prev === base ? tol : 0, tolB = k === targets.length - 1 ? tol : 0;
+      if (!nav.clear(c, prev, t, tolA, tolB)) {
+        const d = nav.astar(c, prev, t);
+        if (!d) { ok = false; break; }
+        chain.push(...d);
+      }
+      chain.push(t); prev = t;
     }
-    if (best) return best;
+    if (!ok) continue;
+    // 2) шулуунасан зам: хамгийн хол харагдах цэг рүү
+    const body: Pt[] = [chain[0]!];
+    let i = 0;
+    while (i < chain.length - 1) {
+      let j = chain.length - 1;
+      while (j > i + 1 && !nav.clear(c, chain[i]!, chain[j]!, i === 0 ? tol : 0, j === chain.length - 1 ? tol : 0)) j--;
+      body.push(chain[j]!); i = j;
+    }
+    const path = [...(preS ? [start] : []), ...body, ...(preE ? [end] : [])].filter((p, k, arr) => k === 0 || !near(p, arr[k - 1]!, 1e-3));
+    fallback = path;
+    // 3) булан дугуйлах (шалгалтад унавал радиусыг багасгана)
+    for (const R of [cfg.turnR, cfg.turnR / 3, 0]) {
+      const dense = fillet(path, R);
+      if (valid(dense)) return polyOf(dense);
+    }
   }
-  return null;
+  return polyOf(fallback);
+}
+
+// ======================= Хашааны хаалганы дүрэм (тоглогч) =======================
+/** Тоглогч энэ үүрэгтэй айлын хашаанд орж болох уу (data/worldmap.json sum3d.walk.enterablePlotRoles). Унтах/айлд орох системүүд үүгээр шалгана */
+export function isEnterablePlot(cfg: Pick<WalkConfig, 'enterablePlotRoles'>, role: string): boolean {
+  return cfg.enterablePlotRoles.includes(role);
+}
+
+const GATE_N: Record<WalkYard['gate'], { x: number; z: number }> = { n: { x: 0, z: -1 }, s: { x: 0, z: 1 }, w: { x: -1, z: 0 }, e: { x: 1, z: 0 } };
+
+/** Хашааны хаалганы нүхийг хаах хайрцаг (хаалттай хаалга) */
+export function gateBox(y: WalkYard, t: number): WalkBox {
+  const n = GATE_N[y.gate], horiz = y.gate === 'n' || y.gate === 's', half = horiz ? y.d / 2 : y.w / 2;
+  return { x: y.x + (horiz ? y.off : 0) + n.x * half, z: y.z + (horiz ? 0 : y.off) + n.z * half, hw: horiz ? y.gw / 2 : t / 2, hd: horiz ? t / 2 : y.gw / 2 };
+}
+
+/** Тоглогч/тээврийн саад: нийтлэг саад + хаалттай хаалгууд. NPC-д `s` өөрийг нь ашиглана */
+export function playerSolids(s: WalkSolids): WalkSolids {
+  return s.playerBoxes?.length ? { boxes: s.boxes.concat(s.playerBoxes), cyls: s.cyls, yards: s.yards } : s;
+}
+
+
+/**
+ * Хаалганы навчийг биеэр түлхэх хүч (0..1). (lx, lz) — биеийн байрлал хаалганы төвөөс: lx хажуугийн, lz хаалганы хавтгайд перпендикуляр (+ гадагш).
+ * Бие навчны эргэх тойрогт (leafW + bodyR) ороход хүч нэмэгдэж, хаалганы хавтгайд яг байхад 1 (бүрэн онгойно). Цаг биш, байрлалаар.
+ */
+export function gatePush(lx: number, lz: number, leafW: number, bodyR: number): number {
+  const reach = leafW + bodyR;
+  if (Math.abs(lx) > reach || Math.abs(lz) > reach) return 0;
+  return Math.max(0, 1 - Math.abs(lz) / reach);
 }

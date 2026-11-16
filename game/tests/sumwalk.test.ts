@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chaseVia, nearestFreeSpot, pushOut, stuckStep, wallRing, yardWaypoint, type WalkBox, type WalkSolids, type WalkYard } from '../src/sim/systems/sumwalk';
+import { fillet, findLeg, gateBox, gatePush, isEnterablePlot, nearestFreeSpot, NavMap, planLegPath, playerSolids, polyAt, pushOut, slideMove, stuckStep, wallRing, type Anchor, type RouteCfg, type WalkBox, type WalkSolids, type WalkYard } from '../src/sim/systems/sumwalk';
 
 const solids = (boxes: WalkBox[], cyls: WalkSolids['cyls'] = []): WalkSolids => ({ boxes, cyls });
 
@@ -90,38 +90,231 @@ describe('sumwalk: хаалганаас гарах зам хашаагаар х�
   });
 });
 
-describe('sumwalk: хашааны хаалгаар дамжуулах (render NPC)', () => {
-  // 20×20 хашаа, хаалга урд (s, z=+10) талд, төвд (4.4 м нүх)
+
+describe('sumwalk: NPC-ийн гудамжны зам (хаалга, булан, үүд)', () => {
+  const RC: RouteCfg = { cell: 0.5, clearances: [1.1, 0.75, 0.5], turnR: 2.2, doorReach: 1.8, sampleMin: 1.5, catchUp: 1.6, doorTol: 1.3 };
+  // 20×20 хашаа, хаалга урд (s, z=+10) талд, төвд (4.4 м нүх); хашааны дотор байшин
+  const boxes: WalkBox[] = [{ x: -5, z: -4, hw: 3, hd: 3 }];
+  wallRing(boxes, 0, 0, 20, 20, 's', 4.4, 0, 0.3);
+  const s = solids(boxes);
+  const nav = new NavMap(s, RC.cell);
+  const leg = (a: { x: number; z: number }, b: { x: number; z: number }) => ({ t0: 0, t1: 10, pts: Array.from({ length: 21 }, (_, i) => ({ x: a.x + ((b.x - a.x) * i) / 20, z: a.z + ((b.z - a.z) * i) / 20 })), simLen: Math.hypot(b.x - a.x, b.z - a.z) });
+  const maxTurn = (pts: { x: number; z: number }[]): number => {
+    let m = 0;
+    for (let i = 1; i < pts.length - 1; i++) {
+      const a = pts[i]!, b = pts[i - 1]!, c = pts[i + 1]!, u = Math.atan2(a.x - b.x, a.z - b.z), v = Math.atan2(c.x - a.x, c.z - a.z);
+      if (Math.hypot(a.x - b.x, a.z - b.z) < 1e-6 || Math.hypot(c.x - a.x, c.z - a.z) < 1e-6) continue;
+      m = Math.max(m, Math.abs(Math.atan2(Math.sin(v - u), Math.cos(v - u))));
+    }
+    return m;
+  };
+  it('хашааны дотроос гадагш: хаалганы нүхээр гарна, ханыг нэвтлэхгүй', () => {
+    const p = planLegPath(nav, s, leg({ x: -7, z: 4 }, { x: -7, z: 18 }), { anchors: [] }, RC, 0.35);
+    for (const q of p.pts) expect(pushOut(s, q.x, q.z, 0.3).hit, `${q.x.toFixed(1)},${q.z.toFixed(1)}`).toBe(false);
+    const cross = p.pts.find((q, i) => i > 0 && p.pts[i - 1]!.z < 10 && q.z >= 10)!;
+    expect(Math.abs(cross.x)).toBeLessThan(2.2);
+    expect(p.len).toBeGreaterThan(18);
+  });
+  it('гэрийн үүднээс хаалга хүртэл зөөлөн муруй: огцом эргэлт (> 60°), буцалт үгүй; үүднээс шулуун гарна', () => {
+    const door: Anchor = { x: -5, z: 0.4, dx: 0, dz: 1 };           // байшингийн урд (+z) талын үүд
+    const p = planLegPath(nav, s, leg({ x: -5, z: 0.4 }, { x: 0, z: 20 }), { anchors: [door] }, RC, 0.35);
+    expect(maxTurn(p.pts)).toBeLessThan(Math.PI / 3);
+    const a = polyAt(p, 1.0);
+    expect(Math.abs(a.x - -5)).toBeLessThan(0.05);                   // эхний ~1.8 м үүдээс шулуун
+    expect(a.z).toBeGreaterThan(1.2);
+    for (const q of p.pts) expect(pushOut(s, q.x, q.z, 0.3).hit && Math.hypot(q.x - door.x, q.z - door.z) > 1.3).toBe(false);
+  });
+  it('гаднаас хашаанд орж, үүдэнд шулуун хүрнэ (ирмэгц л үүдэнд)', () => {
+    const door: Anchor = { x: -5, z: 0.4, dx: 0, dz: 1 };
+    const p = planLegPath(nav, s, leg({ x: 14, z: 18 }, { x: -5, z: 0.4 }), { anchors: [door] }, RC, 0.35);
+    const end = p.pts[p.pts.length - 1]!, pre = polyAt(p, p.len - 1.0);
+    expect(Math.hypot(end.x - door.x, end.z - door.z)).toBeLessThan(1e-6);
+    expect(Math.abs(pre.x - -5)).toBeLessThan(0.05);
+    const cross = p.pts.find((q, i) => i > 0 && p.pts[i - 1]!.z >= 10 && q.z < 10)!;
+    expect(Math.abs(cross.x)).toBeLessThan(2.2);
+  });
+  it('fillet: 90° булан дугуйрна, төгсгөл хадгалагдана', () => {
+    const r = fillet([{ x: 0, z: 0 }, { x: 0, z: 10 }, { x: 10, z: 10 }], 2);
+    expect(r.length).toBeGreaterThan(3);
+    expect(r[0]).toEqual({ x: 0, z: 0 });
+    expect(r[r.length - 1]).toEqual({ x: 10, z: 10 });
+    expect(maxTurn(r)).toBeLessThan(Math.PI / 4);
+  });
+  it('findLeg: хөдөлж буй хугацааны хил, дээжлэсэн цэг', () => {
+    const probe = (m: number) => { const w = m >= 10 && m < 40; return { moving: w, out: true, x: w ? m - 10 : m < 10 ? 0 : 30, z: 0 }; };
+    const L = findLeg(probe, 20, 1.5)!;
+    expect(L.t0).toBeCloseTo(10, 2);
+    expect(L.t1).toBeCloseTo(40, 2);
+    expect(L.simLen).toBeGreaterThan(28);
+    expect(findLeg(probe, 5, 1.5)).toBeNull();
+  });
+});
+
+describe('sumwalk: бүх NPC-ийн бодит зам (73 хашаа, барилга)', () => {
+  it('хашаа бүртгэгдсэн (73), үүдтэй; NPC-ийн гэр хашааны дотор → үүдэнтэй', async () => {
+    const { cfg } = await import('./helpers');
+    const { buildSumCenter } = await import('../src/render/sumlayout');
+    const W = cfg.worldmap.sum3d.walk, b = buildSumCenter(cfg.sumcenter, { seed: 7, walk: W });
+    expect(b.walk.yards!.length).toBe(73);
+    const noGate = b.walk.yards!.filter((y) => !['n', 's', 'e', 'w'].includes(y.gate) || y.gw < 2);
+    expect(noGate).toEqual([]);
+    // хашаа бүрийн хаалганы нүх бодитоор чөлөөтэй (хоёр талаас)
+    const bad = b.walk.yards!.filter((y) => {
+      const n = { n: [0, -1], s: [0, 1], w: [-1, 0], e: [1, 0] }[y.gate]!, horiz = y.gate === 'n' || y.gate === 's';
+      const cx = y.x + (horiz ? y.off : 0) + n[0]! * (horiz ? y.d / 2 : y.w / 2), cz = y.z + (horiz ? 0 : y.off) + n[1]! * (horiz ? y.d / 2 : y.w / 2);
+      return pushOut(b.walk, cx, cz, W.npcR).hit;
+    });
+    expect(bad.map((y) => `${y.x.toFixed(0)},${y.z.toFixed(0)}`)).toEqual([]);
+    const inY = (y: WalkYard, x: number, z: number): boolean => Math.abs(x - y.x) < y.w / 2 && Math.abs(z - y.z) < y.d / 2;
+    for (const n of cfg.npcs.npcs) {
+      if (typeof n.home !== 'object') continue;
+      const y = b.walk.yards!.find((q) => inY(q, (n.home as { x: number }).x, (n.home as { z: number }).z));
+      expect(y?.door, `${n.id}: хашааны үүд`).toBeDefined();
+    }
+  });
+
+  it('NPC бүрийн бүх алхалт (хичээлийн өдөр, амралт): ханыг нэвтлэхгүй, огцом эргэлтгүй, үүдэнд шулуун орно', async () => {
+    const { cfg } = await import('./helpers');
+    const { buildSumCenter } = await import('../src/render/sumlayout');
+    const { npcAt } = await import('../src/sim/systems/npc');
+    const { allBuildings, doorPoint, facingOf } = await import('../src/sim/systems/sumtown');
+    const { seasonOf } = await import('../src/sim/systems/seasons');
+    const W = cfg.worldmap.sum3d.walk, b = buildSumCenter(cfg.sumcenter, { seed: 7, walk: W });
+    const RCfg = (cfg.npcs as unknown as { render: { route: RouteCfg } }).render.route;
+    const nav = new NavMap(b.walk, RCfg.cell);
+    const vec = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] } as const;
+    const anchors: Anchor[] = [
+      ...allBuildings(cfg.sumcenter).map((bd) => { const d = doorPoint(bd), v = vec[facingOf(bd)]; return { x: d.x, z: d.z, dx: v[0], dz: v[1] }; }),
+      ...b.walk.yards!.filter((y) => y.door).map((y) => y.door!),
+    ];
+    const dayOf = (season: string): number => { for (let d = 1; d < 800; d++) if (seasonOf(cfg, d) === season) return d; throw new Error(season); };
+    const inY = (y: WalkYard, x: number, z: number): boolean => Math.abs(x - y.x) < y.w / 2 && Math.abs(z - y.z) < y.d / 2;
+    const bad: string[] = [];
+    let legs = 0, longest = 0;
+    for (const day of [dayOf('winter'), dayOf('summer')]) for (const n of cfg.npcs.npcs) {
+      const probe = (m: number) => { const r = npcAt(cfg, n, day, m); return { moving: r.moving, out: r.mode === 'out', x: r.x, z: r.z }; };
+      const seen = new Set<string>();
+      let home: { pt: { x: number; z: number }; door: Anchor } | null = null;
+      if (typeof n.home === 'object') { const y = b.walk.yards!.find((q) => inY(q, (n.home as { x: number }).x, (n.home as { z: number }).z)); if (y?.door) home = { pt: n.home, door: y.door }; }
+      for (let m = 330; m < 1300; m += 4) {
+        const L = findLeg(probe, m, RCfg.sampleMin);
+        if (!L) continue;
+        const key = L.t0.toFixed(1);
+        if (seen.has(key)) continue;
+        seen.add(key); legs++;
+        const p = planLegPath(nav, b.walk, L, { anchors, home }, RCfg, W.npcR);
+        longest = Math.max(longest, p.len / Math.max(1, L.simLen));
+        const s0 = p.pts[0]!, s1 = p.pts[p.pts.length - 1]!;
+        for (const q of p.pts) {
+          if (Math.hypot(q.x - s0.x, q.z - s0.z) < RCfg.doorTol || Math.hypot(q.x - s1.x, q.z - s1.z) < RCfg.doorTol) continue;
+          if (pushOut(b.walk, q.x, q.z, W.npcR - 0.06).hit) { bad.push(`${n.id} d${day} ${L.t0.toFixed(0)}: хана/барилга ${q.x.toFixed(1)},${q.z.toFixed(1)}`); break; }
+        }
+        // дээжлэж (0.25 м) алхахад ч нэвтрэхгүй
+        let prevHit = false;
+        for (let s = 0; s <= p.len && !prevHit; s += 0.25) {
+          const q = polyAt(p, s);
+          if (Math.hypot(q.x - s0.x, q.z - s0.z) < RCfg.doorTol || Math.hypot(q.x - s1.x, q.z - s1.z) < RCfg.doorTol) continue;
+          if (pushOut(b.walk, q.x, q.z, W.npcR - 0.06).hit) { bad.push(`${n.id} d${day} ${L.t0.toFixed(0)}: алхмын цэг ${q.x.toFixed(1)},${q.z.toFixed(1)}`); prevHit = true; }
+        }
+        // огцом эргэлт: 1 м-ийн цонхонд чиглэл ≤ 120° (үүдэнд хажуугаас орох 90° эргэлт хүртэл, буцалт үгүй)
+        let worst = 0;
+        for (let s = 0.5; s + 0.5 <= p.len; s += 0.5) {
+          const a = polyAt(p, s - 0.5), c = polyAt(p, s), d = polyAt(p, s + 0.5);
+          const u = Math.atan2(c.x - a.x, c.z - a.z), v = Math.atan2(d.x - c.x, d.z - c.z);
+          worst = Math.max(worst, Math.abs(Math.atan2(Math.sin(v - u), Math.cos(v - u))));
+        }
+        if (worst > (120 * Math.PI) / 180) bad.push(`${n.id} d${day} ${L.t0.toFixed(0)}: огцом эргэлт ${((worst * 180) / Math.PI).toFixed(0)}°`);
+      }
+    }
+    expect(legs).toBeGreaterThan(40);
+    expect(bad).toEqual([]);
+    expect(longest).toBeLessThan(6);   // замын уртрал sim-ийнхээс хэт том биш
+  });
+});
+
+describe('sumwalk: хашааны хаалганы дүрэм (тоглогч орж болох айл)', () => {
   const y: WalkYard = { x: 0, z: 0, w: 20, d: 20, gate: 's', off: 0, gw: 4.4 };
   const boxes: WalkBox[] = [];
   wallRing(boxes, 0, 0, 20, 20, 's', 4.4, 0, 0.3);
-  const s = solids(boxes);
-  it('хашааны дотроос гадагш хана гатлах бол эхлээд хаалганы дотор цэг', () => {
-    const wp = yardWaypoint([y], { x: -6, z: 0 }, { x: -6, z: 14 });
-    expect(wp).not.toBeNull();
-    expect(Math.abs(wp!.x)).toBeLessThan(0.01);
-    expect(wp!.z).toBeLessThan(10);
+  const closed: WalkSolids = { boxes, cyls: [], playerBoxes: [gateBox(y, 0.3)] };
+  it('хаалттай хаалга тоглогчийг нэвтрүүлэхгүй, NPC (нийтлэг саад) чөлөөтэй', () => {
+    expect(pushOut(playerSolids(closed), 0, 10, 0.35).hit).toBe(true);
+    expect(pushOut(closed, 0, 10, 0.35).hit).toBe(false);
   });
-  it('хаалганы ойр байвал шууд гаднах цэг рүү; хоёулаа нэг талд бол null', () => {
-    const wp = yardWaypoint([y], { x: 0.5, z: 8.9 }, { x: 0, z: 16 });
-    expect(wp!.z).toBeGreaterThan(10);
-    expect(yardWaypoint([y], { x: -6, z: 0 }, { x: 5, z: 3 })).toBeNull();
+  it('playerBoxes байхгүй бол playerSolids нь ижил объект', () => {
+    const open: WalkSolids = { boxes, cyls: [] };
+    expect(playerSolids(open)).toBe(open);
   });
-  it('chaseVia: хана хөндлөн гарсан зорилт руу хаалгаар явж, ханын нүхээр л орно', () => {
-    let p = { x: -6, z: 0 };
-    const to = { x: -6, z: 14 };
-    let crossedAtGap = false;
-    for (let i = 0; i < 400; i++) {
-      const q = chaseVia([y], p, to, 0.2, 40);
-      if (p.z < 10 && q.z >= 10) crossedAtGap = Math.abs(q.x) < 2.2;
-      p = q;
-      if (Math.hypot(p.x - to.x, p.z - to.z) < 1e-6) break;
+  it('gatePush: бие хаалганы хавтгайд ойртох тусам навч түлхэгдэнэ, холдвол 0', () => {
+    expect(gatePush(0, 0, 1.25, 0.35)).toBe(1);
+    expect(gatePush(0, 0.8, 1.25, 0.35)).toBeCloseTo(0.5, 5);
+    expect(gatePush(0, 1.6, 1.25, 0.35)).toBe(0);
+    expect(gatePush(2, 0, 1.25, 0.35)).toBe(0);
+    expect(gatePush(0, 0.5, 1.25, 0.35)).toBe(gatePush(0, -0.5, 1.25, 0.35));
+  });
+  it('өгөгдөл: хамаатан, худалдах айл орж болно; нээгддэг хаалга зөвхөн тэдэнд; бусад хаалга тоглогчид хаалттай', async () => {
+    const { cfg } = await import('./helpers');
+    const { buildSumCenter } = await import('../src/render/sumlayout');
+    const W = cfg.worldmap.sum3d.walk, b = buildSumCenter(cfg.sumcenter, { seed: 7, walk: W });
+    expect(isEnterablePlot(W, 'relative') && isEnterablePlot(W, 'forSale') && !isEnterablePlot(W, 'other')).toBe(true);
+    const special = cfg.sumcenter.specialPlots ?? [];
+    expect(special.length).toBeGreaterThan(0);
+    expect(b.gates.filter((g) => g.enterable).map((g) => g.plotId).sort()).toEqual(special.filter((s) => isEnterablePlot(W, s.role)).map((s) => s.id).sort());
+    expect(b.gates.length).toBeGreaterThan(b.gates.filter((g) => g.enterable).length);   // NPC-д зориулсан бусад айлын хаалга
+    const P = playerSolids(b.walk), yards = b.walk.yards!;
+    expect(b.walk.playerBoxes!.length).toBeGreaterThan(50);   // процедурын айлууд (fence() хашаа нээлттэй хэвээр)
+    expect(b.walk.playerBoxes!.length + b.gates.filter((g) => g.enterable).length).toBeLessThanOrEqual(yards.length);
+    for (const g of b.gates.filter((g) => g.enterable)) {   // орж болох хаалгаар тоглогч өнгөрнө
+      expect(pushOut(P, g.x, g.z, W.bodyR).hit).toBe(false);
     }
-    expect(crossedAtGap).toBe(true);
-    expect(Math.hypot(p.x - to.x, p.z - to.z)).toBeLessThan(1e-6);
-    expect(pushOut(s, 0, 10, 0.35).hit).toBe(false);
+    for (const pb of b.walk.playerBoxes!) {   // хаалттай хаалга тоглогчид хаалттай, NPC-д нээлттэй
+      expect(pushOut(P, pb.x, pb.z, W.bodyR).hit).toBe(true);
+      expect(pushOut(b.walk, pb.x, pb.z, W.npcR).hit).toBe(false);
+    }
   });
-  it('хэт хол зөрвөл шууд очно (снап)', () => {
-    expect(chaseVia([y], { x: -6, z: 0 }, { x: 30, z: 30 }, 0.2)).toEqual({ x: 30, z: 30 });
+});
+
+describe('sumwalk: ханын дагуу гулсалт (slideMove)', () => {
+  const wall: WalkSolids = { boxes: [{ x: 0, z: 5, hw: 20, hd: 0.15 }], cyls: [] };   // z=5 дээрх хана, нормал −z
+  const cfg = { slideMin: 0.85, slideAngle: 0.25 };
+  const r = 0.35, step = 0.1;
+  /** 1 алхам: (px, pz)-ээс ханыг налуу (өнцөг a рад, ханатай параллелээс) шахна */
+  const move = (px: number, pz: number, a: number, c: Pick<typeof cfg, 'slideMin' | 'slideAngle'>): { x: number; z: number } => slideMove(wall, px, pz, px + Math.cos(a) * step, pz + Math.sin(a) * step, r, c);
+
+  it('налуу (10°) шахахад ханын дагуух хурд хадгалагдана (≥ pushOut, ≥ slideMin-ээс бага биш), хананд орохгүй', () => {
+    const z0 = 5 - 0.15 - r;
+    const a = (10 * Math.PI) / 180, plain = pushOut(wall, 0 + Math.cos(a) * step, z0 + Math.sin(a) * step, r);
+    expect(plain.x).toBeCloseTo(Math.cos(a) * step, 6);          // pushOut тангенциалыг хэвээр (cos10°)
+    const m = move(0, z0, a, cfg);
+    expect(m.x).toBeGreaterThanOrEqual(plain.x - 1e-9);
+    expect(m.z).toBeLessThanOrEqual(z0 + 1e-6);                    // хананд орохгүй
+  });
+
+  it('бага налуу (3°) шахахад хурд slideMin·(налуу/босго) хүртэл өснө, шууд шахалтад (90°) гулсахгүй', () => {
+    const z0 = 5 - 0.15 - r;
+    const shallow = move(0, z0, (3 * Math.PI) / 180, cfg), plain = pushOut(wall, Math.cos(0.05236) * step, z0 + Math.sin(0.05236) * step, r);
+    expect(shallow.x).toBeGreaterThan(plain.x - 1e-9);
+    const head = move(0, z0, Math.PI / 2, cfg);
+    expect(Math.abs(head.x)).toBeLessThan(1e-6);
+    expect(head.z).toBeLessThanOrEqual(z0 + 1e-6);
+  });
+
+  it('саадгүй бол хүссэн байрлал хэвээр, давхар шахалтад хана дотор орохгүй (булан)', () => {
+    expect(move(0, 0, 0.3, cfg).x).toBeCloseTo(Math.cos(0.3) * step, 9);
+    const corner: WalkSolids = { boxes: [{ x: 0, z: 5, hw: 20, hd: 0.15 }, { x: 5, z: 0, hw: 0.15, hd: 20 }], cyls: [] };
+    let x = 4.4, z = 4.4;
+    for (let i = 0; i < 40; i++) { const q = slideMove(corner, x, z, x + 0.07, z + 0.07, r, cfg); x = q.x; z = q.z; }
+    expect(pushOut(corner, x, z, r - 1e-6).hit).toBe(false);
+  });
+});
+
+describe('sumwalk: 45° шахалт', () => {
+  it('pushOut cos45°=71% хурдтай, slideMove slideMin=85% хурдтай гулсана', () => {
+    const wall: WalkSolids = { boxes: [{ x: 0, z: 5, hw: 20, hd: 0.15 }], cyls: [] };
+    const z0 = 5 - 0.15 - 0.35, a = Math.PI / 4, d = 0.1;
+    const plain = pushOut(wall, Math.cos(a) * d, z0 + Math.sin(a) * d, 0.35);
+    const m = slideMove(wall, 0, z0, Math.cos(a) * d, z0 + Math.sin(a) * d, 0.35, { slideMin: 0.85, slideAngle: 0.25 });
+    expect(plain.x).toBeCloseTo(0.0707, 3);
+    expect(m.x).toBeCloseTo(0.085, 3);
   });
 });

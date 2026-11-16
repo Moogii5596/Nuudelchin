@@ -44,7 +44,7 @@ export interface CharacterRig {
   face: FacePainter;
   /** улирал бүрийн толгойн өмсгөл */
   wear: Record<Season, CharacterHat | 'none'>;
-  anim: { phase: number; time: number; run: number; speed: number; gait: number; moving: boolean; blinkT: number; blinkP: number; emo: Emotion };
+  anim: { phase: number; time: number; breath: number; run: number; speed: number; gait: number; moving: boolean; blinkT: number; blinkP: number; emo: Emotion };
 }
 
 export interface BuildOptions {
@@ -128,7 +128,7 @@ export function buildCharacter(spec: CharacterSpec, opts: BuildOptions = {}): Ch
     sleeveMat, sleeveColors: { terleg, deel, winter: deel },
     elbows: [armL.elbow, armR.elbow], elbowRest: [rest0, rest1], wrists: [armL.wrist, armR.wrist], curls: [armL.curl, armR.curl],
     face, build: spec.figure.build, wear,
-    anim: { phase: 0, time: 0, run: 0, speed: 0, gait: 0, moving: false, blinkT: 1.5, blinkP: 1, emo: { ...EMOTIONS.neutral } },
+    anim: { phase: 0, time: 0, breath: 0, run: 0, speed: 0, gait: 0, moving: false, blinkT: 1.5, blinkP: 1, emo: { ...EMOTIONS.neutral } },
   };
   dressCharacter(rig, 'autumn');
   return rig;

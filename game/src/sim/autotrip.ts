@@ -7,6 +7,7 @@
 import type { Sim } from './sim';
 import type { BuyOrder, ProductId } from './state';
 import { sellableAnimals, sellableAtShop, sumId } from './systems/travel';
+import { isOpen } from './systems/shops';
 
 export interface AutoTripPlan {
   sell: Partial<Record<ProductId, number>>;   // агуулахаас ачиж зарах
@@ -60,6 +61,8 @@ export class AutoTrip {
       }
       case 'toSum': {
         if (p.place !== 'sum') return false;
+        // Хаалттай бол нээгдэх хүртэл хүлээнэ (data/shops.json); Худалдаачин = buyer
+        if (!isOpen(cfg, 'buyer', state.time.minute)) return false;
         const r = sim.command({
           type: 'trade',
           plan: { sell: sellableAtShop(state), sellAnimalIds: sellableAnimals(state).map((a) => a.id), buy: this.plan.buy },

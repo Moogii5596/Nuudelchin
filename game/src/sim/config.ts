@@ -28,6 +28,8 @@ import gerJson from '../../../data/ger.json';
 import difficultyJson from '../../../data/difficulty.json';
 import milestonesJson from '../../../data/milestones.json';
 import traderJson from '../../../data/trader.json';
+import shopsJson from '../../../data/shops.json';
+import { validateShops, type ShopsConfig } from './systems/shops';
 import { validateTrader, type TraderConfig } from './systems/trader';
 import { validateMilestones, type MilestonesConfig } from './systems/milestones';
 import type { StuckConfig } from './systems/safety';
@@ -287,6 +289,8 @@ export interface GameConfig {
   milestones: MilestonesConfig;
   /** M6.12: явуулын худалдаачин — data/trader.json */
   trader: TraderConfig;
+  /** Дэлгүүр, үйлчилгээний ажлын цаг — data/shops.json */
+  shops: ShopsConfig;
   /** Гэрийн загварын хэмжээс, тавилгын байрлал (data/ger.json — render/ger-тэй хуваалцана; хаалганы цэг, дотор саад) */
   ger: GerSimConfig;
   start: { camp: string; home: string; vehicles: string[]; storageLevel: number; animals: StartAnimal[] };
@@ -319,6 +323,7 @@ export function loadConfig(): GameConfig {
     difficulty: difficultyJson as unknown as DifficultyConfig,
     milestones: milestonesJson as unknown as MilestonesConfig,
     trader: traderJson as unknown as TraderConfig,
+    shops: shopsJson as unknown as ShopsConfig,
   };
   const errors = validateConfig(cfg);
   if (errors.length) {
@@ -387,6 +392,7 @@ export function validateConfig(cfg: GameConfig): string[] {
   e.push(...validateDifficultyConfig(cfg));
   e.push(...validateMilestones(cfg));
   e.push(...validateTrader(cfg));
+  try { validateShops(cfg.shops); } catch (x) { e.push((x as Error).message); }
   if (!cfg.storage.levels[cfg.start.storageLevel]) e.push('start.storageLevel: агуулахын түвшин алга');
   for (const a of cfg.start.animals) if (!cfg.animals.species[a.species]) e.push(`start.animals: "${a.species}" алга`);
   return e;
@@ -400,7 +406,7 @@ export function validateSumLayout(cfg: GameConfig): string[] {
   if (!L || !S) return ['data/sumcenter.json, worldmap.sum3d хэрэгтэй'];
   if (!(S.radius > 50 && S.shopR > 0 && S.lotR > 0)) e.push('worldmap.sum3d: radius > 50, shopR > 0, lotR > 0');
   const W = S.walk;
-  if (!W || !(W.bodyR > 0 && W.mountedR >= W.bodyR && W.vehicleR > 0 && W.npcR > 0 && W.plotGateW > 0 && W.fenceT > 0 && W.stuckSec > 0 && W.stuckSpeed >= 0 && W.unstickStep > 0)) e.push('worldmap.sum3d.walk: радиус, хаалга, зузаан, гацалтын утга эерэг');
+  if (!W || !(W.bodyR > 0 && W.mountedR >= W.bodyR && W.vehicleR > 0 && W.npcR > 0 && W.plotGateW > 0 && W.fenceT > 0 && W.stuckSec > 0 && W.stuckSpeed >= 0 && W.unstickStep > 0 && W.slideMin >= 0 && W.slideMin <= 1 && W.slideAngle > 0 && W.slideAngle <= 1 && W.gateOpenSec > 0 && Array.isArray(W.enterablePlotRoles))) e.push('worldmap.sum3d.walk: радиус, хаалга, зузаан, гацалтын утга эерэг; enterablePlotRoles жагсаалт, gateOpenSec > 0');
   const [tw, td] = L.terrain.size;
   if (Math.min(tw, td) / 2 < S.radius) e.push('sumcenter.terrain.size: газар 3D-ийн хязгаарыг (radius) бүрхэх ёстой');
   if (Math.hypot(L.entry.x, L.entry.z) > S.radius - 6) e.push('sumcenter.entry: хязгаараас дотор байх ёстой');

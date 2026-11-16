@@ -103,7 +103,7 @@ export interface PlotSpec {
   /** houseA|houseB|houseC|gerYard|grandparents|relative1|relative2 */
   kind: string; season?: 'summer' | 'winter'; roofColor?: string; seed?: number; w?: number; d?: number; fenceColor?: string; gateColor?: string;
   /** Хашааны нэмэлт барилга: woodshed | animalShed | greenhouse */
-  extras?: string[]; path?: 'walk' | 'dirt'; trees?: 'full' | 'bush'; kennel?: boolean; yard?: boolean; gerSize?: string;
+  extras?: string[]; path?: 'walk' | 'dirt'; trees?: 'full' | 'bush'; kennel?: boolean; yard?: boolean; gerSize?: string; /** Том хаалганы навчгүй (sumcenter.ts анимаци хийнэ) */ noLeaves?: boolean;
   /** Гудамж хүртэлх шороон зам (м) */
   drive?: number; outline?: boolean;
 }
