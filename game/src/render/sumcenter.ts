@@ -28,6 +28,7 @@ import { animateCharacter } from './character/animate';
 import { buildCharacter, showOutfit, type CharacterRig } from './character/rig';
 import { EmotionQueue, postTalkEvent, talkBus, turnToward } from './character/talk';
 import { t } from '../i18n/i18n';
+import { NpcView } from './npcs';
 
 /**
  * Оршин суугчид (хөдөлгөөнгүй): render/character-ийн `crowd` хэлбэр — төрх (data/characters.json crowd.looks: preset ×
@@ -82,6 +83,8 @@ export class SumCenterView {
   /** V3.5: айлын гэрүүд (makeGer → bakeStatic, бүгд нэг mesh + бэхэн хүрээ); улирал солигдоход дахин угсарна */
   private gerMeshes: THREE.Mesh[] = [];
   private gerWinter: boolean | null = null;
+  /** V6.3: хуваарьтай NPC-үүд (гадаа; дотор нь render/interior.ts-ээр) */
+  readonly npcs: NpcView;
   private liveRigs = new Map<number, CharacterRig>();
   private live: { idx: number; rig: CharacterRig; yaw: number; emo: EmotionQueue } | null = null;
   private talkClock = 0;
@@ -181,6 +184,8 @@ export class SumCenterView {
     this.people = crowd;
     this.syncCrowd(Infinity, Infinity);
     this.group.add(people);
+    this.npcs = new NpcView(cfg);
+    this.group.add(this.npcs.group);
 
     // V3.2: айлын үүдэнд хэвтэх нохой (байрлалын хэш) — хөдөлгөөнгүй тул бүгдийг материалаар нь нэгтгэнэ (bakeStatic)
     const dogs: THREE.Object3D[] = [];
@@ -275,9 +280,11 @@ export class SumCenterView {
     const p = state.player, T = characters.talk;
     const speed = dt > 0 ? Math.hypot(p.x - this.talkPrev.x, p.z - this.talkPrev.z) / dt : 0;
     this.talkPrev = { x: p.x, z: p.z };
+    // V6.3: хуваарьтай NPC — хамгийн ойрын нь ярина (оршин суугчийн ярианаас түрүүлнэ)
+    const npcP = p.place === 'sum' && !p.interior ? this.npcs.updateOutdoor(state, dt, this.built.heightAt, p.x, p.z, speed) : (this.npcs.hideOutdoor(), null);
     const trade = nearTradeDoor(this.cfg, state);
     const atDoor = p.place === 'sum' && !p.interior && (trade !== null || nearTownDoor(this.cfg, state) !== null || nearTeahouse(this.cfg, state));
-    const active = atDoor && speed < T.stillSpeed;
+    const active = !npcP && atDoor && speed < T.stillSpeed;
     let idx = -1;
     if (active) {
       let bd = T.partnerR;
@@ -286,7 +293,7 @@ export class SumCenterView {
     if (!active || idx !== this.live?.idx) this.releaseLive();
     if (active && idx >= 0 && !this.live) this.takeLive(idx);
     const r = this.live ? this.people[this.live.idx]! : null;
-    talkBus.partner = !active ? null : r ? { x: r.x, z: r.z } : trade ? { x: trade.x, z: trade.z } : null;
+    talkBus.partner = npcP ?? (!active ? null : r ? { x: r.x, z: r.z } : trade ? { x: trade.x, z: trade.z } : null);
     // наймаа: ярилцлагын үеэр мөнгө өөрчлөгдвөл
     if (active && !Number.isNaN(this.talkMoney) && state.money !== this.talkMoney) {
       const e = state.money > this.talkMoney ? 'sell' : 'buy';

@@ -293,6 +293,7 @@ export class GameView {
     this.place = p.place;
     this.skyUniforms.cloudTime.value += Math.max(0, dt);
     const look = seasonLook(this.cfg, state);
+    if (import.meta.env.DEV) (window as unknown as { __state?: GameState }).__state = state;   // dev: туршилтын зураг авахад (цаг, өдөр, байрлал өөрчлөх)
     const season = seasonOf(this.cfg, state.time.day);
     this.applyDaylight(state.time.minute, season, p.x, p.z);
     this.characters.setSeason(season);
@@ -356,6 +357,7 @@ export class GameView {
     this.renderer.render(this.scene, this.cam.camera);
   }
 
+  private inPrev = { x: 0, z: 0 };
   private campKey = '';
   private campSol: CamSolids = { boxes: [], cyls: [] };
   /** Бууцны камерын саад: өөрийн гэр/майхан, туслахын байр, айлын гэр (цөөн, өөрчлөгдвөл л дахин тооцно) */
@@ -398,6 +400,10 @@ export class GameView {
     }
     this.interior.show(ip.room, ip.door, this.characters.herderObject);
     this.interior.update(dt, this.daylight);
+    // V6.3: барилгын NPC-үүд өрөөнд (ажлын байрандаа); хамгийн ойр нь ярина
+    const ispeed = dt > 0 ? Math.hypot(ip.x - this.inPrev.x, ip.z - this.inPrev.z) / dt : 0;
+    this.inPrev = { x: ip.x, z: ip.z };
+    this.interior.placeNpcs(this.sum.npcs, state, dt, ip.door, ip.x, ip.z, Math.min(ispeed, 9));
     this.cam.dist = Math.min(cc.maxDist, Math.max(cc.minDist, this.cam.dist));
     this.renderer.toneMappingExposure = 1;
     // Малчны загвар дотоод координатаар: байрлал, чиглэл нь өрөөний; бусад нь хэвээр
@@ -411,6 +417,7 @@ export class GameView {
   /** Дотроос гарсан: дүр зургийг чөлөөлж, камерыг сэргээнэ */
   private leaveInterior(): void {
     this.inside = false;
+    this.interior.releaseNpcs(this.sum.npcs);
     this.interior.hide();
     if (this.camBefore) {
       this.cam.dist = this.camBefore.dist;

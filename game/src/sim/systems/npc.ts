@@ -9,7 +9,7 @@
  */
 import type { GameConfig } from '../config';
 import type { GameState } from '../state';
-import { allBuildings, doorPoint, plotHouse, type SumBuildingSpec } from './sumtown';
+import { allBuildings, doorPoint, facingOf, plotHouse, type SumBuildingSpec } from './sumtown';
 import { seasonOf } from './seasons';
 
 // ======================= data/npcs.json-ийн төрөл =======================
@@ -215,7 +215,10 @@ function stopOf(cfg: GameConfig, w: World, n: NpcDef, t: number, spec: string): 
   if (spec === 'away') return mk('away', n.away ?? null, null, null);
   const [k, id] = spec.split(':') as [string, string];
   if (k === 'door') {
-    const d = w.doorOf(id), b = w.buildings.get(id);
+    const d0 = w.doorOf(id), b = w.buildings.get(id);
+    // хаалганы яг өмнө тоглогч зогсдог тул хажуу тийш 1.4 м зөөнө
+    const side = hash(n.id + id) < 0.5 ? -1.4 : 1.4, vertical = b ? facingOf(b) === 'e' || facingOf(b) === 'w' : false;
+    const d = d0 ? { x: d0.x + (vertical ? 0 : side), z: d0.z + (vertical ? side : 0) } : null;
     const heading = d && b ? Math.atan2(b.x - d.x, b.z - d.z) : 0;
     return mk('door', id, d, d, heading);
   }

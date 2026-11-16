@@ -117,3 +117,21 @@ describe('V6.3 NPC — Сарангэрэл = plot_rel_1-ийн хамаатан
     expect(nearTownDoor(cfg, st)?.role).toBe('soon');
   });
 });
+
+describe('V6.3 NPC — төрх (characters.json)', () => {
+  it('NPC бүрийн preset олдоно; тогоочид хормогч, ламд улаан дээл', async () => {
+    const { characterSpec } = await import('../src/render/character/spec');
+    for (const n of N.npcs) expect(() => characterSpec(n.look.preset), n.id).not.toThrow();
+    expect(characterSpec('cook').apron).not.toBeNull();
+    expect(characterSpec('lama').apron).toBeNull();
+    const red = characterSpec('lama').deel.color;
+    expect((red >> 16) & 255).toBeGreaterThan(140);
+    expect(red & 255).toBeLessThan(60);
+  });
+
+  it('i18n: NPC бүрд өөрийн 3 мөр (mn, en)', async () => {
+    const mn = (await import('../src/i18n/npc.mn.json')).default as Record<string, string>, en = (await import('../src/i18n/npc.en.json')).default as Record<string, string>;
+    for (const n of N.npcs) for (let i = 1; i <= 3; i++) { expect(mn[`npc.${n.id}.${i}`], `mn ${n.id}.${i}`).toBeTruthy(); expect(en[`npc.${n.id}.${i}`], `en ${n.id}.${i}`).toBeTruthy(); }
+    expect(mn['npc.away']).toBeTruthy();
+  });
+});

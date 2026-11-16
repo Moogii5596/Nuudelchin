@@ -7,7 +7,9 @@
  */
 import * as THREE from 'three';
 import type { GameConfig } from '../sim/config';
+import type { GameState } from '../sim/state';
 import { roomGerSize, roomSpec, type RoomSpec } from '../sim/systems/interior';
+import type { NpcView } from './npcs';
 import { GER } from './ger/config';
 import { makeGer } from './ger/ger';
 import { makeGerInterior } from './ger/gerInterior';
@@ -73,6 +75,17 @@ export class InteriorView {
     if (this.lamp) this.scene.remove(this.lamp);
     this.root = this.ground = this.ring = this.lamp = null;
     this.key = '';
+  }
+
+  /** V6.3: орсон барилгын NPC-үүдийг өрөөнд байрлуулна (render/npcs.ts); ярьж буй NPC-ийн байрлалыг буцаана */
+  placeNpcs(npcs: NpcView, state: GameState, dt: number, building: string, px: number, pz: number, speed: number): { x: number; z: number } | null {
+    npcs.hideOutdoor();
+    return npcs.updateIndoor(state, dt, this.scene, building, px, pz, speed);
+  }
+
+  /** Дотроос гарахад NPC-үүдийг гаднах бүлэгт буцаана */
+  releaseNpcs(npcs: NpcView): void {
+    npcs.leaveIndoor();
   }
 
   /** Өдрийн гэрэл 0–1: цонхгүй өрөөнд бага зэрэг нөлөөлнө */
