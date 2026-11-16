@@ -18,8 +18,7 @@ export interface WalkConfig {
   /** Айлын хашааны хаалганы нүхний өргөн (м) */ plotGateW: number;
   /** Хашааны хананы зузаан (м) */ fenceT: number;
   /** Тоглогч орж болох айлын үүрэг (specialPlots.role): хаалга нь нээгддэг, бусад айлын хаалга тоглогчид хаалттай */ enterablePlotRoles: string[];
-  /** Хаалга нээгдэж эхлэх зай — тоглогчоос хаалга хүртэл (м) */ gateOpenR: number;
-  /** Хаалга бүрэн нээгдэх/хаагдах хугацаа (сек) */ gateOpenSec: number;
+  /** Хаалганы навч бүрэн эргэх/хаагдах хугацаа (сек) */ gateOpenSec: number;
   /** Хөдөлгөөн хүссэн мөртлөө N сек нүүхгүй бол гацсан гэж үзнэ */ stuckSec: number;
   /** Нэг кадрт энэ зайгаас бага шилжвэл «хөдлөөгүй» (м/с) */ stuckSpeed: number;
   /** Гацсан үед түлхэх зай (м) */ unstickStep: number;
@@ -189,8 +188,13 @@ export function playerSolids(s: WalkSolids): WalkSolids {
   return s.playerBoxes?.length ? { boxes: s.boxes.concat(s.playerBoxes), cyls: s.cyls, yards: s.yards } : s;
 }
 
-/** Хаалганы нээлтийн түвшин (0..1): тоглогч ойр бол нэмэгдэж, холдвол буурна; бүрэн шилжилт `sec` секунд */
-export function gateOpenStep(open: number, near: boolean, dt: number, sec: number): number {
-  const k = dt / Math.max(sec, 1e-3);
-  return near ? Math.min(1, open + k) : Math.max(0, open - k);
+
+/**
+ * Хаалганы навчийг биеэр түлхэх хүч (0..1). (lx, lz) — биеийн байрлал хаалганы төвөөс: lx хажуугийн, lz хаалганы хавтгайд перпендикуляр (+ гадагш).
+ * Бие навчны эргэх тойрогт (leafW + bodyR) ороход хүч нэмэгдэж, хаалганы хавтгайд яг байхад 1 (бүрэн онгойно). Цаг биш, байрлалаар.
+ */
+export function gatePush(lx: number, lz: number, leafW: number, bodyR: number): number {
+  const reach = leafW + bodyR;
+  if (Math.abs(lx) > reach || Math.abs(lz) > reach) return 0;
+  return Math.max(0, 1 - Math.abs(lz) / reach);
 }

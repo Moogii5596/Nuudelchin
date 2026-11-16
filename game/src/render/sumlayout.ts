@@ -24,8 +24,8 @@ export interface VehicleSlotView { id: string; vehicle: string; x: number; y: nu
 export interface HomeDoor { x: number; y: number; z: number }
 export interface SumPlotView { id: string; role: SumSpecialPlotSpec['role']; x: number; z: number; door: HomeDoor }
 export interface SumGer { x: number; y: number; z: number; color: string; r: number }
-/** Орж болох айлын нээгддэг хаалга (2 навч): sumcenter.ts анимаци хийнэ. hinge — нугасны дэлхийн цэг, phi — хашааны эргэлт (rotation.y), хаалга локал −Z руу (дотогш) нээгдэнэ */
-export interface GateView { plotId: string; x: number; z: number; phi: number; hingeL: { x: number; y: number; z: number }; hingeR: { x: number; y: number; z: number }; leafW: number; h: number; lift: number; color: string }
+/** Айлын хашааны хаалга (2 навч): биеэр түлхэгдэж онгойно, sumcenter.ts анимаци хийнэ. hinge — нугасны дэлхийн цэг, phi — хашааны эргэлт (rotation.y), хаалга локал −Z руу (дотогш) нээгдэнэ */
+export interface GateView { plotId: string; /** тоглогч орж болох уу (үгүй бол зөвхөн NPC-д онгойно) */ enterable: boolean; x: number; z: number; phi: number; hingeL: { x: number; y: number; z: number }; hingeR: { x: number; y: number; z: number }; leafW: number; h: number; lift: number; color: string }
 /** Орж болох айлын нээгддэг хаалга (2 навч): sumcenter.ts анимаци хийнэ. hinge — нугасны дэлхийн цэг, phi — хашааны эргэлт (rotation.y), хаалга локал −Z руу (дотогш) нээгдэнэ */
 export interface GateView { plotId: string; x: number; z: number; phi: number; hingeL: { x: number; y: number; z: number }; hingeR: { x: number; y: number; z: number }; leafW: number; h: number; lift: number; color: string }
 export interface SumCenterBuild {
@@ -36,7 +36,7 @@ export interface SumCenterBuild {
   vehicles: Map<string, THREE.Object3D>;
   vehicleSlots: VehicleSlotView[];
   plots: SumPlotView[];
-  /** Орж болох айлын нээгддэг хаалганууд (worldmap sum3d.walk.enterablePlotRoles) */
+  /** Бүх айлын хаалганууд (enterable — worldmap sum3d.walk.enterablePlotRoles) */
   gates: GateView[];
   homes: HomeDoor[];
   /** Айлын гэрийн байрлал (V3.5: render/ger-ээр sumcenter.ts зурна) — y газрын өндөр, r хананы радиус */
@@ -364,7 +364,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
   /** Нэг айлын хашаа (лабораторийн makePlot): хашааны төв (x, z), хаалганы чиглэл gate. Орчуулга: хашааны локал нүүр +Z */
   const plotLab = (o: { x: number; z: number; w: number; d: number; gate: 'n' | 's' | 'e' | 'w'; kind: string; seed: number; roofColor?: string; extras?: string[];
     path?: 'walk' | 'dirt'; trees?: 'full' | 'bush'; kennel?: boolean; fenceColor: string; gateColor: string; gerColor?: string;
-    /** Тоглогч орж болох айл (нээгддэг хаалга). Үгүй бол хаалга тоглогч/тээвэрт хаалттай (NPC чөлөөтэй) */ enter?: string }): HomeDoor => {
+    /** Тоглогч орж болох айл (нээгддэг хаалга). Үгүй бол хаалга тоглогч/тээвэрт хаалттай (NPC чөлөөтэй) */ enter?: string; id?: string }): HomeDoor => {
     wallRing(walk.boxes, o.x, o.z, o.w, o.d, o.gate, WK.plotGateW, 0, WK.fenceT);   // айлын хашаа: хаалга төвд (building/yard.ts gateX = 0)
     const yard = { x: o.x, z: o.z, w: o.w, d: o.d, gate: o.gate, off: 0, gw: WK.plotGateW };
     walk.yards!.push(yard);
@@ -372,14 +372,14 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     const vertical = o.gate === 'e' || o.gate === 'w', lw = vertical ? o.d : o.w, ld = vertical ? o.w : o.d, phi = GATE_PHI[o.gate], y = heightAt(o.x, o.z);
     const c = Math.cos(phi), s = Math.sin(phi), toW = (lx: number, lz: number) => ({ x: o.x + lx * c + lz * s, z: o.z - lx * s + lz * c });
     town.add((season, out) => {
-      const p = makePlot({ kind: o.kind, season, roofColor: o.roofColor, seed: o.seed, w: lw, d: ld, fenceColor: o.fenceColor, gateColor: o.gateColor, extras: o.extras, path: o.path, trees: o.trees, kennel: o.kennel, yard: true, noLeaves: !!o.enter });
+      const p = makePlot({ kind: o.kind, season, roofColor: o.roofColor, seed: o.seed, w: lw, d: ld, fenceColor: o.fenceColor, gateColor: o.gateColor, extras: o.extras, path: o.path, trees: o.trees, kennel: o.kennel, yard: true, noLeaves: true });
       appendAt(out, p.geo, phi, o.x, y, o.z);
       for (const g of p.gers) g.ger.dispose();   // гэр нь айлын гэрийн нэгдсэн mesh-ээр (sumcenter.ts buildGers)
     });
-    if (o.enter) {   // нээгддэг хаалга: навчийг тусад нь (sumcenter.ts) анимаци хийнэ
+    {   // хаалганы навчийг тусад нь (sumcenter.ts) анимаци хийнэ: NPC бүх айлд, тоглогч орж болох айлд
       const K = BC.khashaa, tot = K.leafW * 2 + K.wicketW + K.gatePost * 3, cx = K.gateX - tot / 2 + K.gatePost + K.leafW, lz = ld / 2;
       const hl = toW(cx - K.leafW, lz), hr = toW(cx + K.leafW, lz), gc = toW(cx, lz);
-      gates.push({ plotId: o.enter, x: gc.x, z: gc.z, phi, hingeL: { x: hl.x, y: heightAt(hl.x, hl.z), z: hl.z }, hingeR: { x: hr.x, y: heightAt(hr.x, hr.z), z: hr.z },
+      gates.push({ plotId: o.enter ?? o.id ?? '', enterable: !!o.enter, x: gc.x, z: gc.z, phi, hingeL: { x: hl.x, y: heightAt(hl.x, hl.z), z: hl.z }, hingeR: { x: hr.x, y: heightAt(hr.x, hr.z), z: hr.z },
         leafW: K.leafW, h: K.gateH, lift: K.gateLift, color: o.gateColor });
     }
     if (o.kind === 'gerYard') {
@@ -836,7 +836,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
         const roofColor = roofKeys[Math.floor(rand() * roofKeys.length)]!;
         const extras: string[] = [], rich = quality !== 'low';
         if (rich) { if (rand() < 0.5) extras.push('woodshed'); if (rand() < 0.22) extras.push('greenhouse'); if (rand() < 0.25) extras.push('animalShed'); }
-        const hd0 = plotLab({ x, z, w: pw, d: pd, gate, kind, seed: 1 + Math.floor(rand() * 997), roofColor, extras, path: rand() < 0.5 ? 'walk' : 'dirt',
+        const hd0 = plotLab({ id: `${zn.id}:plot`, x, z, w: pw, d: pd, gate, kind, seed: 1 + Math.floor(rand() * 997), roofColor, extras, path: rand() < 0.5 ? 'walk' : 'dirt',
           trees: rich ? (rand() < 0.5 ? 'full' : 'bush') : undefined, kennel: rich && rand() < 0.3, fenceColor: fc, gateColor: gatePalette[Math.floor(rand() * gatePalette.length)]!, gerColor: rand() < 0.15 ? '#E8DCC0' : '#F3EDE2' });
         homes.push(hd0);
       }

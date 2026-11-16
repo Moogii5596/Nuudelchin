@@ -8,7 +8,7 @@ import * as THREE from 'three';
 import type { GameConfig } from '../sim/config';
 import type { VehicleId } from '../sim/state';
 import { allBuildings, facingOf, lotSlots, nearTradeDoor, sumDoors, TRADE_ROLES, type SumBuildingSpec } from '../sim/systems/sumtown';
-import { buildSumCenter, type SumCenterBuild } from './sumlayout';
+import { buildSumCenter, type GateView, type SumCenterBuild } from './sumlayout';
 import { makeBuildingMaterials, type BuildingMaterials } from './building';
 import { nearTownDoor, plotDoors } from '../sim/systems/town';
 import { nearTeahouse } from '../sim/systems/helpers';
@@ -31,7 +31,7 @@ import { buildCharacter, showOutfit, type CharacterRig } from './character/rig';
 import { EmotionQueue, postTalkEvent, talkBus, turnToward } from './character/talk';
 import { t } from '../i18n/i18n';
 import { NpcView } from './npcs';
-import { gateOpenStep, playerSolids, type WalkSolids } from '../sim/systems/sumwalk';
+import { gatePush, playerSolids, type WalkSolids } from '../sim/systems/sumwalk';
 
 /**
  * Оршин суугчид (хөдөлгөөнгүй): render/character-ийн `crowd` хэлбэр — төрх (data/characters.json crowd.looks: preset ×
@@ -73,8 +73,9 @@ export class SumCenterView {
   readonly group = new THREE.Group();
   readonly ground: THREE.Mesh;
   private built: SumCenterBuild;
-  /** Орж болох айлын нээгддэг хаалганы навчнууд: open 0..1, pivot зүүн/баруун нугас */
-  private gateAnims: { cx: number; cz: number; open: number; l: THREE.Object3D; r: THREE.Object3D; phi: number }[] = [];
+  /** Айлын хаалганы төлөв: ang — навчны эргэлт (рад), dir — түлхэгдсэн чиглэл (+ дотогш) */
+  private gateAnims: { g: GateView; ang: number; dir: number; c: number; s: number }[] = [];
+  private gateMesh: THREE.InstancedMesh | null = null;
   private gateClock = 0;
   private playerWalkCache: WalkSolids | null = null;
   private lotVehicles: { id: VehicleId; mesh: THREE.Object3D }[] = [];
@@ -301,37 +302,70 @@ export class SumCenterView {
   /** Тоглогч/тээврийн саад: walk + орж болдоггүй айлын хаалттай хаалгууд (NPC-д нөлөөлөхгүй) */
   get playerWalk(): WalkSolids { return (this.playerWalkCache ??= playerSolids(this.built.walk)); }
 
-  /** Орж болох айлын хаалганы 2 навч (нугас дээр эргэнэ). Навчийг building/yard.ts noLeaves-ээр хашаанаас салгасан */
+  /** Айлын хашааны хаалганы 2 навч — нэг InstancedMesh (1 draw call), нугас дээр эргэнэ. Навчийг building/yard.ts noLeaves-ээр хашаанаас салгасан */
   private buildGates(): void {
-    for (const g of this.built.gates) {
-      const h = g.h - g.lift, geo = new THREE.BoxGeometry(g.leafW, h, 0.05);
-      const material = new THREE.MeshLambertMaterial({ color: g.color, flatShading: true });
-      const mk = (hinge: { x: number; y: number; z: number }, dir: 1 | -1): THREE.Object3D => {
-        const pivot = new THREE.Group(), leaf = new THREE.Mesh(geo, material);
-        leaf.position.set(dir * g.leafW / 2, g.lift + h / 2, 0);
-        pivot.add(leaf);
-        pivot.position.set(hinge.x, hinge.y, hinge.z);
-        pivot.rotation.y = g.phi;
-        this.group.add(pivot);
-        return pivot;
-      };
-      this.gateAnims.push({ cx: g.x, cz: g.z, open: 0, phi: g.phi, l: mk(g.hingeL, 1), r: mk(g.hingeR, -1) });
-    }
+    const G = this.built.gates;
+    if (!G.length) return;
+    const g0 = G[0]!, h = g0.h - g0.lift, geo = new THREE.BoxGeometry(g0.leafW, h, 0.05);
+    const im = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({ color: '#ffffff', flatShading: true }), G.length * 2);
+    im.frustumCulled = false;   // instance-ууд хол тархсан — bounding sphere тохирохгүй
+    const col = new THREE.Color();
+    G.forEach((g, i) => {
+      im.setColorAt(i * 2, col.set(g.color)); im.setColorAt(i * 2 + 1, col);
+      this.gateAnims.push({ g, ang: 0, dir: 0, c: Math.cos(g.phi), s: Math.sin(g.phi) });
+      this.setLeaves(im, i, 0);
+    });
+    im.instanceMatrix.needsUpdate = true;
+    this.gateMesh = im;
+    this.group.add(im);
+  }
+  private readonly gDummy = new THREE.Object3D();
+  private readonly gLocal = new THREE.Matrix4();
+  private setLeaves(im: THREE.InstancedMesh, i: number, ang: number): void {
+    const { g } = this.gateAnims[i]!, h = g.h - g.lift;
+    const put = (idx: number, hinge: { x: number; y: number; z: number }, dir: 1 | -1, rot: number): void => {
+      const d = this.gDummy;
+      d.position.set(hinge.x, hinge.y, hinge.z); d.rotation.set(0, rot, 0); d.updateMatrix();
+      im.setMatrixAt(idx, d.matrix.multiply(this.gLocal.makeTranslation(dir * g.leafW / 2, g.lift + h / 2, 0)));
+    };
+    put(i * 2, g.hingeL, 1, g.phi + ang);       // зүүн навч: +ang → локал −Z (дотогш)
+    put(i * 2 + 1, g.hingeR, -1, g.phi - ang);
   }
 
-  /** Хаалга: тоглогч ойртвол нээгдэж, холдвол хаагдана (data sum3d.walk.gateOpenR/gateOpenSec) */
+  private readonly gActors: { x: number; z: number }[] = [];
+  /**
+   * Хаалга биеэр түлхэгдэж онгойно (цаг биш): тоглогч/NPC навчны тойрогт орвол хаалганы хавтгайд ойртох тусам навч түлхэгдэнэ.
+   * Гаднаас орвол дотогш, дотроос гарвал гадагш. Бие холдвол навч хаагдана. Тоглогч зөвхөн орж болох айлын хаалгыг түлхэнэ.
+   */
   private syncGates(state: GameState): void {
+    const im = this.gateMesh;
+    if (!im) return;
     const now = performance.now(), dt = this.gateClock ? Math.min(0.1, (now - this.gateClock) / 1000) : 0;
     this.gateClock = now;
-    const W = this.cfg.worldmap.sum3d.walk, p = state.player, inSum = p.place === 'sum' && !p.interior;
-    for (const a of this.gateAnims) {
-      const o = gateOpenStep(a.open, inSum && Math.hypot(p.x - a.cx, p.z - a.cz) < W.gateOpenR, dt, W.gateOpenSec);
-      if (o === a.open) continue;
-      a.open = o;
-      const ang = o * o * (3 - 2 * o) * (Math.PI / 2) * 0.96;   // smoothstep; локал −Z (дотогш) нээгдэнэ
-      a.l.rotation.y = a.phi + ang;
-      a.r.rotation.y = a.phi - ang;
-    }
+    const W = this.cfg.worldmap.sum3d.walk, p = state.player, A = this.gActors;
+    A.length = 0;
+    this.npcs.forEachPlaced((x, z) => A.push({ x, z }));
+    const nNpc = A.length;
+    if (p.place === 'sum' && !p.interior) A.push({ x: p.x, z: p.z });
+    const maxAng = (Math.PI / 2) * 0.96, k = 1 - Math.exp(-dt / Math.max(W.gateOpenSec / 3, 1e-3));   // gateOpenSec — бүрэн шилжилтийн хугацаа
+    let dirty = false;
+    this.gateAnims.forEach((a, i) => {
+      const g = a.g;
+      let push = 0, side = 0;
+      for (let j = 0; j < A.length; j++) {
+        if (j >= nNpc && !g.enterable) break;   // тоглогч хаалттай айлын хаалгыг түлхэхгүй
+        const dx = A[j]!.x - g.x, dz = A[j]!.z - g.z;
+        if (Math.abs(dx) > 4 || Math.abs(dz) > 4) continue;
+        const lz = dx * a.s + dz * a.c, q = gatePush(dx * a.c - dz * a.s, lz, g.leafW, W.bodyR);
+        if (q > push) { push = q; side = lz >= 0 ? 1 : -1; }
+      }
+      if (push > 0 && a.dir === 0) a.dir = side;   // эхэлсэн чиглэлээ барина (биеийг дайрч эргэхгүй)
+      const target = a.dir * push * maxAng, next = a.ang + (target - a.ang) * k;
+      if (push === 0 && Math.abs(next) < 0.01) { if (a.ang !== 0) { a.ang = 0; a.dir = 0; this.setLeaves(im, i, 0); dirty = true; } return; }
+      if (Math.abs(next - a.ang) < 1e-4) return;
+      a.ang = next; this.setLeaves(im, i, next); dirty = true;
+    });
+    if (dirty) im.instanceMatrix.needsUpdate = true;
   }
 
   /** V3.4: худалдаж авсан байшингийн шошго (R7: сумын төвд кадр бүр дуудагддаг тул ярилцлагыг ч эндээс) */

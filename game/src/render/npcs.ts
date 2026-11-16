@@ -118,6 +118,12 @@ export class NpcView {
     }
   }
 
+  /** Гаднах NPC-үүдийн дүрслэх байрлал (хаалга биеэр түлхэгдэж онгойход) */
+  forEachPlaced(cb: (x: number, z: number) => void): void {
+    if (!this.group.visible) return;
+    for (const e of this.entries) if (e.placed) cb(e.rx, e.rz);
+  }
+
   // ---------- нийтлэг ----------
   private now(state: GameState): NpcNow[] {
     // sim минутаар алхдаг (3 м/с × 0.33 с = 1 м үсрэлт) — кадрын хувиар (minuteFrac) минут доторх байрлалыг зөөлрүүлнэ

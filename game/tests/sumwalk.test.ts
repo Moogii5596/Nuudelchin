@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chaseVia, gateBox, gateOpenStep, isEnterablePlot, nearestFreeSpot, playerSolids, pushOut, stuckStep, wallRing, yardWaypoint, type WalkBox, type WalkSolids, type WalkYard } from '../src/sim/systems/sumwalk';
+import { chaseVia, gateBox, gatePush, isEnterablePlot, nearestFreeSpot, playerSolids, pushOut, stuckStep, wallRing, yardWaypoint, type WalkBox, type WalkSolids, type WalkYard } from '../src/sim/systems/sumwalk';
 
 const solids = (boxes: WalkBox[], cyls: WalkSolids['cyls'] = []): WalkSolids => ({ boxes, cyls });
 
@@ -139,13 +139,12 @@ describe('sumwalk: хашааны хаалганы дүрэм (тоглогч о
     const open: WalkSolids = { boxes, cyls: [] };
     expect(playerSolids(open)).toBe(open);
   });
-  it('gateOpenStep: ойртоход 0.4 сек-д нээгдэж, холдоход хаагдана', () => {
-    let o = 0;
-    for (let i = 0; i < 20; i++) o = gateOpenStep(o, true, 0.02, 0.4);
-    expect(o).toBe(1);
-    expect(gateOpenStep(0, true, 0.1, 0.4)).toBeCloseTo(0.25, 5);
-    for (let i = 0; i < 20; i++) o = gateOpenStep(o, false, 0.02, 0.4);
-    expect(o).toBe(0);
+  it('gatePush: бие хаалганы хавтгайд ойртох тусам навч түлхэгдэнэ, холдвол 0', () => {
+    expect(gatePush(0, 0, 1.25, 0.35)).toBe(1);
+    expect(gatePush(0, 0.8, 1.25, 0.35)).toBeCloseTo(0.5, 5);
+    expect(gatePush(0, 1.6, 1.25, 0.35)).toBe(0);
+    expect(gatePush(2, 0, 1.25, 0.35)).toBe(0);
+    expect(gatePush(0, 0.5, 1.25, 0.35)).toBe(gatePush(0, -0.5, 1.25, 0.35));
   });
   it('өгөгдөл: хамаатан, худалдах айл орж болно; нээгддэг хаалга зөвхөн тэдэнд; бусад хаалга тоглогчид хаалттай', async () => {
     const { cfg } = await import('./helpers');
@@ -154,11 +153,12 @@ describe('sumwalk: хашааны хаалганы дүрэм (тоглогч о
     expect(isEnterablePlot(W, 'relative') && isEnterablePlot(W, 'forSale') && !isEnterablePlot(W, 'other')).toBe(true);
     const special = cfg.sumcenter.specialPlots ?? [];
     expect(special.length).toBeGreaterThan(0);
-    expect(b.gates.map((g) => g.plotId).sort()).toEqual(special.filter((s) => isEnterablePlot(W, s.role)).map((s) => s.id).sort());
+    expect(b.gates.filter((g) => g.enterable).map((g) => g.plotId).sort()).toEqual(special.filter((s) => isEnterablePlot(W, s.role)).map((s) => s.id).sort());
+    expect(b.gates.length).toBeGreaterThan(b.gates.filter((g) => g.enterable).length);   // NPC-д зориулсан бусад айлын хаалга
     const P = playerSolids(b.walk), yards = b.walk.yards!;
     expect(b.walk.playerBoxes!.length).toBeGreaterThan(50);   // процедурын айлууд (fence() хашаа нээлттэй хэвээр)
-    expect(b.walk.playerBoxes!.length + b.gates.length).toBeLessThanOrEqual(yards.length);
-    for (const g of b.gates) {   // орж болох хаалгаар тоглогч өнгөрнө
+    expect(b.walk.playerBoxes!.length + b.gates.filter((g) => g.enterable).length).toBeLessThanOrEqual(yards.length);
+    for (const g of b.gates.filter((g) => g.enterable)) {   // орж болох хаалгаар тоглогч өнгөрнө
       expect(pushOut(P, g.x, g.z, W.bodyR).hit).toBe(false);
     }
     for (const pb of b.walk.playerBoxes!) {   // хаалттай хаалга тоглогчид хаалттай, NPC-д нээлттэй
