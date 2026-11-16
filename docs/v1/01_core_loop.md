@@ -1,7 +1,7 @@
 ---
 title: 01. Тоглоомын давталт, цаг, хүч
 type: Spec
-status: Draft
+status: Archived
 last_updated: 2026-11-13
 tags: [v1, gdd]
 ---

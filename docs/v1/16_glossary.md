@@ -1,7 +1,7 @@
 ---
 title: 16. Нэр томьёоны толь
 type: Guide
-status: Draft
+status: Archived
 last_updated: 2026-11-13
 tags: [v1, gdd, glossary]
 ---

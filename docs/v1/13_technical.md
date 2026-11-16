@@ -1,7 +1,7 @@
 ---
 title: 13. Техникийн баримт бичиг
 type: Architecture
-status: Draft
+status: Archived
 last_updated: 2026-11-13
 tags: [v1, gdd, tech]
 ---

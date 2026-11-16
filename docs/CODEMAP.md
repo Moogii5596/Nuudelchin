@@ -1861,21 +1861,20 @@ FILE game/tests/trader.test.ts 8.4KB 164L
 FILE game/tests/transfer.test.ts 14.2KB 255L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 33.7KB 134L
+FILE docs/CONTEXT.md 9.7KB 71L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-29 ## 2. Стек ба командууд
-DOC docs/CONTEXT.md:30-108 ## 3. Файлын зураглал (`game/src/`)
-DOC docs/CONTEXT.md:109-111 ## 4. `data/*.json` → аль файл хэрэглэдэг
-DOC docs/CONTEXT.md:112-120 ## 5. Архитектурын дүрэм ([[architecture]])
-DOC docs/CONTEXT.md:121-124 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
-DOC docs/CONTEXT.md:125-127 ## 7. Нээлттэй асуултууд
-DOC docs/CONTEXT.md:128-134 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
-FILE docs/INDEX.md 14.1KB 136L
+DOC docs/CONTEXT.md:30-48 ## 3. Файлын зураглал (`game/src/`)
+DOC docs/CONTEXT.md:49-51 ## 4. `data/*.json` → аль файл хэрэглэдэг
+DOC docs/CONTEXT.md:52-60 ## 5. Архитектурын дүрэм ([[architecture]])
+DOC docs/CONTEXT.md:61-64 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
+DOC docs/CONTEXT.md:65-71 ## 7. Баримтын хэсгийн индекс (мөрийн муж)
+FILE docs/INDEX.md 14.9KB 139L
 DOC docs/INDEX.md:16-30 ## 1. Унших дараалал ба давуу эрх
-DOC docs/INDEX.md:31-107 ## 2. Баримтууд
-DOC docs/INDEX.md:108-111 ## 3. Гол тоо
-DOC docs/INDEX.md:112-130 ## 4. Нэр томьёо
-DOC docs/INDEX.md:131-136 ## 5. Баримт засах дүрэм
+DOC docs/INDEX.md:31-110 ## 2. Баримтууд
+DOC docs/INDEX.md:111-114 ## 3. Гол тоо
+DOC docs/INDEX.md:115-133 ## 4. Нэр томьёо
+DOC docs/INDEX.md:134-139 ## 5. Баримт засах дүрэм
 FILE docs/architecture.md 20.3KB 236L
 DOC docs/architecture.md:16-29 ## 1. Технологи
 DOC docs/architecture.md:30-68 ## 2. Хавтасны бүтэц
@@ -1893,119 +1892,9 @@ DOC docs/character-design.md:28-52 ## 2. Үндсэн дүр — хэрэгжи�
 DOC docs/character-design.md:53-61 ## 3. NPC-үүд одоо
 DOC docs/character-design.md:62-147 ## 4. Нэг кодын сан: дүр бүрийг тохиргооноос угсрах (V4.5)
 DOC docs/character-design.md:148-157 ## 5. Нээлттэй шийдвэр 🙋
-FILE docs/competitive-analysis/farvival.md 7.5KB 78L
-DOC docs/competitive-analysis/farvival.md:16-27 ## 1. Товч мэдээлэл
-DOC docs/competitive-analysis/farvival.md:28-37 ## 2. Агуулга
-DOC docs/competitive-analysis/farvival.md:38-43 ## 3. Жанрын байршил
-DOC docs/competitive-analysis/farvival.md:44-68 ## 4. Манай тоглоомд хамаарах сургамж
-DOC docs/competitive-analysis/farvival.md:69-73 ## 5. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
-DOC docs/competitive-analysis/farvival.md:74-78 ## Эх сурвалж
-FILE docs/competitive-analysis/herder.md 10.6KB 109L
-DOC docs/competitive-analysis/herder.md:16-27 ## 1. Товч мэдээлэл
-DOC docs/competitive-analysis/herder.md:28-36 ## 2. Гол давталт
-DOC docs/competitive-analysis/herder.md:37-47 ## 3. Системүүд
-DOC docs/competitive-analysis/herder.md:48-55 ## 4. ✅ Сайшаасан зүйлс
-DOC docs/competitive-analysis/herder.md:56-62 ## 5. ❌ Шүүмжилсэн зүйлс
-DOC docs/competitive-analysis/herder.md:63-95 ## 6. Манай тоглоомд хамаарах сургамж
-DOC docs/competitive-analysis/herder.md:96-101 ## 7. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
-DOC docs/competitive-analysis/herder.md:102-109 ## Эх сурвалж
-FILE docs/competitive-analysis/herding-adventures.md 12.3KB 119L
-DOC docs/competitive-analysis/herding-adventures.md:18-29 ## 1. Товч мэдээлэл
-DOC docs/competitive-analysis/herding-adventures.md:30-39 ## 2. Гол санаа — «Удирдлага биш, дарамт»
-DOC docs/competitive-analysis/herding-adventures.md:40-53 ## 3. Үнэлгээ (хөгжүүлэгчийн амлалт дээр үндэслэсэн)
-DOC docs/competitive-analysis/herding-adventures.md:54-65 ## 4. Сүрэг туух механикийн тойм (бусад тоглоомууд)
-DOC docs/competitive-analysis/herding-adventures.md:66-89 ## 5. Манай тоглоомд хамаарах сургамж
-DOC docs/competitive-analysis/herding-adventures.md:90-103 ## 6. Туух механикийн нэгдсэн санал (Herdling + Herding Adventures + бусад)
-DOC docs/competitive-analysis/herding-adventures.md:104-110 ## 7. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
-DOC docs/competitive-analysis/herding-adventures.md:111-119 ## Эх сурвалж
-FILE docs/competitive-analysis/herdling.md 18.6KB 157L
-DOC docs/competitive-analysis/herdling.md:16-27 ## 1. Товч мэдээлэл
-DOC docs/competitive-analysis/herdling.md:28-35 ## 2. Гол давталт
-DOC docs/competitive-analysis/herdling.md:36-67 ## 3. Системүүд
-DOC docs/competitive-analysis/herdling.md:68-76 ## 4. ✅ Сайшаасан зүйлс
-DOC docs/competitive-analysis/herdling.md:77-88 ## 5. ❌ Шүүмжилсэн зүйлс
-DOC docs/competitive-analysis/herdling.md:89-126 ## 6. Манай тоглоомд хамаарах сургамж
-DOC docs/competitive-analysis/herdling.md:127-138 ## 7. Гурван тоглоомын нийтлэг дүгнэлт
-DOC docs/competitive-analysis/herdling.md:139-146 ## 8. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
-DOC docs/competitive-analysis/herdling.md:147-157 ## Эх сурвалж
-FILE docs/competitive-analysis/khiimori.md 17.4KB 146L
-DOC docs/competitive-analysis/khiimori.md:15-26 ## 1. Товч мэдээлэл
-DOC docs/competitive-analysis/khiimori.md:27-34 ## 2. Гол давталт (core loop)
-DOC docs/competitive-analysis/khiimori.md:35-64 ## 3. Системүүд
-DOC docs/competitive-analysis/khiimori.md:65-75 ## 4. ✅ Юуг сайшаасан бэ
-DOC docs/competitive-analysis/khiimori.md:76-88 ## 5. ❌ Юуг шүүмжилсэн бэ
-DOC docs/competitive-analysis/khiimori.md:89-127 ## 6. Манай тоглоомд хамаарах сургамж
-DOC docs/competitive-analysis/khiimori.md:128-134 ## 7. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
-DOC docs/competitive-analysis/khiimori.md:135-146 ## Эх сурвалж
-FILE docs/competitive-analysis/medieval-dynasty.md 14.5KB 130L
-DOC docs/competitive-analysis/medieval-dynasty.md:16-27 ## 1. Товч мэдээлэл
-DOC docs/competitive-analysis/medieval-dynasty.md:28-36 ## 2. Гол давталт
-DOC docs/competitive-analysis/medieval-dynasty.md:37-47 ## 3. Системүүд
-DOC docs/competitive-analysis/medieval-dynasty.md:48-57 ## 4. ✅ Сайшаасан зүйлс (жингээр)
-DOC docs/competitive-analysis/medieval-dynasty.md:58-72 ## 5. ❌ Шүүмжилсэн зүйлс (жингээр)
-DOC docs/competitive-analysis/medieval-dynasty.md:73-108 ## 6. Манай тоглоомд хамаарах сургамж
-DOC docs/competitive-analysis/medieval-dynasty.md:109-116 ## 7. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
-DOC docs/competitive-analysis/medieval-dynasty.md:117-130 ## Эх сурвалж
-FILE docs/competitive-analysis/mount-and-blade-warband.md 14.5KB 124L
-DOC docs/competitive-analysis/mount-and-blade-warband.md:16-27 ## 1. Товч мэдээлэл
-DOC docs/competitive-analysis/mount-and-blade-warband.md:28-35 ## 2. Гол давталт
-DOC docs/competitive-analysis/mount-and-blade-warband.md:36-45 ## 3. ✅ Сайшаасан зүйлс
-DOC docs/competitive-analysis/mount-and-blade-warband.md:46-57 ## 4. ❌ Шүүмжилсэн зүйлс
-DOC docs/competitive-analysis/mount-and-blade-warband.md:58-92 ## 5. Манай тоглоомд хамаарах сургамж
-DOC docs/competitive-analysis/mount-and-blade-warband.md:93-103 ## 6. Таван тоглоомын нийтлэг дүгнэлт (энэ ээлжийн судалгаа)
-DOC docs/competitive-analysis/mount-and-blade-warband.md:104-110 ## 7. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
-DOC docs/competitive-analysis/mount-and-blade-warband.md:111-124 ## Эх сурвалж
-FILE docs/competitive-analysis/nomad-steppeborn-saga.md 17.3KB 161L
-DOC docs/competitive-analysis/nomad-steppeborn-saga.md:16-28 ## 1. Товч мэдээлэл
-DOC docs/competitive-analysis/nomad-steppeborn-saga.md:29-32 ## 2. Амласан гол давталт
-DOC docs/competitive-analysis/nomad-steppeborn-saga.md:33-58 ## 3. Амласан системүүд
-DOC docs/competitive-analysis/nomad-steppeborn-saga.md:59-69 ## 4. ✅ Сайн тал (санаа, чиглэлийн хувьд)
-DOC docs/competitive-analysis/nomad-steppeborn-saga.md:70-84 ## 5. ❌ Эрсдэл, сул тал
-DOC docs/competitive-analysis/nomad-steppeborn-saga.md:85-119 ## 6. Манай тоглоомд хамаарах сургамж
-DOC docs/competitive-analysis/nomad-steppeborn-saga.md:120-135 ## 7. Khiimori-тэй харьцуулалт
-DOC docs/competitive-analysis/nomad-steppeborn-saga.md:136-142 ## 8. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
-DOC docs/competitive-analysis/nomad-steppeborn-saga.md:143-149 ## 9. Дараагийн судлах тоглоом (санал)
-DOC docs/competitive-analysis/nomad-steppeborn-saga.md:150-161 ## Эх сурвалж
-FILE docs/competitive-analysis/ranch-simulator.md 11.3KB 111L
-DOC docs/competitive-analysis/ranch-simulator.md:16-28 ## 1. Товч мэдээлэл
-DOC docs/competitive-analysis/ranch-simulator.md:29-37 ## 2. Гол давталт
-DOC docs/competitive-analysis/ranch-simulator.md:38-45 ## 3. ✅ Сайшаасан зүйлс
-DOC docs/competitive-analysis/ranch-simulator.md:46-59 ## 4. ❌ Шүүмжилсэн зүйлс
-DOC docs/competitive-analysis/ranch-simulator.md:60-93 ## 5. Манай тоглоомд хамаарах сургамж
-DOC docs/competitive-analysis/ranch-simulator.md:94-100 ## 6. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
-DOC docs/competitive-analysis/ranch-simulator.md:101-111 ## Эх сурвалж
-FILE docs/competitive-analysis/russian-village-simulator.md 16.0KB 128L
-DOC docs/competitive-analysis/russian-village-simulator.md:18-32 ## 1. Товч мэдээлэл
-DOC docs/competitive-analysis/russian-village-simulator.md:33-44 ## 2. Агуулга
-DOC docs/competitive-analysis/russian-village-simulator.md:45-52 ## 3. ✅ Тоглогчид юуг таашаасан бэ
-DOC docs/competitive-analysis/russian-village-simulator.md:53-61 ## 4. ❌ Шүүмжилсэн зүйлс
-DOC docs/competitive-analysis/russian-village-simulator.md:62-72 ## 5. Дэд жанрын зураглал — «Орос амьдралын симулятор»
-DOC docs/competitive-analysis/russian-village-simulator.md:73-105 ## 6. Манай тоглоомд хамаарах сургамж
-DOC docs/competitive-analysis/russian-village-simulator.md:106-113 ## 7. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
-DOC docs/competitive-analysis/russian-village-simulator.md:114-128 ## Эх сурвалж
-FILE docs/competitive-analysis/stardew-valley.md 13.5KB 125L
-DOC docs/competitive-analysis/stardew-valley.md:16-26 ## 1. Товч мэдээлэл
-DOC docs/competitive-analysis/stardew-valley.md:27-34 ## 2. Гол давталт
-DOC docs/competitive-analysis/stardew-valley.md:35-48 ## 3. Урт хугацааны сэдлийн бүтэц (гол сургамж)
-DOC docs/competitive-analysis/stardew-valley.md:49-58 ## 4. ✅ Сайшаасан зүйлс (Steam сэтгэгдлийн жингээр)
-DOC docs/competitive-analysis/stardew-valley.md:59-71 ## 5. ❌ Шүүмжилсэн зүйлс (жингээр)
-DOC docs/competitive-analysis/stardew-valley.md:72-104 ## 6. Манай тоглоомд хамаарах сургамж
-DOC docs/competitive-analysis/stardew-valley.md:105-112 ## 7. Нээлттэй асуулт (🙋 → `mvp-spec.md` §13)
-DOC docs/competitive-analysis/stardew-valley.md:113-125 ## Эх сурвалж
-FILE docs/competitive-analysis/summary.md 29.7KB 248L
-DOC docs/competitive-analysis/summary.md:17-28 ## 0. Гол 7 дүгнэлт
-DOC docs/competitive-analysis/summary.md:29-46 ## 1. Судалсан тоглоомууд
-DOC docs/competitive-analysis/summary.md:47-56 ## 2. Эрэмбэлэх арга
-DOC docs/competitive-analysis/summary.md:57-116 ## 3. Эрэмбэлсэн дүгнэлт
-DOC docs/competitive-analysis/summary.md:117-157 ## 4. Гол шийдвэрүүдийн хувилбарууд (дэлгэрэнгүй)
-DOC docs/competitive-analysis/summary.md:158-171 ## 5. Тоглоомуудын хоорондын зөрчил
-DOC docs/competitive-analysis/summary.md:172-200 ## 6. Зах зээл, борлуулалтын сургамж
-DOC docs/competitive-analysis/summary.md:201-213 ## 7. Манай ялгарах байр суурь (нэг дор)
-DOC docs/competitive-analysis/summary.md:214-242 ## 8. Шийдвэрийн асуултууд 🙋
-DOC docs/competitive-analysis/summary.md:243-248 ## Эх сурвалж
-FILE docs/decisions.md 20.0KB 130L
-DOC docs/decisions.md:16-125 ## 0. Хэрэглэгчийн шийдвэрийн түүх
-DOC docs/decisions.md:126-130 ## 13. MVP-ийн хүрээ хаагдсан (2026-11-15)
+FILE docs/decisions.md 22.3KB 139L
+DOC docs/decisions.md:16-134 ## 0. Хэрэглэгчийн шийдвэрийн түүх
+DOC docs/decisions.md:135-139 ## 13. MVP-ийн хүрээ хаагдсан (2026-11-15)
 FILE docs/grazing-livestock.md 27.4KB 316L
 DOC docs/grazing-livestock.md:17-125 ## 1. Малын үзүүлэлтүүд
 DOC docs/grazing-livestock.md:126-146 ## 2. Үнэ = амьдын жин × кг-ын үнэ
@@ -2052,23 +1941,21 @@ DOC docs/plan/LEAD.md:26-32 ## 3. Явж буй ажил (энэ тэмдэгл�
 DOC docs/plan/LEAD.md:33-45 ## 4. Хэрэглэгчийн шийдвэр хүлээж буй
 DOC docs/plan/LEAD.md:46-50 ## 5. Дараагийн алхам
 DOC docs/plan/LEAD.md:51-54 ## 6. Контекст хэмнэх (2026-11-16)
-FILE docs/plan/M6.md 21.3KB 73L
+FILE docs/plan/M6.md 6.7KB 51L
 DOC docs/plan/M6.md:15-17 ## Зорилго
 DOC docs/plan/M6.md:18-34 ## MVP «дууссан» шалгуур (D1–D10 — M6 ба M7-ийн нийт)
-DOC docs/plan/M6.md:35-37 ## Одоогийн байдал
-DOC docs/plan/M6.md:38-56 ## Блокууд
-DOC docs/plan/M6.md:57-63 ## Жолооч: сум руу шууд явуулах + 9 цагийн аяллын засвар (2026-11-16) ✅
-DOC docs/plan/M6.md:64-71 ## Эрсдэл
-DOC docs/plan/M6.md:72-73 ## Хуваарь
-FILE docs/plan/M7.md 7.6KB 31L
+DOC docs/plan/M6.md:35-47 ## Нээлттэй ажил
+DOC docs/plan/M6.md:48-51 ## Зогссон цэг
+FILE docs/plan/M7.md 7.7KB 34L
 DOC docs/plan/M7.md:12-22 ## Блокууд
 DOC docs/plan/M7.md:23-27 ## Асуулга (10 асуулт)
-DOC docs/plan/M7.md:28-31 ## Эрсдэл
-FILE docs/plan/V.md 84.6KB 299L
+DOC docs/plan/M7.md:28-32 ## Эрсдэл
+DOC docs/plan/M7.md:33-34 ## Зогссон цэг
+FILE docs/plan/V.md 6.2KB 50L
 DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
-DOC docs/plan/V.md:24-265 ## Блокууд ба чеклист (2026-11-15)
-DOC docs/plan/V.md:266-299 ## Зогссон цэг
+DOC docs/plan/V.md:24-44 ## Нээлттэй ажил
+DOC docs/plan/V.md:45-50 ## Зогссон цэг
 FILE docs/plan/playtest.md 23.5KB 143L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
 DOC docs/plan/playtest.md:19-39 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
@@ -2089,6 +1976,10 @@ DOC docs/seasons-camps.md:81-86 ## 6. Төллөлт
 DOC docs/seasons-camps.md:87-92 ## 7. Отор (M5-ын үргэлжлэл)
 DOC docs/seasons-camps.md:93-99 ## 8. Дүрслэл, UI
 DOC docs/seasons-camps.md:100-104 ## 9. Тэнцвэр ба 🙋
+FILE docs/summary.md 2.9KB 26L
+DOC docs/summary.md:12-20 ## 0. Гол 7 дүгнэлт
+DOC docs/summary.md:21-24 ## 3. Сэдвүүд (дэлгэрэнгүй → [[summary-full]] §3)
+DOC docs/summary.md:25-26 ## 6–7. Зах зээл, ялгарах байр суурь
 FILE docs/visuals-plan.md 28.3KB 277L
 DOC docs/visuals-plan.md:19-31 ## 1. Зорилго
 DOC docs/visuals-plan.md:32-40 ## 2. Зарчим

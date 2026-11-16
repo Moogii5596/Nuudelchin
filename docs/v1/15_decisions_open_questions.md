@@ -1,7 +1,7 @@
 ---
 title: 15. Шийдвэрийн бүртгэл ба нээлттэй асуултууд
 type: Log
-status: Draft
+status: Archived
 last_updated: 2026-11-15
 tags: [v1, gdd, decisions]
 ---

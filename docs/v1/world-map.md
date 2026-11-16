@@ -1,7 +1,7 @@
 ---
 title: Дэлхийн газрын зураг, Говийн 2-р сум, Нийслэл
 type: Spec
-status: Draft
+status: Active
 last_updated: 2026-11-15
 tags: [v1, world-map]
 ---

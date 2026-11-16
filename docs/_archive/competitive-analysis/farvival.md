@@ -1,7 +1,7 @@
 ---
 title: Өрсөлдөгчийн шинжилгээ — Farvival
 type: Research
-status: Active
+status: Archived
 last_updated: 2026-11-15
 tags: [research, competitive-analysis, farvival]
 ---

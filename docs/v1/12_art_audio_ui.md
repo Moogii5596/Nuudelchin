@@ -1,7 +1,7 @@
 ---
 title: 12. Уран сайхан, дуу хөгжим, интерфейс
 type: Spec
-status: Draft
+status: Active
 last_updated: 2026-11-13
 tags: [v1, gdd]
 ---

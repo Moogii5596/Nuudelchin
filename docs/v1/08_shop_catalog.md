@@ -1,7 +1,7 @@
 ---
 title: 08. Дэлгүүрийн каталог
 type: Spec
-status: Draft
+status: Archived
 last_updated: 2026-11-13
 tags: [v1, gdd]
 ---

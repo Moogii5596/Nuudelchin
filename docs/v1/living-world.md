@@ -1,7 +1,7 @@
 ---
 title: Амьд ертөнц: «Би Монголын хөдөө малчин болчихлоо»
 type: Spec
-status: Draft
+status: Active
 last_updated: 2026-11-15
 tags: [v1, living-world]
 ---

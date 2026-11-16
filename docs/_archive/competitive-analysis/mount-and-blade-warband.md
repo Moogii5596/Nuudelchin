@@ -1,7 +1,7 @@
 ---
 title: Өрсөлдөгчийн шинжилгээ — Mount & Blade: Warband
 type: Research
-status: Active
+status: Archived
 last_updated: 2026-11-15
 tags: [research, competitive-analysis, mount-and-blade]
 ---

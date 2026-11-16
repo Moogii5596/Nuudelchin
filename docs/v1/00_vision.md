@@ -1,7 +1,7 @@
 ---
 title: 00. Алсын хараа
 type: Spec
-status: Draft
+status: Active
 last_updated: 2026-11-13
 tags: [v1, gdd]
 ---
