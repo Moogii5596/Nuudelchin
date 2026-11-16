@@ -1,0 +1,25 @@
+{
+  "_doc": "Замын тэмдэг (M6.5, mvp-spec §10.2). Шахахгүй, цагийн хязгааргүй. stages = урт замын үе шат (өдрийн 20:00-д шалгагдана); firsts = жижиг «анхны» мэдэгдлүүд; seasonGoals = улирлын зөөлөн зорилт (өвөө, эмээгийн зөвлөгөө, заавал биш). Нөхцөл: sheepUnits (хонин толгой, animals.json жин: хонь 1, ямаа 0.9, үхэр 6, адуу 7), gerWalls (өөрийн гэрийн ханын тоо ≥), speciesKinds (ялгаатай төрлийн мал ≥), helpers, animals (нийт мал ≥), stat (state.stats.<нэр> ≥ min), vehicle, winterPassed. Нэр, тайлбар — i18n `milestone.<id>`. ceremony = баярын мөч (ёслол) гарах үе шат.",
+  "stages": [
+    { "id": "young", "cond": {} },
+    { "id": "homeowner", "cond": { "gerWalls": "economy.goalGerWalls", "sheepUnits": "economy.goalSheepUnits" }, "ceremony": true },
+    { "id": "fullHerd", "cond": { "sheepUnits": 100, "speciesKinds": 3 } },
+    { "id": "townOwner", "cond": { "sheepUnits": 300, "helpers": 1 } },
+    { "id": "thousand", "cond": { "animals": 1000 } }
+  ],
+  "firsts": [
+    { "id": "firstSale", "cond": { "stat": { "name": "salesIncome", "min": 1 } } },
+    { "id": "cart", "cond": { "vehicle": "horseCart" } },
+    { "id": "firstBirth", "cond": { "stat": { "name": "births", "min": 1 } } },
+    { "id": "firstMove", "cond": { "stat": { "name": "moves", "min": 1 } } },
+    { "id": "firstWinter", "cond": { "winterPassed": true } },
+    { "id": "firstHelper", "cond": { "helpers": 1 } },
+    { "id": "sheep20", "cond": { "sheepUnits": 20 } }
+  ],
+  "seasonGoals": {
+    "autumn": { "hay": 10, "shed": true },
+    "winter": { "hay": 1 },
+    "spring": { "births": 10 }
+  },
+  "dailyHistoryMax": 600
+}

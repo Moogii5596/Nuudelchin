@@ -24,6 +24,7 @@ import { moveStep } from './systems/camps';
 import { herderStep } from './systems/herder';
 import { ensureInteriorValid } from './systems/interior';
 import { goalGerReached } from './systems/gerLayout';
+import { checkMilestones, recordDay } from './systems/milestones';
 import { townDaily, townMonthly, townSeason, type TownEvent } from './systems/town';
 import { wolvesDaily, wolvesStep, nightRaid, endRaid, type WolfEvent } from './systems/wolves';
 
@@ -47,9 +48,11 @@ export interface DayReport extends DayStats {
   dogs: number;
   storageUsed: number;
   goalReached: boolean;
+  /** M6.5: энэ өдөр хүрсэн замын тэмдгүүд (онцлох мөр) */
+  milestones: string[];
 }
 
-export type SimEvent = ClockEvent | WolfEvent | TravelEvent | HelperEvent | { type: 'dayReport'; report: DayReport } | TownEvent | { type: 'season'; season: Season; day: number };
+export type SimEvent = { type: 'milestone'; id: string; kind: 'stage' | 'first'; ceremony: boolean; day: number } | ClockEvent | WolfEvent | TravelEvent | HelperEvent | { type: 'dayReport'; report: DayReport } | TownEvent | { type: 'season'; season: Season; day: number };
 
 export class Sim {
   readonly cfg: GameConfig;
@@ -118,6 +121,7 @@ export class Sim {
     processingStep(cfg, state);
     for (const ev of mapStep(cfg, state, rng)) this.emit(ev);
     if (moveStep(cfg, state, rng)) {
+      state.stats.moves++;
       this.refreshQuality();
       this.centers = new Map();
       state.flockCenters = [];
@@ -227,7 +231,20 @@ export class Sim {
       dogs: state.dogs.length,
       storageUsed: storage.used(state),
       goalReached: goal,
+      milestones: [],
     };
+    // M6.5: статистик, замын тэмдэг (өдрийн 20:00)
+    const S = state.stats, inc = Object.entries(t.income), sales = inc.filter(([k]) => k !== 'rent' && k !== 'loan').reduce((a, [, n]) => a + (n ?? 0), 0);
+    S.income += inc.reduce((a, [, n]) => a + (n ?? 0), 0);
+    S.salesIncome += sales;
+    S.expenses += Object.values(t.expenses).reduce((a, n) => a + n, 0);
+    S.births += t.births;
+    S.deaths += t.deaths;
+    S.wolfLost += Object.values(t.wolfKills).reduce((a, n) => a + (n ?? 0), 0);
+    recordDay(cfg, state, day, su);
+    const reached = checkMilestones(cfg, state, day);
+    report.milestones = reached.map((r) => r.id);
+    for (const r of reached) this.emit({ type: 'milestone', id: r.id, kind: r.kind, ceremony: r.ceremony, day });
     state.dayStartMoney = state.money;
     state.today = emptyDayStats();
     this.emit({ type: 'dayReport', report });

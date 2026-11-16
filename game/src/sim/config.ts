@@ -25,6 +25,8 @@ import npcsJson from '../../../data/npcs.json';
 import { npcConfigErrors, type NpcsConfig } from './systems/npc';
 import gerJson from '../../../data/ger.json';
 import difficultyJson from '../../../data/difficulty.json';
+import milestonesJson from '../../../data/milestones.json';
+import { validateMilestones, type MilestonesConfig } from './systems/milestones';
 import { validateDifficultyConfig, type DifficultyConfig } from './systems/difficulty';
 import { validateInteriors, type InteriorsConfig } from './systems/interior';
 import type { GerSimConfig } from './systems/gerLayout';
@@ -270,6 +272,8 @@ export interface GameConfig {
   npcs: NpcsConfig;
   /** M6.10: тайван тохиргооны гулсуурын хүрээ, анхдагч — data/difficulty.json */
   difficulty: DifficultyConfig;
+  /** M6.5: замын тэмдэг — data/milestones.json */
+  milestones: MilestonesConfig;
   /** Гэрийн загварын хэмжээс, тавилгын байрлал (data/ger.json — render/ger-тэй хуваалцана; хаалганы цэг, дотор саад) */
   ger: GerSimConfig;
   start: { camp: string; home: string; vehicles: string[]; storageLevel: number; animals: StartAnimal[] };
@@ -299,6 +303,7 @@ export function loadConfig(): GameConfig {
     npcs: npcsJson as unknown as NpcsConfig,
     ger: gerJson.ger as unknown as GerSimConfig,
     difficulty: difficultyJson as unknown as DifficultyConfig,
+    milestones: milestonesJson as unknown as MilestonesConfig,
   };
   const errors = validateConfig(cfg);
   if (errors.length) {
@@ -363,6 +368,7 @@ export function validateConfig(cfg: GameConfig): string[] {
   e.push(...npcConfigErrors(cfg));
   e.push(...validateInteriors(cfg));
   e.push(...validateDifficultyConfig(cfg));
+  e.push(...validateMilestones(cfg));
   if (!cfg.storage.levels[cfg.start.storageLevel]) e.push('start.storageLevel: агуулахын түвшин алга');
   for (const a of cfg.start.animals) if (!cfg.animals.species[a.species]) e.push(`start.animals: "${a.species}" алга`);
   return e;

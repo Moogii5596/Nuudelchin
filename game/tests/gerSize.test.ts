@@ -119,7 +119,7 @@ describe('Хадгалалт: homeSize, migrate 14 → 15', () => {
   });
 
   it('v14 хадгалалт: homeSize = small4, хүлээгдэж буй ger захиалгад size нөхөгдөнө', () => {
-    expect(SAVE_VERSION).toBe(15);
+    expect(SAVE_VERSION).toBeGreaterThanOrEqual(15);
     const sim = newSim(5);
     sim.state.player.orders.push({ kind: 'ger', size: 'big4' });
     const old = JSON.parse(JSON.stringify(sim.state)) as Record<string, unknown> & { player: { orders: { kind: string; size?: string }[] }; version: number };
@@ -127,7 +127,7 @@ describe('Хадгалалт: homeSize, migrate 14 → 15', () => {
     delete old.player.orders[0]!.size;
     old.version = 14;
     const st = deserialize(cfg, JSON.stringify(old));
-    expect(st.version).toBe(15);
+    expect(st.version).toBe(SAVE_VERSION);
     expect(st.homeSize).toBe(cfg.ger.home.size);
     expect(st.player.orders[0]).toEqual({ kind: 'ger', size: 'small4' });
     expect(MIGRATIONS[14]).toBeTypeOf('function');

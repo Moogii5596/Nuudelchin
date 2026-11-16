@@ -37,6 +37,8 @@ export type Command =
   | { type: 'toggleUurga' }           // шилбүүр/уурга барих/тавих (U)
   | { type: 'callHorse' }             // морь дуудах (H)
   | { type: 'scareWolves' }           // чоно үргээх (Q)
+  | { type: 'ackCeremony' }                       // M6.5: баярын мөчийг хаах («▶ Үргэлжлүүлэх»)
+  | { type: 'setShowMilestones'; on: boolean }   // M6.5: HUD-ийн замын тэмдгийн самбар
   | { type: 'setDifficulty'; patch: Partial<Difficulty> }   // M6.10: гулсуур (тоглолтын дундаас ч)
   | { type: 'debugAddAnimals'; n: number; x?: number; z?: number }   // туршилтын цэс: мал нэмэх
   | { type: 'pickup'; ids: number[] | 'nearby' }
@@ -165,6 +167,14 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
       const n = scareWolves(cfg, state);
       return n ? ok(m('sim.huu_hai_wolves_fled', { n })) : fail(m('sim.no_wolves_nearby'));
     }
+
+    case 'ackCeremony':
+      state.milestones.ceremony = null;
+      return ok();
+
+    case 'setShowMilestones':
+      state.settings.showMilestones = cmd.on;
+      return ok();
 
     case 'setDifficulty': {
       state.settings.difficulty = clampDifficulty(cfg, state.settings.difficulty, cmd.patch);

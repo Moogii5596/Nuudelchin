@@ -32,6 +32,7 @@ import { PRODUCT_EMOJI, SEASON_EMOJI, SEASON_NAME, fmtMinutes, fmtMoney, fmtNum 
 import { PlayerController } from './input/controller';
 import { t } from './i18n/i18n';
 import { tm } from './i18n/msg';
+import { nextStage, seasonGoal } from './sim/systems/milestones';
 import type { Msg } from './sim/msg';
 import { SaveStore } from './persist/idb';
 import { Autosave, attachPageEvents, attachSimEvents } from './persist/autosave';
@@ -173,6 +174,7 @@ function start(boot?: Boot): void {
     autosave, dispatch: (cmd) => sim.command(cmd), hasGame: !!boot?.state,
     toast, getQuality: () => curQuality,
     setQuality: (q) => { curQuality = q; setQuality(q); view.applyQuality(QUALITY_SPEC[q], q, state); },
+    openMilestones: () => panels.open('milestones'),
     openHelp: () => { document.getElementById('help')!.style.display = 'block'; },
     reload: () => {
       // ?lang=mn (туршилт) хэл солиход саад болохгүй: параметрийг авч хаяад дахин ачаална
@@ -186,6 +188,7 @@ function start(boot?: Boot): void {
   let huntToastT = 0;
   sim.on((e) => {
     if (e.type === 'dayReport' && showReports) panels.showReport(e.report);
+    else if (e.type === 'milestone') toast(t(e.kind === 'stage' ? 'ms.reached' : 'ms.first_toast', { name: t((e.kind === 'stage' ? 'ms.stage.' : 'ms.first.') + e.id) }), 'good');
     else if (e.type === 'wolfHunt') {
       const now = performance.now();
       if (now - huntToastT > 4000) {
@@ -403,6 +406,7 @@ function start(boot?: Boot): void {
       if (steps >= 60) acc = 0;
     }
     autosave?.flush();   // алхмуудын завсарт (state бүтэн)
+    if (state.milestones.ceremony && !panels.isOpen && !menu.isOpen && !photoMode) panels.open('ceremony');   // M6.5 баярын мөч (хадгалалтаас ачаалсан үед ч хүлээгдэж байвал)
     if (placeKey() !== previousPlace) {
       previousPlace = placeKey();
       const fade = document.getElementById('sceneFade')!;
@@ -466,6 +470,15 @@ function start(boot?: Boot): void {
       const helpersTxt = hs.list.length
         ? t('ui.helpers_j', { length: hs.list.length, x: hs.otor.length ? t('ui.otor', { length: hs.otor.length }) : '', x2: hs.list.some((h) => h.trip) ? t('ui.on_the_road') : '' })
         : '';
+      // M6.5: замын тэмдгийн жижиг самбар (нууж болно; цагийн тоолуур, «амжаагүй» сануулга ҮГҮЙ)
+      let msTxt = '';
+      if (state.settings.showMilestones) {
+        const ns = nextStage(cfg, state), sg = seasonGoal(cfg, state);
+        const mark = (done: boolean): string => (done ? ' ✓' : '');
+        const stage = ns ? ns.parts.map((p) => t('ms.hud.' + p.key, { have: p.have, need: p.need }) + mark(p.done)).join(' · ') : '';
+        const soft = sg && sg.items.length ? t('ms.season.' + sg.season) + ': ' + sg.items.map((i) => t('ms.goal.' + i.key, { have: i.have, need: i.need }) + mark(i.done)).join(' · ') : '';
+        msTxt = [stage, soft].filter(Boolean).join('<br>');
+      }
       const sp = seasonProgress(cfg, state.time.day);
       const cs = state.camps[state.campId];
       const snowTxt = cs && cs.snow >= 0.5 ? t('ui.cm_grazeable', { x: Math.round(cs.snow), x2: Math.round(campAccess(cfg, cs.snow) * 100) }) : '';
@@ -479,6 +492,7 @@ function start(boot?: Boot): void {
         `${t('hud.animals')}: ${counts.join(' · ')}<br>` +
         `📦 ${fmtNum(storage.used(state))}/${storage.capacity(cfg, state)} · ✋ ${carryTxt} (${fmtNum(carried)}/${cfg.products.carryUnits})${onGround ? t('ui.on_the_ground', { onGround }) : ''}<br>` +
         `${t('hud.camp')}: ${t('camp.' + state.campId)} · ${t('hud.grass')} ${Math.round(grassAvg * 100)}% · ${t('hud.degrade')} ${Math.round(degrade * 100)}%<br>` +
+        (msTxt ? `${msTxt}<br>` : '') +
         `${status} · ${t('hud.speed')}: ${speed}×${fast ? ' ⏩' : ''} <small>(1/2/3)</small><br>` +
         dogsTxt +
         helpersTxt +

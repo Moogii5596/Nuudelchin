@@ -58,6 +58,7 @@ export interface MenuDeps {
   getQuality: () => Quality;
   setQuality: (q: Quality) => void;
   openHelp: () => void;
+  openMilestones: () => void;
   reload: () => void;
   /** Цэсэнд хамгийн эхний товшилт (утсанд бүтэн дэлгэц/хэвтээ түгжих зөвшөөрөл) */
   onFirstTap?: () => void;
@@ -257,6 +258,7 @@ export class MenuUI {
         ${this.netBtn('transfer', '📤', t('menu.transfer'), false)}
         ${this.netBtn('code', '📥', t('menu.enterCode'), !this.d.store)}
         <button class="mb" data-a="settings">⚙ ${t('menu.settings')}</button>
+        <button class="mb" data-a="ms">🏆 ${t('menu.milestones')}</button>
         <button class="mb" data-a="help">❓ ${t('menu.help')}</button>
         <button class="mb" data-a="main">🏠 ${t('menu.mainMenu')}</button>
       </div>
@@ -332,7 +334,11 @@ export class MenuUI {
     let h = this.back('⚙ ' + t('menu.settings'));
     h += `<div class="row"><label>${t('menu.graphics')}</label><div class="pick">${QUALITIES.map((x) => `<button class="mb ${x === q ? 'on' : ''}" data-a="quality" data-v="${x}">${esc(QUALITY_NAME[x])}</button>`).join('')}</div></div>`;
     h += `<div class="row"><label>${t('menu.language')}</label><div class="pick"><button class="mb ${lang === 'mn' ? 'on' : ''}" data-a="lang" data-v="mn">Монгол</button><button class="mb ${lang === 'en' ? 'on' : ''}" data-a="lang" data-v="en">English</button></div></div>`;   // i18n-skip: хэлний нэр өөрийн хэл дээр
-    if (this.root === 'game') h += `<h2 style="margin-top:10px">${t('menu.diff.title')}</h2>${this.difficultyHtml(this.d.state.settings.difficulty)}`;
+    if (this.root === 'game') {
+      const on = this.d.state.settings.showMilestones;
+      h += `<div class="row"><label>${t('menu.showMilestones')}</label><div class="pick"><button class="mb ${on ? 'on' : ''}" data-a="showMs" data-v="1">${t('menu.yes')}</button><button class="mb ${on ? '' : 'on'}" data-a="showMs" data-v="0">${t('menu.no')}</button></div></div>`;
+      h += `<h2 style="margin-top:10px">${t('menu.diff.title')}</h2>${this.difficultyHtml(this.d.state.settings.difficulty)}`;
+    }
     else h += `<div class="hint">${t('menu.diff.atNew')}</div>`;
     return h;
   }
@@ -431,6 +437,8 @@ export class MenuUI {
       case 'new': this.draft = null; this.go('new'); return;
       case 'slots': case 'file': case 'settings': this.go(a); return;
       case 'help': this.close(); this.d.openHelp(); return;
+      case 'ms': this.close(); this.d.openMilestones(); return;
+      case 'showMs': this.d.dispatch({ type: 'setShowMilestones', on: v === '1' }); this.render(); return;
       case 'install':
         if (pwa.native) await pwa.prompt();
         else this.d.toast(t('menu.install.ios'), 'good');

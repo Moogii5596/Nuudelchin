@@ -36,7 +36,7 @@ import { t } from '../../i18n/i18n';
 import { gerLadder, goalGerReached } from '../../sim/systems/gerLayout';
 import type { Msg } from '../../sim/msg';
 
-type Kind = 'storage' | 'cargo' | 'shop' | 'lot' | 'town' | 'arrive' | 'report' | 'dogs' | 'camps' | 'cheat' | 'teahouse' | 'helpers';
+type Kind = 'storage' | 'cargo' | 'shop' | 'lot' | 'town' | 'arrive' | 'report' | 'dogs' | 'camps' | 'cheat' | 'teahouse' | 'helpers' | 'milestones' | 'ceremony';
 
 /** Туслахуудын цонхны дэд хэсэг: жагсаалт, отор явуулах, малаар цалинжуулах */
 interface HelperView {
@@ -162,6 +162,7 @@ export class Panels {
   }
 
   close(): void {
+    if (this.kind === 'ceremony') this.hooks.dispatch({ type: 'ackCeremony' });   // Esc, гадна товшилт ч баярын мөчийг хаана (давтан гарахгүй)
     if (this.kind === 'report') {
       this.report = this.reports.shift() ?? null;
       if (this.report) {
@@ -214,8 +215,40 @@ export class Panels {
     else if (this.kind === 'cheat') html = this.cheatHtml();
     else if (this.kind === 'teahouse') html = this.teahouseHtml();
     else if (this.kind === 'helpers') html = this.helpersHtml();
+    else if (this.kind === 'milestones') html = this.milestonesHtml();
+    else if (this.kind === 'ceremony') html = this.ceremonyHtml();
     this.box.innerHTML = touchKeys(html);   // утсанд товчны нэрийг товчны дүрсээр
     this.box.scrollTop = scroll;
+  }
+
+  // ======================= замын тэмдэг (M6.5) =======================
+  private milestonesHtml(): string {
+    const { cfg, state } = this;
+    const row = (grp: 'stage' | 'first', id: string, desc: boolean): string => {
+      const day = state.milestones.reached[id];
+      return `<tr><td>${day !== undefined ? '✅' : '⬜'} <b>${t('ms.' + grp + '.' + id)}</b>${desc ? `<br><span class="muted">${t('ms.stage.' + id + '.desc')}</span>` : ''}</td><td class="num ${day !== undefined ? 'good' : 'muted'}">${day !== undefined ? t('ms.reached_day', { day }) : t('ms.not_yet')}</td></tr>`;
+    };
+    return `<h2>${t('ms.title')} <span class="close" data-act="close">✕</span></h2><h3>${t('ms.long_path')}</h3><table>${cfg.milestones.stages.map((d) => row('stage', d.id, true)).join('')}</table>
+      <h3>${t('ms.firsts')}</h3><table>${cfg.milestones.firsts.map((d) => row('first', d.id, false)).join('')}</table>`;
+  }
+
+  /** Хоёр цуваа график (SVG): хонин толгой, мөнгө */
+  private spark(values: number[], color: string): string {
+    if (values.length < 2) return '';
+    const W = 300, H = 70, lo = Math.min(...values), hi = Math.max(...values), span = hi - lo || 1;
+    const pts = values.map((v, i) => `${((i / (values.length - 1)) * W).toFixed(1)},${(H - 4 - ((v - lo) / span) * (H - 8)).toFixed(1)}`).join(' ');
+    return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none"><polyline fill="none" stroke="${color}" stroke-width="2" points="${pts}"/></svg>`;
+  }
+
+  /** Баярын мөч: гэр босгосон дүрслэл (🛖🔥), статистик, график, «▶ Үргэлжлүүлэх» */
+  private ceremonyHtml(): string {
+    const { state } = this;
+    const S = state.stats, d = S.daily;
+    const stat = (k: string, v: string | number): string => `<tr><td>${t('ms.stat.' + k)}</td><td class="num"><b>${v}</b></td></tr>`;
+    return `<div style="text-align:center"><div style="font-size:56px;line-height:1.1">🛖🔥</div><h2 style="justify-content:center">${t('ms.ceremony.title')}</h2><p class="muted">${t('ms.ceremony.text')}</p></div>
+      <table>${stat('days', state.time.day)}${stat('animals', state.animals.length)}${stat('income', fmtMoney(S.income))}${stat('expenses', fmtMoney(S.expenses))}${stat('births', S.births)}${stat('deaths', S.deaths)}${stat('wolfLost', S.wolfLost)}${stat('moves', S.moves)}</table>
+      <div class="cols"><div><h3>${t('ms.graph.sheep')}</h3>${this.spark(d.map((x) => x.sheepUnits), '#7bbf5a')}</div><div><h3>${t('ms.graph.money')}</h3>${this.spark(d.map((x) => x.money), '#c8962c')}</div></div>
+      <p style="text-align:center"><button class="btn gold big" data-act="close">${t('ms.continue')}</button></p>`;
   }
 
   // ======================= агуулах =======================
@@ -601,7 +634,10 @@ export class Panels {
     const cap = storage.capacity(cfg, this.state);
     const goalSU = cfg.economy.goalSheepUnits, walls = cfg.economy.goalGerWalls;
     const profit = r.moneyEnd - r.moneyStart;
-    return t('ui.daily_report_year_money', { day: r.day, x: SEASON_EMOJI[r.season], x2: SEASON_NAME[r.season], x3: yearOf(cfg, r.day), x4: inc.map(([k, n]) => `<tr><td>${k === 'animals' ? t('ui.animals_sold') : k === 'rent' ? t('ui.house_rent') : k === 'loan' ? t('ui.bank_loan') : `${PRODUCT_EMOJI[k] ?? ''} ${productName(k)}`}</td><td class="num good">+${fmtMoney(n ?? 0)}</td></tr>`).join('') || t('ui.no_income_today'), x5: exp.map(([k, n]) => `<tr><td>${expenseName(k)}</td><td class="num bad">${fmtMoney(-(n ?? 0))}</td></tr>`).join(''), x6: profit >= 0 ? 'good' : 'bad', x7: profit >= 0 ? '+' : '', x8: fmtMoney(profit), x9: fmtMoney(r.moneyEnd), x10: fmtMoney(totalInc), x11: fmtMoney(totalExp), x12: prodRows || '<tr><td class="muted" colspan="4">—</td></tr>', x13: fmtNum(r.storageUsed), cap, animals: r.animals, x14: fmtNum(r.sheepUnits), x15: r.births ? t('ui.born', { births: r.births }) : '', x16: r.deaths ? t('ui.died', { deaths: r.deaths }) : '', x17: Math.round(r.avgCondition * 100), x18: Math.round(r.avgGutFill * 100), x19: fmtNum(Math.round(r.avgEweKg * 10) / 10), x20: this.wolfKillsHtml(r), x21: t('camp.' + this.state.campId), campDays: r.campDays, x22: r.snow >= 0.5 ? t('ui.snow_cm_grazing_access', { x: Math.round(r.snow), x2: Math.round(campAccess(cfg, r.snow) * 100) }) : '', x23: r.hayFed > 0 ? t('ui.hay_bales_fed_left', { x: fmtNum(Math.round(r.hayFed * 10) / 10), x2: fmtNum(Math.round(r.hay * 10) / 10) }) : r.season === 'winter' || r.season === 'spring' ? t('ui.hay_feed_bales', { x: r.hay > 0 ? '' : 'bad', x2: fmtNum(Math.round(r.hay * 10) / 10) }) : '', x24: r.coldHit > 0 ? t('ui.animals_lost_condition_sleeping', { coldHit: r.coldHit }) : '', x25: Math.round(r.grass * 100), x26: r.campDegrade > 0.3 ? 'bad' : '', x27: Math.round(r.campDegrade * 100), x28: r.regrowthMult < 0.8 ? 'bad' : '', x29: Math.round(r.regrowthMult * 100), x30: r.campDegrade > 0.6 ? t('ui.the_pasture_is_degraded') : r.campDegrade > 0.3 ? t('ui.time_to_change_camp') : '', x31: Object.entries(r.camps).filter(([id]) => id !== this.state.campId).map(([id, c]) => `${t('camp.' + id)} ${Math.round(c.degrade * 100)}%`).join(' · '), goalSU, walls, x32: Math.min(100, (r.sheepUnits / goalSU) * 100), x33: this.state.home === 'ger' ? t('ui.ger_progress', { mark: goalGerReached(cfg, this.state) ? '✅' : '⬜', label: t('ger.size.' + this.state.homeSize), have: cfg.ger.sizes[this.state.homeSize]!.walls, need: cfg.economy.goalGerWalls }) : t('ui.ger', { x: fmtMoney(cfg.ger.sizes[cfg.ger.home.size]!.price) }), x34: fmtNum(r.sheepUnits), goalSU2: goalSU, x35: r.goalReached ? t('ui.goal_reached') : '' });
+    const html = t('ui.daily_report_year_money', { day: r.day, x: SEASON_EMOJI[r.season], x2: SEASON_NAME[r.season], x3: yearOf(cfg, r.day), x4: inc.map(([k, n]) => `<tr><td>${k === 'animals' ? t('ui.animals_sold') : k === 'rent' ? t('ui.house_rent') : k === 'loan' ? t('ui.bank_loan') : `${PRODUCT_EMOJI[k] ?? ''} ${productName(k)}`}</td><td class="num good">+${fmtMoney(n ?? 0)}</td></tr>`).join('') || t('ui.no_income_today'), x5: exp.map(([k, n]) => `<tr><td>${expenseName(k)}</td><td class="num bad">${fmtMoney(-(n ?? 0))}</td></tr>`).join(''), x6: profit >= 0 ? 'good' : 'bad', x7: profit >= 0 ? '+' : '', x8: fmtMoney(profit), x9: fmtMoney(r.moneyEnd), x10: fmtMoney(totalInc), x11: fmtMoney(totalExp), x12: prodRows || '<tr><td class="muted" colspan="4">—</td></tr>', x13: fmtNum(r.storageUsed), cap, animals: r.animals, x14: fmtNum(r.sheepUnits), x15: r.births ? t('ui.born', { births: r.births }) : '', x16: r.deaths ? t('ui.died', { deaths: r.deaths }) : '', x17: Math.round(r.avgCondition * 100), x18: Math.round(r.avgGutFill * 100), x19: fmtNum(Math.round(r.avgEweKg * 10) / 10), x20: this.wolfKillsHtml(r), x21: t('camp.' + this.state.campId), campDays: r.campDays, x22: r.snow >= 0.5 ? t('ui.snow_cm_grazing_access', { x: Math.round(r.snow), x2: Math.round(campAccess(cfg, r.snow) * 100) }) : '', x23: r.hayFed > 0 ? t('ui.hay_bales_fed_left', { x: fmtNum(Math.round(r.hayFed * 10) / 10), x2: fmtNum(Math.round(r.hay * 10) / 10) }) : r.season === 'winter' || r.season === 'spring' ? t('ui.hay_feed_bales', { x: r.hay > 0 ? '' : 'bad', x2: fmtNum(Math.round(r.hay * 10) / 10) }) : '', x24: r.coldHit > 0 ? t('ui.animals_lost_condition_sleeping', { coldHit: r.coldHit }) : '', x25: Math.round(r.grass * 100), x26: r.campDegrade > 0.3 ? 'bad' : '', x27: Math.round(r.campDegrade * 100), x28: r.regrowthMult < 0.8 ? 'bad' : '', x29: Math.round(r.regrowthMult * 100), x30: r.campDegrade > 0.6 ? t('ui.the_pasture_is_degraded') : r.campDegrade > 0.3 ? t('ui.time_to_change_camp') : '', x31: Object.entries(r.camps).filter(([id]) => id !== this.state.campId).map(([id, c]) => `${t('camp.' + id)} ${Math.round(c.degrade * 100)}%`).join(' · '), goalSU, walls, x32: Math.min(100, (r.sheepUnits / goalSU) * 100), x33: this.state.home === 'ger' ? t('ui.ger_progress', { mark: goalGerReached(cfg, this.state) ? '✅' : '⬜', label: t('ger.size.' + this.state.homeSize), have: cfg.ger.sizes[this.state.homeSize]!.walls, need: cfg.economy.goalGerWalls }) : t('ui.ger', { x: fmtMoney(cfg.ger.sizes[cfg.ger.home.size]!.price) }), x34: fmtNum(r.sheepUnits), goalSU2: goalSU, x35: r.goalReached ? t('ui.goal_reached') : '' });
+    // M6.5: өдрийн онцлох мөр — энэ өдөр хүрсэн замын тэмдэг
+    const hl = r.milestones.length ? `<p class="good">${t('ms.highlight', { x: r.milestones.map((id) => t(cfg.milestones.stages.some((s) => s.id === id) ? 'ms.stage.' + id : 'ms.first.' + id)).join(', ') })}</p>` : '';
+    return html.replace('</h2>', '</h2>' + hl);
   }
 
   private wolfKillsHtml(r: DayReport): string {

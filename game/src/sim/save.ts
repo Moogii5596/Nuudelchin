@@ -200,7 +200,18 @@ export function validateState(cfg: GameConfig, s: GameState): string[] {
     need(isObj(s.town.houses) && isObj(s.town.relatives) && Array.isArray(s.town.summerKids), 'town.houses/relatives/summerKids буруу');
   }
   need(isObj(s.today), 'today алга');
-  if (need(isObj(s.settings), 'settings алга')) e.push(...difficultyProblems(cfg, s.settings.difficulty));
+  if (need(isObj(s.settings), 'settings алга')) {
+    e.push(...difficultyProblems(cfg, s.settings.difficulty));
+    need(typeof s.settings.showMilestones === 'boolean', 'settings.showMilestones: true/false');
+  }
+  if (need(isObj(s.stats), 'stats алга')) {
+    for (const k of ['salesIncome', 'income', 'expenses', 'births', 'deaths', 'wolfLost', 'moves'] as const) need(fin(s.stats[k]), `stats.${k}: тоо`);
+    need(Array.isArray(s.stats.daily) && s.stats.daily.every((d) => isObj(d) && fin(d.day) && fin(d.money) && fin(d.sheepUnits)), 'stats.daily буруу');
+  }
+  if (need(isObj(s.milestones), 'milestones алга')) {
+    need(isObj(s.milestones.reached) && Object.values(s.milestones.reached).every(fin), 'milestones.reached: {id: өдөр}');
+    need(s.milestones.ceremony === null || (isObj(s.milestones.ceremony) && typeof s.milestones.ceremony.id === 'string' && fin(s.milestones.ceremony.day)), 'milestones.ceremony');
+  }
   need(s.goalReachedDay === null || fin(s.goalReachedDay), 'goalReachedDay: тоо эсвэл null');
   void o;
   return e;
