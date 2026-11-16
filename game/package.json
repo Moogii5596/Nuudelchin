@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "test:perf": "vitest run --config vitest.perf.config.ts",
     "balance": "tsx ../tools/balance_sim/run.ts",
-    "codemap": "tsx ../tools/codemap.ts"
+    "codemap": "tsx ../tools/codemap.ts",
+    "houses": "tsx ../tools/genHouseInteriors.ts"
   },
   "dependencies": {
     "three": "^0.187.0"

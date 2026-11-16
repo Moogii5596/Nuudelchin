@@ -1,5 +1,5 @@
 ﻿{
-  "_doc": "gerSize = гэр төрлийн өрөө (render/ger makeGerInterior): r, entry, exit, саад нь data/ger.json-оос тооцогдоно (home — тоглогчийн гэр, helper — туслахын гэр); тавилга нь гэрийн загварын нэг хэсэг тул spots хоосон. dwellingBaseRadius = туслахын/айлын гэрийн хуучин загварын радиус (S1-ээр шинэ загвар холбогдтол). V6.1 Орж болдог барилгын дотор тал. Өрөө бүр өөрийн координаттай (төв 0,0; хаалга нь урд (z+) ханын голд). enterR = гаднах хаалганаас E дарж орох зай (м). exitR = хаалганы дэргэд E дарж гарах зай. counterR = лангуу/тооцооны цэгээс E дарах зай. campDoorOut/dwellingDoorOut = гэрийн хаалганы цэг (гэрийн гадна талаас, м). kindRoom = сумын төвийн барилгын kind → өрөөний төрөл; idRoom = тодорхой барилгын id-д өөр өрөө (хоосон бол kindRoom). V3.5: өрөөний w,d,h нь data/buildings.json-ийн барилгын «дотор өрөө»-д багтана (tests/buildings.test.ts). rooms.*.spots = тавилга байрлуулах цэгүүд (V6.2-т ашиглана, одоохондоо дүрслэгдэхгүй). counter = лангуу: энд E дарвал тухайн барилгын цонх (худалдаа, дуган, ЗДТГ, банк, цайны газар) нээгдэнэ — гаднах хаалганы үйлдэл дотроос ч ажиллана.",
+  "_doc": "gerSize = гэр төрлийн өрөө (render/ger makeGerInterior): r, entry, exit, саад нь data/ger.json-оос тооцогдоно (home — тоглогчийн гэр, helper — туслахын гэр); тавилга нь гэрийн загварын нэг хэсэг тул spots хоосон. dwellingBaseRadius = туслахын/айлын гэрийн хуучин загварын радиус (S1-ээр шинэ загвар холбогдтол). V6.1 Орж болдог барилгын дотор тал. Өрөө бүр өөрийн координаттай (төв 0,0; хаалга нь урд (z+) ханын голд). enterR = гаднах хаалганаас E дарж орох зай (м). exitR = хаалганы дэргэд E дарж гарах зай. counterR = лангуу/тооцооны цэгээс E дарах зай. campDoorOut/dwellingDoorOut = гэрийн хаалганы цэг (гэрийн гадна талаас, м). kindRoom = сумын төвийн барилгын kind → өрөөний төрөл; idRoom = тодорхой барилгын id-д өөр өрөө (хоосон бол kindRoom). V3.5: өрөөний w,d,h нь data/buildings.json-ийн барилгын «дотор өрөө»-д багтана (tests/buildings.test.ts). rooms.*.spots = тавилга байрлуулах цэгүүд (V6.2-т ашиглана, одоохондоо дүрслэгдэхгүй). counter = лангуу: энд E дарвал тухайн барилгын цонх (худалдаа, дуган, ЗДТГ, банк, цайны газар) нээгдэнэ — гаднах хаалганы үйлдэл дотроос ч ажиллана. V3.5: house* өрөө — хашаа байшингийн дотор тал (render/building/interior.ts), хэмжээ, саад, орох/гарах цэг, лангуу нь data/buildings.json-оос тооцогдоно (sim/systems/houseLayout.ts); idRoom «:owned» = худалдаж авсны дараа тавилгатай.",
   "enterR": 3.2,
   "exitR": 1.8,
   "counterR": 2.0,
@@ -19,9 +19,9 @@
     "kindergarten": "kindergarten",
     "temple": "temple",
     "teahouse": "teahouse",
-    "house": "house"
+    "house": "houseA"
   },
-  "idRoom": {},
+  "idRoom": { "plot_sale_1": "houseB", "plot_sale_2": "houseB", "plot_sale_1:owned": "houseBf", "plot_sale_2:owned": "houseBf", "plot_rel_1": "houseA", "plot_rel_2": "houseC" },
   "gerRooms": { "home": "ger", "familyGer": "ger", "helperGer": "helperGer" },
   "rooms": {
     "ger": {
@@ -38,17 +38,37 @@
       "entry": [0, 1.6], "exit": [0, 1.9], "counter": null,
       "spots": []
     },
-    "house": {
-      "shape": "box", "w": 6.6, "d": 5, "h": 2.4,
-      "floor": "#a0825a", "wall": "#d9cbb0", "trim": "#7a5a3a",
+    "houseA": {
+      "shape": "box", "w": 6, "d": 5, "h": 2.2, "house": "houseA",
+      "floor": "#8a5a3a", "wall": "#efe9dc", "trim": "#6e8a8e",
       "light": { "color": "#ffd9a8", "intensity": 8 },
-      "entry": [0, 1.58], "exit": [0, 2.33], "counter": [0, 0.25],
-      "spots": [
-        { "id": "stove", "kind": "stove", "x": -2.47, "z": -1.83, "rot": 0 },
-        { "id": "bed", "kind": "bed", "x": 2.47, "z": -1.67, "rot": 0 },
-        { "id": "table", "kind": "table", "x": 0, "z": -0.5, "rot": 0 },
-        { "id": "chest", "kind": "chest", "x": -2.64, "z": 0.83, "rot": 1.57 }
-      ]
+      "entry": [0, 0], "exit": [0, 0], "counter": [0, 0],
+      "camera": { "dist": 8, "minDist": 4, "maxDist": 12, "pitch": 1.0 },
+      "spots": []
+    },
+    "houseB": {
+      "shape": "box", "w": 6, "d": 5, "h": 2.2, "house": "houseB",
+      "floor": "#8a5a3a", "wall": "#efe9dc", "trim": "#6e8a8e",
+      "light": { "color": "#ffd9a8", "intensity": 8 },
+      "entry": [0, 0], "exit": [0, 0], "counter": [0, 0],
+      "camera": { "dist": 8, "minDist": 4, "maxDist": 12, "pitch": 1.0 },
+      "spots": []
+    },
+    "houseBf": {
+      "shape": "box", "w": 6, "d": 5, "h": 2.2, "house": "houseBf",
+      "floor": "#8a5a3a", "wall": "#efe9dc", "trim": "#6e8a8e",
+      "light": { "color": "#ffd9a8", "intensity": 8 },
+      "entry": [0, 0], "exit": [0, 0], "counter": [0, 0],
+      "camera": { "dist": 8, "minDist": 4, "maxDist": 12, "pitch": 1.0 },
+      "spots": []
+    },
+    "houseC": {
+      "shape": "box", "w": 6, "d": 5, "h": 2.2, "house": "houseC",
+      "floor": "#8a5a3a", "wall": "#efe9dc", "trim": "#6e8a8e",
+      "light": { "color": "#ffd9a8", "intensity": 8 },
+      "entry": [0, 0], "exit": [0, 0], "counter": [0, 0],
+      "camera": { "dist": 8, "minDist": 4, "maxDist": 12, "pitch": 1.0 },
+      "spots": []
     },
     "school": {
       "shape": "box", "w": 14, "d": 10, "h": 2.9,

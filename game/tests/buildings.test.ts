@@ -54,6 +54,11 @@ describe('барилгын загвар (лабораторийн баталса
 });
 
 import { cfg } from './helpers';
+import { houseRoom, houseInteriorKeys } from '../src/sim/systems/houseLayout';
+import { roomSpec, clampToRoom, validateInteriors } from '../src/sim/systems/interior';
+import { makeInterior } from '../src/render/building';
+import { houseInteriorData } from '../src/render/building/interiorData';
+import houseJson from '../../data/house-interiors.json';
 import { allBuildings, doorPoint, plotHouse } from '../src/sim/systems/sumtown';
 import { entryFootprint, labDoorPoint, labOrigin, rotLocal, townEntry, worldSize } from '../src/sim/systems/buildingSize';
 import { TOWN } from '../src/render/building';
@@ -101,16 +106,15 @@ describe('сумын төв ↔ лабораторийн барилга (sim х�
     }
   });
 
-  it('лабораторийн бус барилга хуучин томьёогоор (2 м)', () => {
-    const r = byId.get('resort_main')!;
-    expect(townEntry(r.id)).toBeNull();
-    expect(doorPoint(r)).toEqual({ x: r.x, z: r.z + r.d / 2 + 2 });
+  it('сумын төвийн бүх барилга лабораторийн загвартай (resort, market_office орсон); id-гүй бол хуучин томьёо (2 м)', () => {
+    for (const b of blds) expect(townEntry(b.id), b.id).not.toBeNull();
+    expect(doorPoint({ x: 10, z: 20, w: 6, d: 4, front: 's' })).toEqual({ x: 10, z: 24 });
   });
 });
 
 describe('дотор өрөө (data/interiors.json) ⊂ барилгын дотор өрөө (interior.main)', () => {
   const rooms = cfg.interiors.rooms as Record<string, { w: number; d: number; h: number }>;
-  const pairs: [string, string][] = [['house', 'houseA'], ['house', 'houseC'], ['school', 'school'], ['admin', 'zdtg'], ['bank', 'bank'], ['culture', 'culture'], ['kindergarten', 'kinder'],
+  const pairs: [string, string][] = [['school', 'school'], ['admin', 'zdtg'], ['bank', 'bank'], ['culture', 'culture'], ['kindergarten', 'kinder'],
     ['teahouse', 'teahouse'], ['temple', 'temple'], ...['grocery', 'feed', 'equipment', 'gertent', 'clothes', 'pets'].map((k): [string, string] => ['shop', k])];
   for (const [room, kind] of pairs) it(`${room} өрөө ≤ ${kind}`, () => {
     const r = rooms[room]!, m = makeBuilding(kind, {}).interior!.main;
@@ -126,5 +130,38 @@ describe('тусгай хашааны байшин (plotHouse) = лаборат�
       const inside = Math.abs(ph.door.x - ph.house.x) < ph.house.w / 2 && Math.abs(ph.door.z - ph.house.z) < ph.house.d / 2;
       expect(inside, sp.id).toBe(false);
     }
+  });
+});
+
+describe('хашаа байшингийн дотор тал (V6.1/V6.2, лаборатори building-lab2)', () => {
+  const keys = houseInteriorKeys();
+  it('data/house-interiors.json лабораторийн makeInterior-той тэнцүү (шинэчлэх: cd game && npm run houses)', () => { expect(JSON.parse(JSON.stringify(houseInteriorData()))).toEqual(houseJson); });
+  it('interiors.json өрөө алдаагүй (орох/гарах/лангуу өрөө дотор)', () => { expect(validateInteriors(cfg)).toEqual([]); });
+  it('өрөөний хэмжээ = байшингийн interior.main (таазны өндөр 2.19 А)', () => {
+    for (const k of ['houseA', 'houseB', 'houseC']) { const H = houseRoom(k, cfg.interiors.bodyR), m = makeBuilding(H.base, {}).interior!.main; expect([k, H.w, H.d, H.h]).toEqual([k, m.w, m.d, m.h]); }
+    expect(houseRoom('houseA', 0.35).h).toBe(2.19);
+    for (const id of ['houseA', 'houseB', 'houseBf', 'houseC']) { const r = roomSpec(cfg, id)!; expect(r.h).toBeLessThanOrEqual(makeBuilding(r.house === 'houseBf' ? 'houseB' : r.house!, {}).interior!.main.h + 1e-9); }
+  });
+  it('геометр: бүх хувилбар төгсгөлөг; Б хоосон < Б тавилгатай; mirror = ижил гурвалжин', () => {
+    for (const k of keys) { const r = makeInterior(k)!; expect(r.geo.p.every(Number.isFinite), k).toBe(true); expect(r.geo.triangles).toBeGreaterThan(100); }
+    expect(makeInterior('houseB')!.geo.triangles).toBeLessThan(makeInterior('houseBf')!.geo.triangles);
+    expect(makeInterior('houseBf')!.empty).toBe(false); expect(makeInterior('houseB')!.empty).toBe(true);
+  });
+  it('орох цэгээс лангуу, тавилгыг тойрч явж болно (саадгүй зам), тавилганд орохгүй', () => {
+    for (const id of ['houseA', 'houseB', 'houseBf', 'houseC']) {
+      const room = roomSpec(cfg, id)!, step = 0.1, seen = new Set<string>(), key = (x: number, z: number): string => Math.round(x * 1000) + ',' + Math.round(z * 1000);
+      const free = (x: number, z: number): boolean => { const c = clampToRoom(cfg, room, x, z); return Math.abs(c.x - x) < 1e-6 && Math.abs(c.z - z) < 1e-6; };
+      expect(free(room.entry[0], room.entry[1]), id + ' entry').toBe(true);
+      const q: [number, number][] = [[room.entry[0], room.entry[1]]]; seen.add(key(...q[0]!));
+      while (q.length) { const [x, z] = q.pop()!; for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) { const nx = x + dx * step, nz = z + dz * step, k = key(nx, nz); if (!seen.has(k) && free(nx, nz)) { seen.add(k); q.push([nx, nz]); } } }
+      const near = (p: [number, number]): boolean => [...seen].some((s) => { const [a, b] = s.split(',').map(Number) as [number, number]; return Math.hypot(a / 1000 - p[0], b / 1000 - p[1]) < 0.3; });
+      expect(near(room.counter!), id + ' counter хүрдэг').toBe(true);
+      expect(near(room.exit), id + ' exit хүрдэг').toBe(true);
+      expect(seen.size, id + ' талбай').toBeGreaterThan(150);
+    }
+  });
+  it('зарах байшин: авахаас өмнө хоосон өрөө, авсны дараа тавилгатай; хамаатан тусдаа', () => {
+    expect(cfg.interiors.idRoom.plot_sale_1).toBe('houseB'); expect(cfg.interiors.idRoom['plot_sale_1:owned']).toBe('houseBf');
+    expect(houseRoom('houseB', 0.35).blockers.length).toBeLessThan(houseRoom('houseBf', 0.35).blockers.length);
   });
 });

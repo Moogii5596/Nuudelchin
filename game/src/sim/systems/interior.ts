@@ -10,6 +10,8 @@ import { m, type Msg } from '../msg';
 import type { GameConfig } from '../config';
 import type { GameState, InteriorState } from '../state';
 import { allBuildings, facingOf, plotHouse, sumDoors, TRADE_ROLES, type Facing } from './sumtown';
+import { houseRoom, clampToWalk, type WalkRect } from './houseLayout';
+import { GATE_PHI } from './buildingSize';
 import { gerBlockers, gerBoxes, gerDoorOffset, gerInnerRadius, pushOutOfBox, type LayoutBox } from './gerLayout';
 
 // ======================= Тохиргооны төрөл (data/interiors.json) =======================
@@ -46,6 +48,10 @@ export interface RoomSpec {
   obstacles?: LayoutBox[];
   /** Мөргөлдөөнд (хананд тулсан тавилгыг хана руу сунгасан) */
   blockers?: LayoutBox[];
+  /** V3.5 хашаа байшин: data/buildings.json interior түлхүүр (houseA|houseB|houseBf|houseC). w, d, h, entry, exit, counter, walk, blockers нь тооцогдоно (houseLayout.ts) */
+  house?: string;
+  /** Алхах талбай (биеийн төв): гол өрөө + амбаар + хаалганы завсар. Байхгүй бол w × d тэгш өнцөгт */
+  walk?: WalkRect[];
 }
 export interface InteriorsConfig {
   enterR: number;
@@ -108,7 +114,9 @@ export function sumEnterDoors(cfg: GameConfig): { door: EnterDoor; plot: string 
   for (const sp of L.specialPlots ?? []) {
     const h = plotHouse(L, sp);
     const room = I.idRoom[sp.id] ?? I.kindRoom.house ?? '';
-    out.push({ door: { id: sp.id, room, place: 'sum', x: h.door.x, z: h.door.z, outHeading: OUT_HEADING.s, service: 'town' }, plot: sp.id, role: sp.role === 'forSale' ? 'house' : 'relative' });
+    const hk = I.rooms[room]?.house, hr = hk ? houseRoom(hk, I.bodyR) : null;
+    const ph = GATE_PHI[h.gate], oc = hr ? { x: hr.out.x * Math.cos(ph) + hr.out.z * Math.sin(ph), z: -hr.out.x * Math.sin(ph) + hr.out.z * Math.cos(ph) } : null;   // гарах хаалганы гадна чиглэл (дэлхийд)
+    out.push({ door: { id: sp.id, room, place: 'sum', x: h.door.x, z: h.door.z, outHeading: oc ? Math.atan2(oc.x, oc.z) : OUT_HEADING.s, service: 'town' }, plot: sp.id, role: sp.role === 'forSale' ? 'house' : 'relative' });
   }
   return out;
 }
@@ -139,8 +147,7 @@ export function enterDoors(cfg: GameConfig, state: GameState): EnterDoor[] {
   if (p.place !== 'sum') return [];
   const owned = state.town.houses;
   return sumEnterDoors(cfg)
-    .filter((e) => e.plot === null || e.role === 'relative' || !!owned[e.plot])   // зарагдаагүй байшинд орохгүй
-    .map((e) => e.door);
+    .map((e) => (e.plot !== null && e.role === 'house' && owned[e.plot] && cfg.interiors.idRoom[`${e.plot}:owned`] ? { ...e.door, room: cfg.interiors.idRoom[`${e.plot}:owned`]! } : e.door));   // зарах байшин: авахаас өмнө хоосон, авсны дараа тавилгатай
 }
 
 /** Хамгийн ойрын орох хаалга (enterR дотор) */
@@ -166,11 +173,16 @@ const resolved = new WeakMap<GameConfig, Map<string, RoomSpec>>();
 export function roomSpec(cfg: GameConfig, id: string, homeSize: string = cfg.ger.home.size): RoomSpec | null {
   const raw = cfg.interiors.rooms[id];
   if (!raw) return null;
-  if (!raw.gerSize) return raw;
+  if (!raw.gerSize && !raw.house) return raw;
   let m = resolved.get(cfg);
   if (!m) resolved.set(cfg, (m = new Map()));
   const ck = `${id}|${raw.gerSize === 'home' ? homeSize : ''}`;
   let r = m.get(ck);
+  if (!r && raw.house) {
+    const H = houseRoom(raw.house, cfg.interiors.bodyR);
+    r = { ...raw, shape: 'box', w: H.w, d: H.d, h: H.h, entry: H.entry, exit: H.exit, exitR: 0.9, counter: H.counter, spots: [], walk: H.walk, blockers: H.blockers };
+    m.set(ck, r);
+  }
   if (!r) {
     const key = raw.gerSize === 'home' ? homeSize : cfg.ger.helper.size;
     const Ri = gerInnerRadius(cfg.ger, key);
@@ -209,6 +221,16 @@ export function clampToRoom(cfg: GameConfig, room: RoomSpec, x: number, z: numbe
       if (l > hard) { px = (px / l) * hard; pz = (pz / l) * hard; }
     }
     return { x: px, z: pz };
+  }
+  if (room.walk) {   // хашаа байшин: гол өрөө, амбаар, хаалганы завсар + тавилгын саад
+    let p = clampToWalk(room.walk, x, z);
+    for (let pass = 0; pass < 4; pass++) {
+      for (const o of room.blockers ?? []) p = pushOutOfBox(o, p.x, p.z, b);
+      const q = clampToWalk(room.walk, p.x, p.z);
+      if (Math.abs(q.x - p.x) < 1e-9 && Math.abs(q.z - p.z) < 1e-9) break;
+      p = q;
+    }
+    return p;
   }
   const hx = (room.w ?? 6) / 2 - b, hz = (room.d ?? 6) / 2 - b;
   return { x: Math.max(-hx, Math.min(hx, x)), z: Math.max(-hz, Math.min(hz, z)) };

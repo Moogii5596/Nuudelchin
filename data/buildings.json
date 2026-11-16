@@ -245,6 +245,13 @@
    "roofColor": "red",
    "enterable": true,
    "plaque": true
+  },
+  "forSale": {
+   "label": "Зарах байшин",
+   "base": "houseB",
+   "roofColor": "green",
+   "enterable": true,
+   "forSale": true
   }
  },
  "plaque": {
@@ -504,6 +511,16 @@
     "sign": "ХАЛУУН УС · ҮСЧИН",
     "signColor": "#2E5E9E",
     "signText": "#FFFFFF"
+   },
+   "hotel": {
+    "sign": "АМРАЛТЫН ГАЗАР",
+    "signColor": "#8A2E2E",
+    "signText": "#F4EEDF"
+   },
+   "guard": {
+    "sign": "МАНААЧ",
+    "signColor": "#4E6B3A",
+    "signText": "#FFFFFF"
    }
   },
   "types": {
@@ -631,6 +648,21 @@
     "goods": "cages",
     "gameRole": "pets",
     "central": true
+   },
+   "marketOffice": {
+    "label": "Малын захын оффис",
+    "sign": "МАЛЫН ЗАХ",
+    "signColor": "#6E5A44",
+    "signText": "#F4EEDF",
+    "roof": "green",
+    "wall": "#F1ECE0",
+    "goods": null,
+    "gameRole": "livestock",
+    "w": 10,
+    "d": 7,
+    "wallH": 3.6,
+    "canopy": false,
+    "apron": false
    }
   }
  },
@@ -1050,6 +1082,40 @@
      }
     ],
     "extras": []
+   },
+   "hotel": {
+    "label": "Амралтын газар (зочид буудал)",
+    "w": 24,
+    "d": 14,
+    "floors": 3,
+    "roof": "gable",
+    "roofColor": "#8A2E2E",
+    "wall": "#F1ECE0",
+    "trim": "#2E5E9E",
+    "gameRole": "hotel",
+    "entrances": [
+     {
+      "x": 0
+     }
+    ],
+    "extras": []
+   },
+   "guard": {
+    "label": "Манаач",
+    "w": 6,
+    "d": 5,
+    "floors": 1,
+    "roof": "gable",
+    "roofColor": "#6E8A5C",
+    "wall": "#E8DCC0",
+    "trim": "#4E6B3A",
+    "gameRole": "guard",
+    "entrances": [
+     {
+      "x": 0
+     }
+    ],
+    "extras": []
    }
   }
  },
@@ -1284,7 +1350,7 @@
  },
  "atlas": {
   "size": 512,
-  "h": 2048,
+  "h": 2192,
   "lamp": [
    96,
    32
@@ -1336,12 +1402,12 @@
    896
   ],
   "templeBeam": [
-   1952,
-   2000
+   2096,
+   2144
   ],
   "wheelBand": [
-   2000,
-   2048
+   2144,
+   2192
   ],
   "white": [
    32,
@@ -1507,6 +1573,18 @@
    "temple": {
     "type": "temple",
     "dz": 2.5
+   },
+   "market_office": {
+    "type": "shop",
+    "kind": "marketOffice"
+   },
+   "resort_main": {
+    "type": "public",
+    "kind": "hotel"
+   },
+   "resort_guard": {
+    "type": "public",
+    "kind": "guard"
    }
   },
   "compounds": {
@@ -1535,12 +1613,12 @@
   ],
   "plots": {
    "plot_sale_1": {
-    "house": "houseA",
-    "roofColor": "blue"
+    "house": "houseB",
+    "roofColor": "green"
    },
    "plot_sale_2": {
-    "house": "houseC",
-    "roofColor": "red"
+    "house": "houseB",
+    "roofColor": "green"
    },
    "plot_rel_1": {
     "house": "houseA",
@@ -1551,8 +1629,125 @@
     "roofColor": "#6E2222"
    }
   },
-  "skip": [
-   "market_office"
-  ]
+  "skip": []
+ },
+ "interior": {
+  "inset": 0.12,
+  "floor": "#8A5A3A",
+  "ceil": "#F4F1EA",
+  "wallLow": "#9FC3C8",
+  "wallUp": "#EFE9DC",
+  "lowH": 1,
+  "trim": "#6E8A8E",
+  "houseA": {
+   "partition": {
+    "x": -1.3,
+    "z1": 0.9
+   },
+   "stove": {
+    "x": -1.3,
+    "z": -0.9,
+    "w": 1.1,
+    "d": 1,
+    "h": 1.55,
+    "cook": 0.55
+   },
+   "cookSide": 1,
+   "kitchen": {
+    "table": [
+     1,
+     0.25
+    ],
+    "tv": 0.3,
+    "basinZ": 0.9,
+    "barrel": [
+     -0.4,
+     -0.45
+    ],
+    "mat": "front"
+   },
+   "bulbs": [
+    [
+     0.9,
+     0
+    ],
+    [
+     -2.4,
+     0
+    ]
+   ]
+  },
+  "houseC": {
+   "partition": {
+    "x": -1.6,
+    "z1": 1
+   },
+   "stove": {
+    "x": -1.6,
+    "z": -1,
+    "w": 1.1,
+    "d": 1,
+    "h": 1.6,
+    "cook": 0.55
+   },
+   "cookSide": 1,
+   "kitchen": {
+    "table": [
+     0.9,
+     0.6
+    ],
+    "tv": -0.1,
+    "basinZ": -0.5,
+    "barrel": [
+     -0.4,
+     2.55
+    ],
+    "mat": "side",
+    "sofa": true,
+    "chestZ": 0.3
+   },
+   "bulbs": [
+    [
+     1,
+     0
+    ],
+    [
+     -2.8,
+     0
+    ]
+   ]
+  },
+  "houseB": {
+   "partition": {
+    "x": 1.1,
+    "z1": 0.3
+   },
+   "stove": {
+    "x": 1.1,
+    "z": -0.8,
+    "w": 1,
+    "d": 0.9,
+    "h": 1.5,
+    "cook": 0.5
+   },
+   "cookSide": -1,
+   "empty": true,
+   "bulbs": [
+    [
+     -0.8,
+     0.2
+    ],
+    [
+     2,
+     0
+    ]
+   ]
+  },
+  "houseBf": {
+   "base": "houseB",
+   "layout": "houseA",
+   "mirror": true
+  },
+  "_doc": "Хашаа байшингийн дотор тал (лаборатори, V6.1/V6.2). houseA/B/C = хуваалт, пийшин, тавилга; houseB.empty = зарах байшин хоосон. houseBf = Б байшинг авсны дараа: А-ийн тавилгын зохион байгуулалтыг Б-ийн хэмжээнд толин тусгалаар (mirror)."
  }
 }

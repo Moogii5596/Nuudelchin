@@ -21,7 +21,7 @@ describe('Орж болдог барилга (V6.1)', () => {
   it('data/interiors.json зөв; орох хаалга бүрт өрөө, үйлчилгээтэй барилгад лангуу бий', () => {
     expect(validateInteriors(cfg)).toEqual([]);
     const kinds = new Set(sumEnterDoors(cfg).map((e) => cfg.sumcenter && e.door.room));
-    for (const r of ['school', 'temple', 'admin', 'bank', 'culture', 'kindergarten', 'teahouse', 'shop', 'house']) expect(kinds.has(r), r).toBe(true);
+    for (const r of ['school', 'temple', 'admin', 'bank', 'culture', 'kindergarten', 'teahouse', 'shop', 'houseA', 'houseB', 'houseC']) expect(kinds.has(r), r).toBe(true);
     // Хашааны хаалга (мал зах) орох хаалга биш
     expect(sumEnterDoors(cfg).some((e) => e.door.id === 'market')).toBe(false);
     expect(plotDoors(cfg).length).toBeGreaterThan(0);
@@ -81,21 +81,24 @@ describe('Орж болдог барилга (V6.1)', () => {
       atSum(sim, door.x, door.z + 0.5);
       const r = sim.command({ type: 'enterBuilding', door: door.id });
       expect(r.ok, `${door.id}: ${r.msg?.key}`).toBe(true);
-      expect(sim.state.player.interior?.room).toBe(door.room);
+      expect(sim.state.player.interior?.room).toBe(cfg.interiors.idRoom[`${door.id}:owned`] ?? door.room);   // зарах байшин: авсны дараа тавилгатай өрөө
       expect(sim.command({ type: 'exitBuilding', force: true }).ok).toBe(true);
       expect(sim.state.player.interior).toBeNull();
       expect(sim.state.player.x).toBe(door.x);
     }
   });
 
-  it('зарагдаагүй байшинд орохгүй, хамаатны гэрт орно; морьтой/жолоодож байхад орохгүй', () => {
+  it('зарагдаагүй байшин хоосон өрөөтэй (V3.5), авсны дараа тавилгатай; хамаатны гэрт орно; морьтой/жолоодож байхад орохгүй', () => {
     const sim = newSim(4);
     const sale = plotDoors(cfg).find((d) => d.role === 'house')!;
     const rel = plotDoors(cfg).find((d) => d.role === 'relative')!;
     atSum(sim, sale.x, sale.z);
-    expect(sim.command({ type: 'enterBuilding' }).ok).toBe(false);
+    expect(sim.command({ type: 'enterBuilding' }).ok).toBe(true);
+    expect(sim.state.player.interior?.room).toBe('houseB');   // хоосон
+    sim.command({ type: 'exitBuilding', force: true });
     sim.state.town.houses[sale.id] = { mode: 'empty' };
     expect(sim.command({ type: 'enterBuilding' }).ok).toBe(true);
+    expect(sim.state.player.interior?.room).toBe('houseBf');   // тавилгатай
     sim.command({ type: 'exitBuilding', force: true });
     atSum(sim, rel.x, rel.z);
     sim.state.player.mounted = true;

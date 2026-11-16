@@ -13,6 +13,7 @@ import type { NpcView } from './npcs';
 import { GER } from './ger/config';
 import { makeGer } from './ger/ger';
 import { makeGerInterior } from './ger/gerInterior';
+import { makeBuildingMaterials, makeInterior } from './building';
 
 const GOLD = 0xf2c14e;
 
@@ -135,9 +136,54 @@ export class InteriorView {
     return g;
   }
 
+  /**
+   * V3.5 хашаа байшин: лабораторийн makeInterior (хана, шал, тааз, хуваалт, пийшин, тавилга, амбаар) — нэг Geo + атлас, ороход л ачаална.
+   * Хана нь дотогш харсан нэг талт тул камерын талын хана харагдахгүй. Тавилгын саад — sim/systems/houseLayout (room.blockers, room.walk).
+   */
+  private buildHouse(room: RoomSpec): THREE.Group {
+    const g = new THREE.Group();
+    const it = makeInterior(room.house!);
+    if (!it) throw new Error(`house interior "${room.house}" алга`);
+    const mats = makeBuildingMaterials();
+    mats.setGlow(0);
+    const geometry = it.geo.build();
+    this.disposers.push(() => { geometry.dispose(); mats.dispose(); });
+    const body = new THREE.Mesh(geometry, mats.mat);
+    body.castShadow = false; body.receiveShadow = false; body.name = 'house:interior';
+    g.add(body);
+    g.position.y = -it.floorY;   // шал нь өрөөний y = 0
+    // дарж явах шал (харагдахгүй)
+    let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
+    for (const [a, b, c, d] of room.walk ?? []) { x0 = Math.min(x0, a); z0 = Math.min(z0, b); x1 = Math.max(x1, c); z1 = Math.max(z1, d); }
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0 + 2, z1 - z0 + 2).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ visible: false }));
+    floor.name = 'ground';
+    floor.position.set((x0 + x1) / 2, it.floorY, (z0 + z1) / 2);
+    g.add(floor);
+    this.ground = floor;
+    // лангуу: E дарах газар (зарах байшинд — авах цонх, хамаатанд — айлчлал)
+    if (room.counter) {
+      const ring = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.75, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: GOLD, transparent: true, opacity: 0.85 }));
+      ring.position.set(room.counter[0], it.floorY + 0.03, room.counter[1]);
+      g.add(ring);
+      this.ring = ring;
+    }
+    // гэрэл: шилэн чийдэн бүрт
+    const lights = it.lights.map((v) => {
+      const l = new THREE.PointLight(new THREE.Color(room.light.color), room.light.intensity, 9, 1.2);
+      l.position.set(v.x, v.y - it.floorY, v.z);
+      this.scene.add(l);
+      this.disposers.push(() => this.scene.remove(l));
+      return l;
+    });
+    this.lamp = lights[0] ?? null;
+    this.hemi.color.set(room.light.color).lerp(new THREE.Color(0xffffff), 0.6);
+    return g;
+  }
+
   private build(room: RoomSpec): THREE.Group {
     const gerSize = roomGerSize(this.cfg, room, this.homeSize);
     if (gerSize) return this.buildGer(room, gerSize);
+    if (room.house) return this.buildHouse(room);
     const g = new THREE.Group();
     const I = this.cfg.interiors;
     const mat = (c: string, side: THREE.Side = THREE.FrontSide): THREE.MeshLambertMaterial => new THREE.MeshLambertMaterial({ color: new THREE.Color(c), side });

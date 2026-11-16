@@ -77,7 +77,7 @@ export function buildHouse(K, opts) {
     geo,
     door: { position: new THREE.Vector3(dp[0], 0, dp[1]), inward: new THREE.Vector3(di[0], 0, di[1]), width: D.w, height: D.h },
     dims: { w, d, wallH: wh, ridgeH: ridgeY, footprint: { x0: nxOut, x1: pxOut, z0: -hd, z1: pzOut } },
-    interior: { main: { w: w - K.wallT * 2, d: d - K.wallT * 2, h: K.ceilingH }, porch: { w: Q.w - 0.2, d: Q.d - 0.1, h: Q.hFront - 0.05 } },   // V6.1 дотор талын хэмжээ
+    interior: { main: { w: w - K.wallT * 2, d: d - K.wallT * 2, h: +(wh - ph - 0.06).toFixed(2) }, porch: { w: Q.w - 0.2, d: Q.d - 0.1, h: Q.hFront - 0.05 } },   // V6.1 дотор талын хэмжээ
     chimneyTop: new THREE.Vector3(ch.x, chTop + 0.12, ch.z), windows,
   };
 }

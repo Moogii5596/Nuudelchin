@@ -571,7 +571,10 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
   for (const p of L.props) {
     const y = heightAt(p.x, p.z);
     const n = (k: string, d = 0) => (p[k] as number) ?? d;
-    if (templeYard && (p.kind === 'stupa' || p.kind === 'ger') && Math.abs(p.x - templeYard.o.x) < templeYard.w / 2 && Math.abs(p.z - templeYard.o.z) < templeYard.d / 2) continue;   // лабораторийн дуганы хашаанд орсон
+    if (templeYard && (p.kind === 'stupa' || p.kind === 'ger') && Math.abs(p.x - templeYard.o.x) < templeYard.w / 2 && Math.abs(p.z - templeYard.o.z) < templeYard.d / 2) {
+      if (p.kind === 'ger') ger(templeYard.o.x + templeYard.w / 2 + 4.5, p.z, '#F3EDE2', 2.8);   // суварга лабораторийн дуганы хашаанд орсон; гэр хашааны гадна (S1-ийн гэр)
+      continue;
+    }
     const lp = TOWN.props[p.kind];
     if (lp) {   // V3.5: колонк — лабораторийн загвар (халхавч, түгээгүүр, касс, үнийн шон)
       labAt(lp, p.x, p.z);

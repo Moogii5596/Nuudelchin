@@ -1531,7 +1531,7 @@ SYM game/src/sim/terrain.ts:22 fn waterDistance
 SYM game/src/sim/terrain.ts:28 fn baseHeightAt
 SYM game/src/sim/terrain.ts:54 fn heightAt
 SYM game/src/sim/terrain.ts:77 fn waterLevel
-FILE tools/balance_sim/run.ts 25.4KB 442L
+FILE tools/balance_sim/run.ts 27.0KB 460L
 SYM tools/balance_sim/run.ts:31 fn nextGerOrder
 SYM tools/balance_sim/run.ts:53 fn applyOverrides
 SYM tools/balance_sim/run.ts:74 fn escort
@@ -1544,10 +1544,10 @@ SYM tools/balance_sim/run.ts:141 fn bestSpot
 SYM tools/balance_sim/run.ts:178 fn rotateCamp
 SYM tools/balance_sim/run.ts:194 fn buyPlan
 SYM tools/balance_sim/run.ts:248 fn mediumStrategy
-SYM tools/balance_sim/run.ts:333 fn run
-SYM tools/balance_sim/run.ts:377 fn killsTxt
-SYM tools/balance_sim/run.ts:384 fn median
-SYM tools/balance_sim/run.ts:389 fn fmt
+SYM tools/balance_sim/run.ts:341 fn run
+SYM tools/balance_sim/run.ts:390 fn killsTxt
+SYM tools/balance_sim/run.ts:397 fn median
+SYM tools/balance_sim/run.ts:402 fn fmt
 FILE tools/genHouseInteriors.ts 0.8KB 10L
 FILE tools/codemap.ts 8.3KB 203L exports: CONTEXT_START,CONTEXT_END,INDEXED_DOCS,Generated,extractSymbols,extractH2,generate
 SYM tools/codemap.ts:18 const CONTEXT_START
@@ -1603,15 +1603,15 @@ FILE game/tests/town.test.ts 6.1KB 127L
 FILE game/tests/transfer.test.ts 14.2KB 255L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 27.0KB 119L
+FILE docs/CONTEXT.md 27.8KB 120L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-29 ## 2. Стек ба командууд
-DOC docs/CONTEXT.md:30-93 ## 3. Файлын зураглал (`game/src/`)
-DOC docs/CONTEXT.md:94-96 ## 4. `data/*.json` → аль файл хэрэглэдэг
-DOC docs/CONTEXT.md:97-105 ## 5. Архитектурын дүрэм ([[architecture]])
-DOC docs/CONTEXT.md:106-109 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
-DOC docs/CONTEXT.md:110-112 ## 7. Нээлттэй асуултууд
-DOC docs/CONTEXT.md:113-119 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
+DOC docs/CONTEXT.md:30-94 ## 3. Файлын зураглал (`game/src/`)
+DOC docs/CONTEXT.md:95-97 ## 4. `data/*.json` → аль файл хэрэглэдэг
+DOC docs/CONTEXT.md:98-106 ## 5. Архитектурын дүрэм ([[architecture]])
+DOC docs/CONTEXT.md:107-110 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
+DOC docs/CONTEXT.md:111-113 ## 7. Нээлттэй асуултууд
+DOC docs/CONTEXT.md:114-120 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
 FILE docs/INDEX.md 13.9KB 135L
 DOC docs/INDEX.md:16-30 ## 1. Унших дараалал ба давуу эрх
 DOC docs/INDEX.md:31-106 ## 2. Баримтууд
@@ -1798,11 +1798,11 @@ FILE docs/plan/M7.md 7.6KB 31L
 DOC docs/plan/M7.md:12-22 ## Блокууд
 DOC docs/plan/M7.md:23-27 ## Асуулга (10 асуулт)
 DOC docs/plan/M7.md:28-31 ## Эрсдэл
-FILE docs/plan/V.md 65.2KB 222L
+FILE docs/plan/V.md 67.0KB 224L
 DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
-DOC docs/plan/V.md:24-204 ## Блокууд ба чеклист (2026-11-15)
-DOC docs/plan/V.md:205-222 ## Зогссон цэг
+DOC docs/plan/V.md:24-206 ## Блокууд ба чеклист (2026-11-15)
+DOC docs/plan/V.md:207-224 ## Зогссон цэг
 FILE docs/plan/playtest.md 16.7KB 104L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
 DOC docs/plan/playtest.md:19-39 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])

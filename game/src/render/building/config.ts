@@ -72,7 +72,7 @@ function collectErrors(c: unknown): string[] {
   // дэлгүүр: хаягийн самбар бүр атласт багтах
   const shop = c.shop as { types: Obj; extraSigns: Obj; order: string[] };
   const nSigns = Object.keys(shop.types).length + Object.keys(shop.extraSigns).length;
-  if ((A.signY as number) + nSigns * (A.signH as number) > (A.h as number)) errs.push('atlas: хаягийн самбар атласт багтахгүй');
+  if ((A.signY as number) + nSigns * (A.signH as number) > (A.templeBeam as number[])[0]!) errs.push('atlas: хаягийн самбар (signY + n·signH) дараагийн зурвас (templeBeam)-д давхцана — atlas.h, templeBeam, wheelBand-ийг томруул');
   for (const k of shop.order) if (!isObj(shop.types[k])) errs.push(`shop.order: "${k}" shop.types-д алга`);
   for (const [k, t] of Object.entries(shop.types)) { const T = t as Obj; for (const f of ['sign', 'signColor', 'signText', 'roof', 'wall']) if (typeof T[f] !== 'string') errs.push(`shop.types.${k}.${f} алга`); }
   const pub = (c.public as { kinds: Record<string, Obj> }).kinds;
