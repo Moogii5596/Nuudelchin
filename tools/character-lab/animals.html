@@ -158,6 +158,17 @@ function legGeoDetail(len, r0, r1) {
   const pts = [[0, 0], [r0 * 0.92, -0.012], [r0, -0.04], [(r0 + r1) / 2 + 0.004, -len * 0.5], [r1, -len * 0.92], [r1 * 0.96, -len], [0, -len]].map(([x, y]) => new THREE.Vector2(x, y));
   const g = new THREE.LatheGeometry(pts, 16); g.computeVertexNormals(); return g;
 }
+/** Хоёр үетэй хөл: дээд (хонго→өвдөг/шагай), доод (өвдөг→туурай); хоёр хэсгийн хэлбэр нь нэг профайлын хоёр хагас */
+const legRm = (d) => (d.legR0 + d.legR1) / 2 + 0.004;
+const legLens = (d) => { const lu = d.legLen * (d.legSplit ?? 0.5); return { lu, ll: d.legLen - lu, hh: d.hoofH ?? 0.045, hk: d.hoofK ?? 1 }; };
+function legUpperGeo(lu, r0, rm) {
+  const pts = [[0, 0], [r0 * 0.92, -0.012], [r0, -0.04], [rm, -lu]].map(([x, y]) => new THREE.Vector2(x, y));
+  const g = new THREE.LatheGeometry(pts, 16); g.computeVertexNormals(); return g;
+}
+function legLowerGeo(len, rm, r1) {
+  const pts = [[rm, 0], [(rm + r1) / 2 + 0.002, -len * 0.45], [r1, -len * 0.92], [r1 * 0.96, -len], [0, -len]].map(([x, y]) => new THREE.Vector2(x, y));
+  const g = new THREE.LatheGeometry(pts, 16); g.computeVertexNormals(); return g;
+}
 function hoofGeo(r, ys = 1) {
   const pts = [[0, 0.004], [r * 1.0, 0.0], [r * 1.12, -0.022 * ys], [r * 1.05, -0.05 * ys], [0, -0.052 * ys]].map(([x, y]) => new THREE.Vector2(x, y));
   const g = new THREE.LatheGeometry(pts, 16); g.computeVertexNormals(); return g;
@@ -376,7 +387,7 @@ const SHEEP = {
   d: {
     body: { L: 0.92, R: 0.30, wide: 1.1, p: 2.5 }, bodyY: 0.47,
     neckAt: [0, 0.53, 0.36], neckRest: 0.02, neckLen: 0.29, neckR: 1, headAt: [0, 0, 0.30], headTilt: 0.5,
-    legLen: 0.3, legY: 0.3, legR0: 0.072, legR1: 0.04, legX: 0.13, legZ: 0.27,
+    legLen: 0.3, legY: 0.3, legR0: 0.072, legR1: 0.04, legX: 0.13, legZ: 0.27, legSplit: 0.5, hock: 0.08,
     tail: { w: 0.2, h: 0.17, d: 0.09 }, tailAt: [0, 0.455, -0.4], tailRaise: 0, wag: 0.05,
   },
   head: { L: 0.30, r: 0.105, rn: 0.052, bridge: 0, eyeT: 0.41, ea: 0.022, eb: 0.030, hx: 0.92, zb: 0.22, ear: { l: 0.15, w: 0.09, droop: 0.8 } },
@@ -396,7 +407,7 @@ const GOAT = {
   d: {
     body: { L: 0.92, R: 0.285, wide: 1.05, p: 2.8 }, bodyY: 0.62,
     neckAt: [0, 0.78, 0.36], neckRest: -0.65, neckLen: 0.26, neckR: 0.95, headAt: [0, 0, 0.27], headTilt: 0.8,   // богино бүдүүн хүзүү, зогсохдоо ~37° өргөгдсөн
-    legLen: 0.36, legY: 0.36, legR0: 0.068, legR1: 0.042, legX: 0.125, legZ: 0.29, hoofH: 0.06, hoofK: 1.3,    // хонины хөлөөс арай урт, бүдүүн, тод туурай
+    legLen: 0.36, legY: 0.36, legR0: 0.068, legR1: 0.042, legX: 0.125, legZ: 0.29, hoofH: 0.06, hoofK: 1.3, legSplit: 0.5, hock: 0.1,    // хонины хөлөөс арай урт, бүдүүн, тод туурай
     tail: { w: 0.035, h: 0.075, d: 0.03 }, tailAt: [0, 0.8, -0.43], tailRaise: 2.5, wag: 0.14,
     skirt: { hair: 0.14, amp: 0.04, attach: 0.15, knee: -0.95, off: 0.03, flare: 0.03 },
   },
@@ -409,7 +420,7 @@ const GOAT = {
     beard: { len: 0.12, w: 0.015, t: 0.8 },
   },
   motion: { fatX: [0.88, 0.24], fatY: [0.9, 0.16], pitch: 0.3, neckGraze: 1.2, headGraze: 1.4, browse: true, browsePitch: -0.52, neckBrowse: -0.75, headBrowse: 0.0, browseLeg: 0.85 },
-  light: { bodySeg: 16, bodyRows: 8, tail: [5, 3], neck: [6, 2], skirt: [6, 2], skirtDetail: [20, 8] },
+  light: { bodySeg: 16, bodyRows: 8, tail: [5, 3], neck: [6, 2], skirt: [4, 2], skirtDetail: [20, 8] },
   patchMask: true,
   variants: [
     { n: 'Цагаан', wool: 0xf3eee1, head: 0xe9ddc6 },
@@ -445,7 +456,7 @@ function makeRig(sp) {
   S.shape = group(S.body, 0, d.bodyY, 0);
   S.neck = group(S.body, ...d.neckAt);
   S.head = group(S.neck, ...d.headAt);
-  S.legs = [[1, 1], [-1, 1], [1, -1], [-1, -1]].map(([sx, sz]) => { const g = group(S.body, sx * d.legX, d.legY, sz * d.legZ); g.userData = { sx }; return g; });
+  S.legs = [[1, 1], [-1, 1], [1, -1], [-1, -1]].map(([sx, sz]) => { const g = group(S.body, sx * d.legX, d.legY, sz * d.legZ); g.userData = { sx }; g.up = group(g); g.knee = group(g); g.low = group(g.knee); return g; });
   S.tail = group(S.body, ...d.tailAt);
   S.st = newSt();
   return S;
@@ -470,12 +481,14 @@ function buildDetail(sp) {
   S.eyes = hp.eyes.map((e) => { const g = group(tilt, e.pos.x, e.pos.y, e.pos.z); mesh(e.cream, S.headMat, g); mesh(e.pupil, S.headMat, g); return g; });
   S.ears = hp.ears.map((e) => { const g = group(tilt, e.pos.x, e.pos.y, e.pos.z); g.rotation.z = e.sx * e.droop; g.userData = { sx: e.sx, base: e.droop }; mesh(e.outer, S.headMat, g); mesh(e.inner, S.headMat, g); return g; });
   S.legs.forEach((g) => {
-    const hh = d.hoofH ?? 0.045, hk = d.hoofK ?? 1;
-    mesh(legGeoDetail(d.legLen - hh, d.legR0, d.legR1), S.legMat, g);
-    mesh(hoofGeo(d.legR1 * hk, hh / 0.045), S.hoofMat, g, 0, -(d.legLen - hh) + 0.002, 0);
+    const { lu, ll, hh, hk } = legLens(d), rm = legRm(d);
+    mesh(legUpperGeo(lu, d.legR0, rm), S.legMat, g.up);
+    mesh(ellipsoid(rm * 0.93, rm * 0.93, rm * 0.93, [0, 0, 0], 12, 8), S.legMat, g.knee);
+    mesh(legLowerGeo(ll - hh, rm, d.legR1), S.legMat, g.low);
+    mesh(hoofGeo(d.legR1 * hk, hh / 0.045), S.hoofMat, g.low, 0, -(ll - hh) + 0.002, 0);
   });
   mesh(tailGeo(d.tail), S.woolMat, S.tail);
-  if (d.skirt) mesh(skirtGeo(d, ...sp.light.skirtDetail), lam(mix(col.wool, LAB.palette.hair, 0.1), { side: THREE.DoubleSide }), S.shape);
+  if (d.skirt) S.skirt = mesh(skirtGeo(d, ...sp.light.skirtDetail), lam(mix(col.wool, LAB.palette.hair, 0.1), { side: THREE.DoubleSide }), S.shape);
   S.parts = []; S.root.traverse((o) => o.isMesh && S.parts.push(o));
   S.tris = S.parts.reduce((n, m) => n + triOf(m.geometry), 0);
   return S;
@@ -508,13 +521,12 @@ function buildLight(sp) {
   // 2. хүзүү
   const neck = prep(neckGeo(d.neckLen, Lq.neck[0], Lq.neck[1], d.neckR), 1);
   // 3. толгой + чих + нүд: нүд, хошуу нь оройн өнгө
-  // 4. нэг хөл (туурайтай); 4 instance
-  const L = d.legLen, r0 = d.legR0, r1 = d.legR1, hy = -(L - (d.hoofH ?? 0.045)), hk = d.hoofK ?? 1;
-  const pts = [[r0, 0], [r1, hy], [r1 * 1.1 * hk, hy], [r1 * 1.02 * hk, -L]].map(([x, y]) => new THREE.Vector2(x, y));
-  const lg = new THREE.LatheGeometry(pts, 5); lg.computeVertexNormals();
-  prep(lg, 1);
-  const slot = lg.attributes.aSlot, lc = lg.attributes.color, hoof = new THREE.Color(LAB.palette.hoof);
-  for (let i = 0; i < lg.attributes.position.count; i++) {
+  // 4. хөл: дээд ×4, доод+туурай ×4 (тус бүр instance); 5 талт
+  const { lu, ll, hh, hk } = legLens(d), rm = legRm(d), r0 = d.legR0, r1 = d.legR1, hy = -(ll - hh);
+  const legU = new THREE.LatheGeometry([[r0, 0], [rm, -lu], [rm * 0.6, -lu - 0.012]].map(([x, y]) => new THREE.Vector2(x, y)), 5); legU.computeVertexNormals(); prep(legU, 1);
+  const legL = new THREE.LatheGeometry([[rm, 0], [r1, hy], [r1 * 1.1 * hk, hy], [r1 * 1.02 * hk, -ll]].map(([x, y]) => new THREE.Vector2(x, y)), 5); legL.computeVertexNormals(); prep(legL, 1);
+  const slot = legL.attributes.aSlot, lc = legL.attributes.color, hoof = new THREE.Color(LAB.palette.hoof);
+  for (let i = 0; i < legL.attributes.position.count; i++) {
     if (i % 4 >= 2) { slot.setX(i, 0); lc.setXYZ(i, hoof.r, hoof.g, hoof.b); }   // lathe-ийн 3, 4-р цагираг = туурай
   }
   const mk = (geo, mult) => {
@@ -532,7 +544,8 @@ function buildLight(sp) {
       ? [{ name: 'толгой ♂+эвэр', geo: lightHeadGeo(sp, { hornK: 1 }), mult: 1, node: (S) => [S.head], col: (c) => c.head, use: (r) => r.male && r.age >= 3 },
          { name: 'толгой ♀', geo: lightHeadGeo(sp, { hornK: sp.head.horn.fk }), mult: 1, node: (S) => [S.head], col: (c) => c.head, use: (r) => !(r.male && r.age >= 3), alt: true }]
       : [{ name: 'толгой+чих+нүд', geo: lightHeadGeo(sp, { hornK: 1 }), mult: 1, node: (S) => [S.head], col: (c) => c.head }]),
-    { name: '4 хөл', geo: lg, mult: 4, node: (S) => S.legs, col: (c) => c.leg },
+    { name: 'хөл дээд ×4', geo: legU, mult: 4, node: (S) => S.legs.map((l) => l.up), col: (c) => c.leg },
+    { name: 'хөл доод+туурай ×4', geo: legL, mult: 4, node: (S) => S.legs.map((l) => l.low), col: (c) => c.leg },
   ];
   parts.forEach((p) => { p.mesh = mk(p.geo, p.mult); p.n = 0; });
   return { sp, parts, tris: parts.filter((p) => !p.alt).reduce((n, p) => n + triOf(p.geo) * p.mult, 0) };
@@ -573,14 +586,17 @@ function poseAnimal(S, dt, o) {
 
   const sinP = Math.sin(st.ph), A = M.walkAmp * mv;
   const wk = [sinP, -sinP, -sinP, sinP], lieAng = [-1.3, -1.3, 1.2, 1.2];
+  const { lu, ll } = legLens(d), hr = d.hock ?? 0;
+  const hrK = hr ? -(hr + Math.asin(Math.min(1, lu * Math.sin(hr) / ll))) : 0;         // хойд шагай хойш: доод хэсэг босоо болох нугаралт
   S.legs.forEach((g, i) => {
     const front = i < 2, extraG = i === 0 ? 0.3 * gz : 0, extra = extraG + (front ? (mo.browseLeg || 0) * br * (i === 0 ? 1 : 0.85) : 0);
     const walkAng = (A * wk[i] + stepSwing[i]) * (1 - lie);
-    g.rotation.x = (walkAng - pitch - extra) * (1 - lie) + lieAng[i] * lie;
+    g.rotation.x = (walkAng - pitch - extra + (front ? 0 : hr)) * (1 - lie) + lieAng[i] * lie;
     g.position.x = g.userData.sx * d.legX * gx;
     g.position.z = (front ? 1 : -1) * lz;
-    const fs = front ? 1 + (frontScale - 1) * gz : 1;
-    g.scale.set(1, legK * fs * (1 - 0.35 * lie) / Math.cos(extraG), 1);
+    const fs = front ? 1 + (frontScale - 1) * gz : 1, sy = legK * fs * (1 - 0.35 * lie) / Math.cos(extraG);
+    g.up.scale.set(1, sy, 1); g.low.scale.set(1, sy, 1); g.knee.position.y = -lu * sy;
+    g.knee.rotation.x = front ? 0 : hrK * (1 - lie);
   });
   const lift = d.legLen * (legK - 1);
   const drop = (d.bodyY - d.body.R * gy) - 0.02;
