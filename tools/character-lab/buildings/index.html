@@ -1,0 +1,1723 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Барилгын лаборатори V3.5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Гэрийн лабораторитой ижил бүтэц: бүтэн 3D тайз + нэг самбар. Палитр = docs/visuals-plan.md §3.2 */
+  --ink:#2A221C; --ink-soft:#6A5E52; --paper:#F6F2E8; --paper-2:#ECE5D6; --line:#D6CCB8;
+  --accent:#2E5E9E; --accent-ink:#FFFFFF; --ok:#4E6B3A; --bad:#B03A22;
+  --font-display:"Montserrat","Noto Sans",system-ui,sans-serif;
+  --font-body:"Noto Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:#CFE6F5;color:var(--ink);font:14px/1.45 var(--font-body);display:flex;overflow:hidden}
+#stage{position:relative;flex:1;min-width:0;min-height:0}
+#stage canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#stage canvas:active{cursor:grabbing}
+#hint{position:absolute;left:16px;bottom:14px;padding:6px 10px;border-radius:6px;background:rgba(42,34,28,.62);color:#fff;font-size:12px;pointer-events:none}
+#views{position:absolute;left:16px;top:14px;display:flex;gap:6px;flex-wrap:wrap;max-width:calc(100% - 32px)}
+#tag{position:absolute;transform:translate(-50%,-100%);padding:2px 7px;border-radius:4px;background:var(--ink);color:#fff;font-size:11px;font-weight:600;white-space:nowrap;pointer-events:none}
+#err{position:absolute;inset:auto 16px 50% 16px;padding:12px 14px;border-radius:8px;background:#fff;border:2px solid var(--bad);display:none}
+aside{width:320px;flex:none;background:var(--paper);border-left:1px solid var(--line);overflow-y:auto;padding:18px 16px 24px;display:flex;flex-direction:column;gap:16px}
+h1{font:700 17px/1.2 var(--font-display);margin:0;text-wrap:balance}
+.sub{color:var(--ink-soft);font-size:12.5px;margin:4px 0 0}
+fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+legend{font:600 11px/1 var(--font-display);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);padding:0;margin-bottom:6px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+button{font:500 13px/1.2 var(--font-body);color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:6px;padding:7px 10px;cursor:pointer}
+button:hover:not(:disabled){border-color:var(--accent)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button:disabled{color:#A79C8C;background:var(--paper-2);cursor:not-allowed}
+#views button{background:rgba(255,255,255,.9);padding:6px 9px;font-size:12px}
+.note{font-size:12px;color:var(--ink-soft);margin:0}
+.sw{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:6px;vertical-align:-1px;border:1px solid rgba(0,0,0,.25)}
+.stats{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:grid;grid-template-columns:1fr auto;gap:5px 10px;font-variant-numeric:tabular-nums;margin:0}
+.stats dt{color:var(--ink-soft)} .stats dd{margin:0;text-align:right;font-weight:600}
+.pill{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:9px;font-size:11px;font-weight:600;color:#fff;background:var(--ok)}
+.pill.bad{background:var(--bad)}
+@media (max-width:760px){
+  body{flex-direction:column}
+  aside{width:auto;max-height:46%;border-left:0;border-top:1px solid var(--line);padding:14px 16px 20px}
+  #hint{display:none}
+}
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="c"></canvas>
+  <div id="views">
+    <button type="button" id="view-house">Байшин</button>
+    <button type="button" id="view-front">Урдаас</button>
+    <button type="button" id="view-side">Хажуугаас</button>
+    <button type="button" id="view-door">Хаалга ойроос</button>
+    <button type="button" id="view-gate">Гудамжнаас</button>
+    <button type="button" id="view-yard">Бүх хашаа</button>
+    <button type="button" id="view-top">Дээрээс</button>
+  </div>
+  <div id="tag">Хүн 1.7 м</div>
+  <div id="hint">Чирж эргүүлнэ · дугуйгаар эсвэл хоёр хуруугаар ойртуулна</div>
+  <div id="err"></div>
+</div>
+<aside>
+  <div>
+    <h1>Барилгын лаборатори · V3.5</h1>
+    <p class="sub">1-р бүлэг ✓ батлагдсан. 2-р бүлэг ✓. 3-р бүлэг ✓. 4-р бүлэг ✓. 5-р бүлэг: малын зах, тоглоомын талбай (тор, гэрэлтүүлэг), бөхийн талбай (жишээ зургаар).</p>
+  </div>
+  <fieldset><legend>Горим</legend><div class="seg" id="g-mode"></div>
+    <p class="note">Гудамж: 7 хашаа (1-р бүлэг ✓). Дэлгүүрийн эгнээ: 6 дэлгүүр замын дагуу.</p></fieldset>
+  <fieldset><legend>Барилга</legend><div class="seg" id="g-kind"></div></fieldset>
+  <fieldset><legend>Дээврийн өнгө</legend><div class="seg" id="g-roof"></div></fieldset>
+  <fieldset><legend>Хашааны нэмэлт</legend><div class="seg" id="g-extra"></div>
+    <p class="note">Зарим айлд л байдаг. Гудамжинд айл бүрт өөр.</p></fieldset>
+  <fieldset><legend>Байшин хүртэлх зам</legend><div class="seg" id="g-path"></div></fieldset>
+  <fieldset><legend>Улирал</legend><div class="seg" id="g-season"></div></fieldset>
+  <fieldset><legend>Цаг</legend><div class="seg" id="g-time"></div></fieldset>
+  <fieldset><legend>Харуулах</legend><div class="seg" id="g-show"></div></fieldset>
+  <dl class="stats">
+    <dt id="l-tri">Гурвалжин (барилга)</dt><dd><span id="s-tri">0</span><span class="pill" id="p-tri">≤ 400</span></dd>
+    <dt>Гурвалжин (хашаа + жорлон)</dt><dd id="s-yard">0</dd>
+    <dt>Гурвалжин (бүх дэлгэц)</dt><dd id="s-all">0</dd>
+    <dt>Draw call</dt><dd id="s-dc">0</dd>
+    <dt>Хэмжээ</dt><dd id="s-dim">—</dd>
+    <dt>Дотор өрөө</dt><dd id="s-in">—</dd>
+    <dt>Үүдний амбаар</dt><dd id="s-porch">—</dd>
+    <dt>Хаалганы цэг (x, z)</dt><dd id="s-door">—</dd>
+    <dt>Хашаа</dt><dd id="s-fence">—</dd>
+    <dt>Дэлгэц нийт · FPS</dt><dd id="s-scene">0</dd>
+  </dl>
+  <p class="note">Байшин, хашаа, жорлон бүгд нэг mesh (нэг атлас + vertex color) + бэхэн хүрээ = 2 call, гудамжинд ч гэсэн. Гэр нь гэрийн лабораторийн makeGer-ээс (өөрийн хаалганы атластай) тусдаа.</p>
+</aside>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { Geo, rgb, mix, makeGer, GER_CONFIG } from './ger.js';
+
+/* =====================================================================
+   ТОХИРГОО — дараа нь data/buildings.json (хэлбэр, өнгө) ба data/sumcenter.json (хашааны хэмжээ) руу шилжинэ.
+   Бүх урт метрээр. Барилгын нүүр +Z (өмнө зүг).
+   ===================================================================== */
+const BUILDING_CONFIG = {
+  palette: {            // docs/visuals-plan.md §3.2-ын өнгө ба тэдгээрийн цайвар/бараан хувилбар
+    wall:    '#F1ECE0', // шохойдсон хана
+    plinth:  '#8C8478', // суурь (цоколь), үүдний шат
+    trim:    '#2E5E9E', // цонхны хүрээ, хаалга, хашааны хаалга
+    casing:  '#F4EEDF', // цонхны дотор хүрээ, дээврийн захын банз
+    wood:    '#B08A5E', // амбаарын банз
+    woodDark:'#6E5A44', // дээврийн доод тал, хашааны банзны үзүүр
+    fence:   '#8C7453', // өгөршсөн банзан хашаа
+    gable:   '#9A7A55', // хоёр хажуугийн гурвалжин ханын банз
+    brick:   '#A8553A', // яндан
+    iron:    '#4A4640',
+    glass:   '#3D4C5E',
+    snow:    '#F2F5F8', snowShade: '#B8C8E0',
+    fire:    '#FFB35C', // шөнийн цонхны гэрэл
+    outline: '#1A130D', // бэхэн хүрээ (гэр, гол дүртэй ижил)
+  },
+  roofColors: {
+    orange: { label: 'Улбар шар', hex: '#D9622B' },
+    blue:   { label: 'Хөх',       hex: '#2E5E9E' },
+    green:  { label: 'Ногоон',    hex: '#4E6B3A' },
+    red:    { label: 'Хүрэн улаан', hex: '#9A3B2E' },
+    grey:   { label: 'Саарал',    hex: '#8C8478' },
+  },
+  house: {
+    // wallMat: plaster (шохой) | logs (дүнз) | siding (хэвтээ банз) · gableMat: planks (босоо банз) | wall (ханатай ижил)
+    // porch.side: front | east | west · porch.doorFace: out (амбаарын урд) | left | right (амбаарын хажуу, амбаараас харахад)
+    houseA: { label: 'А · шохойдсон ✓', wallMat: 'plaster', gableMat: 'planks', w: 7.2, d: 5.6, wallH: 2.6, plinthH: 0.35, plinthOut: 0.04,
+      roofColor: 'orange', roofPitch: 0.55, eave: 0.40, gableOut: 0.30, roofT: 0.06, roofLift: 0.03,
+      wallT: 0.25, ceilingH: 2.40,
+      window: { w: 1.15, h: 1.25, sill: 1.00, out: 0.05, front: [-2.30, -0.50], side: [0] },
+      porch:  { side: 'front', x: 2.00, w: 2.00, d: 1.50, hBack: 2.25, hFront: 2.02, roofOut: 0.15, roofFront: 0.25, doorFace: 'out' },
+      door:   { w: 0.90, h: 1.85, sill: 0.10, out: 0.03 },
+      step:   { w: 1.30, d: 0.60, h: 0.10 },
+      chimney:{ x: -1.30, z: -0.90, size: 0.42, rise: 0.55 },
+    },
+    houseB: { label: 'Б · дүнзэн', wallMat: 'logs', gableMat: 'wall', wallColor: '#A97E50', corner: 0.13,
+      w: 6.0, d: 4.8, wallH: 2.35, plinthH: 0.25, plinthOut: 0.04,
+      roofColor: 'blue', roofPitch: 0.50, eave: 0.38, gableOut: 0.30, roofT: 0.06, roofLift: 0.03,
+      wallT: 0.22, ceilingH: 2.15,
+      window: { w: 1.00, h: 1.10, sill: 0.95, out: 0.05, front: [0.45, 1.95], side: [0] },
+      porch:  { side: 'front', x: -1.65, w: 1.80, d: 1.35, hBack: 2.10, hFront: 1.92, roofOut: 0.15, roofFront: 0.25, doorFace: 'out' },
+      door:   { w: 0.85, h: 1.78, sill: 0.10, out: 0.03 },
+      step:   { w: 1.20, d: 0.55, h: 0.10 },
+      chimney:{ x: 1.10, z: -0.80, size: 0.40, rise: 0.50 },
+    },
+    houseC: { label: 'В · банзан, хажуу амбаартай', wallMat: 'siding', gableMat: 'wall', wallColor: '#B9CBB0',
+      w: 8.0, d: 6.2, wallH: 2.7, plinthH: 0.40, plinthOut: 0.04,
+      roofColor: 'green', roofPitch: 0.48, eave: 0.42, gableOut: 0.32, roofT: 0.06, roofLift: 0.03,
+      wallT: 0.20, ceilingH: 2.50,
+      window: { w: 1.15, h: 1.30, sill: 1.00, out: 0.05, front: [-2.50, -0.85, 0.85, 2.50], side: [-1.30, 1.30] },
+      porch:  { side: 'east', z: 1.40, w: 2.40, d: 1.70, hBack: 2.45, hFront: 2.20, roofOut: 0.15, roofFront: 0.25, doorFace: 'left' },   // зүүн хананд, хаалга нь урагшаа (хашааны хаалга руу)
+      door:   { w: 0.90, h: 1.85, sill: 0.10, out: 0.03 },
+      step:   { w: 1.30, d: 0.60, h: 0.10 },
+      chimney:{ x: -1.60, z: -1.00, size: 0.44, rise: 0.55 },
+    },
+  },
+  // Тусгай айлууд (sumcenter.json → specialPlots). base: суурь хашааны төрөл. enterable: тоглогч орж болно (V6.1 дотор тал)
+  special: {
+    grandparents: { label: 'Өвөө эмээгийн гэр', base: 'gerYard', gerSize: 'small5', porter: true, plaque: true, enterable: true },   // дотор тал: гэрийн лабораторийн makeGerInterior('small5')
+    relative1:    { label: 'Хамаатан 1', base: 'houseA', roofColor: 'blue', enterable: true, plaque: true },
+    relative2:    { label: 'Хамаатан 2', base: 'houseC', roofColor: 'red',  enterable: true, plaque: true },
+  },
+  plaque: { w: 0.62, h: 0.42, y: 1.45, color: '#F4EEDF', frame: '#2E5E9E', gap: 0.7 },   // хашааны жижиг хаалганы хажуугийн айлын самбар
+  // Портер маягийн жижиг ачааны машин (тулгуур загвар; тоглоомд машины өөрийн загвар орно). Урд нь +Z
+  porter: { cab: '#F4EEDF', bed: '#2E5E9E', glass: '#3D4C5E', tire: '#2A221C', rim: '#B0B6BB', chassis: '#4A4640', light: '#F2C12E',
+    W: 1.70, cabZ: [0.95, 2.45], cabY: [0.55, 1.95], bedZ: [-2.55, 0.85], bedY: 0.85, sideH: 0.40, wheelR: 0.33, wheelW: 0.20, axles: [1.55, -1.30],
+    at: { dx: 5.0, dz: 2.2, phi: Math.PI / 2 } },   // хашааны хаалганаас зүүн тийш, гудамжны захад, хашааг даган зогсоно
+  // Хашааны нэмэлт барилга (зарим айлд). Бүгд урагшаа (+Z) нүүртэй локал координатад
+  woodshed:   { label: 'Новны амбаар', w: 3.0, d: 1.8, hFront: 2.10, hBack: 1.80, roofOut: 0.18, roofColor: 'grey', color: '#8C7453', stackH: 1.35, post: 0.12 },   // урд нь онгорхой, түлээ өрсөн
+  animalShed: { label: 'Малын саравч', W: 7.0, D: 3.2, hFront: 2.10, hBack: 1.70, roofOut: 0.25, roofColor: 'grey', color: '#7A6448', post: 0.16,
+    pen: 5.0, gateW: 1.6, railH: [0.35, 0.75, 1.15], rail: 0.07, manure: '#6E5A44' },   // урд нь онгорхой саравч + урдаа хашаа хороо, бууцтай.
+    // Хашаанд: саравч хойшоо харж, хороо нь хашааны хойд хашаанд тулна. Хорооны хаалга хашааны хойд хашаанд — мал айлын хашааг дайралгүй гаднаас шууд орно
+  greenhouse: { label: 'Ногооны хүлэмж', W: 3.2, H: 2.2, L: 5.0, segs: 8, ribEvery: 1.25, ribW: 0.06, film: '#E2ECE6', rib: '#8C9A92', door: '#7A6448' },   // нуман хонгил, урт тэнхлэг зүүн-баруун, хаалга зүүн тийш
+  // Хашааны ногоон байдал, зам, мод бут, нохойн үүр
+  ground: { yard: '#78A04A', road: '#A88A62', rut: '#8A7050', walk: '#B9B2A4', dirt: '#A08460', roadW: 5.0, rutW: 0.38, rutAt: 0.85 },   // гудамжинд зөвхөн машины зам шороон, бусад нь ногоон
+  path: { w: 1.0, slab: 1.0, joint: 0.06, walkH: 0.035, dirtW: 1.15, drive: 3.2 },   // walk: бетон хавтан явган зам · dirt: шороон зам · drive: том хаалганаас зам хүртэлх шороо
+  tree: { trunk: '#6E5A44', trunkH: 1.7, trunkW: 0.22, crownR: 1.3, crownH: 2.7, crown: '#4E6B3A', crownTop: '#6E8E48', bare: '#6E5A44' },
+  bush: { crownR: 0.65, crownH: 1.05, crown: '#5E7A3A', crownTop: '#7A9A4E', bare: '#7A6448' },
+  kennel: { w: 0.80, d: 1.00, wallH: 0.62, ridgeH: 0.98, color: '#9A7A55', roof: '#6E5A44', holeW: 0.38, holeH: 0.46 },
+  // 2-р бүлэг: дэлгүүр — нэг үндсэн хэлбэр, хаягийн самбар/өнгө/үүдний бараагаар ялгарна
+  shop: {
+    w: 9.6, d: 8.0, wallH: 4.0, plinthH: 0.45, roofPitch: 0.35, eave: 0.40, gableOut: 0.30, roofT: 0.06, roofLift: 0.03, wallT: 0.3, ceilingH: 3.2,
+    sign: { w: 7.4, h: 0.82, y: 3.28, out: 0.15 },                     // хаягийн самбар (төвийн өндөр)
+    door: { w: 1.40, h: 2.10, out: 0.04 }, win: { w: 1.90, h: 1.45, sill: 1.00, gap: 0.55, out: 0.05 }, sideWin: { w: 1.15, h: 1.25, sill: 1.0 },
+    canopy: { w: 2.8, d: 1.2, y: 2.64 },                                 // хаалганы дээрх халхавч
+    porch: { w: 3.2, d: 1.4, steps: 2, stepD: 0.32, rail: 0.9 },         // бетон тавцан, шат, хашлага
+    apron: { d: 3.0, color: '#B9B2A4' },                                 // урдах бетон талбай
+    chimney: { x: -2.6, z: -1.6, size: 0.45, rise: 0.6 },
+    order: ['grocery', 'feed', 'equipment', 'gertent', 'clothes', 'pets'],   // дэлгүүрийн эгнээ (6 дэлгүүр)
+    extraSigns: { fuelCanopy: { sign: 'ШАТАХУУН', signColor: '#D9622B', signText: '#FFFFFF' },
+      school: { sign: 'ЕРӨНХИЙ БОЛОВСРОЛЫН СУРГУУЛЬ', signColor: '#5C8A94', signText: '#FFFFFF' }, dorm: { sign: 'ДОТУУР БАЙР', signColor: '#3A5FB0', signText: '#FFFFFF' },
+      kinder: { sign: 'ЦЭЦЭРЛЭГ', signColor: '#D9622B', signText: '#FFFFFF' }, zdtg: { sign: 'ЗАСАГ ДАРГЫН ТАМГЫН ГАЗАР', signColor: '#B5633F', signText: '#FFFFFF' },
+      police: { sign: 'ЦАГДАА', signColor: '#2E5E9E', signText: '#FFFFFF' }, bank: { sign: 'БАНК', signColor: '#2E5C8A', signText: '#FFFFFF' },
+      culture: { sign: 'СОЁЛЫН ТӨВ', signColor: '#8A2E2E', signText: '#F4EEDF' }, hospital: { sign: 'ЭМНЭЛЭГ', signColor: '#FFFFFF', signText: '#B03A22' },
+      vet: { sign: 'МАЛ ЭМНЭЛЭГ', signColor: '#4E6B3A', signText: '#FFFFFF' }, boiler: { sign: 'УУРЫН ЗУУХ', signColor: '#4A4640', signText: '#F4EEDF' },
+      bath: { sign: 'ХАЛУУН УС · ҮСЧИН', signColor: '#2E5E9E', signText: '#FFFFFF' } },
+    types: {   // gameRole нь sumcenter.json-ын gameRole-той таарна
+      grocery:   { label: 'Хүнс',              sign: 'ХҮНСНИЙ ДЭЛГҮҮР',  signColor: '#D9622B', signText: '#FFFFFF', roof: 'orange', wall: '#F1ECE0', goods: 'crates',  gameRole: 'grocery', central: true },
+      feed:      { label: 'Малын тэжээл',      sign: 'МАЛЫН ТЭЖЭЭЛ',     signColor: '#4E6B3A', signText: '#FFFFFF', roof: 'green',  wall: '#E8DCC0', goods: 'hay',     gameRole: 'feed', central: true },
+      equipment: { label: 'Тоног төхөөрөмж',   sign: 'ТОНОГ ТӨХӨӨРӨМЖ',  signColor: '#2E5E9E', signText: '#FFFFFF', roof: 'blue',   wall: '#EFEBE2', goods: 'cans',    gameRole: 'equipment', central: true },
+      gertent:   { label: 'Гэр, майхан',       sign: 'ГЭР, МАЙХАН',      signColor: '#9A3B2E', signText: '#F4EEDF', roof: 'red',    wall: '#E8DCC0', goods: 'felt',    gameRole: 'gerTent', central: true },
+      clothes:   { label: 'Хувцас, гутал',     sign: 'ХУВЦАС, ГУТАЛ',    signColor: '#7A3E6E', signText: '#F4EEDF', roof: 'grey',   wall: '#F1ECE0', goods: 'clothes', gameRole: 'clothes', central: true },
+      teahouse:  { label: 'Цайны газар', sign: 'ЦАЙНЫ ГАЗАР', signColor: '#6E5A44', signText: '#F4EEDF', roof: '#D8A93A', wall: '#E8DCC0', goods: 'bench', gameRole: 'teahouse',
+                   w: 10, d: 8, winStyle: 'house', windows: 2 },                                   // айлын цонхтой, гадаа ширээ сандал
+      milkOffice:{ label: 'Сүү, ноос хүлээн авах', sign: 'СҮҮ, НООС ХҮЛЭЭН АВНА', signColor: '#2E5E9E', signText: '#FFFFFF', roof: 'blue', wall: '#F1ECE0', goods: null, gameRole: 'milkWool',
+                   w: 7, d: 6, wallH: 3.6, canopy: false, apron: false },
+      carOffice: { label: 'Машин худалдаа', sign: 'МАШИН ХУДАЛДАА', signColor: '#2E5E9E', signText: '#FFFFFF', roof: '#3A5FB0', wall: '#EFEBE2', goods: null, gameRole: 'vehicles',
+                   w: 10, d: 8, flat: true, apron: false },
+      fuelKiosk: { label: 'Колонкийн касс', sign: 'ШТС · КАСС', signColor: '#D9622B', signText: '#FFFFFF', roof: '#B03A22', wall: '#F1ECE0', goods: null, gameRole: 'fuel',
+                   w: 6, d: 4.4, wallH: 3.4, flat: true, canopy: false, apron: false },
+      pets:      { label: 'Тэжээвэр амьтан',   sign: 'ТЭЖЭЭВЭР АМЬТАН',  signColor: '#D8A93A', signText: '#2A221C', roof: 'grey',   wall: '#EFEBE2', goods: 'cages',   gameRole: 'pets', central: true },
+    },
+  },
+  // 2-р бүлгийн бусад: нэг талбайд хэд хэдэн хэсэгтэй (локал төв = талбайн төв, нүүр +Z)
+  milkWool: { lot: [26, 20], ground: '#A88A62', office: { x: -7.5, z: 3.0 },
+    tanks: { x: -8.5, z: -4.5, r: 0.85, L: 3.6, gap: 2.1, legH: 0.7, color: '#B0B6BB' },          // хэвтээ сүүний сав, хоёр
+    store: { x: 5.5, z: -1.5, w: 12, d: 9, wallH: 4.4, pitch: 0.25, color: '#8FA7B0', roof: '#8C8478', doorW: 3.6, doorH: 3.6 },   // ноосны агуулах (төмөр)
+    bales: { x: 9.0, z: 5.0, n: [3, 2], size: [1.0, 0.8, 1.2], color: '#E8E0CC' },               // ноосны боодол
+    scale: { x: -1.5, z: 6.0, w: 3.2, L: 8.0 } },                                                // машины жин
+  carDealer: { lot: [32, 26], office: { x: 0, z: -8.5 }, yard: { z: 4.5, w: 32, d: 14, color: '#B9B2A4' },   // хашаагүй задгай талбай
+    rail: { h: 0.8, every: 2.4, color: '#F4EEDF' }, flags: ['#D9622B', '#2E5E9E', '#D8A93A', '#4E6B3A', '#9A3B2E'],
+    slots: [ { item: 'porter', x: -12, z: 4.0, phi: 0.35, cab: '#F4EEDF', bed: '#2E5E9E' },      // зарагдах машинууд: 5 зогсоол (тоглоомд жинхэнэ загвар орно)
+             { item: 'amjirgaa', x: -6, z: 4.0, phi: 0.35, cab: '#F4EEDF', bed: '#F4EEDF' },
+             { item: 'porter', x: 0, z: 4.0, phi: 0.35, cab: '#2E5E9E', bed: '#4A4640' },
+             { item: 'amjirgaa', x: 6, z: 4.0, phi: 0.35, cab: '#9A3B2E', bed: '#F4EEDF' },
+             { item: 'moto', x: 12, z: 4.5, phi: 0.6 } ] },
+  fuel: { lot: [20, 18], ground: '#B9B2A4', canopy: { w: 9, d: 7, h: 4.6, t: 0.6, color: '#F4EEDF' }, pillars: 0.4,
+    island: { w: 4.4, d: 1.2 }, pumps: [-1.3, 1.3], kiosk: { x: 0, z: -6.4 }, pylon: { x: 7.5, z: 6.5, h: 5.6, w: 1.5, d: 0.45, front: '#D9622B', side: '#B03A22', base: '#9AA3A8', name: 'ШТС',   // үнийн босоо самбар (жишээ зургаар; брэндгүй)
+      prices: [['92', '#2E9A4A', 'дууссан'], ['92', '#B03A22', '3590'], ['95', '#2E5E9E', 'дууссан'], ['ДТ', '#2A221C', '5600']],   // [марк, өнгө, үнэ ₮ эсвэл «дууссан»] → тоглоомд economy-оос
+      note: 'ЧАНАРТАЙ ШАТАХУУН' }, stripe: '#B03A22' },
+  // 3-р бүлэг: олон нийтийн барилга. Давхар бүрийн цонх нэг давтагдах зурвас (bay м тутамд нэг цонх) — урт барилга ч цөөн гурвалжинтай
+  public: { floorH: 3.2, plinth: 0.5, bay: 3.0, belt: 0.14, parapet: 0.35, pitch: 0.32, eave: 0.45,
+    kinds: {   // entrances: x байрлал; columns: хаалганы дээрх халхавчны багана; portico: соёлын төвийн баганат үүд
+      school:   { label: 'Сургууль', w: 56, d: 15, floors: 3, roof: 'flat', roofColor: '#9AA3A6', wall: '#EFEBE2', trim: '#5C8A94', central: true, gameRole: 'school',
+                  entrances: [{ x: 0, w: 2.4, canopy: 4.2, columns: true }], extras: ['flag'] },
+      dorm:     { label: 'Дотуур байр', w: 34, d: 12, floors: 2, roof: 'gable', roofColor: '#D9622B', wall: '#EFEBE2', trim: '#3A5FB0', central: true, gameRole: 'dormitory', entrances: [{ x: 0 }] },
+      kinder:   { label: 'Цэцэрлэг', w: 40, d: 14, floors: 2, roof: 'gable', roofColor: '#8A2E2E', wall: '#F1ECE0', trim: '#D9622B', central: true, gameRole: 'kindergarten',
+                  entrances: [{ x: -9 }, { x: 9 }], extras: ['playground'], stripe: ['#D9622B', '#D8A93A', '#4E6B3A', '#2E5E9E'] },
+      zdtg:     { label: 'ЗДТГ (цагдаа дотроо)', w: 28, d: 14, floors: 2, roof: 'hip', roofColor: '#3F9E6E', wall: '#F3EDE2', trim: '#B5633F', central: true, gameRole: 'admin',
+                  entrances: [{ x: 0, w: 2.4, canopy: 4.6, columns: true }, { x: 10.5, sign: 'police' }], extras: ['flags3'] },
+      bank:     { label: 'Банк', w: 18, d: 12, floors: 2, roof: 'flat', roofColor: '#2E5C8A', wall: '#E8E4DA', trim: '#2E5C8A', central: true, gameRole: 'bank', entrances: [{ x: -4.5 }], extras: ['atm'] },
+      culture:  { label: 'Соёлын төв', w: 40, d: 18, floors: 1, floorH: 6.5, roof: 'gable', roofColor: '#8A2E2E', wall: '#EFEBE2', trim: '#B5633F', central: true, gameRole: 'culture',
+                  entrances: [{ x: 0, w: 3.0, portico: true }], tallWin: true },
+      hospital: { label: 'Эмнэлэг', w: 50, d: 12, floors: 2, roof: 'flat', roofColor: '#4A4A4A', wall: '#E8DCC0', trim: '#5C8AB0', central: true, gameRole: 'hospital',
+                  entrances: [{ x: -12, w: 2.4, canopy: 4.0, columns: true }, { x: 14 }], extras: ['cross'] },
+      vet:      { label: 'Мал эмнэлэг', w: 14, d: 9, floors: 1, roof: 'gable', roofColor: '#6E8A5C', wall: '#E8DCC0', trim: '#4E6B3A', central: true, gameRole: 'vet', entrances: [{ x: -3 }], extras: ['pen'] },
+      boiler:   { label: 'Уурын зуух', w: 24, d: 14, floors: 1, floorH: 7, roof: 'flat', roofColor: '#3A3A3A', wall: '#A8553A', trim: '#6E6A64', gameRole: 'boiler',
+                  entrances: [{ x: 5 }, { x: -6, garage: true }], extras: ['stack', 'coal'] },
+      bath:     { label: 'Халуун ус, үсчин', w: 12, d: 8, floors: 1, roof: 'gable', roofColor: '#6E8A5C', wall: '#E8DCC0', trim: '#2E5E9E', central: true, gameRole: 'bath', entrances: [{ x: 0 }], extras: [] },
+    } },
+  // 4-р бүлэг: дуган — тавцан, цагаан хана, улаан багана, будмал дам нуруу, хоёр давхар ногоон дээвэр, алтан ганжир, хүрдний эгнээ, суварга, шар хашаа
+  temple: { yard: [34, 26], fence: '#D9A441', gate: '#B03A22', hallZ: -2.5,
+    plat: { w: 13, d: 14.5, h: 0.6, color: '#B9B2A4' }, hall: { w: 10, d: 10, h: 4.0, wall: '#F1ECE0', red: '#B03A22', gold: '#D8A93A' },
+    porch: { d: 2.4, cols: [-4.2, -1.5, 1.5, 4.2], colR: 0.2 }, beamH: 0.6,
+    roof: { color: '#2FA84F', under: '#8A2E2E', eave: 1.1, rise: 1.7, flare: 0.55 }, upper: { w: 6, h: 1.4, eave: 0.8, rise: 1.5 },
+    wheels: { row: { x: 8.6, n: 5, gap: 0.85, r: 0.24, h: 0.62, mid: 0.8, top: 1.75 },        // эгнээ хүрд (улаан хүрээ)
+              single: { x: -4.2, z: 10.6 },                                                 // ганц гуулин хүрд (ногоон дээвэр)
+              pavilion: { x: 8.6, z: 6.5, w: 2.6, h: 2.6 } },                               // асартай цагаан хүрд
+    stupa: { x: -10.2, z: 5.0 },
+    spinDir: -1 },   // нар зөв: дээрээс харахад цагийн зүүний дагуу (Three.js-д rotation.y буурна). Хүрд эргүүлэх, суварга тойрох хоёулаа ийм чиглэлтэй
+  // 5-р бүлэг: малын зах (хашаа, хороо) ба тоглоомын/бөхийн талбай
+  market: { lot: [40, 30], ground: '#A08460', rail: '#7A6448', railH: [0.55, 1.25], post: 0.16,
+    pens: { cols: 4, rows: 2, w: 6, d: 6, x0: -15, z0: -9, gap: 1.5 },      // хороо: 4 × 2, дунд нь гарц
+    shed: { x: 10, z: -7, w: 12, d: 6 }, ramp: { x: 15.5, z: 9, w: 3, L: 5, h: 1.2 }, trough: { x: 6, z: 6 } },
+  stadium: { lot: [74, 54], grass: '#6E9A44', line: '#F4EEDF',   // тоглоомын (хөлбөмбөгийн) талбай: хамгаалалтын тор, шөнийн гэрэлтүүлэг
+    pitch: { x: 0, w: 56, d: 36 }, goalW: 5, goalH: 2.2, net: { margin: 4, h: 5.0, every: 6, color: '#3F6E5A', board: 0.9, gate: 3 },
+    stand: { x: 0, z: -24.5, w: 24, rows: 4, step: 0.45, rowD: 0.8, roof: '#D9622B' }, lamps: { h: 12, inset: 2.5 } },
+  wrestle: { lot: [88, 72], track: { rx: 27, rz: 19, w: 5, color: '#B5533A' }, fence: { rx: 38, rz: 30, every: 9, brick: '#B5733F', iron: '#2A2622' },   // бөхийн талбай (наадмын цэнгэлдэх)
+    tribune: { z: -27, w: 20, d: 7, h: 4.2 }, bleachers: { n: 8, w: 6, d: 3, roof: '#3FA0A8' }, sulde: { x: -6, z: -14 }, lamps: { h: 12 } },
+  toilet: { w: 1.10, d: 1.20, hFront: 2.15, hBack: 1.90, roofOut: 0.14, roofColor: 'grey', color: '#8C7453', door: { w: 0.70, h: 1.75, sill: 0.08 } },
+  khashaa: {
+    w: 22, d: 26,                  // sumcenter.json-ын plotW × plotD (24 × 28 − санамсаргүй 0–4)
+    h: 1.9, jitter: 0.07,
+    section: 4.8, thick: 0.035, sink: 0.10,
+    post: 0.12, postDrop: 0.18,
+    gateX: 0,
+    leafW: 1.25, gateH: 1.85, wicketW: 0.90, gatePost: 0.18, gatePostH: 2.20, gateLift: 0.08,
+    houseGap: 2.0, houseSide: 1.6, // байшин хойд ба хажуугийн хашаанаас зай
+    extra: { woodshedX: 0.8, woodshedBack: 0.9, shedEast: 0.15, greenWest: 1.5, greenFront: 5.9 },   // нэмэлт барилгын зай (м)
+    toiletIn: 1.4,                 // жорлон зүүн-урд буланд (+X, +Z), хашаанаас зай; хаалга нь хашааны дотор руу (хойш) харна
+    gerGap: 2.4,                   // гэр хашаанаас зай
+  },
+  // px (512²). Дээд хэсэг: дан зургууд. Доод 6 зурвас хэвтээ чигт давтагдана, цагаан суурьтай тул vertex color-оор будагдана.
+  atlas: { size: 512, h: 2048, lamp: [96, 32], shopWin: [0, 512, 128, 640], shopDoor: [128, 512, 224, 640], pubDoor: [224, 512, 320, 640], niche: [320, 512, 384, 640], ornament: [384, 512, 512, 576], wheelScript: [384, 576, 512, 640], pylon: [0, 640, 512, 768], winBand: [768, 896], templeBeam: [1952, 2000], wheelBand: [2000, 2048], white: [32, 32], firewood: [0, 64, 128, 128], signY: 896, signH: 48, /* 512 × 2048: 512-оос доош дэлгүүр/олон нийтийн цонх, хаалга, ШТС, давхрын цонхны зурвас, 24 самбар */ window: [128, 0, 256, 128], door: [256, 0, 320, 128], gateLeaf: [320, 0, 416, 128], wicket: [416, 0, 512, 128],
+    roof: [130, 190], plaster: [194, 254], planksOut: [258, 318], planksIn: [322, 382], logs: [386, 446], siding: [450, 510],
+    roofSpan: 6.4, plasterSpan: 6.4, plankSpan: 3.2, plankH: 1.9, hSpan: 2.56 },   // hSpan: дүнз, хэвтээ банзны 512 px = 2.56 м өндөр (u нь өндрөөр давтагдана)
+  shade: { bottom: 0.84 },
+  doorStandOff: 0.75, gateStandOff: 1.2,
+  outlineW: 0.03,
+};
+
+const sc = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
+const px2uv = (x, y) => [x / BUILDING_CONFIG.atlas.size, 1 - y / BUILDING_CONFIG.atlas.h];   // атлас 512 × 1408: 512-оос доош хаягийн самбар (12), дэлгүүрийн цонх, хаалга
+const rot = (x, z, phi, tx = 0, tz = 0) => [x * Math.cos(phi) + z * Math.sin(phi) + tx, -x * Math.sin(phi) + z * Math.cos(phi) + tz];   // Geo.append, Object3D.rotation.y-тэй ижил
+
+/* =====================================================================
+   Барилгын атлас — бүх барилгад НЭГ canvas (өнгө + шөнийн гэрлийн зураг)
+   ===================================================================== */
+let _atlas = null;
+function buildingAtlas() {
+  if (_atlas) return _atlas;
+  const P = BUILDING_CONFIG.palette, A = BUILDING_CONFIG.atlas, S = A.size;
+  const mk = () => { const c = document.createElement('canvas'); c.width = S; c.height = A.h; return c; };
+  const cm = mk(), ce = mk(), g = cm.getContext('2d'), e = ce.getContext('2d');
+  let seed = 17; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  g.fillStyle = '#fff'; g.fillRect(0, 0, S, A.h); e.fillStyle = '#000'; e.fillRect(0, 0, S, A.h);
+
+  { // цонх
+    const [X, Y, X1, Y1] = A.window, W = X1 - X, H = Y1 - Y;
+    g.fillStyle = P.trim; g.fillRect(X, Y, W, H);
+    g.fillStyle = 'rgba(255,255,255,.2)'; g.fillRect(X, Y, W, 5);
+    g.fillStyle = 'rgba(0,0,0,.28)'; g.fillRect(X, Y1 - 9, W, 9);
+    g.fillStyle = P.casing; g.fillRect(X + 12, Y + 12, W - 24, H - 26);
+    for (const [px, py, pw, ph] of [[18, 18, 41, 26], [69, 18, 41, 26], [18, 50, 41, 58], [69, 50, 41, 58]]) {
+      g.fillStyle = P.glass; g.fillRect(X + px, Y + py, pw, ph);
+      g.fillStyle = 'rgba(255,255,255,.17)'; g.beginPath(); g.moveTo(X + px + 3, Y + py + ph); g.lineTo(X + px + pw * 0.55, Y + py); g.lineTo(X + px + pw * 0.85, Y + py); g.lineTo(X + px + pw * 0.33, Y + py + ph); g.fill();
+      e.fillStyle = P.fire; e.fillRect(X + px, Y + py, pw, ph);
+    }
+    for (const [x0, dir] of [[X + 18, 1], [X + 110, -1]]) for (const [ctx, col] of [[g, 'rgba(244,238,223,.6)'], [e, 'rgba(255,244,220,.55)']]) {
+      ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x0, Y + 50); ctx.lineTo(x0 + dir * 30, Y + 50); ctx.quadraticCurveTo(x0 + dir * 8, Y + 72, x0, Y + 108); ctx.fill(); }
+  }
+  { // байшингийн хаалга
+    const [X, Y, X1, Y1] = A.door, W = X1 - X, H = Y1 - Y;
+    g.fillStyle = P.trim; g.fillRect(X, Y, W, H);
+    g.strokeStyle = 'rgba(0,0,0,.4)'; g.lineWidth = 3; g.strokeRect(X + 1.5, Y + 1.5, W - 3, H - 3);
+    for (const [py, ph] of [[10, 44], [62, 56]]) { g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 2; g.strokeRect(X + 9, Y + py, W - 18, ph);
+      g.strokeStyle = 'rgba(255,255,255,.22)'; g.lineWidth = 1.5; g.strokeRect(X + 12, Y + py + 3, W - 24, ph - 6); }
+    g.fillStyle = '#D9A93A'; g.beginPath(); g.arc(X + W - 9, Y + 66, 3.2, 0, 7); g.fill();
+    e.fillStyle = P.fire; e.fillRect(X + 3, Y1 - 3, W - 6, 2);
+  }
+  { // түлээний үзүүр (новны амбаарын овоолго)
+    const [X, Y, X1, Y1] = A.firewood; g.fillStyle = '#3A2C22'; g.fillRect(X, Y, X1 - X, Y1 - Y);
+    for (let row = 0; row < 9; row++) for (let col = 0; col < 19; col++) { const r = 3 + rnd() * 1.4, cx = X + 4 + col * 6.5 + (row % 2) * 3 + (rnd() - 0.5) * 1.5, cy = Y + 4 + row * 6.8 + (rnd() - 0.5) * 1.5;
+      if (cx + r > X1) continue; const v = 170 + Math.floor(rnd() * 60);
+      g.fillStyle = `rgb(${v},${Math.floor(v * 0.78)},${Math.floor(v * 0.52)})`; g.beginPath(); g.arc(cx, cy, r, 0, 7); g.fill();
+      g.strokeStyle = 'rgba(90,55,25,.6)'; g.lineWidth = 0.8; g.beginPath(); g.arc(cx, cy, r * 0.5, 0, 7); g.stroke(); }
+  }
+  { // хашааны хаалга, жорлонгийн хаалга: босоо банз, хөндлөвч, ташуу тулаас (цагаан суурь)
+    const X = A.gateLeaf[0], W = A.wicket[2] - X;
+    for (let x = 0; x < W; x += 12) { const v = 212 + Math.floor(rnd() * 43); g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(X + x, 0, 12, 128); g.fillStyle = 'rgba(0,0,0,.4)'; g.fillRect(X + x, 0, 1.5, 128); }
+    for (const y of [14, 104]) { g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(X, y, W, 11); g.fillStyle = 'rgba(0,0,0,.3)'; g.fillRect(X, y + 11, W, 2); }
+    g.strokeStyle = 'rgba(0,0,0,.2)'; g.lineWidth = 9; g.lineCap = 'butt';
+    for (const x0 of [0, 96]) { g.save(); g.beginPath(); g.rect(X + x0, 0, 96, 128); g.clip(); g.beginPath(); g.moveTo(X + x0 + 4, 106); g.lineTo(X + x0 + 92, 22); g.stroke(); g.restore(); }
+    g.fillStyle = 'rgba(0,0,0,.5)'; g.fillRect(X + 95, 0, 2, 128);
+    g.fillStyle = 'rgba(0,0,0,.6)'; g.beginPath(); g.arc(X + 96 + 84, 66, 3.5, 0, 7); g.fill();
+  }
+  { // атираат төмөр дээвэр
+    const [y0, y1] = A.roof, Y = y0 - 2, H = y1 - y0 + 4;
+    g.fillStyle = '#EDEDED'; g.fillRect(0, Y, S, H);
+    for (let x = 0; x < S; x += 16) { g.fillStyle = 'rgba(0,0,0,.24)'; g.fillRect(x, Y, 2.5, H); g.fillStyle = '#fff'; g.fillRect(x + 2.5, Y, 3.5, H); }
+    g.fillStyle = 'rgba(0,0,0,.13)'; g.fillRect(0, Y + H / 2, S, 2);
+    for (let n = 0; n < 50; n++) { const x = rnd() * S, y = Y + rnd() * H, w = 6 + rnd() * 26; g.fillStyle = `rgba(80,50,25,${0.03 + rnd() * 0.05})`; g.fillRect(x, y, w, 3 + rnd() * 10); g.fillRect(x - S, y, w, 6); }
+  }
+  { // шохойдсон хана
+    const [y0, y1] = A.plaster, Y = y0 - 2, H = y1 - y0 + 4;
+    for (let n = 0; n < 90; n++) { const x = rnd() * S, y = Y + rnd() * H, rx = 8 + rnd() * 30, ry = 3 + rnd() * 9;
+      g.fillStyle = `rgba(120,100,70,${0.025 + rnd() * 0.04})`; for (const dx of [0, -S, S]) { g.beginPath(); g.ellipse(x + dx, y, rx, ry, 0, 0, 7); g.fill(); } }
+    const gr = g.createLinearGradient(0, Y + H - 22, 0, Y + H); gr.addColorStop(0, 'rgba(110,90,60,0)'); gr.addColorStop(1, 'rgba(110,90,60,.26)'); g.fillStyle = gr; g.fillRect(0, Y + H - 22, S, 22);
+    g.strokeStyle = 'rgba(90,75,55,.28)'; g.lineWidth = 1;
+    for (let n = 0; n < 6; n++) { let x = 20 + rnd() * (S - 40), y = Y + 6 + rnd() * 20; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 4; k++) { x += (rnd() - 0.5) * 12; y += 5 + rnd() * 6; g.lineTo(x, y); } g.stroke(); }
+  }
+  const planks = (y0, y1, dark, rails) => { // босоо банз
+    const Y = y0 - 2, H = y1 - y0 + 4;
+    for (let x = 0; x < S;) { const w = Math.min(S - x, 20 + Math.floor(rnd() * 11)), v = Math.floor((198 + rnd() * 57) * dark);
+      g.fillStyle = `rgb(${v},${v},${Math.floor(v * 0.98)})`; g.fillRect(x, Y, w, H);
+      g.fillStyle = 'rgba(0,0,0,.07)'; for (let k = 0; k < 2; k++) g.fillRect(x + 4 + rnd() * (w - 8), Y, 1, H);
+      g.fillStyle = 'rgba(0,0,0,.5)'; g.fillRect(x, Y, 2, H);
+      if (!rails) { g.fillStyle = 'rgba(0,0,0,.55)'; for (const yy of [0.2, 0.78]) g.fillRect(x + w / 2 - 1, Y + H * yy, 2, 2); }
+      if (rnd() < 0.3) { g.fillStyle = 'rgba(60,40,20,.3)'; g.beginPath(); g.ellipse(x + w / 2, Y + rnd() * H, 3, 4, 0, 0, 7); g.fill(); }
+      x += w; }
+    if (rails) for (const yy of [0.18, 0.74]) { g.fillStyle = '#E6E0D6'; g.fillRect(0, Y + H * yy, S, 6); g.fillStyle = 'rgba(0,0,0,.4)'; g.fillRect(0, Y + H * yy + 6, S, 2); }
+  };
+  planks(...A.planksOut, 1, false); planks(...A.planksIn, 0.86, true);
+  { // дүнз: canvas-ын x = өндөр (давтагдана). Дүнз бүр дугуй сүүдэртэй, хооронд нь хар завсар (хөвд)
+    const [y0, y1] = A.logs, Y = y0 - 2, H = y1 - y0 + 4, n = 12, lw = S / n;
+    for (let k = 0; k < n; k++) { const x = k * lw, gr = g.createLinearGradient(x, 0, x + lw, 0);
+      gr.addColorStop(0, '#8A8A8A'); gr.addColorStop(0.18, '#E4E4E4'); gr.addColorStop(0.55, '#FFFFFF'); gr.addColorStop(0.9, '#B4B4B4'); gr.addColorStop(1, '#6E6E6E');
+      g.fillStyle = gr; g.fillRect(x, Y, lw, H); g.fillStyle = 'rgba(40,28,15,.75)'; g.fillRect(x, Y, 3, H);
+      g.fillStyle = 'rgba(70,45,20,.12)'; for (let q = 0; q < 3; q++) g.fillRect(x + 6 + rnd() * (lw - 12), Y, 1.2, H);
+      if (rnd() < 0.6) { g.fillStyle = 'rgba(70,45,20,.35)'; g.beginPath(); g.ellipse(x + lw * 0.5, Y + rnd() * H, 4, 2.5, 0, 0, 7); g.fill(); } }
+  }
+  { // хэвтээ банз (давхарласан): доод ирмэг нь дараагийн банзан дээр сүүдэр тусгана
+    const [y0, y1] = A.siding, Y = y0 - 2, H = y1 - y0 + 4, n = 16, bw = S / n;
+    for (let k = 0; k < n; k++) { const x = k * bw, gr = g.createLinearGradient(x, 0, x + bw, 0);
+      gr.addColorStop(0, '#9A9A9A'); gr.addColorStop(0.22, '#F2F2F2'); gr.addColorStop(1, '#FFFFFF');
+      g.fillStyle = gr; g.fillRect(x, Y, bw, H); g.fillStyle = 'rgba(0,0,0,.45)'; g.fillRect(x + bw - 2, Y, 2, H); }
+    for (let n2 = 0; n2 < 30; n2++) { g.fillStyle = `rgba(90,80,60,${0.03 + rnd() * 0.05})`; g.fillRect(rnd() * S, Y + rnd() * H, 4 + rnd() * 20, 3 + rnd() * 8); }
+  }
+
+  { // дэлгүүрийн хаягийн самбар: төрөл бүрт 512 × 64 зурвас (өнгө, хүрээ, бичиг, доороо алхан хээ). Шөнө бичиг нь гэрэлтэнэ
+    const SH = BUILDING_CONFIG.shop;
+    SIGN_KEYS().forEach((k, i) => { const T = signDef(k), y = A.signY + i * A.signH, H = A.signH;
+      g.fillStyle = T.signColor; g.fillRect(0, y, S, H);
+      g.strokeStyle = P.casing; g.lineWidth = 3; g.strokeRect(3, y + 3, S - 6, H - 6);
+      g.strokeStyle = T.signText; g.globalAlpha = 0.55; g.lineWidth = 2; g.beginPath();
+      for (let x = 14; x < S - 24; x += 16) { const yb = y + H - 10; g.moveTo(x, yb + 4); g.lineTo(x, yb - 2); g.lineTo(x + 10, yb - 2); g.lineTo(x + 10, yb + 2); g.lineTo(x + 5, yb + 2); }
+      g.stroke(); g.globalAlpha = 1;
+      let fs = Math.round(H * 0.5); const font = n => `700 ${n}px "Noto Sans", "Montserrat", "Segoe UI", sans-serif`; g.font = font(fs);
+      while (g.measureText(T.sign).width > S - 70 && fs > 14) g.font = font(--fs);
+      g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = T.signText; g.fillText(T.sign, S / 2, y + H / 2 - 4);
+      e.fillStyle = 'rgba(255,179,92,.12)'; e.fillRect(0, y, S, H); e.font = g.font; e.textAlign = 'center'; e.textBaseline = 'middle'; e.fillStyle = '#FFE7C2'; e.fillText(T.sign, S / 2, y + H / 2 - 4); });
+  }
+  { // дэлгүүрийн том цонх: мөнгөлөг хүрээ, шил, дотор лангуун дээрх бараа
+    const [X, Y, X1, Y1] = A.shopWin, W = X1 - X, H = Y1 - Y;
+    g.fillStyle = '#B9BBB7'; g.fillRect(X, Y, W, H); g.fillStyle = P.glass; g.fillRect(X + 7, Y + 7, W - 14, H - 14);
+    const cols = ['#D9622B', '#2E5E9E', '#D8A93A', '#4E6B3A', '#F4EEDF', '#9A3B2E'];
+    for (const sy of [40, 76, 108]) { g.fillStyle = 'rgba(200,190,170,.5)'; g.fillRect(X + 9, Y + sy, W - 18, 3); e.fillStyle = '#FFE2B0'; e.fillRect(X + 7, Y + sy - 30, W - 14, 33);
+      for (let x = X + 12; x < X1 - 16; x += 9 + Math.floor(rnd() * 5)) { const h = 8 + rnd() * 16; g.fillStyle = cols[Math.floor(rnd() * cols.length)]; g.globalAlpha = 0.7; g.fillRect(x, Y + sy - h, 7, h); g.globalAlpha = 1; } }
+    g.fillStyle = 'rgba(255,255,255,.16)'; g.beginPath(); g.moveTo(X + 14, Y1 - 8); g.lineTo(X + 70, Y + 8); g.lineTo(X + 92, Y + 8); g.lineTo(X + 36, Y1 - 8); g.fill();
+    g.fillStyle = '#9A9C98'; g.fillRect(X + W / 2 - 2, Y, 4, H);
+  }
+  { // дэлгүүрийн хаалга: хоёр хавтас, шилэн, мөнгөлөг хүрээ
+    const [X, Y, X1, Y1] = A.shopDoor, W = X1 - X, H = Y1 - Y;
+    g.fillStyle = '#B9BBB7'; g.fillRect(X, Y, W, H);
+    for (const x0 of [X + 6, X + W / 2 + 3]) { g.fillStyle = P.glass; g.fillRect(x0, Y + 8, W / 2 - 9, H - 36); e.fillStyle = '#FFD9A0'; e.fillRect(x0, Y + 8, W / 2 - 9, H - 36);
+      g.fillStyle = 'rgba(255,255,255,.15)'; g.fillRect(x0 + 4, Y + 12, 6, H - 46); }
+    g.fillStyle = '#6E706C'; g.fillRect(X + W / 2 - 1.5, Y, 3, H); g.fillRect(X + W / 2 - 9, Y + 60, 4, 18); g.fillRect(X + W / 2 + 5, Y + 60, 4, 18);
+  }
+
+  { // олон нийтийн барилгын хаалга: хоёр хавтастай модон, дээрээ шилтэй
+    const [X, Y, X1, Y1] = A.pubDoor, W = X1 - X, H = Y1 - Y;
+    g.fillStyle = '#6E4A2E'; g.fillRect(X, Y, W, H); g.fillStyle = '#F4EEDF'; g.fillRect(X, Y, W, 6); g.fillRect(X, Y, 5, H); g.fillRect(X1 - 5, Y, 5, H);
+    g.fillStyle = P.glass; g.fillRect(X + 8, Y + 10, W - 16, 22); e.fillStyle = P.fire; e.fillRect(X + 8, Y + 10, W - 16, 22);
+    for (const x0 of [X + 8, X + W / 2 + 2]) { g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 2; g.strokeRect(x0, Y + 38, W / 2 - 10, 38); g.strokeRect(x0, Y + 82, W / 2 - 10, 38); }
+    g.fillStyle = 'rgba(0,0,0,.5)'; g.fillRect(X + W / 2 - 1, Y + 34, 2, H - 34); g.fillStyle = '#D9A93A'; g.fillRect(X + W / 2 - 7, Y + 76, 3, 12); g.fillRect(X + W / 2 + 4, Y + 76, 3, 12);
+  }
+  { // давхрын цонхны зурвас: 4 хэсэг (нэг хэсэг = нэг bay), цагаан суурьтай тул ханын өнгөөр будагдана. Шөнө зарим цонх гэрэлтэй
+    const [y0, y1] = A.winBand, H = y1 - y0;
+    for (let k = 0; k < 4; k++) { const X = k * 128, wx = X + 34, ww = 60, wy = y0 + 30, wh = 66;
+      g.fillStyle = 'rgba(0,0,0,.08)'; g.fillRect(wx - 6, wy + wh, ww + 12, 6);
+      g.fillStyle = '#FFFFFF'; g.fillRect(wx - 5, wy - 5, ww + 10, wh + 10); g.fillStyle = 'rgba(0,0,0,.25)'; g.strokeStyle = 'rgba(0,0,0,.3)'; g.lineWidth = 1.5; g.strokeRect(wx - 5, wy - 5, ww + 10, wh + 10);
+      g.fillStyle = P.glass; g.fillRect(wx, wy, ww, wh); g.fillStyle = '#F4F1EA'; g.fillRect(wx + ww / 2 - 2, wy, 4, wh); g.fillRect(wx, wy + 20, ww, 4);
+      g.fillStyle = 'rgba(255,255,255,.16)'; g.fillRect(wx + 4, wy + 26, 8, wh - 30);
+      if (k % 2 === 0 || k === 3) { e.fillStyle = k === 3 ? '#C98A40' : P.fire; e.fillRect(wx, wy, ww, wh); e.fillStyle = '#000'; e.fillRect(wx + ww / 2 - 2, wy, 4, wh); e.fillRect(wx, wy + 20, ww, 4); }
+      for (let n = 0; n < 6; n++) { g.fillStyle = `rgba(120,100,70,${0.03 + rnd() * 0.04})`; g.beginPath(); g.ellipse(X + rnd() * 128, y0 + rnd() * H, 6 + rnd() * 16, 3 + rnd() * 6, 0, 0, 7); g.fill(); } }
+  }
+  { e.fillStyle = '#FFF4D8'; e.fillRect(72, 8, 48, 48); }   // гэрлийн толгойн тусгал (lamp) — энэ хэсэг шөнө гэрэлтэнэ
+  { // дуганы будмал дам нуруу: 64 px давтагдах хээ (хөх суурь, ногоон/улаан хавтан, алтан дугуй), дээд доод улаан зураас
+    const [y0, y1] = A.templeBeam, H = y1 - y0;
+    for (let x = 0; x < S; x += 64) { g.fillStyle = '#2E5E9E'; g.fillRect(x, y0, 64, H);
+      g.fillStyle = '#4E8A3A'; g.fillRect(x + 4, y0 + 10, 22, H - 20); g.fillStyle = '#B03A22'; g.fillRect(x + 38, y0 + 10, 22, H - 20);
+      g.strokeStyle = '#F4EEDF'; g.lineWidth = 2; g.strokeRect(x + 4, y0 + 10, 22, H - 20); g.strokeRect(x + 38, y0 + 10, 22, H - 20);
+      g.fillStyle = '#D8A93A'; g.beginPath(); g.arc(x + 32, y0 + H / 2, 7, 0, 7); g.fill(); g.fillStyle = '#B03A22'; g.beginPath(); g.arc(x + 32, y0 + H / 2, 3, 0, 7); g.fill();
+      g.fillStyle = '#F4EEDF'; g.beginPath(); g.arc(x + 15, y0 + H / 2, 4, 0, 7); g.fill(); g.beginPath(); g.arc(x + 49, y0 + H / 2, 4, 0, 7); g.fill(); }
+    g.fillStyle = '#B03A22'; g.fillRect(0, y0, S, 6); g.fillRect(0, y1 - 6, S, 6); g.fillStyle = '#D8A93A'; g.fillRect(0, y0 + 6, S, 2); g.fillRect(0, y1 - 8, S, 2);
+  }
+  { // хүрдний гадаргуу: алтан суурь, улаан хүрээ, давтагдах дэлбээ хээ (бичиггүй)
+    const [y0, y1] = A.wheelBand, H = y1 - y0;
+    g.fillStyle = '#D8A93A'; g.fillRect(0, y0, S, H); g.fillStyle = '#B03A22'; g.fillRect(0, y0, S, 7); g.fillRect(0, y1 - 7, S, 7);
+    for (let x = 0; x < S; x += 32) { g.fillStyle = '#B03A22'; g.beginPath(); g.ellipse(x + 16, y0 + H / 2, 7, 12, 0, 0, 7); g.fill();
+      g.fillStyle = '#F4EEDF'; g.beginPath(); g.ellipse(x + 16, y0 + H / 2, 3, 6, 0, 0, 7); g.fill(); g.fillStyle = '#2E5E9E'; g.fillRect(x, y0 + H / 2 - 1, 3, 3); }
+  }
+  { // сувргын тахилын нүх: алтан нуман хүрээ, улаан/хөх дотор, алтан бадам цэцэг (дүрсгүй)
+    const [X, Y, X1, Y1] = A.niche, W = X1 - X, H = Y1 - Y;
+    g.fillStyle = '#D8A93A'; g.fillRect(X, Y, W, H); g.fillStyle = '#B03A22'; g.beginPath(); g.moveTo(X + 6, Y1 - 6); g.lineTo(X + 6, Y + 40); g.quadraticCurveTo(X + W / 2, Y - 6, X1 - 6, Y + 40); g.lineTo(X1 - 6, Y1 - 6); g.fill();
+    g.fillStyle = '#2E5E9E'; g.beginPath(); g.moveTo(X + 13, Y1 - 13); g.lineTo(X + 13, Y + 46); g.quadraticCurveTo(X + W / 2, Y + 8, X1 - 13, Y + 46); g.lineTo(X1 - 13, Y1 - 13); g.fill();
+    g.fillStyle = '#D8A93A'; for (let k = 0; k < 5; k++) { g.beginPath(); g.ellipse(X + W / 2 + (k - 2) * 7, Y1 - 30, 4, 11, (k - 2) * 0.35, 0, 7); g.fill(); }
+    g.beginPath(); g.arc(X + W / 2, Y + 58, 9, 0, 7); g.fill(); e.fillStyle = 'rgba(255,200,120,.25)'; e.fillRect(X + 13, Y + 20, W - 26, H - 33);
+  }
+  { // алтан хээтэй хавтан (суварганы давхарга): эргэлдсэн угалз, дугуй
+    const [X, Y, X1, Y1] = A.ornament, W = X1 - X, H = Y1 - Y;
+    g.fillStyle = '#E8C46A'; g.fillRect(X, Y, W, H); g.strokeStyle = '#9A6A1E'; g.lineWidth = 2; g.strokeRect(X + 2, Y + 2, W - 4, H - 4);
+    for (const cx of [X + 22, X + 64, X + 106]) { g.strokeStyle = '#9A6A1E'; g.lineWidth = 2.5; g.beginPath();
+      for (let t = 0; t <= 9.4; t += 0.3) { const q = 16 * (1 - t / 11), x = cx + Math.cos(t) * q, y = Y + H / 2 + Math.sin(t) * q * 0.8; t ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke();
+      g.fillStyle = cx === X + 64 ? '#2E9A4A' : '#B03A22'; g.beginPath(); g.arc(cx, Y + H / 2, 5, 0, 7); g.fill(); }
+  }
+  { // цагаан хүрдний гадаргуу: цагаан суурь, алтан чимэг тэмдэг (бичиг биш), улбар шар хүрээ
+    const [X, Y, X1, Y1] = A.wheelScript, W = X1 - X, H = Y1 - Y;
+    g.fillStyle = '#FFFFFF'; g.fillRect(X, Y, W, H); g.fillStyle = '#D9622B'; g.fillRect(X, Y, W, 5); g.fillRect(X, Y1 - 5, W, 5);
+    g.strokeStyle = '#C9972E'; g.lineWidth = 3; g.lineCap = 'round';
+    for (const cx of [X + 32, X + 96]) { g.beginPath(); g.arc(cx, Y + H / 2 - 4, 9, Math.PI * 0.2, Math.PI * 1.6); g.stroke(); g.beginPath(); g.moveTo(cx + 2, Y + H / 2 + 6); g.quadraticCurveTo(cx + 14, Y + H / 2 + 14, cx + 4, Y + H / 2 + 18); g.stroke();
+      g.beginPath(); g.moveTo(cx - 8, Y + 14); g.lineTo(cx + 10, Y + 14); g.stroke(); g.fillStyle = '#C9972E'; g.beginPath(); g.arc(cx + 1, Y + 9, 2.5, 0, 7); g.fill(); }
+  }
+  { // колонкийн үнийн самбар: 128 × 512 босоо зургийг 90° эргүүлж 512 × 128 зурвас руу хийнэ
+    const Y = BUILDING_CONFIG.fuel.pylon, [X0, Y0] = A.pylon, mkp = () => { const c = document.createElement('canvas'); c.width = 128; c.height = 512; return c; };
+    const pc = mkp(), pe = mkp(), q = pc.getContext('2d'), qe = pe.getContext('2d'), F = n => `700 ${n}px "Noto Sans", "Montserrat", sans-serif`;
+    q.fillStyle = Y.front; q.fillRect(0, 0, 128, 512); qe.fillStyle = '#000'; qe.fillRect(0, 0, 128, 512);
+    q.fillStyle = 'rgba(255,255,255,.12)'; q.fillRect(0, 0, 6, 512); q.fillStyle = 'rgba(0,0,0,.15)'; q.fillRect(118, 0, 10, 512);
+    q.fillStyle = '#FFFFFF'; q.beginPath(); q.arc(64, 44, 26, 0, 7); q.fill();                                                         // энгийн дусал тэмдэг
+    q.fillStyle = Y.side; q.beginPath(); q.moveTo(64, 24); q.quadraticCurveTo(82, 48, 78, 56); q.arc(64, 54, 14, 0.15, Math.PI - 0.15); q.quadraticCurveTo(46, 48, 64, 24); q.fill();
+    q.fillStyle = '#FFFFFF'; q.textAlign = 'center'; q.textBaseline = 'middle'; q.font = F(30); q.fillText(Y.name, 64, 98);
+    qe.fillStyle = 'rgba(255,220,170,.35)'; qe.beginPath(); qe.arc(64, 44, 26, 0, 7); qe.fill(); qe.textAlign = 'center'; qe.textBaseline = 'middle'; qe.font = F(30); qe.fillStyle = '#FFE7C2'; qe.fillText(Y.name, 64, 98);
+    q.fillStyle = '#1E1A18'; q.fillRect(8, 122, 112, 212);
+    Y.prices.forEach(([lab, col, val], i) => { const y = 128 + i * 51;
+      q.fillStyle = col; q.fillRect(14, y + 6, 36, 38); q.fillStyle = '#FFFFFF'; q.font = F(lab.length > 2 ? 18 : 22); q.fillText(lab, 32, y + 26);
+      const sold = isNaN(+val); q.fillStyle = sold ? '#E6E0D6' : '#FFFFFF'; q.font = F(sold ? 14 : 22); q.textAlign = 'right'; q.fillText(val, 114, y + 26); q.textAlign = 'center';
+      qe.fillStyle = col; qe.globalAlpha = 0.6; qe.fillRect(14, y + 6, 36, 38); qe.globalAlpha = 1; qe.fillStyle = '#FFFFFF'; qe.font = F(lab.length > 2 ? 18 : 22); qe.fillText(lab, 32, y + 26);
+      qe.fillStyle = sold ? '#C8C0B0' : '#FFF4D8'; qe.font = F(sold ? 14 : 22); qe.textAlign = 'right'; qe.fillText(val, 114, y + 26); qe.textAlign = 'center'; });
+    for (let k = 0; k < 3; k++) { const x = 14 + k * 38; q.fillStyle = '#FFFFFF'; q.fillRect(x, 346, 30, 30); q.fillStyle = Y.side;   // гурван дүрс
+      if (k === 0) { q.beginPath(); q.arc(x + 15, 361, 9, 0, 7); q.fill(); q.fillStyle = '#FFFFFF'; q.font = F(11); q.fillText('24', x + 15, 362); }
+      if (k === 1) { q.fillRect(x + 9, 352, 10, 16); q.fillRect(x + 19, 356, 3, 8); }
+      if (k === 2) { q.beginPath(); q.moveTo(x + 15, 351); q.quadraticCurveTo(x + 25, 364, x + 15, 371); q.quadraticCurveTo(x + 5, 364, x + 15, 351); q.fill(); } }
+    q.fillStyle = '#FFFFFF'; q.fillRect(10, 390, 108, 30); q.fillStyle = '#2A221C'; q.font = F(10); const nw = q.measureText(Y.note).width; if (nw > 100) q.font = F(Math.floor(10 * 100 / nw)); q.fillText(Y.note, 64, 405);
+    q.fillStyle = 'rgba(0,0,0,.12)'; q.fillRect(0, 440, 128, 72);
+    for (const [ctx, src] of [[g, pc], [e, pe]]) { ctx.save(); ctx.translate(X0, Y0 + 128); ctx.rotate(-Math.PI / 2); ctx.drawImage(src, 0, 0); ctx.restore(); }
+  }
+
+  const tex = c => { const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = THREE.RepeatWrapping; t.anisotropy = 4; return t; };
+  return (_atlas = { map: tex(cm), emissiveMap: tex(ce) });
+}
+
+/* =====================================================================
+   Хавтгай хэлбэрийн туслахууд (Geo g руу бичнэ)
+   ===================================================================== */
+const bandV = (r, t) => 1 - (r[1] + (r[0] - r[1]) * Math.min(1, Math.max(0, t))) / BUILDING_CONFIG.atlas.h;   // r = [дээд px, доод px], t: 0 доод … 1 дээд
+// босоо хана a → b. mat: { r: зурвас, span, vh } — босоо зурвас (шохой, банз) эсвэл { r, h: true } — хэвтээ (дүнз, хэвтээ банз: u нь өндөр)
+function wallQuad(g, a, b, y0, y1a, n, col, mat, y1b = y1a) {
+  const A = BUILDING_CONFIG.atlas, len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  const uv = mat.h ? (s, y) => [y / A.hSpan, bandV(mat.r, 0.05 + 0.9 * s)]
+                   : (s, y) => [s * len / mat.span, bandV(mat.r, y / mat.vh)];
+  g.quad([[a[0], y0, a[1]], [b[0], y0, b[1]], [b[0], y1b, b[1]], [a[0], y1a, a[1]]], n, col, [uv(0, y0), uv(1, y0), uv(1, y1b), uv(0, y1a)]);
+}
+// налуу хавтан (дээвэр, цас): дээд ирмэг (zH, yH) → доод ирмэг (zL, yL), x0…x1, зузаан t
+function slab(g, x0, x1, zH, yH, zL, yL, t, o) {
+  const dz = zL - zH, dy = yL - yH, l = Math.hypot(dz, dy), n = [0, Math.abs(dz) / l, -dy * Math.sign(dz) / l], sg = Math.sign(dz);
+  const a = [x0, yH, zH], b = [x1, yH, zH], c = [x1, yL, zL], e = [x0, yL, zL], dn = q => [q[0], q[1] - t, q[2]];
+  g.quad([a, b, c, e], n, o.top, o.uv ? [[x0 / o.span, bandV(o.uv, 1)], [x1 / o.span, bandV(o.uv, 1)], [x1 / o.span, bandV(o.uv, 0)], [x0 / o.span, bandV(o.uv, 0)]] : null);
+  if (o.under) g.quad([dn(a), dn(b), dn(c), dn(e)], [0, -n[1], -n[2]], o.under);
+  g.quad([e, c, dn(c), dn(e)], [0, 0, sg], o.edge);
+  g.quad([a, e, dn(e), dn(a)], [-1, 0, 0], o.edge); g.quad([b, c, dn(c), dn(b)], [1, 0, 0], o.edge);
+  if (o.high) g.quad([a, b, dn(b), dn(a)], [0, 0, -sg], o.edge);
+}
+// хананд наасан зурагтай хавтан (цонх, хаалга): c = хананы цэг, n = гадагш чиглэл
+function panel(g, c, n, hx, hy, out, r, side, col = [1, 1, 1]) {
+  const u = [n[2], 0, -n[0]], pt = (a, b, k) => [c[0] + u[0] * a * hx + n[0] * k, c[1] + b * hy, c[2] + u[2] * a * hx + n[2] * k];
+  g.quad([pt(-1, -1, out), pt(1, -1, out), pt(1, 1, out), pt(-1, 1, out)], n, col,
+    [px2uv(r[0] + 1, r[3] - 1), px2uv(r[2] - 1, r[3] - 1), px2uv(r[2] - 1, r[1] + 1), px2uv(r[0] + 1, r[1] + 1)]);
+  g.quad([pt(-1, 1, 0), pt(1, 1, 0), pt(1, 1, out), pt(-1, 1, out)], [0, 1, 0], side);
+  g.quad([pt(-1, -1, 0), pt(1, -1, 0), pt(1, -1, out), pt(-1, -1, out)], [0, -1, 0], side);
+  for (const s of [1, -1]) g.quad([pt(s, -1, 0), pt(s, 1, 0), pt(s, 1, out), pt(s, -1, out)], [u[0] * s, 0, u[2] * s], side);
+}
+const shadeDown = (g, top, from = 0) => { const k0 = BUILDING_CONFIG.shade.bottom;   // дээрээсээ доош бараантах зөөлөн шилжилт
+  for (let i = from; i < g.p.length; i += 3) { const y = g.p[i + 1]; if (y < top) { const k = k0 + (1 - k0) * Math.max(0, y / top); g.c[i] *= k; g.c[i + 1] *= k; g.c[i + 2] *= k; } } };
+
+/* =====================================================================
+   makeBuilding(kind, opts) → { geo, door, dims, interior, ... }
+   geo: Geo (mesh биш) — render/sumlayout.ts бүх барилгыг geo.append(...)-оор нэг mesh-д нийлүүлнэ.
+   door: { position, inward, width, height } — барилгын локал координат (V6.1 орж болдог барилгад).
+   kind: 'houseA' | 'houseB' | 'houseC' (opts: season, roofColor, wallColor)
+         'toilet' (opts: season)
+         'khashaa' (opts: w, d, seed, fenceColor, gateColor, groundAt(x, z)) → { geo, gate, wicket, houseSlot, toiletSlot, gerSlot, dims }
+   Гэр: makeGer(sizeKey, opts) (гэрийн лаборатори) — өөрийн хаалганы атластай тул тусдаа mesh.
+   ===================================================================== */
+function makeBuilding(kind, opts = {}) {
+  if (kind === 'khashaa') return buildKhashaa(opts);
+  if (kind === 'toilet') return buildToilet(opts);
+  if (kind === 'woodshed') return buildWoodshed(opts);
+  if (kind === 'animalShed') return buildAnimalShed(opts);
+  if (kind === 'greenhouse') return buildGreenhouse(opts);
+  if (kind === 'kennel') return buildKennel(opts);
+  if (BUILDING_CONFIG.shop.types[kind]) return buildShop(kind, opts);
+  if (kind === 'milkWool') return buildMilkWool(opts);
+  if (kind === 'carDealer') return buildCarDealer(opts);
+  if (kind === 'fuel') return buildFuel(opts);
+  if (BUILDING_CONFIG.public.kinds[kind]) return buildPublic(kind, opts);
+  if (kind === 'temple') return buildTemple(opts);
+  if (kind === 'market') return buildMarket(opts);
+  if (kind === 'stadium') return buildStadium(opts);
+  if (kind === 'wrestle') return buildWrestle(opts);
+  const K = BUILDING_CONFIG.house[kind];
+  if (!K) throw new Error('makeBuilding: тодорхойгүй төрөл ' + kind);
+  return buildHouse(K, opts);
+}
+
+function buildHouse(K, opts) {
+  const C = BUILDING_CONFIG, P = C.palette, A = C.atlas, white = px2uv(...A.white), geo = new Geo(white), snowG = new Geo(white), winter = opts.season === 'winter';
+  const w = K.w, d = K.d, hw = w / 2, hd = d / 2, wh = K.wallH, ph = K.plinthH;
+  const rc = opts.roofColor || K.roofColor, roofCol = rgb(C.roofColors[rc] ? C.roofColors[rc].hex : rc);
+  const wall = rgb(opts.wallColor || K.wallColor || P.wall), trimD = rgb(P.trim, 0.7), fascia = rgb(P.casing), under = rgb(P.woodDark), wood = rgb(P.wood);
+  const snow = rgb(P.snow), snowEdge = mix(P.snow, P.snowShade, 0.45);
+  const wallMat = { plaster: { r: A.plaster, span: A.plasterSpan, vh: wh }, logs: { r: A.logs, h: true }, siding: { r: A.siding, h: true } }[K.wallMat];
+  const plankMat = vh => ({ r: A.planksOut, span: A.plankSpan, vh });
+
+  // --- суурь, дөрвөн хана
+  geo.box(0, ph / 2, 0, w + K.plinthOut * 2, ph, d + K.plinthOut * 2, rgb(P.plinth));
+  wallQuad(geo, [-hw, hd], [hw, hd], ph, wh, [0, 0, 1], wall, wallMat);
+  wallQuad(geo, [hw, -hd], [-hw, -hd], ph, wh, [0, 0, -1], wall, wallMat);
+  wallQuad(geo, [hw, hd], [hw, -hd], ph, wh, [1, 0, 0], wall, wallMat);
+  wallQuad(geo, [-hw, -hd], [-hw, hd], ph, wh, [-1, 0, 0], wall, wallMat);
+  if (K.corner) for (const sx of [1, -1]) for (const sz of [1, -1])   // дүнзэн байшингийн булангийн цухуйсан дүнзний үзүүр
+    geo.box(sx * hw, (ph + wh) / 2, sz * hd, K.corner * 2, wh - ph, K.corner * 2, sc(wall, 0.78));
+
+  // --- хоёр хажуугийн гурвалжин хана, хоёр налуу төмөр дээвэр, оройн төмөр
+  const apexY = wh + hd * K.roofPitch, ridgeY = apexY + K.roofLift, roofY = z => ridgeY - K.roofPitch * Math.abs(z);
+  const gabCol = K.gableMat === 'planks' ? rgb(P.gable) : sc(wall, 0.93);
+  for (const sx of [1, -1]) { const n = [sx, 0, 0];
+    const uv = K.gableMat === 'planks' ? (z, y) => [z / A.plankSpan, bandV(A.planksOut, (y - wh) / A.plankH)] : (z, y) => [y / A.hSpan, bandV(wallMat.r, 0.05 + 0.9 * (z + hd) / d)];
+    geo.tri([sx * hw, wh, -hd], [sx * hw, wh, hd], [sx * hw, apexY, 0], n, n, n, gabCol, gabCol, gabCol, uv(-hd, wh), uv(hd, wh), uv(0, apexY)); }
+  const eaveZ = hd + K.eave, gx = hw + K.gableOut;
+  for (const s of [1, -1]) slab(geo, -gx, gx, 0, ridgeY, s * eaveZ, roofY(eaveZ), K.roofT, { top: roofCol, uv: A.roof, span: A.roofSpan, edge: fascia, under });
+  geo.box(0, ridgeY + 0.015, 0, gx * 2 + 0.06, 0.09, 0.28, sc(roofCol, 0.85));
+
+  // --- тоосгон яндан
+  const ch = K.chimney, chBase = roofY(ch.z) - 0.3, chTop = ridgeY + ch.rise;
+  geo.box(ch.x, (chBase + chTop) / 2, ch.z, ch.size, chTop - chBase, ch.size, rgb(P.brick));
+  geo.box(ch.x, chTop + 0.04, ch.z, ch.size + 0.1, 0.08, ch.size + 0.1, rgb(P.iron));
+
+  // --- үүдний амбаар: локал координатад (хананаас +Z тийш, x ∈ ±w/2) угсарч, тал руу нь эргүүлж залгана
+  const Q = K.porch, D = K.door, St = K.step, pg = new Geo(white), ps = new Geo(white);
+  const qx0 = -Q.w / 2, qx1 = Q.w / 2, qz1 = Q.d, slope = (Q.hBack - Q.hFront) / Q.d, pm = plankMat(Q.hBack);
+  wallQuad(pg, [qx0, 0], [qx0, qz1], 0, Q.hBack, [-1, 0, 0], wood, pm, Q.hFront);
+  wallQuad(pg, [qx1, qz1], [qx1, 0], 0, Q.hFront, [1, 0, 0], wood, pm, Q.hBack);
+  wallQuad(pg, [qx0, qz1], [qx1, qz1], 0, Q.hFront, [0, 0, 1], wood, pm);
+  const pz = qz1 + Q.roofFront, pyH = Q.hBack + 0.06, pyL = Q.hFront + 0.06 - slope * Q.roofFront;
+  slab(pg, qx0 - Q.roofOut, qx1 + Q.roofOut, 0, pyH, pz, pyL, 0.05, { top: roofCol, uv: A.roof, span: A.roofSpan, edge: fascia, under });
+  let dLocal, dIn;
+  if (Q.doorFace === 'out') {
+    panel(pg, [0, D.sill + D.h / 2, qz1], [0, 0, 1], D.w / 2, D.h / 2, D.out, A.door, trimD);
+    pg.box(0, St.h / 2, qz1 + St.d / 2, St.w, St.h, St.d, rgb(P.plinth));
+    dLocal = [0, qz1 + St.d + C.doorStandOff]; dIn = [0, -1];
+  } else { const sx = Q.doorFace === 'right' ? 1 : -1, zc = qz1 / 2;
+    panel(pg, [sx * Q.w / 2, D.sill + D.h / 2, zc], [sx, 0, 0], D.w / 2, D.h / 2, D.out, A.door, trimD);
+    pg.box(sx * (Q.w / 2 + St.d / 2), St.h / 2, zc, St.d, St.h, St.w, rgb(P.plinth));
+    dLocal = [sx * (Q.w / 2 + St.d + C.doorStandOff), zc]; dIn = [-sx, 0]; }
+  if (winter) slab(ps, qx0 - Q.roofOut + 0.06, qx1 + Q.roofOut - 0.06, 0.04, pyH + 0.1, pz - 0.12, pyL + 0.1 + slope * 0.12, 0.105, { top: snow, edge: snowEdge });
+  const pose = { front: [0, Q.x, hd], east: [Math.PI / 2, hw, Q.z], west: [-Math.PI / 2, -hw, Q.z] }[Q.side];
+  geo.append(pg, ...pose);
+
+  // --- цонх: урд, хоёр хажууд (хойд талд цонхгүй). Амбаартай давхцах хажуугийн цонхыг алгасна
+  const W = K.window, wy = W.sill + W.h / 2, windows = [];
+  for (const x of W.front) if (Q.side !== 'front' || Math.abs(x - Q.x) > Q.w / 2 + W.w / 2 + 0.1) { panel(geo, [x, wy, hd], [0, 0, 1], W.w / 2, W.h / 2, W.out, A.window, trimD); windows.push(new THREE.Vector3(x, wy, hd)); }
+  for (const sx of [1, -1]) for (const z of W.side) {
+    if (Q.side === (sx > 0 ? 'east' : 'west') && Math.abs(z - Q.z) < Q.w / 2 + W.w / 2 + 0.1) continue;
+    panel(geo, [sx * hw, wy, z], [sx, 0, 0], W.w / 2, W.h / 2, W.out, A.window, trimD); windows.push(new THREE.Vector3(sx * hw, wy, z)); }
+
+  shadeDown(geo, wh);
+  // --- өвөл: дээвэр, амбаарын дээвэр дээр цас (сүүдэрлэлтийн дараа)
+  if (winter) { const zs = eaveZ - 0.28, o = { top: snow, edge: snowEdge };
+    for (const s of [1, -1]) slab(geo, -gx + 0.08, gx - 0.08, 0, ridgeY + 0.13, s * zs, roofY(zs) + 0.13, 0.135, o);
+    geo.append(ps, ...pose); }
+
+  const dp = rot(dLocal[0], dLocal[1], pose[0], pose[1], pose[2]), di = rot(dIn[0], dIn[1], pose[0]);
+  const pzOut = Q.side === 'front' ? hd + Q.d + St.d : hd, pxOut = Q.side === 'east' ? hw + Q.d + St.d : hw, nxOut = Q.side === 'west' ? -hw - Q.d - St.d : -hw;
+  return {
+    geo,
+    door: { position: new THREE.Vector3(dp[0], 0, dp[1]), inward: new THREE.Vector3(di[0], 0, di[1]), width: D.w, height: D.h },
+    dims: { w, d, wallH: wh, ridgeH: ridgeY, footprint: { x0: nxOut, x1: pxOut, z0: -hd, z1: pzOut } },
+    interior: { main: { w: w - K.wallT * 2, d: d - K.wallT * 2, h: K.ceilingH }, porch: { w: Q.w - 0.2, d: Q.d - 0.1, h: Q.hFront - 0.05 } },   // V6.1 дотор талын хэмжээ
+    chimneyTop: new THREE.Vector3(ch.x, chTop + 0.12, ch.z), windows,
+  };
+}
+
+function buildToilet(opts) {
+  const C = BUILDING_CONFIG, T = C.toilet, P = C.palette, A = C.atlas, geo = new Geo(px2uv(...A.white)), winter = opts.season === 'winter';
+  const hw = T.w / 2, hd = T.d / 2, col = rgb(opts.color || T.color), m = { r: A.planksOut, span: A.plankSpan, vh: T.hFront }, sl = (T.hFront - T.hBack) / T.d;
+  wallQuad(geo, [-hw, hd], [hw, hd], 0, T.hFront, [0, 0, 1], col, m);
+  wallQuad(geo, [hw, -hd], [-hw, -hd], 0, T.hBack, [0, 0, -1], sc(col, 0.95), m);
+  wallQuad(geo, [-hw, -hd], [-hw, hd], 0, T.hBack, [-1, 0, 0], col, m, T.hFront);
+  wallQuad(geo, [hw, hd], [hw, -hd], 0, T.hFront, [1, 0, 0], col, m, T.hBack);
+  const ro = T.roofOut, rcol = rgb(C.roofColors[T.roofColor].hex);
+  slab(geo, -hw - ro, hw + ro, hd + ro, T.hFront + 0.05 + sl * ro, -hd - ro, T.hBack + 0.05 - sl * ro, 0.04, { top: rcol, uv: A.roof, span: A.roofSpan, edge: sc(rcol, 0.7), under: rgb(P.woodDark) });
+  const D = T.door; panel(geo, [0, D.sill + D.h / 2, hd], [0, 0, 1], D.w / 2, D.h / 2, 0.025, A.wicket, sc(col, 0.6), sc(col, 0.9));
+  geo.box(0, D.sill + D.h - 0.22, hd + 0.03, 0.12, 0.12, 0.01, [0.08, 0.06, 0.05]);   // агааржуулах нүх
+  shadeDown(geo, T.hFront);
+  if (winter) slab(geo, -hw - ro + 0.05, hw + ro - 0.05, hd + ro - 0.05, T.hFront + 0.15 + sl * ro, -hd - ro + 0.05, T.hBack + 0.15 - sl * ro, 0.1, { top: rgb(P.snow), edge: mix(P.snow, P.snowShade, 0.45) });
+  return { geo, door: { position: new THREE.Vector3(0, 0, hd + C.doorStandOff), inward: new THREE.Vector3(0, 0, -1), width: D.w, height: D.h },
+    dims: { w: T.w, d: T.d, ridgeH: T.hFront + 0.05 }, interior: { main: { w: T.w - 0.1, d: T.d - 0.1, h: T.hBack - 0.05 } } };
+}
+
+// налуу дээвэртэй (урд өндөр) гурван хана: урд онгорхой. Новны амбаар, малын саравчинд
+function leanTo(g, w, d, hF, hB, col, roofCol, ro, winter) {
+  const C = BUILDING_CONFIG, A = C.atlas, P = C.palette, hw = w / 2, hd = d / 2, m = { r: A.planksOut, span: A.plankSpan, vh: hF }, sl = (hF - hB) / d;
+  wallQuad(g, [hw, -hd], [-hw, -hd], 0, hB, [0, 0, -1], sc(col, 0.95), m);
+  wallQuad(g, [-hw, -hd], [-hw, hd], 0, hB, [-1, 0, 0], col, m, hF);
+  wallQuad(g, [hw, hd], [hw, -hd], 0, hF, [1, 0, 0], col, m, hB);
+  wallQuad(g, [-hw, -hd + 0.03], [hw, -hd + 0.03], 0, hB, [0, 0, 1], sc(col, 0.7), m);                      // дотор тал (харанхуй)
+  const yF = hF + 0.05 + sl * ro, yB = hB + 0.05 - sl * ro;
+  slab(g, -hw - ro, hw + ro, hd + ro, yF, -hd - ro, yB, 0.05, { top: roofCol, uv: A.roof, span: A.roofSpan, edge: sc(roofCol, 0.7), under: rgb(P.woodDark) });
+  return () => winter && slab(g, -hw - ro + 0.06, hw + ro - 0.06, hd + ro - 0.06, yF + 0.11, -hd - ro + 0.06, yB + 0.11, 0.1, { top: rgb(P.snow), edge: mix(P.snow, P.snowShade, 0.45) });
+}
+const roofHex = k => BUILDING_CONFIG.roofColors[k] ? BUILDING_CONFIG.roofColors[k].hex : k;
+
+function buildWoodshed(opts) {
+  const C = BUILDING_CONFIG, T = C.woodshed, A = C.atlas, geo = new Geo(px2uv(...A.white)), hw = T.w / 2, hd = T.d / 2, col = rgb(T.color);
+  const snow = leanTo(geo, T.w, T.d, T.hFront, T.hBack, col, rgb(roofHex(T.roofColor)), T.roofOut, opts.season === 'winter');
+  for (const sx of [1, -1]) geo.box(sx * (hw - T.post / 2), T.hFront / 2, hd - T.post / 2, T.post, T.hFront, T.post, sc(col, 0.8));   // урд багана
+  const x0 = -hw + 0.12, x1 = hw - 0.12, z0 = -hd + 0.1, z1 = hd - 0.3, H = T.stackH, wood = rgb('#A97E50'), F = A.firewood;   // түлээний овоолго
+  geo.box(0, H / 2, (z0 + z1) / 2 - 0.005, x1 - x0, H, z1 - z0 - 0.01, wood);
+  geo.quad([[x0, 0, z1], [x1, 0, z1], [x1, H, z1], [x0, H, z1]], [0, 0, 1], [1, 1, 1], [px2uv(F[0], F[3]), px2uv(F[2], F[3]), px2uv(F[2], F[1]), px2uv(F[0], F[1])]);
+  geo.box(0.9, 0.22, hd + 0.75, 0.42, 0.44, 0.42, rgb('#8A6230'));   // хагалах хожуул
+  shadeDown(geo, T.hFront); snow();
+  return { geo, door: { position: new THREE.Vector3(0, 0, hd + 1.4), inward: new THREE.Vector3(0, 0, -1), width: T.w - T.post * 2, height: T.hFront },
+    dims: { w: T.w, d: T.d, ridgeH: T.hFront + 0.05 }, interior: null };
+}
+
+function buildAnimalShed(opts) {
+  const C = BUILDING_CONFIG, T = C.animalShed, A = C.atlas, geo = new Geo(px2uv(...A.white)), hw = T.W / 2, hd = T.D / 2, col = rgb(T.color), winter = opts.season === 'winter';
+  geo.quad([[-hw, 0.008, hd + T.pen], [hw, 0.008, hd + T.pen], [hw, 0.008, -hd], [-hw, 0.008, -hd]], [0, 1, 0], rgb(winter ? '#C9D2DC' : T.manure));   // бууц
+  const snow = leanTo(geo, T.W, T.D, T.hFront, T.hBack, col, rgb(roofHex(T.roofColor)), T.roofOut, winter);
+  const pc = sc(col, 0.8), post = (x, z, h) => geo.box(x, h / 2, z, T.post, h, T.post, pc);
+  for (const x of [-hw, -hw / 3, hw / 3, hw]) post(x + (x < 0 ? T.post / 2 : x > 0 ? -T.post / 2 : 0), hd - T.post / 2, T.hFront);   // саравчны урд багана
+  const ff = !!opts.fenceFront;   // хорооны урд тал нь хашааны хашаа (хаалга нь тэнд)
+  const zf = hd + T.pen, gx = T.gateW / 2, rails = (a, b) => { for (const y of T.railH) geo.beam([a[0], y, a[1]], [b[0], y, b[1]], T.rail, T.rail, sc(col, 0.9)); };
+  const zr = ff ? zf - 0.12 : zf;
+  for (const [x, z] of [[-hw, hd + T.pen / 2], [-hw, zr], [hw, hd + T.pen / 2], [hw, zr], ...(ff ? [] : [[-gx - 1.35, zf], [-gx, zf], [gx, zf], [gx + 1.35, zf]])]) post(x, z, 1.35);   // хорооны багана
+  rails([-hw, hd], [-hw, zr]); rails([hw, hd], [hw, zr]); if (!ff) { rails([-hw, zf], [-gx, zf]); rails([gx, zf], [hw, zf]); }
+  shadeDown(geo, T.hFront); snow();
+  return { geo, door: { position: new THREE.Vector3(0, 0, zf + 0.9), inward: new THREE.Vector3(0, 0, -1), width: T.gateW, height: 1.3 },
+    dims: { w: T.W, d: T.D + T.pen, ridgeH: T.hFront + 0.05 }, interior: { main: { w: T.W - 0.2, d: T.D - 0.2, h: T.hBack - 0.1 } } };
+}
+
+function buildGreenhouse(opts) {
+  const C = BUILDING_CONFIG, T = C.greenhouse, A = C.atlas, geo = new Geo(px2uv(...A.white)), hw = T.W / 2, hl = T.L / 2, n = T.segs, winter = opts.season === 'winter';
+  const film = rgb(T.film), rib = rgb(T.rib), arc = (k, s = 1) => { const a = k / n * Math.PI; return [Math.cos(a) * hw * s, Math.sin(a) * T.H * s]; };
+  const nrm = k => { const a = k / n * Math.PI, x = Math.cos(a) / hw, y = Math.sin(a) / T.H, l = Math.hypot(x, y); return [x / l, y / l, 0]; };
+  for (let k = 0; k < n; k++) { const a = arc(k), b = arc(k + 1), top = winter && k >= 2 && k < n - 2;
+    geo.quad([[a[0], a[1], hl], [b[0], b[1], hl], [b[0], b[1], -hl], [a[0], a[1], -hl]], [nrm(k), nrm(k + 1), nrm(k + 1), nrm(k)], top ? rgb(C.palette.snow) : film); }
+  const nr = Math.round(T.L / T.ribEvery);
+  for (let i = 0; i <= nr; i++) { const z = -hl + i * T.L / nr, z0 = Math.max(-hl, z - T.ribW / 2), z1 = Math.min(hl, z + T.ribW / 2);
+    for (let k = 0; k < n; k++) { const a = arc(k, 1.012), b = arc(k + 1, 1.012); geo.quad([[a[0], a[1], z1], [b[0], b[1], z1], [b[0], b[1], z0], [a[0], a[1], z0]], [nrm(k), nrm(k + 1), nrm(k + 1), nrm(k)], rib); } }
+  for (const [z, nz] of [[hl, 1], [-hl, -1]]) for (let k = 0; k < n; k++) { const a = arc(k), b = arc(k + 1);   // хоёр төгсгөл
+    geo.tri([0, 0, z], [a[0], a[1], z], [b[0], b[1], z], [0, 0, nz], [0, 0, nz], [0, 0, nz], sc(film, 0.95), sc(film, 0.95), sc(film, 0.95)); }
+  const dc = rgb(T.door);
+  geo.box(0, 0.9, hl + 0.02, 0.9, 1.8, 0.04, dc); geo.box(0, 0.9, hl + 0.045, 0.7, 1.6, 0.01, sc(film, 0.85));   // хаалга
+  geo.box(-hw - 0.04, 0.12, 0, 0.1, 0.24, T.L, sc(dc, 0.9)); geo.box(hw + 0.04, 0.12, 0, 0.1, 0.24, T.L, sc(dc, 0.9));   // доод модон тавцан
+  shadeDown(geo, T.H);
+  return { geo, door: { position: new THREE.Vector3(0, 0, hl + 0.8), inward: new THREE.Vector3(0, 0, -1), width: 0.8, height: 1.8 },
+    dims: { w: T.W, d: T.L, ridgeH: T.H }, interior: { main: { w: T.W - 0.3, d: T.L - 0.2, h: T.H - 0.1 } } };
+}
+
+function buildKennel(opts) {
+  const C = BUILDING_CONFIG, T = C.kennel, A = C.atlas, geo = new Geo(px2uv(...A.white)), hw = T.w / 2, hd = T.d / 2, col = rgb(T.color), m = { r: A.planksOut, span: A.plankSpan, vh: T.ridgeH };
+  geo.box(0, T.wallH / 2, 0, T.w, T.wallH, T.d, col);
+  for (const sz of [1, -1]) { const n = [0, 0, sz], z = sz * hd, uv = (x, y) => [x / A.plankSpan, bandV(A.planksOut, y / T.ridgeH)];   // гурвалжин хана
+    geo.tri([-hw, T.wallH, z], [hw, T.wallH, z], [0, T.ridgeH, z], n, n, n, col, col, col, uv(-hw, T.wallH), uv(hw, T.wallH), uv(0, T.ridgeH)); }
+  const rc = rgb(opts.season === 'winter' ? C.palette.snow : T.roof), sl = (T.ridgeH - T.wallH) / hw;
+  for (const sx of [1, -1]) { const x1 = sx * (hw + 0.08), y1 = T.wallH - 0.08 * sl, n = [sx * sl, 1, 0];
+    geo.quad([[0, T.ridgeH + 0.03, -hd - 0.06], [0, T.ridgeH + 0.03, hd + 0.06], [x1, y1 + 0.03, hd + 0.06], [x1, y1 + 0.03, -hd - 0.06]], n, rc); }
+  geo.quad([[-T.holeW / 2, 0.04, hd + 0.005], [T.holeW / 2, 0.04, hd + 0.005], [T.holeW / 2, 0.04 + T.holeH, hd + 0.005], [-T.holeW / 2, 0.04 + T.holeH, hd + 0.005]], [0, 0, 1], [0.08, 0.06, 0.05]);   // нүх
+  shadeDown(geo, T.ridgeH);
+  return { geo, door: { position: new THREE.Vector3(0, 0, hd + 0.9), inward: new THREE.Vector3(0, 0, -1), width: T.holeW, height: T.holeH }, dims: { w: T.w, d: T.d, ridgeH: T.ridgeH + 0.03 }, interior: null };
+}
+
+function plantGeo(kind, season, seed = 1) {   // мод (улиас/хайлаас маягийн) эсвэл бут. Өвөл навчгүй
+  const C = BUILDING_CONFIG, T = C[kind], g = new Geo(px2uv(...C.atlas.white)), winter = season === 'winter';
+  let sd = seed; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647; const k = 0.85 + rnd() * 0.3;
+  const base = kind === 'tree' ? T.trunkH * 0.75 * k : 0.05, R = T.crownR * k, H = T.crownH * k, top = base + H;
+  if (kind === 'tree') g.box(0, T.trunkH * k / 2, 0, T.trunkW, T.trunkH * k, T.trunkW, rgb(T.trunk));
+  if (winter) { const bc = rgb(T.bare), n = kind === 'tree' ? 4 : 5;   // нүцгэн мөчир
+    for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + rnd(), r = R * 0.7; g.beam([0, base, 0], [Math.sin(a) * r, top - H * 0.25 * rnd(), Math.cos(a) * r], 0.05, 0.05, bc); }
+    return g; }
+  const prof = [[0, base], [R * 0.75, base + H * 0.1], [R, base + H * 0.45], [R * 0.7, base + H * 0.8], [0, top]];
+  g.lathe({ segs: 7, smooth: false, profile: prof, colorAt: (seg, side, pi) => mix(T.crown, T.crownTop, Math.min(1, pi / 4)) });
+  return g;
+}
+
+// хашаан доторх зам: a → b (x, z) шулуун хэсэг. style: walk (хавтан) | dirt
+function pathSeg(g, a, b, style, extend = 0) {
+  const C = BUILDING_CONFIG, Pp = C.path, G = C.ground, L0 = Math.hypot(b[0] - a[0], b[1] - a[1]); if (L0 < 0.05) return;
+  const tx = (b[0] - a[0]) / L0, tz = (b[1] - a[1]) / L0, ox = tz, oz = -tx, L = L0 + extend;
+  const at = (s, o, y) => [a[0] + tx * s + ox * o, y, a[1] + tz * s + oz * o];
+  if (style === 'dirt') { const w = Pp.dirtW / 2; g.quad([at(0, -w, 0.012), at(0, w, 0.012), at(L, w, 0.012), at(L, -w, 0.012)], [0, 1, 0], rgb(G.dirt)); return; }
+  const w = Pp.w / 2, h = Pp.walkH, n = Math.max(1, Math.round(L / Pp.slab)), sl = L / n, col = rgb(G.walk);
+  for (let i = 0; i < n; i++) { const s0 = i * sl + Pp.joint / 2, s1 = (i + 1) * sl - Pp.joint / 2, c = sc(col, 0.94 + ((i * 7) % 5) * 0.025);
+    g.quad([at(s0, -w, h), at(s0, w, h), at(s1, w, h), at(s1, -w, h)], [0, 1, 0], c); }
+  for (const sg of [1, -1]) g.quad([at(0, sg * w, 0), at(L, sg * w, 0), at(L, sg * w, h), at(0, sg * w, h)], [ox * sg, 0, oz * sg], sc(col, 0.75));
+}
+
+function buildShop(type, opts) {   // T.w/T.d: хэмжээ · T.flat: хавтгай дээвэр · T.winStyle: 'house' (айлын цонх) · T.canopy: false · T.goods: null
+  const C = BUILDING_CONFIG, SH = C.shop, T = SH.types[type], P = C.palette, A = C.atlas, geo = new Geo(px2uv(...A.white)), winter = opts.season === 'winter';
+  const w = T.w || SH.w, d = T.d || SH.d, hw = w / 2, hd = d / 2, wh = T.wallH || SH.wallH, ph = SH.plinthH, wall = rgb(T.wall), roofCol = rgb(roofHex(opts.roofColor || T.roof));
+  const trimD = rgb('#9A9C98'), fascia = rgb(P.casing), under = rgb(P.woodDark), con = rgb(SH.apron.color), wm = { r: A.plaster, span: A.plasterSpan, vh: wh };
+  if (T.apron !== false) geo.quad([[-hw - 0.4, 0.012, hd], [hw + 0.4, 0.012, hd], [hw + 0.4, 0.012, hd + SH.apron.d], [-hw - 0.4, 0.012, hd + SH.apron.d]], [0, 1, 0], sc(con, 0.95));   // урдах бетон талбай
+  geo.box(0, ph / 2, 0, w + 0.08, ph, d + 0.08, rgb(P.plinth));
+  wallQuad(geo, [-hw, hd], [hw, hd], ph, wh, [0, 0, 1], wall, wm); wallQuad(geo, [hw, -hd], [-hw, -hd], ph, wh, [0, 0, -1], wall, wm);
+  wallQuad(geo, [hw, hd], [hw, -hd], ph, wh, [1, 0, 0], wall, wm); wallQuad(geo, [-hw, -hd], [-hw, hd], ph, wh, [-1, 0, 0], wall, wm);
+  let ridgeY, roofY, eaveZ, gx;
+  if (T.flat) { ridgeY = wh + 0.35; geo.box(0, wh + 0.12, 0, w + 0.3, 0.24, d + 0.3, roofCol);   // хавтгай дээвэр + хаяавч (парапет)
+    for (const [x, z, sx, sz] of [[0, hd + 0.1, w + 0.3, 0.12], [0, -hd - 0.1, w + 0.3, 0.12], [hw + 0.1, 0, 0.12, d + 0.3], [-hw - 0.1, 0, 0.12, d + 0.3]]) geo.box(x, wh + 0.3, z, sx, 0.2, sz, sc(roofCol, 0.8)); }
+  else { const apexY = wh + hd * SH.roofPitch; ridgeY = apexY + SH.roofLift; roofY = z => ridgeY - SH.roofPitch * Math.abs(z);
+    for (const sx of [1, -1]) { const n = [sx, 0, 0], uv = (z, y) => [z / A.plasterSpan, bandV(A.plaster, Math.min(1, y / apexY))];
+      geo.tri([sx * hw, wh, -hd], [sx * hw, wh, hd], [sx * hw, apexY, 0], n, n, n, wall, wall, wall, uv(-hd, wh), uv(hd, wh), uv(0, apexY)); }
+    eaveZ = hd + SH.eave; gx = hw + SH.gableOut;
+    for (const s of [1, -1]) slab(geo, -gx, gx, 0, ridgeY, s * eaveZ, roofY(eaveZ), SH.roofT, { top: roofCol, uv: A.roof, span: A.roofSpan, edge: fascia, under });
+    geo.box(0, ridgeY + 0.015, 0, gx * 2 + 0.06, 0.09, 0.28, sc(roofCol, 0.85)); }
+  const ch = SH.chimney, chx = Math.max(-hw + 0.6, ch.x), chz = Math.max(-hd + 0.6, ch.z), chB = T.flat ? wh : roofY(chz) - 0.3, chTop = ridgeY + ch.rise;
+  if (!T.central) geo.box(chx, (chB + chTop) / 2, chz, ch.size, chTop - chB, ch.size, rgb(P.brick));   // central: нэгдсэн уурын зуухаас галладаг — янданггүй
+  const D = SH.door, W = T.winStyle === 'house' ? { ...SH.sideWin, gap: 0.6, out: 0.05 } : SH.win, Sg = SH.sign, Sw = SH.sideWin, wTex = T.winStyle === 'house' ? A.window : A.shopWin;
+  panel(geo, [0, ph + D.h / 2, hd], [0, 0, 1], D.w / 2, D.h / 2, D.out, A.shopDoor, trimD);
+  const nWin = T.windows || 1, windows = [];
+  for (const sx of [1, -1]) for (let k = 0; k < nWin; k++) { const x = sx * (D.w / 2 + W.gap + W.w / 2 + k * (W.w + 0.5)); if (Math.abs(x) + W.w / 2 > hw - 0.25) continue;
+    panel(geo, [x, W.sill + W.h / 2, hd], [0, 0, 1], W.w / 2, W.h / 2, W.out, wTex, T.winStyle === 'house' ? rgb(P.trim, 0.7) : trimD); windows.push(new THREE.Vector3(x, W.sill + W.h / 2, hd)); }
+  if (d > 4.5) for (const sx of [1, -1]) panel(geo, [sx * hw, Sw.sill + Sw.h / 2, -0.8 * d / 8], [sx, 0, 0], Sw.w / 2, Sw.h / 2, 0.05, A.window, rgb(P.trim, 0.7));
+  const sgW = Math.min(Sg.w, w - 1.2), sgH = sgW < Sg.w ? Sg.h * 0.85 : Sg.h, sgY = Math.min(Sg.y, wh - sgH / 2 - 0.2), sr = signRect(type);
+  geo.box(0, sgY, hd + Sg.out / 2, sgW + 0.1, sgH + 0.1, Sg.out, sc(rgb(T.signColor), 0.6));
+  panel(geo, [0, sgY, hd + Sg.out], [0, 0, 1], sgW / 2, sgH / 2, 0.005, sr, sc(rgb(T.signColor), 0.6));
+  const Cn = SH.canopy, hasCn = T.canopy !== false;
+  if (hasCn) slab(geo, -Cn.w / 2, Cn.w / 2, hd, Cn.y + 0.12, hd + Cn.d, Cn.y, 0.06, { top: roofCol, uv: A.roof, span: A.roofSpan, edge: fascia, under });
+  const Q = SH.porch, pz = hd + Q.d / 2; geo.box(0, ph / 2, pz, Q.w, ph, Q.d, con);
+  for (let k = 1; k <= Q.steps; k++) { const h = ph * (1 - k / (Q.steps + 1)); geo.box(0, h / 2, hd + Q.d + (k - 0.5) * Q.stepD, Q.w - 1.0, h, Q.stepD, sc(con, 1 - k * 0.03)); }
+  const iron = rgb(P.iron);
+  for (const sx of [1, -1]) { const x = sx * (Q.w / 2 - 0.05), y0 = ph, y1 = ph + Q.rail;
+    geo.beam([x, y0, hd + 0.05], [x, y1, hd + 0.05], 0.05, 0.05, iron); geo.beam([x, y0, hd + Q.d - 0.05], [x, y1, hd + Q.d - 0.05], 0.05, 0.05, iron);
+    geo.beam([x, y1, hd + 0.05], [x, y1, hd + Q.d - 0.05], 0.05, 0.05, iron); }
+  shadeDown(geo, wh);
+  const wx0 = D.w / 2 + W.gap + W.w / 2;
+  if (T.goods) goods(geo, T.goods, -wx0 - 0.7, hd + 1.0, winter);   // тавцангаас зүүн тийш, цонхны өмнө
+  if (winter) { const o = { top: rgb(P.snow), edge: mix(P.snow, P.snowShade, 0.45) };
+    if (T.flat) geo.box(0, wh + 0.27, 0, w + 0.06, 0.06, d + 0.06, rgb(P.snow));
+    else { const zs = eaveZ - 0.28; for (const s of [1, -1]) slab(geo, -gx + 0.08, gx - 0.08, 0, ridgeY + 0.13, s * zs, roofY(zs) + 0.13, 0.135, o); }
+    if (hasCn) slab(geo, -Cn.w / 2 + 0.05, Cn.w / 2 - 0.05, hd + 0.02, Cn.y + 0.22, hd + Cn.d - 0.08, Cn.y + 0.1, 0.09, o); }
+  const zDoor = hd + Q.d + Q.steps * Q.stepD;
+  return { geo, door: { position: new THREE.Vector3(0, 0, zDoor + C.doorStandOff), inward: new THREE.Vector3(0, 0, -1), width: D.w, height: D.h },
+    dims: { w, d, wallH: wh, ridgeH: ridgeY }, interior: { main: { w: w - SH.wallT * 2, d: d - SH.wallT * 2, h: Math.min(SH.ceilingH, wh - 0.6) } }, windows, gameRole: T.gameRole,
+    chimneyTop: T.central ? null : new THREE.Vector3(chx, chTop + 0.12, chz) };
+}
+function goods(g, kind, ox, oz, winter) {   // ox, oz: үүдний барааны төв
+  const box = (x, y, z, sx, sy, sz, c) => g.box(ox + x, y, oz + z, sx, sy, sz, rgb(c));
+  if (kind === 'bench') { const wd = rgb('#9A7A55'); box(0.2, 0.72, 0, 1.4, 0.06, 0.7, '#9A7A55'); for (const sx of [-0.6, 0.6]) box(0.2 + sx, 0.36, 0, 0.06, 0.72, 0.6, '#6E5A44');   // ширээ, хоёр сандал
+    for (const sz of [-0.62, 0.62]) { box(0.2, 0.42, sz, 1.4, 0.06, 0.32, '#9A7A55'); for (const sx of [-0.55, 0.55]) box(0.2 + sx, 0.21, sz, 0.06, 0.42, 0.28, '#6E5A44'); }
+    g.lathe({ segs: 7, cx: ox + 0.05, cz: oz - 0.1, profile: [[0.09, 0.75], [0.11, 0.9], [0, 0.92]], color: rgb('#D9622B') }); }
+  if (kind === 'crates') { box(0.7, 0.42, 0, 1.2, 0.84, 0.62, '#F4EEDF'); box(0.7, 0.86, 0, 1.12, 0.04, 0.54, '#9AA3A8');
+    [['#B03A22', -0.5, 0.15], ['#2E5E9E', -0.5, 0.45], ['#D8A93A', -1.05, 0.15], ['#4E6B3A', -0.78, 0.75]].forEach(([c, x, y]) => box(x, y, 0, 0.52, 0.3, 0.38, c)); }
+  if (kind === 'hay') { for (const [x, y] of [[-0.55, 0.2], [0.5, 0.2], [0, 0.6]]) box(x, y, -0.1, 1.0, 0.4, 0.5, '#C9A24E');
+    for (const x of [-0.7, -0.15, 0.4]) box(x, 0.14, 0.55, 0.5, 0.28, 0.36, '#E8E0CC'); }   // тэжээлийн шуудай
+  if (kind === 'cans') { const alu = '#B9BBB7'; for (const x of [-0.8, -0.35, 0.1]) g.lathe({ segs: 7, cx: ox + x, cz: oz, profile: [[0.17, 0.01], [0.17, 0.42], [0.12, 0.52], [0.12, 0.6], [0, 0.61]], colorAt: s => (s >= 2 ? rgb(alu, 0.85) : rgb(alu)) });
+    for (const x of [0.6, 1.05]) g.lathe({ segs: 8, cx: ox + x, cz: oz, profile: [[0.24, 0.01], [0.24, 0.85], [0, 0.86]], color: rgb('#2E5E9E') }); }
+  if (kind === 'felt') { for (const [x, y] of [[-0.3, 0.2], [0.15, 0.2], [-0.07, 0.56]]) {
+      const r = new Geo(px2uv(...BUILDING_CONFIG.atlas.white)); r.lathe({ segs: 8, color: rgb('#DDD3BE'), profile: [[0, -0.75], [0.2, -0.75], [0.2, 0.75], [0, 0.75]], smooth: false });
+      for (let i2 = 0; i2 < r.p.length; i2 += 3) { const px = r.p[i2], py = r.p[i2 + 1], nx = r.n[i2], ny = r.n[i2 + 1]; r.p[i2] = py + ox + x; r.p[i2 + 1] = -px + y; r.n[i2] = ny; r.n[i2 + 1] = -nx; /* Z тэнхлэгээр 90° эргүүлнэ */ r.p[i2 + 2] += oz + 0.15; }
+      for (let i2 = 0; i2 < r.p.length; i2 += 3) { g.p.push(r.p[i2], r.p[i2 + 1], r.p[i2 + 2]); g.n.push(r.n[i2], r.n[i2 + 1], r.n[i2 + 2]); } for (const v of r.c) g.c.push(v); for (const v of r.u) g.u.push(v); }
+    const lat = rgb('#D9622B'); for (let k = 0; k < 4; k++) { const x0 = ox - 1.2 + k * 0.36;   // хананд налуулсан
+      g.beam([x0, 0.02, oz - 0.35], [x0 + 0.45, 1.5, oz - 0.75], 0.035, 0.035, lat); g.beam([x0 + 0.45, 0.02, oz - 0.35], [x0, 1.5, oz - 0.75], 0.035, 0.035, lat); } }
+  if (kind === 'clothes') { const post = rgb('#4A4640'); for (const x of [-1.0, 1.0]) g.beam([ox + x, 0, oz], [ox + x, 1.7, oz], 0.05, 0.05, post); g.beam([ox - 1.0, 1.7, oz], [ox + 1.0, 1.7, oz], 0.04, 0.04, post);
+    [['#2E5E9E', -0.65], ['#9A3B2E', -0.2], ['#4E6B3A', 0.25], ['#D8A93A', 0.68]].forEach(([c, x]) => { box(x, 1.12, 0, 0.42, 1.1, 0.12, c); box(x, 0.94, 0.065, 0.44, 0.07, 0.01, '#D9622B'); }); }
+  if (kind === 'cages') { [[-0.6, 0.25, 0.7], [0.25, 0.22, 0.6], [-0.18, 0.69, 0.55]].forEach(([x, y, s]) => { box(x, y, 0, s, s * 0.7, s * 0.7, '#5F656B'); box(x, y, s * 0.35 + 0.004, s - 0.08, s * 0.7 - 0.08, 0.006, '#B0B6BB'); });
+    box(1.0, 0.33, 0, 0.7, 0.66, 0.85, '#9A7A55'); box(1.0, 0.25, 0.43, 0.3, 0.36, 0.01, '#140F0C'); }
+}
+
+const SIGN_KEYS = () => [...Object.keys(BUILDING_CONFIG.shop.types), ...Object.keys(BUILDING_CONFIG.shop.extraSigns)];
+const signDef = k => BUILDING_CONFIG.shop.types[k] || BUILDING_CONFIG.shop.extraSigns[k];
+const signRect = k => { const A = BUILDING_CONFIG.atlas, i = SIGN_KEYS().indexOf(k); return [0, A.signY + i * A.signH, A.size, A.signY + (i + 1) * A.signH]; };
+function hCyl(g, cx, cy, cz, r, L, segs, col) {   // X тэнхлэгийн дагуух хэвтээ цилиндр (сав, өнхрүүш)
+  const n = segs, pt = (k, x) => { const a = k / n * Math.PI * 2; return [cx + x, cy + Math.sin(a) * r, cz + Math.cos(a) * r]; };
+  for (let k = 0; k < n; k++) { const a = (k + 0.5) / n * Math.PI * 2; g.quad([pt(k, -L / 2), pt(k + 1, -L / 2), pt(k + 1, L / 2), pt(k, L / 2)], [0, Math.sin(a), Math.cos(a)], col);
+    for (const sx of [1, -1]) g.tri([cx + sx * L / 2, cy, cz], pt(k, sx * L / 2), pt(k + 1, sx * L / 2), [sx, 0, 0], [sx, 0, 0], [sx, 0, 0], sc(col, 0.92), sc(col, 0.92), sc(col, 0.92)); }
+}
+const groundQuad = (g, x0, z0, x1, z1, col, y = 0.01) => g.quad([[x0, y, z1], [x1, y, z1], [x1, y, z0], [x0, y, z0]], [0, 1, 0], col);
+const pt3 = (v, phi, tx, tz) => { const [x, z] = rot(v.x, v.z, phi, tx, tz); return new THREE.Vector3(x, 0, z); };
+const dirRot = (v, phi) => { const [x, z] = rot(v.x, v.z, phi); return new THREE.Vector3(x, 0, z); };
+
+function buildMilkWool(opts) {   // сүү, ноос хүлээн авах цэг: оффис + сүүний сав + ноосны агуулах + ноосны боодол + машины жин
+  const C = BUILDING_CONFIG, M = C.milkWool, P = C.palette, A = C.atlas, geo = new Geo(px2uv(...A.white)), winter = opts.season === 'winter';
+  const [LW, LD] = M.lot; groundQuad(geo, -LW / 2, -LD / 2, LW / 2, LD / 2, rgb(winter ? '#DDE4EC' : M.ground), 0.009);
+  const off = buildShop('milkOffice', opts); geo.append(off.geo, 0, M.office.x, M.office.z);
+  const T = M.tanks, tc = rgb(T.color);
+  for (const k of [0, 1]) { const z = T.z + (k - 0.5) * T.gap, cy = T.legH + T.r;
+    hCyl(geo, T.x, cy, z, T.r, T.L, 10, tc); for (const sx of [1, -1]) geo.box(T.x + sx * T.L * 0.32, T.legH / 2 + 0.2, z, 0.18, T.legH + 0.4, T.r * 1.4, rgb(P.iron));
+    geo.box(T.x - T.L / 2 - 0.12, cy, z, 0.24, 0.24, 0.24, sc(tc, 0.8)); geo.box(T.x, cy + T.r + 0.08, z, 0.5, 0.16, 0.5, sc(tc, 0.85)); }   // хоолой, нүх
+  if (winter) for (const k of [0, 1]) geo.box(T.x, T.legH + T.r * 2 + 0.05, T.z + (k - 0.5) * T.gap, T.L * 0.9, 0.08, T.r * 0.9, rgb(P.snow));
+  // ноосны агуулах
+  const S = M.store, hw = S.w / 2, hd = S.d / 2, wcol = rgb(S.color), mm = { r: A.roof, span: A.roofSpan * 0.6, vh: S.wallH }, sg = new Geo(px2uv(...A.white));
+  wallQuad(sg, [-hw, hd], [hw, hd], 0, S.wallH, [0, 0, 1], wcol, mm); wallQuad(sg, [hw, -hd], [-hw, -hd], 0, S.wallH, [0, 0, -1], wcol, mm);
+  wallQuad(sg, [hw, hd], [hw, -hd], 0, S.wallH, [1, 0, 0], wcol, mm); wallQuad(sg, [-hw, -hd], [-hw, hd], 0, S.wallH, [-1, 0, 0], wcol, mm);
+  const apex = S.wallH + hd * S.pitch, rc = rgb(S.roof);
+  for (const sx of [1, -1]) { const n = [sx, 0, 0]; sg.tri([sx * hw, S.wallH, -hd], [sx * hw, S.wallH, hd], [sx * hw, apex, 0], n, n, n, wcol, wcol, wcol); }
+  for (const s2 of [1, -1]) slab(sg, -hw - 0.25, hw + 0.25, 0, apex + 0.03, s2 * (hd + 0.35), apex - S.pitch * (hd + 0.35), 0.06, { top: winter ? rgb(P.snow) : rc, uv: winter ? null : A.roof, span: A.roofSpan, edge: sc(rc, 0.7), under: rgb(P.woodDark) });
+  sg.quad([[-S.doorW / 2, 0.02, hd + 0.01], [S.doorW / 2, 0.02, hd + 0.01], [S.doorW / 2, S.doorH, hd + 0.01], [-S.doorW / 2, S.doorH, hd + 0.01]], [0, 0, 1], [0.1, 0.08, 0.06]);   // онгорхой том хаалга
+  sg.box(S.doorW * 0.75, S.doorH / 2 + 0.05, hd + 0.06, S.doorW * 0.5, S.doorH + 0.1, 0.06, sc(wcol, 0.85));   // гулсдаг хаалганы хавтас
+  sg.box(0, S.doorH + 0.2, hd + 0.08, S.doorW * 1.9, 0.12, 0.1, rgb(P.iron));                                      // хаалганы төмөр зам
+  shadeDown(sg, S.wallH); geo.append(sg, 0, S.x, S.z);
+  const B = M.bales, [bx, by, bz] = B.size, bc = rgb(B.color);   // ноосны боодол: доод эгнээ 3, дээр 2
+  for (let row = 0; row < B.n.length; row++) for (let k = 0; k < B.n[row]; k++) { const x = B.x + (k - (B.n[row] - 1) / 2) * (bx + 0.08), y = by / 2 + row * by;
+    geo.box(x, y, B.z, bx, by, bz, sc(bc, 0.96 + 0.04 * ((k + row) % 2))); geo.box(x, y, B.z + bz / 2 + 0.005, bx + 0.01, 0.06, 0.01, rgb('#6E5A44')); }
+  const Sc = M.scale; geo.box(Sc.x, 0.08, Sc.z, Sc.w, 0.16, Sc.L, rgb('#9AA3A8')); geo.box(Sc.x, 0.165, Sc.z, Sc.w - 0.2, 0.01, Sc.L - 0.2, rgb('#7E868C'));   // машины жин
+  const odoor = off.door.position.clone().add(new THREE.Vector3(M.office.x, 0, M.office.z));
+  return { geo, door: { ...off.door, position: odoor }, dims: { w: LW, d: LD, ridgeH: apex + 0.03 }, interior: off.interior, gameRole: 'milkWool', chimneyTop: off.chimneyTop.clone().add(new THREE.Vector3(M.office.x, 0, M.office.z)),
+    points: [ { name: 'Сүү тушаах', position: new THREE.Vector3(T.x - T.L / 2 - 0.9, 0, T.z), inward: new THREE.Vector3(1, 0, 0) },
+              { name: 'Ноос буулгах', position: new THREE.Vector3(S.x, 0, S.z + hd + 1.6), inward: new THREE.Vector3(0, 0, -1) },
+              { name: 'Машины жин', position: new THREE.Vector3(Sc.x, 0, Sc.z + Sc.L / 2 + 1.5), inward: new THREE.Vector3(0, 0, -1) } ],
+    stats: { office: off.geo.triangles } };
+}
+
+function makeMoto() {   // мотоцикл (тулгуур загвар), урд нь +Z
+  const g = new Geo(px2uv(...BUILDING_CONFIG.atlas.white)), r = 0.3, n = 8, tire = rgb('#2A221C'), body = rgb('#9A3B2E'), dark = rgb('#4A4640');
+  for (const cz of [0.65, -0.65]) for (let k = 0; k < n; k++) { const a0 = k / n * Math.PI * 2, a1 = (k + 1) / n * Math.PI * 2, a = (a0 + a1) / 2;
+    const p = (an, x) => [x, r + Math.sin(an) * r, cz + Math.cos(an) * r]; g.quad([p(a0, -0.05), p(a1, -0.05), p(a1, 0.05), p(a0, 0.05)], [0, Math.sin(a), Math.cos(a)], tire); }
+  g.beam([0, r, -0.65], [0, 0.62, 0.0], 0.1, 0.1, dark); g.beam([0, r, 0.65], [0, 0.95, 0.42], 0.06, 0.06, dark);
+  g.box(0, 0.7, 0.15, 0.26, 0.24, 0.5, body); g.box(0, 0.78, -0.3, 0.24, 0.1, 0.62, rgb('#2A221C')); g.beam([-0.33, 1.0, 0.42], [0.33, 1.0, 0.42], 0.04, 0.04, dark);
+  g.box(0, 0.86, 0.58, 0.16, 0.12, 0.06, rgb('#F2C12E'));
+  return g;
+}
+function buildCarDealer(opts) {   // машин худалдаа: оффис + хашлагатай талбай + зарах машинуудын зогсоол (үнийн самбартай) + далбаат утас
+  const C = BUILDING_CONFIG, M = C.carDealer, P = C.palette, A = C.atlas, geo = new Geo(px2uv(...A.white)), winter = opts.season === 'winter';
+  const off = buildShop('carOffice', opts); geo.append(off.geo, 0, M.office.x, M.office.z);
+  const Y = M.yard, hw = Y.w / 2, z0 = Y.z - Y.d / 2, z1 = Y.z + Y.d / 2; groundQuad(geo, -hw, z0, hw, z1, rgb(winter ? '#DDE4EC' : Y.color), 0.011);
+  const R = M.rail, rc = rgb(R.color), post = (x, z) => geo.box(x, R.h / 2, z, 0.08, R.h, 0.08, rc);
+  const railRun = (ax, az, bx, bz) => { const L = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.round(L / R.every));
+    for (let i = 0; i <= n; i++) post(ax + (bx - ax) * i / n, az + (bz - az) * i / n); geo.beam([ax, R.h, az], [bx, R.h, bz], 0.06, 0.06, rc); geo.beam([ax, R.h * 0.5, az], [bx, R.h * 0.5, bz], 0.05, 0.05, sc(rc, 0.9)); };
+  const poleH = 4.2, poles = [[-hw, z1], [-hw, z0], [hw, z0], [hw, z1]];   // далбаат утас
+  for (const [x, z] of poles) geo.box(x, poleH / 2, z, 0.1, poleH, 0.1, rgb(P.iron));
+  for (let i = 0; i < poles.length - 1; i++) { const [ax, az] = poles[i], [bx, bz] = poles[i + 1], L = Math.hypot(bx - ax, bz - az), n = Math.floor(L / 0.9);
+    for (let k = 0; k < n; k++) { const t0 = (k + 0.15) / n, t1 = (k + 0.85) / n, tm = (k + 0.5) / n, sag = t => 0.6 * 4 * t * (1 - t), y0 = poleH - 0.1;
+      const a = [ax + (bx - ax) * t0, y0 - sag(t0), az + (bz - az) * t0], b = [ax + (bx - ax) * t1, y0 - sag(t1), az + (bz - az) * t1], c = [ax + (bx - ax) * tm, y0 - sag(tm) - 0.32, az + (bz - az) * tm];
+      const col = rgb(M.flags[(k + i) % M.flags.length]); geo.tri(a, b, c, [0, 0, 1], [0, 0, 1], [0, 0, 1], col, col, col); geo.tri(b, a, c, [0, 0, -1], [0, 0, -1], [0, 0, -1], col, col, col); } }
+  const slots = [];
+  for (const S of M.slots) { const v = S.item === 'moto' ? makeMoto() : makePorter(opts.season, { cab: S.cab, bed: S.bed }).geo; geo.append(v, S.phi, S.x, S.z);
+    const bx = S.x + 1.3, bz = S.z + 2.6; geo.box(bx, 0.6, bz, 0.05, 1.2, 0.05, rgb(P.iron)); geo.box(bx, 1.25, bz, 0.8, 0.5, 0.04, rgb(P.casing)); geo.box(bx, 1.25, bz + 0.025, 0.6, 0.12, 0.01, rgb('#B03A22'));   // үнийн самбар
+    slots.push({ item: S.item, position: new THREE.Vector3(S.x, 0, S.z), phi: S.phi, price: new THREE.Vector3(bx, 0, bz + 0.8) }); }
+  shadeDown(geo, 1.2, off.geo.p.length);
+  const od = off.door.position.clone().add(new THREE.Vector3(M.office.x, 0, M.office.z));
+  return { geo, door: { ...off.door, position: od }, dims: { w: M.lot[0], d: M.lot[1], ridgeH: poleH }, interior: off.interior, gameRole: 'vehicles', chimneyTop: off.chimneyTop.clone().add(new THREE.Vector3(M.office.x, 0, M.office.z)),
+    slots, points: slots.map(s => ({ name: 'Үнэ: ' + s.item, position: s.price, inward: new THREE.Vector3(0, 0, -1) })), stats: { office: off.geo.triangles } };
+}
+
+function buildFuel(opts) {   // колонк: халхавч + 2 түгээгүүр + касс + үнийн шон
+  const C = BUILDING_CONFIG, F = C.fuel, P = C.palette, A = C.atlas, geo = new Geo(px2uv(...A.white)), winter = opts.season === 'winter';
+  const [LW, LD] = F.lot; groundQuad(geo, -LW / 2, -LD / 2, LW / 2, LD / 2, rgb(winter ? '#DDE4EC' : F.ground), 0.009);
+  const Cn = F.canopy, cc = rgb(Cn.color), sr = signRect('fuelCanopy'), sCol = rgb(C.shop.extraSigns.fuelCanopy.signColor);
+  for (const x of [-Cn.w / 4, Cn.w / 4]) geo.box(x, Cn.h / 2, 0, F.pillars, Cn.h, F.pillars, sc(cc, 0.9));
+  geo.box(0, Cn.h + Cn.t / 2 + 0.08, 0, Cn.w, Cn.t - 0.16, Cn.d, sCol); geo.box(0, Cn.h + 0.08, 0, Cn.w + 0.02, 0.16, Cn.d + 0.02, rgb(F.stripe));   // халхавч: улбар шар, доороо улаан зураас
+  geo.quad([[-Cn.w / 2, Cn.h - 0.001, Cn.d / 2], [Cn.w / 2, Cn.h - 0.001, Cn.d / 2], [Cn.w / 2, Cn.h - 0.001, -Cn.d / 2], [-Cn.w / 2, Cn.h - 0.001, -Cn.d / 2]], [0, -1, 0], cc);
+  for (const sz of [1, -1]) panel(geo, [0, Cn.h + Cn.t / 2, sz * (Cn.d / 2)], [0, 0, sz], Cn.w * 0.42, Cn.t * 0.4, 0.01, sr, sCol);
+  if (winter) geo.box(0, Cn.h + Cn.t + 0.04, 0, Cn.w - 0.1, 0.08, Cn.d - 0.1, rgb(P.snow));
+  const I = F.island; geo.box(0, 0.1, 0, I.w, 0.2, I.d, rgb('#9AA3A8'));
+  for (const x of F.pumps) { geo.box(x, 0.2 + 0.75, 0, 0.62, 1.5, 0.42, rgb('#F4EEDF')); geo.box(x, 1.55, 0, 0.66, 0.14, 0.46, sCol);
+    for (const sz of [1, -1]) { geo.box(x, 1.15, sz * 0.215, 0.36, 0.22, 0.01, rgb('#2A3440')); geo.box(x + 0.22, 0.85, sz * 0.24, 0.08, 0.3, 0.06, rgb(P.iron)); } }   // дэлгэц, хошуу
+  const k = buildShop('fuelKiosk', opts); geo.append(k.geo, 0, F.kiosk.x, F.kiosk.z);
+  const Y = F.pylon, R = A.pylon, y0 = 0.3, hw2 = Y.w / 2;   // босоо үнийн самбар: улаан их бие, хоёр нүүрт зураг, бетон суурь
+  geo.box(Y.x, 0.15, Y.z, Y.w + 0.3, 0.3, Y.d + 0.3, rgb(Y.base)); geo.box(Y.x, (y0 + Y.h) / 2, Y.z, Y.w, Y.h - y0, Y.d, rgb(Y.side));
+  geo.box(Y.x + hw2 * 0.55, Y.h + 0.12, Y.z, Y.w * 0.45, 0.24, Y.d, rgb(Y.side));   // орой нь налуу шат маягтай
+  for (const sz of [1, -1]) { const z = Y.z + sz * (Y.d / 2 + 0.006), xl = Y.x - sz * hw2, xr = Y.x + sz * hw2;
+    geo.quad([[xl, y0, z], [xr, y0, z], [xr, Y.h, z], [xl, Y.h, z]], [0, 0, sz], [1, 1, 1], [px2uv(R[2], R[3]), px2uv(R[2], R[1]), px2uv(R[0], R[1]), px2uv(R[0], R[3])]); }
+  shadeDown(geo, 1.6);
+  const kd = k.door.position.clone().add(new THREE.Vector3(F.kiosk.x, 0, F.kiosk.z));
+  return { geo, door: { ...k.door, position: kd }, dims: { w: LW, d: LD, ridgeH: Cn.h + Cn.t }, interior: k.interior, gameRole: 'fuel', chimneyTop: k.chimneyTop.clone().add(new THREE.Vector3(F.kiosk.x, 0, F.kiosk.z)),
+    points: F.pumps.flatMap(x => [1, -1].map(sz => ({ name: 'Шатахуун цэнэглэх', position: new THREE.Vector3(x, 0, sz * 1.9), inward: new THREE.Vector3(0, 0, -sz) }))),
+    stats: { office: k.geo.triangles } };
+}
+
+function hipRoof(g, x0, x1, z0, z1, y, rise, col, under, uvBand, span) {   // дөрвөн налуутай дээвэр (ЗДТГ)
+  const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, hx = (x1 - x0) / 2, hz = (z1 - z0) / 2, r = Math.min(hx, hz), top = y + rise, rx = hx - r;
+  const A = [x0, y, z1], B = [x1, y, z1], Cc = [x1, y, z0], D = [x0, y, z0], R1 = [cx - rx, top, cz], R2 = [cx + rx, top, cz];
+  const nz = [0, r, rise], nx = [r, rise, 0], uv = (p) => uvBand ? [p[0] / span, bandV(uvBand, (p[1] - y) / rise)] : undefined;
+  const q4 = (a, b, c, d, n) => g.quad([a, b, c, d], n, col, uvBand ? [uv(a), uv(b), uv(c), uv(d)] : null);
+  q4(A, B, R2, R1, [0, rise, r]); q4(Cc, D, R1, R2, [0, rise, -r]);
+  g.tri(B, Cc, R2, [rise, r, 0], [rise, r, 0], [rise, r, 0], col, col, col); g.tri(D, A, R1, [-rise, r, 0], [-rise, r, 0], [-rise, r, 0], col, col, col);
+  g.quad([A, D, Cc, B], [0, -1, 0], under);
+  return top;
+}
+function buildPublic(kind, opts) {
+  const C = BUILDING_CONFIG, PB = C.public, T = PB.kinds[kind], P = C.palette, A = C.atlas, geo = new Geo(px2uv(...A.white)), winter = opts.season === 'winter';
+  const w = T.w, d = T.d, hw = w / 2, hd = d / 2, fh = T.floorH || PB.floorH, nf = T.floors, ph = PB.plinth, wh = ph + fh * nf;
+  const wall = rgb(T.wall), trim = rgb(T.trim), roofCol = rgb(roofHex(opts.roofColor || T.roofColor)), fascia = rgb(P.casing), under = rgb(P.woodDark), con = rgb(C.shop.apron.color);
+  const [b0, b1] = A.winBand, bay = PB.bay;
+  geo.box(0, ph / 2, 0, w + 0.1, ph, d + 0.1, sc(trim, 0.85));   // суурь
+  // давхар бүрийн хана: нэг quad, цонхны зурвас давтагдана (u = урт / (4 bay)). Өндөр давхарт (соёлын төв) цонх сунана
+  const sides = [[[-hw, hd], [hw, hd], [0, 0, 1]], [[hw, -hd], [-hw, -hd], [0, 0, -1]], [[hw, hd], [hw, -hd], [1, 0, 0]], [[-hw, -hd], [-hw, hd], [-1, 0, 0]]];
+  for (let f = 0; f < nf; f++) { const y0 = ph + f * fh, y1 = y0 + fh;
+    for (const [a, b, n] of sides) { const L = Math.hypot(b[0] - a[0], b[1] - a[1]), nb = Math.max(1, Math.round(L / bay)), u1 = nb / 4, off = (nb % 2) ? 0 : 0.125;
+      const vb = 1 - b1 / A.h, vt = 1 - b0 / A.h, plain = T.noWin;
+      geo.quad([[a[0], y0, a[1]], [b[0], y0, b[1]], [b[0], y1, b[1]], [a[0], y1, a[1]]], n, wall, plain ? null : [[off, vb], [u1 + off, vb], [u1 + off, vt], [off, vt]]); }
+    if (f < nf - 1) geo.box(0, y1, 0, w + 0.12, PB.belt, d + 0.12, trim); }   // давхар хоорондын бүс
+  if (T.stripe) for (let k = 0; k < Math.round(w / 3); k++) geo.box(-hw + 1.5 + k * 3, ph + fh - 0.32, hd + 0.03, 2.6, 0.22, 0.04, rgb(T.stripe[k % T.stripe.length]));   // цэцэрлэгийн өнгөт зурвас
+  // дээвэр
+  let topY = wh;
+  if (T.roof === 'flat') { geo.box(0, wh + 0.1, 0, w + 0.2, 0.2, d + 0.2, roofCol);
+    for (const [x, z, sx, sz] of [[0, hd + 0.05, w + 0.2, 0.15], [0, -hd - 0.05, w + 0.2, 0.15], [hw + 0.05, 0, 0.15, d + 0.2], [-hw - 0.05, 0, 0.15, d + 0.2]]) geo.box(x, wh + PB.parapet / 2 + 0.1, z, sx, PB.parapet, sz, sc(trim, 0.9));
+    topY = wh + PB.parapet + 0.1; if (winter) geo.box(0, wh + 0.23, 0, w, 0.06, d, rgb(P.snow)); }
+  else if (T.roof === 'hip') { topY = hipRoof(geo, -hw - PB.eave, hw + PB.eave, -hd - PB.eave, hd + PB.eave, wh, (hd + PB.eave) * PB.pitch * 1.4, winter ? rgb(P.snow) : roofCol, under, winter ? null : A.roof, A.roofSpan); }
+  else { const apex = wh + hd * PB.pitch, ridge = apex + 0.03, ry = z => ridge - PB.pitch * Math.abs(z), ez = hd + PB.eave, gx = hw + 0.35;
+    for (const sx of [1, -1]) { const n = [sx, 0, 0]; geo.tri([sx * hw, wh, -hd], [sx * hw, wh, hd], [sx * hw, apex, 0], n, n, n, wall, wall, wall); }
+    for (const s2 of [1, -1]) slab(geo, -gx, gx, 0, ridge, s2 * ez, ry(ez), 0.07, { top: roofCol, uv: A.roof, span: A.roofSpan, edge: fascia, under });
+    if (winter) { const zs = ez - 0.3; for (const s2 of [1, -1]) slab(geo, -gx + 0.1, gx - 0.1, 0, ridge + 0.13, s2 * zs, ry(zs) + 0.13, 0.13, { top: rgb(P.snow), edge: mix(P.snow, P.snowShade, 0.45) }); }
+    topY = ridge; }
+  // гол самбар: нүүрний дээд хэсэгт
+  const sgKey = kind, sgW = Math.min(w * 0.7, 3.2 + signDef(sgKey).sign.length * 0.38), sgH = 0.75, sgY = wh - 0.55, sCol = rgb(signDef(sgKey).signColor);
+  geo.box(0, sgY, hd + 0.06, sgW + 0.1, sgH + 0.1, 0.12, sc(sCol, 0.6)); panel(geo, [0, sgY, hd + 0.12], [0, 0, 1], sgW / 2, sgH / 2, 0.005, signRect(sgKey), sc(sCol, 0.6));
+  // орцууд
+  const D = { w: 1.8, h: 2.4 }, points = []; let mainDoor = null;
+  for (const E of T.entrances) { const ew = E.w || D.w, x = E.x;
+    if (E.garage) { geo.box(x, 1.9, hd + 0.03, 4.2, 3.8, 0.06, rgb('#6E6A64')); for (let k = 1; k < 8; k++) geo.box(x, k * 0.47, hd + 0.065, 4.2, 0.03, 0.01, rgb('#4A4640'));   // том төмөр хаалга
+      points.push({ name: 'Машины хаалга', position: new THREE.Vector3(x, 0, hd + 3), inward: new THREE.Vector3(0, 0, -1) }); continue; }
+    geo.box(x, ph + D.h / 2 + 0.05, hd + 0.04, ew + 0.3, D.h + 0.3, 0.08, rgb(P.casing));   // хаалганы хүрээ
+    panel(geo, [x, ph + D.h / 2, hd + 0.08], [0, 0, 1], ew / 2, D.h / 2, 0.02, A.pubDoor, sc(trim, 0.8));
+    const pw = ew + 1.6, pd = 1.6; geo.box(x, ph / 2, hd + pd / 2, pw, ph, pd, con);   // тавцан, шат
+    for (let k = 1; k <= 2; k++) geo.box(x, ph * (1 - k / 3) / 2, hd + pd + (k - 0.5) * 0.32, pw - 0.4, ph * (1 - k / 3), 0.32, sc(con, 1 - k * 0.03));
+    if (E.canopy) { const cw = E.canopy, cy = ph + D.h + 0.45; geo.box(x, cy, hd + 1.0, cw, 0.18, 2.0, sc(trim, 0.95)); if (winter) geo.box(x, cy + 0.12, hd + 1.0, cw - 0.1, 0.06, 1.9, rgb(P.snow));
+      if (E.columns) for (const sx of [1, -1]) geo.box(x + sx * (cw / 2 - 0.2), (ph + cy) / 2, hd + 1.8, 0.22, cy - ph, 0.22, rgb(P.casing)); }
+    if (E.portico) { const cw = 10, cd = 3.2, ch = fh * 0.85, cy = ph + ch;   // баганат үүд, гурвалжин оройтой
+      geo.box(x, ph / 2, hd + cd / 2, cw + 0.6, ph, cd + 0.4, con);
+      for (let k = 0; k < 6; k++) geo.lathe({ segs: 8, cx: x - cw / 2 + 0.5 + k * (cw - 1) / 5, cz: hd + cd - 0.4, profile: [[0.26, ph], [0.22, cy - 0.2], [0.3, cy]], color: rgb(P.casing) });
+      geo.box(x, cy + 0.2, hd + cd / 2, cw + 0.4, 0.4, cd + 0.2, sc(trim, 0.95));
+      const pz = hd + cd + 0.1, py = cy + 0.4, n = [0, 0, 1], pc = rgb(T.wall); geo.tri([x - cw / 2 - 0.2, py, pz], [x + cw / 2 + 0.2, py, pz], [x, py + 1.6, pz], n, n, n, pc, pc, pc);
+      for (const sx of [1, -1]) { const nn = [sx * 1.6, cw / 2, 0]; geo.quad([[x, py + 1.6, pz], [x, py + 1.6, hd], [x + sx * (cw / 2 + 0.2), py, hd], [x + sx * (cw / 2 + 0.2), py, pz]], nn, roofCol); } }
+    if (E.sign) { const sr = signRect(E.sign), c2 = rgb(signDef(E.sign).signColor); panel(geo, [x, ph + D.h + 0.6, hd + 0.08], [0, 0, 1], 1.4, 0.3, 0.06, sr, sc(c2, 0.6)); }
+    const dp = { name: E.sign ? signDef(E.sign).sign : 'Орц', position: new THREE.Vector3(x, 0, hd + 1.6 + 0.64 + C.doorStandOff + (E.portico ? 2.0 : 0)), inward: new THREE.Vector3(0, 0, -1), width: ew, height: D.h };
+    if (!mainDoor) mainDoor = dp; else points.push(dp); }
+  shadeDown(geo, ph + fh);
+  // нэмэлт
+  let chimneyTop = null; const ex = T.extras || [];
+  const flag = (x, z, h) => { geo.box(x, h / 2, z, 0.1, h, 0.1, rgb('#B0B6BB')); [['#C4272F', 0], ['#015197', 0.5], ['#C4272F', 1]].forEach(([c, i]) => geo.box(x + 0.32 + i * 0.6, h - 0.5, z, 0.6, 0.9, 0.02, rgb(c))); };   // туг: улаан-хөх-улаан
+  if (ex.includes('flag')) flag(T.entrances[0].x + 7, hd + 4.5, 9);
+  if (ex.includes('flags3')) for (const dx of [-4, 0, 4]) flag(dx - 0.9, hd + 5.5, dx === 0 ? 10 : 8.5);
+  if (ex.includes('atm')) { geo.box(T.entrances[0].x + 2.6, ph + 1.1, hd + 0.12, 0.8, 1.4, 0.24, rgb('#4A4640')); geo.box(T.entrances[0].x + 2.6, ph + 1.35, hd + 0.245, 0.5, 0.35, 0.01, rgb('#3D6A8E')); }   // бэлэн мөнгөний машин
+  if (ex.includes('cross')) { const x = T.entrances[0].x, y = wh - 0.55; geo.box(x + 6.5, y, hd + 0.08, 1.1, 1.1, 0.1, rgb('#FFFFFF')); geo.box(x + 6.5, y, hd + 0.14, 0.8, 0.26, 0.02, rgb('#B03A22')); geo.box(x + 6.5, y, hd + 0.14, 0.26, 0.8, 0.02, rgb('#B03A22')); }
+  if (ex.includes('playground')) { const cz = hd + 8, rail = rgb('#2E5E9E');   // дүүжин, гулгуур, элсний хайрцаг
+    for (const sx of [-1, 1]) { geo.beam([-8 + sx * 1.6, 0, cz - 0.8], [-8 + sx * 1.6, 2.4, cz], 0.08, 0.08, rail); geo.beam([-8 + sx * 1.6, 0, cz + 0.8], [-8 + sx * 1.6, 2.4, cz], 0.08, 0.08, rail); }
+    geo.beam([-9.7, 2.4, cz], [-6.3, 2.4, cz], 0.08, 0.08, rail); for (const sx of [-0.7, 0.7]) { geo.beam([-8 + sx - 0.2, 2.4, cz], [-8 + sx - 0.2, 0.55, cz], 0.02, 0.02, rgb(P.iron)); geo.beam([-8 + sx + 0.2, 2.4, cz], [-8 + sx + 0.2, 0.55, cz], 0.02, 0.02, rgb(P.iron)); geo.box(-8 + sx, 0.53, cz, 0.5, 0.05, 0.25, rgb('#D9622B')); }
+    geo.box(2, 0.75, cz, 1.2, 1.5, 1.2, rgb('#D8A93A')); geo.obox([2, 0.75, cz + 1.8], [0.45, 0, 0], [0, 0.8, 1.15], [0, 0.05, -0.02], rgb('#B03A22'));
+    geo.box(8, 0.12, cz, 3, 0.24, 3, rgb('#9A7A55')); geo.box(8, 0.2, cz, 2.7, 0.04, 2.7, rgb(winter ? P.snow : '#E3CC93')); }
+  if (ex.includes('pen')) { const x0 = hw + 1.5, x1 = hw + 9.5, z0 = -hd + 0.5, z1 = hd + 2, rc = rgb('#7A6448');   // малын хороо, шахуурга
+    const rails = (a, b) => { for (const y of [0.4, 0.85, 1.3]) geo.beam([a[0], y, a[1]], [b[0], y, b[1]], 0.07, 0.07, rc); };
+    for (const [x, z] of [[x0, z0], [x1, z0], [x1, z1], [x0 + 3, z1], [x1, (z0 + z1) / 2], [x0 + 4, z0]]) geo.box(x, 0.75, z, 0.16, 1.5, 0.16, sc(rc, 0.8));
+    rails([x0, z0], [x1, z0]); rails([x1, z0], [x1, z1]); rails([x0 + 3, z1], [x1, z1]);
+    points.push({ name: 'Хорооны хаалга', position: new THREE.Vector3(x0 + 1.5, 0, z1 + 1.2), inward: new THREE.Vector3(0, 0, -1) }); }
+  if (ex.includes('stack')) { const sx = hw + 3, sz = -hd + 3, H = 26, n = 6;   // улаан-цагаан судалтай өндөр яндан
+    geo.lathe({ segs: 10, cx: sx, cz: sz, profile: Array.from({ length: n + 1 }, (_, i) => [1.1 - 0.45 * i / n, i * H / n]), colorAt: seg => rgb(seg % 2 ? '#F4EEDF' : '#B03A22') });
+    geo.box(sx, 0.6, sz, 2.8, 1.2, 2.8, rgb('#8C8478')); geo.beam([hw, wh - 1.5, sz], [sx - 0.8, 3.5, sz], 0.5, 0.5, rgb('#6E6A64'));
+    chimneyTop = new THREE.Vector3(sx, H + 0.3, sz); }
+  if (ex.includes('coal')) geo.lathe({ segs: 8, cx: -hw - 5.5, cz: hd + 2, profile: [[4.0, 0.01], [2.6, 1.6], [0.6, 2.4], [0, 2.45]], color: rgb(winter ? '#C8D0DA' : '#2A2622') });   // нүүрсний овоо
+  if (!T.central && (ex.includes('chimney') || T.roof !== 'flat' && !chimneyTop)) { const cx = -hw + 1.5, cz = -1, base = wh, top = topY + 0.7;
+    geo.box(cx, (base + top) / 2, cz, 0.5, top - base, 0.5, rgb(P.brick)); chimneyTop = new THREE.Vector3(cx, top + 0.15, cz); }
+  if (!chimneyTop && !T.central) chimneyTop = new THREE.Vector3(-hw + 2, topY + 0.6, -2);
+  return { geo, door: mainDoor, points, dims: { w, d, ridgeH: Math.max(topY, chimneyTop ? chimneyTop.y - 0.3 : 0), floors: nf }, interior: { main: { w: w - 0.6, d: d - 0.6, h: fh - 0.3 }, floors: nf },
+    gameRole: T.gameRole, chimneyTop, windows: [new THREE.Vector3(-bay, ph + 1.6, hd)] };
+}
+
+function bandQuad(g, a, b, y0, y1, n, band, span, col = [1, 1, 1]) {   // давтагдах зурвасан хавтан (v нь 0…1 доороос дээш)
+  const u1 = Math.hypot(b[0] - a[0], b[1] - a[1]) / span, vb = bandV(band, 0), vt = bandV(band, 1);
+  g.quad([[a[0], y0, a[1]], [b[0], y0, b[1]], [b[0], y1, b[1]], [a[0], y1, a[1]]], n, col, [[0, vb], [u1, vb], [u1, vt], [0, vt]]);
+}
+function flares(g, x0, x1, z0, z1, y, f, col, bw = 0.42) {   // дээврийн дөрвөн булангийн дээш эргэсэн үзүүр
+  for (const [x, z, sx, sz] of [[x0, z0, -1, -1], [x1, z0, 1, -1], [x0, z1, -1, 1], [x1, z1, 1, 1]]) g.beam([x - sx * 0.6, y + 0.02, z - sz * 0.6], [x + sx * f * 0.7, y + f * 0.65, z + sz * f * 0.7], bw, bw * 0.38, col);
+}
+function buildTemple(opts) {
+  const C = BUILDING_CONFIG, T = C.temple, P = C.palette, A = C.atlas, geo = new Geo(px2uv(...A.white)), winter = opts.season === 'winter';
+  const [YW, YD] = T.yard, yard = buildKhashaa({ season: opts.season, w: YW, d: YD, seed: 9, fenceColor: T.fence, gateColor: T.gate }); geo.append(yard.geo);
+  const H = T.hall, hw = H.w / 2, hd = H.d / 2, zc = T.hallZ, pl = T.plat, y0 = pl.h, wt = y0 + H.h, red = rgb(H.red), gold = rgb(H.gold), wall = rgb(H.wall);
+  const roofC = winter ? rgb(P.snow) : rgb(T.roof.color), under = rgb(T.roof.under), zf = zc + hd, zp = zf + T.porch.d;
+  const hall = new Geo(px2uv(...A.white));
+  hall.box(0, y0 / 2, zc + T.porch.d / 2, pl.w, y0, pl.d, rgb(pl.color));   // чулуун тавцан
+  for (let k = 1; k <= 2; k++) hall.box(0, y0 * (1 - k / 3) / 2, zc + T.porch.d / 2 + pl.d / 2 + (k - 0.5) * 0.4, 4.4, y0 * (1 - k / 3), 0.4, sc(rgb(pl.color), 1 - k * 0.04));
+  const sides = [[[-hw, zf], [hw, zf], [0, 0, 1]], [[hw, zc - hd], [-hw, zc - hd], [0, 0, -1]], [[hw, zf], [hw, zc - hd], [1, 0, 0]], [[-hw, zc - hd], [-hw, zf], [-1, 0, 0]]];
+  for (const [a, b, n] of sides) { hall.quad([[a[0], y0, a[1]], [b[0], y0, b[1]], [b[0], wt, b[1]], [a[0], wt, a[1]]], n, wall);
+    const o = 0.02, ao = [a[0] + n[0] * o, a[1] + n[2] * o], bo = [b[0] + n[0] * o, b[1] + n[2] * o];
+    hall.quad([[ao[0], y0, ao[1]], [bo[0], y0, bo[1]], [bo[0], y0 + 0.7, bo[1]], [ao[0], y0 + 0.7, ao[1]]], n, red);   // улаан хормой
+    bandQuad(hall, ao, bo, wt - T.beamH, wt, n, A.templeBeam, 2.0); }                                               // будмал дам нуруу
+  for (const sx of [1, -1]) for (const sz of [zc - hd, zf]) hall.box(sx * hw, (y0 + wt) / 2, sz, 0.36, H.h, 0.36, red);   // булангийн багана
+  hall.box(0, y0 + 1.5, zf + 0.04, 2.2, 3.0, 0.1, gold); hall.box(0, y0 + 1.45, zf + 0.1, 1.9, 2.8, 0.04, red);            // алтан хүрээтэй улаан хаалга
+  for (const y of [y0 + 0.7, y0 + 2.2]) hall.box(0, y, zf + 0.125, 1.9, 0.08, 0.01, gold); hall.box(0, y0 + 1.45, zf + 0.125, 0.05, 2.8, 0.01, sc(gold, 0.7));
+  for (const sx of [1, -1]) { hall.box(sx * 3.2, y0 + 2.0, zf + 0.04, 1.3, 1.5, 0.08, red); hall.box(sx * 3.2, y0 + 2.0, zf + 0.085, 1.0, 1.2, 0.01, rgb('#3A2418'));   // торон цонх
+    hall.box(sx * 3.2, y0 + 2.0, zf + 0.09, 1.0, 0.05, 0.01, gold); hall.box(sx * 3.2, y0 + 2.0, zf + 0.09, 0.05, 1.2, 0.01, gold); }
+  for (const x of T.porch.cols) hall.lathe({ segs: 8, cx: x, cz: zp - 0.3, profile: [[0.28, y0], [T.porch.colR, y0 + 0.2], [T.porch.colR, wt - 0.1], [0.3, wt]], color: red });   // үүдний улаан багана
+  bandQuad(hall, [-hw - 0.3, zp - 0.05], [hw + 0.3, zp - 0.05], wt - T.beamH, wt, [0, 0, 1], A.templeBeam, 2.0);                 // үүдний дам нуруу
+  hall.box(0, wt - T.beamH / 2, zp - 0.3, H.w + 0.6, T.beamH, 0.42, red);
+  // доод дээвэр (үүдийг хамарна) + дээш эргэсэн булан
+  const R = T.roof, rx0 = -hw - R.eave, rx1 = hw + R.eave, rz0 = zc - hd - R.eave, rz1 = zp + R.eave * 0.6;
+  hipRoof(hall, rx0, rx1, rz0, rz1, wt, R.rise, roofC, under, winter ? null : A.roof, A.roofSpan);
+  flares(hall, rx0, rx1, rz0, rz1, wt, R.flare, roofC);
+  // дээд давхар
+  const U = T.upper, uw = U.w / 2, uz = zc + 0.6, ub = wt + 0.9, ut = ub + U.h;
+  for (const [a, b, n] of [[[-uw, uz + uw], [uw, uz + uw], [0, 0, 1]], [[uw, uz - uw], [-uw, uz - uw], [0, 0, -1]], [[uw, uz + uw], [uw, uz - uw], [1, 0, 0]], [[-uw, uz - uw], [-uw, uz + uw], [-1, 0, 0]]]) {
+    hall.quad([[a[0], ub, a[1]], [b[0], ub, b[1]], [b[0], ut, b[1]], [a[0], ut, a[1]]], n, wall); bandQuad(hall, [a[0] + n[0] * 0.02, a[1] + n[2] * 0.02], [b[0] + n[0] * 0.02, b[1] + n[2] * 0.02], ut - 0.5, ut, n, A.templeBeam, 2.0); }
+  for (const sx of [1, -1]) for (const sz of [-1, 1]) hall.box(sx * uw, (ub + ut) / 2, uz + sz * uw, 0.3, U.h, 0.3, red);
+  const top = hipRoof(hall, -uw - U.eave, uw + U.eave, uz - uw - U.eave, uz + uw + U.eave, ut, U.rise, roofC, under, winter ? null : A.roof, A.roofSpan);
+  flares(hall, -uw - U.eave, uw + U.eave, uz - uw - U.eave, uz + uw + U.eave, ut, R.flare * 0.8, roofC);
+  hall.lathe({ segs: 8, cx: 0, cz: uz, profile: [[0.38, top - 0.05], [0.3, top + 0.2], [0.44, top + 0.5], [0.26, top + 0.85], [0.12, top + 1.15], [0.17, top + 1.3], [0.03, top + 1.9], [0, top + 1.95]], color: gold });   // ганжир
+  shadeDown(hall, wt); geo.append(hall);
+  // хүрд: гурван төрөл (жишээ зургуудаар). Хүрд бүр тусдаа эргэх хэсэг → wheels[] (тоглоомд InstancedMesh, тоглогч очиж эргүүлнэ)
+  const wheels = [], WH = T.wheels;
+  const wheelGeo = (r, h, style) => { const g = new Geo(px2uv(...A.white)), [vb, vt] = [bandV(A.wheelBand, 0), bandV(A.wheelBand, 1)];
+    if (style === 'white') { const R = A.wheelScript, u0 = R[0] / A.size, u1 = R[2] / A.size, v0 = 1 - R[3] / A.h, v1 = 1 - R[1] / A.h;
+      g.lathe({ segs: 8, profile: [[r, 0], [r, h]], uvAt: (pi, f) => [u0 + (u1 - u0) * f, pi ? v1 : v0], color: [1, 1, 1] }); }
+    else g.lathe({ segs: 8, profile: [[r, 0], [r, h]], uvAt: (pi, f) => [f * 1.5, pi ? vt : vb], color: style === 'brass' ? rgb('#C9A24E') : [1, 1, 1] });
+    for (const y of [0, h]) g.lathe({ segs: 8, smooth: false, profile: y ? [[r + 0.025, y - 0.03], [r + 0.025, y + 0.03], [0, y + 0.05]] : [[0, y - 0.05], [r + 0.025, y - 0.03], [r + 0.025, y + 0.03]], color: rgb(style === 'white' ? '#D9622B' : '#B03A22') });
+    return g; };
+  const addWheel = (x, y, z, r, h, style, name, inward) => { wheels.push({ geo: wheelGeo(r, h, style), position: new THREE.Vector3(x, y, z), radius: r, height: h, style });
+    points.push({ name, spinDir: -1, position: new THREE.Vector3(x + inward.x * -(r + 0.7), 0, z + inward.z * -(r + 0.7)), inward }); };
+  const points = [];
+  { // (1) улаан хүрээтэй эгнээ хүрд (3-р зураг): дуганы зүүн талд, хүрээ z тэнхлэгийн дагуу
+    const F = WH.row, L = (F.n - 1) * F.gap + 1.2, x = F.x, z0 = zc - L / 2, red2 = rgb('#C0392B'), fg = new Geo(px2uv(...A.white));
+    for (const z of [z0, z0 + L]) { fg.box(x, F.top / 2, z, 0.22, F.top, 0.22, red2); fg.box(x, 0.08, z, 0.9, 0.16, 0.3, red2); fg.beam([x - 0.4, 0.16, z], [x, 0.8, z], 0.12, 0.12, red2); fg.beam([x + 0.4, 0.16, z], [x, 0.8, z], 0.12, 0.12, red2); }
+    fg.box(x, F.top, zc, 0.5, 0.16, L + 0.5, red2); fg.box(x, F.top - 0.06, zc, 0.42, 0.06, L + 0.4, sc(red2, 0.8));   // дээд хөндлөвч
+    fg.box(x, F.mid, zc, 0.3, 0.12, L, red2);                                                                               // дунд хөндлөвч
+    for (let i = 0; i < F.n; i++) { const z = z0 + 0.6 + i * F.gap; fg.beam([x, F.mid, z], [x, F.top, z], 0.03, 0.03, rgb(P.iron));
+      fg.beam([x - 0.28, F.mid + 0.3, z], [x - 0.05, F.mid + 0.3, z], 0.03, 0.03, rgb(P.iron));   // бариул
+      addWheel(x, F.mid + 0.09, z, F.r, F.h, 'gold', 'Хүрд эргүүлэх', new THREE.Vector3(1, 0, 0)); }
+    shadeDown(fg, F.top); geo.append(fg); }
+  { // (2) ногоон дээвэртэй ганц гуулин хүрд (4-р зураг): хашааны хаалганы зүүн талд
+    const S1 = WH.single, x = S1.x, z = S1.z, red2 = rgb('#C0392B'), green = rgb('#3F8A6E'), sg = new Geo(px2uv(...A.white));
+    for (const sx of [1, -1]) sg.box(x + sx * 0.55, 1.15, z, 0.16, 2.3, 0.16, red2);
+    sg.box(x, 0.32, z, 1.4, 0.14, 0.32, green); sg.box(x, 1.95, z, 1.2, 0.1, 0.2, red2);
+    for (const s2 of [1, -1]) slab(sg, x - 0.85, x + 0.85, z, 2.6, z + s2 * 0.62, 2.22, 0.06, { top: winter ? rgb(P.snow) : green, edge: sc(green, 0.7), under: sc(green, 0.6) });
+    sg.beam([x, 0.39, z], [x, 1.9, z], 0.04, 0.04, rgb(P.iron));
+    shadeDown(sg, 2.3); geo.append(sg);
+    addWheel(x, 0.6, z, 0.3, 0.95, 'brass', 'Хүрд эргүүлэх', new THREE.Vector3(0, 0, -1)); }
+  { // (3) дөрвөн баганатай асартай цагаан хүрд (5-р зураг): дуганы урд баруун талд
+    const Pv = WH.pavilion, x = Pv.x, z = Pv.z, hw2 = Pv.w / 2, pg = new Geo(px2uv(...A.white)), red2 = rgb('#B5532A'), orange = rgb('#D9622B'), green = winter ? rgb(P.snow) : rgb('#2F8A55');
+    pg.box(x, 0.06, z, Pv.w + 0.8, 0.12, Pv.w + 0.8, rgb('#9AA3A8')); pg.box(x, 0.13, z, Pv.w - 0.4, 0.02, Pv.w - 0.4, rgb('#B5633F'));   // хавтан, улаан тоосгон дэвсгэр
+    for (const sx of [1, -1]) for (const sz of [1, -1]) pg.lathe({ segs: 8, cx: x + sx * hw2, cz: z + sz * hw2, profile: [[0.2, 0.12], [0.16, 0.4], [0.13, Pv.h], [0.17, Pv.h + 0.05]], color: red2 });
+    for (const [a1, b1] of [[[-1, -1], [1, -1]], [[1, -1], [1, 1]], [[1, 1], [-1, 1]], [[-1, 1], [-1, -1]]]) pg.beam([x + a1[0] * hw2, Pv.h + 0.12, z + a1[1] * hw2], [x + b1[0] * hw2, Pv.h + 0.12, z + b1[1] * hw2], 0.2, 0.22, orange);
+    const tp = hipRoof(pg, x - hw2 - 0.35, x + hw2 + 0.35, z - hw2 - 0.35, z + hw2 + 0.35, Pv.h + 0.24, 0.75, green, orange, null, 1);
+    flares(pg, x - hw2 - 0.35, x + hw2 + 0.35, z - hw2 - 0.35, z + hw2 + 0.35, Pv.h + 0.24, 0.3, rgb(H.gold), 0.16);
+    pg.lathe({ segs: 8, cx: x, cz: z, profile: [[0.14, tp - 0.05], [0.16, tp + 0.15], [0.1, tp + 0.4], [0.12, tp + 0.5], [0, tp + 0.62]], color: rgb(H.gold) });
+    pg.box(x, 0.45, z, 0.62, 0.66, 0.62, rgb('#FFFFFF')); pg.lathe({ segs: 8, cx: x, cz: z, profile: [[0.1, 0.78], [0.1, 1.05]], color: rgb('#9AA3A8') });   // цагаан тавиур, багана
+    pg.beam([x, 1.9, z], [x, Pv.h + 0.1, z], 0.03, 0.03, rgb(P.iron));
+    shadeDown(pg, Pv.h); geo.append(pg);
+    addWheel(x, 1.08, z, 0.33, 0.8, 'white', 'Хүрд эргүүлэх', new THREE.Vector3(0, 0, -1)); }
+  // суварга (1–2-р зураг): өндөр цагаан тавцан, гурван шат, алтан хээтэй давхарга, хонх хэлбэрийн бумба (алтан хүрээтэй тахилын нүх), цагираг бүхий шовх, алтан шүхэр, алтан "далавч"
+  const St = T.stupa, sx0 = St.x, sz0 = St.z, wht = rgb('#FFFFFF'), wht2 = rgb('#EEF0F0'), sg2 = new Geo(px2uv(...A.white)), gold2 = rgb(H.gold);
+  const tier = (w, y, h, c = wht) => sg2.box(sx0, y + h / 2, sz0, w, h, w, c);
+  const orn = (w, y, h) => { const O = A.ornament; for (const [n, ox, oz] of [[[0, 0, 1], 0, 1], [[0, 0, -1], 0, -1], [[1, 0, 0], 1, 0], [[-1, 0, 0], -1, 0]])
+    panel(sg2, [sx0 + ox * (w / 2 + 0.005), y + h / 2, sz0 + oz * (w / 2 + 0.005)], n, w * 0.42, h * 0.38, 0.005, O, gold2); };
+  tier(4.0, 0, 0.15, wht2); tier(3.6, 0.15, 2.3); tier(3.2, 2.45, 0.22); tier(2.95, 2.67, 0.2); tier(2.7, 2.87, 0.18);
+  tier(2.3, 3.05, 0.6); orn(2.3, 3.05, 0.6); tier(2.6, 3.65, 0.16);                                // алтан хээтэй давхарга, хучилт
+  for (let k = 0; k < 4; k++) { const w = 2.2 - k * 0.22; tier(w, 3.81 + k * 0.17, 0.17); sg2.box(sx0, 3.81 + k * 0.17 + 0.085, sz0 + w / 2 + 0.004, w * 0.86, 0.06, 0.01, gold2); }   // шатлал алтан зураастай
+  const by = 4.5; sg2.lathe({ segs: 8, cx: sx0, cz: sz0, profile: [[0.82, by], [0.95, by + 0.25], [0.97, by + 0.85], [0.82, by + 1.2], [0.45, by + 1.38], [0, by + 1.4]], color: wht });   // бумба
+  { const nz = sz0 + 0.96, ny = by + 0.62, N = A.niche; sg2.box(sx0, ny, nz - 0.04, 0.78, 0.98, 0.12, gold2); panel(sg2, [sx0, ny, nz + 0.02], [0, 0, 1], 0.3, 0.4, 0.005, N, gold2); }   // тахилын нүх
+  sg2.box(sx0, by + 1.55, sz0, 0.62, 0.3, 0.62, wht);
+  sg2.lathe({ segs: 6, cx: sx0, cz: sz0, profile: Array.from({ length: 7 }, (_, i) => [0.3 - i * 0.03 + (i % 2) * 0.025, by + 1.7 + i * 0.227]), color: wht });   // цагирагтай шовх
+  const ty = by + 3.06; sg2.lathe({ segs: 8, cx: sx0, cz: sz0, smooth: false, profile: [[0.18, ty - 0.02], [0.62, ty + 0.08], [0.58, ty + 0.16], [0.12, ty + 0.22]], color: gold2 });   // шүхэр
+  sg2.lathe({ segs: 6, cx: sx0, cz: sz0, profile: [[0.1, ty + 0.2], [0.17, ty + 0.35], [0.09, ty + 0.5], [0.13, ty + 0.62], [0, ty + 0.85]], color: gold2 });   // сар нар
+  for (const s2 of [1, -1]) { sg2.beam([sx0 + s2 * 0.55, ty + 0.08, sz0], [sx0 + s2 * 1.05, by + 1.15, sz0], 0.2, 0.06, gold2); sg2.beam([sx0 + s2 * 1.05, by + 1.15, sz0], [sx0 + s2 * 1.3, by + 1.35, sz0], 0.2, 0.06, gold2); }   // далавч
+  for (const dx of [-0.45, 0.35]) sg2.beam([sx0 + dx, 2.5, sz0 + 1.79], [sx0 + dx + 0.18, 1.55, sz0 + 1.84], 0.34, 0.02, rgb('#2E6FB8'));   // хадаг (тавцангийн захаас унжсан)
+  shadeDown(sg2, 2.5); geo.append(sg2);
+  points.push({ name: 'Суварга мөргөх', position: new THREE.Vector3(sx0, 0, sz0 + 2.9), inward: new THREE.Vector3(0, 0, -1) },
+              { name: 'Суварга тойрох', direction: 'clockwise', position: new THREE.Vector3(sx0 + 2.9, 0, sz0), inward: new THREE.Vector3(-1, 0, 0) },
+              { name: 'Хашааны хаалга', position: yard.gate.position.clone(), inward: yard.gate.inward });
+  const door = { position: new THREE.Vector3(0, 0, zc + T.porch.d / 2 + pl.d / 2 + 0.8 + C.doorStandOff), inward: new THREE.Vector3(0, 0, -1), width: 1.9, height: 2.8 };
+  return { geo, door, dims: { w: YW, d: YD, ridgeH: top + 1.95 }, interior: { main: { w: H.w - 0.6, d: H.d - 0.6, h: H.h - 0.3 } }, gameRole: 'temple', chimneyTop: null,
+    points, wheels, stats: { office: hall.triangles, stupa: sg2.triangles, wheels: wheels.reduce((a2, w2) => a2 + w2.geo.triangles, 0) } };
+}
+
+function railRun(g, a, b, M, col) {   // хөндлөвчтэй модон хашаа a → b (хөнгөн: багана 4 тал, хөндлөвч 3 тал)
+  const L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.round(L / (M.every || 4))), tx = (b[0] - a[0]) / L, tz = (b[1] - a[1]) / L, ox = -tz, oz = tx, pc = sc(col, 0.8), p = M.post / 2;
+  for (let i = 0; i <= n; i++) { const x = a[0] + (b[0] - a[0]) * i / n, z = a[1] + (b[1] - a[1]) * i / n, q = (u, v, y) => [x + tx * u + ox * v, y, z + tz * u + oz * v];
+    for (const [u0, v0, u1, v1, nn] of [[-p, p, p, p, [ox, 0, oz]], [p, -p, -p, -p, [-ox, 0, -oz]], [p, p, p, -p, [tx, 0, tz]], [-p, -p, -p, p, [-tx, 0, -tz]]])
+      g.quad([q(u0, v0, 0), q(u1, v1, 0), q(u1, v1, M.postH || 1.5), q(u0, v0, M.postH || 1.5)], nn, pc); }
+  const r = 0.04; for (const y of M.railH) { const A1 = [a[0], a[1]], B1 = [b[0], b[1]], q = (P2, v, yy) => [P2[0] + ox * v, yy, P2[1] + oz * v];
+    g.quad([q(A1, r, y - r), q(B1, r, y - r), q(B1, r, y + r), q(A1, r, y + r)], [ox, 0, oz], col); g.quad([q(B1, -r, y - r), q(A1, -r, y - r), q(A1, -r, y + r), q(B1, -r, y + r)], [-ox, 0, -oz], col);  }
+}
+function buildMarket(opts) {
+  const C = BUILDING_CONFIG, M = C.market, P = C.palette, A = C.atlas, geo = new Geo(px2uv(...A.white)), winter = opts.season === 'winter', rc = rgb(M.rail);
+  const [LW, LD] = M.lot, hw = LW / 2, hd = LD / 2; groundQuad(geo, -hw, -hd, hw, hd, rgb(winter ? '#DDE4EC' : M.ground), 0.009);
+  // гадна хашаа: урд талын голд 6 м хаалга
+  railRun(geo, [-hw, hd], [-3, hd], M, rc); railRun(geo, [3, hd], [hw, hd], M, rc); railRun(geo, [hw, hd], [hw, -hd], M, rc); railRun(geo, [hw, -hd], [-hw, -hd], M, rc); railRun(geo, [-hw, -hd], [-hw, hd], M, rc);
+  for (const sx of [1, -1]) geo.box(sx * 3, 1.3, hd, 0.25, 2.6, 0.25, sc(rc, 0.7)); geo.beam([-3, 2.55, hd], [3, 2.55, hd], 0.18, 0.18, sc(rc, 0.7));
+  // хороонууд: 2 эгнээ, хооронд нь гарц; хорооны хаалга гарц руу
+  const Q = M.pens, points = [];
+  for (let r = 0; r < Q.rows; r++) for (let c = 0; c < Q.cols; c++) {
+    const x0 = Q.x0 + c * Q.w, z0 = Q.z0 + r * (Q.d + 4) , x1 = x0 + Q.w, z1 = z0 + Q.d, gz = r ? z0 : z1;
+    railRun(geo, [x0, z0 + (r ? 0 : 0)], [x0, z1], M, rc); if (c === Q.cols - 1) railRun(geo, [x1, z0], [x1, z1], M, rc);
+    railRun(geo, r ? [x0, z1] : [x0, z0], r ? [x1, z1] : [x1, z0], M, rc);                       // ар тал
+    railRun(geo, [x0, gz], [x0 + Q.w / 2 - 0.9, gz], M, rc); railRun(geo, [x0 + Q.w / 2 + 0.9, gz], [x1, gz], M, rc);   // урд тал хаалгатай
+    points.push({ name: 'Хороо ' + (r * Q.cols + c + 1), position: new THREE.Vector3(x0 + Q.w / 2, 0, gz + (r ? -1.2 : 1.2)), inward: new THREE.Vector3(0, 0, r ? 1 : -1) }); }
+  // саравч (худалдааны), ачих тавцан, тэвш, өвс
+  const S = M.shed, sg = new Geo(px2uv(...A.white)); const snowF = leanTo(sg, S.w, S.d, 2.6, 2.2, rgb('#8C7453'), rgb(roofHex('grey')), 0.3, winter); shadeDown(sg, 2.6); snowF(); geo.append(sg, 0, S.x, S.z);
+  const R = M.ramp, rg = new Geo(px2uv(...A.white)), con = rgb('#9AA3A8');
+  rg.box(0, R.h / 2, -R.L / 2 - 1, R.w, R.h, 2, con); rg.obox([0, R.h / 2 - 0.05, 0], [R.w / 2, 0, 0], [0, R.h / 2, R.L / 2 - 0.05], [0, 0.1, -0.02], sc(rc, 0.9));
+  for (const sx of [1, -1]) rg.beam([sx * R.w / 2, R.h + 0.1, -R.L / 2 - 2], [sx * R.w / 2, 0.9, R.L / 2], 0.08, 0.08, rc);
+  geo.append(rg, 0, R.x, R.z);
+  const T = M.trough; geo.box(T.x, 0.3, T.z, 3, 0.5, 0.7, rgb('#6E6A64')); geo.box(T.x, 0.52, T.z, 2.8, 0.02, 0.5, rgb(winter ? '#DCE6EE' : '#4A6A8A'));
+  for (const [x, z] of [[T.x + 3, T.z], [T.x + 4.1, T.z + 0.3], [T.x + 3.5, T.z + 0.2]]) geo.box(x, 0.25, z, 1.0, 0.5, 0.5, rgb('#C9A24E'));
+  shadeDown(geo, 2.6);
+  return { geo, door: { position: new THREE.Vector3(0, 0, hd + 1.5), inward: new THREE.Vector3(0, 0, -1), width: 6, height: 2.5 }, dims: { w: LW, d: LD, ridgeH: 2.7 }, interior: null, gameRole: 'livestockMarket', chimneyTop: null,
+    points: [...points, { name: 'Мал буулгах тавцан', position: new THREE.Vector3(R.x, 0, R.z + R.L / 2 + 1.5), inward: new THREE.Vector3(0, 0, -1) }], stats: { office: 0 } };
+}
+function floodlight(g, x, z, h, face) {   // гэрэлтүүлгийн шон: толгой нь face (x, z) чиглэлд, нүүр нь шөнө гэрэлтэнэ
+  const C = BUILDING_CONFIG, A = C.atlas, iron = rgb(C.palette.iron), L = Math.hypot(face[0], face[1]), fx = face[0] / L, fz = face[1] / L;
+  g.box(x, 0.3, z, 0.7, 0.6, 0.7, rgb('#9AA3A8')); g.beam([x, 0.6, z], [x, h, z], 0.22, 0.22, iron);
+  const hx = x + fx * 0.3, hz = z + fz * 0.3; g.box(hx, h + 0.3, hz, 1.6 * Math.abs(fz) + 0.5 * Math.abs(fx), 1.0, 1.6 * Math.abs(fx) + 0.5 * Math.abs(fz), iron);
+  const uv = px2uv(...A.lamp), c = [hx + fx * 0.27, h + 0.3, hz + fz * 0.27], u = [fz, 0, -fx], w2 = 0.7, h2 = 0.42, n = [fx, -0.3, fz];
+  g.quad([[c[0] - u[0] * w2, c[1] - h2, c[2] - u[2] * w2], [c[0] + u[0] * w2, c[1] - h2, c[2] + u[2] * w2], [c[0] + u[0] * w2, c[1] + h2, c[2] + u[2] * w2], [c[0] - u[0] * w2, c[1] + h2, c[2] - u[2] * w2]], n, [1, 1, 1], [uv, uv, uv, uv]);
+  return new THREE.Vector3(c[0] + fx * 1.5, c[1], c[2] + fz * 1.5);
+}
+function buildStadium(opts) {
+  const C = BUILDING_CONFIG, S = C.stadium, P = C.palette, A = C.atlas, geo = new Geo(px2uv(...A.white)), winter = opts.season === 'winter';
+  const [LW, LD] = S.lot, line = rgb(winter ? '#C9D2DC' : S.line), Pt = S.pitch, px = Pt.x, hw = Pt.w / 2, hd = Pt.d / 2, y = 0.016;
+  groundQuad(geo, -LW / 2, -LD / 2, LW / 2, LD / 2, rgb(winter ? '#E6ECF3' : S.grass), 0.008);
+  const ln = (a, b, w = 0.12) => { const dx = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dx, dz), ox = -dz / L * w / 2, oz = dx / L * w / 2;
+    geo.quad([[a[0] - ox, y, a[1] - oz], [b[0] - ox, y, b[1] - oz], [b[0] + ox, y, b[1] + oz], [a[0] + ox, y, a[1] + oz]], [0, 1, 0], line); };
+  ln([px - hw, -hd], [px + hw, -hd]); ln([px + hw, -hd], [px + hw, hd]); ln([px + hw, hd], [px - hw, hd]); ln([px - hw, hd], [px - hw, -hd]); ln([px, -hd], [px, hd]);
+  for (let k = 0; k < 16; k++) { const a0 = k / 16 * Math.PI * 2, a1 = (k + 1) / 16 * Math.PI * 2; ln([px + Math.cos(a0) * 5, Math.sin(a0) * 5], [px + Math.cos(a1) * 5, Math.sin(a1) * 5]); }
+  for (const sx of [1, -1]) { const gx = px + sx * hw, w = S.goalW / 2, iron = rgb('#F4EEDF');
+    ln([gx, -8], [gx - sx * 9, -8]); ln([gx - sx * 9, -8], [gx - sx * 9, 8]); ln([gx - sx * 9, 8], [gx, 8]);
+    for (const z of [-w, w]) geo.beam([gx, 0, z], [gx, S.goalH, z], 0.1, 0.1, iron); geo.beam([gx, S.goalH, -w], [gx, S.goalH, w], 0.1, 0.1, iron);
+    for (const z of [-w, w]) geo.beam([gx, S.goalH, z], [gx + sx * 1.5, 0, z], 0.05, 0.05, iron); }
+  // хамгаалалтын тор: өндөр шон, 5 хэвтээ утас + доод самбар; урд талын голд хаалга
+  const N = S.net, nx = hw + N.margin, nz = hd + N.margin, nc = rgb(N.color), M = { post: 0.12, postH: N.h, every: N.every, railH: [N.board + 0.4, 1.9, 2.9, 3.9, N.h - 0.05] };
+  const run = (a, b) => { railRun(geo, a, b, M, nc); const L = Math.hypot(b[0] - a[0], b[1] - a[1]), dz = (b[1] - a[1]) / L, dx = (b[0] - a[0]) / L;
+    for (const s2 of [1, -1]) geo.quad([[a[0] + dz * 0.03 * s2, 0, a[1] - dx * 0.03 * s2], [b[0] + dz * 0.03 * s2, 0, b[1] - dx * 0.03 * s2], [b[0] + dz * 0.03 * s2, N.board, b[1] - dx * 0.03 * s2], [a[0] + dz * 0.03 * s2, N.board, a[1] - dx * 0.03 * s2]], [-dz * s2, 0, dx * s2], sc(nc, 0.85)); };
+  run([px - nx, nz], [px - N.gate / 2, nz]); run([px + N.gate / 2, nz], [px + nx, nz]); run([px + nx, nz], [px + nx, -nz]); run([px + nx, -nz], [px - nx, -nz]); run([px - nx, -nz], [px - nx, nz]);
+  // цэнгэлдэх: торны гадна, ард
+  const T = S.stand, wood = rgb('#9A7A55'), roofC = winter ? rgb(P.snow) : rgb(T.roof);
+  for (let r = 0; r < T.rows; r++) { const z = T.z + r * -T.rowD, h = 0.4 + r * T.step; geo.box(T.x, h / 2, z, T.w, h, T.rowD, sc(rgb('#B9B2A4'), 1 - r * 0.03)); geo.box(T.x, h + 0.06, z + 0.15, T.w - 0.2, 0.08, 0.32, wood); }
+  const zb = T.z - (T.rows - 0.5) * T.rowD, zf = T.z + 0.6, top = 0.4 + T.rows * T.step + 2.4;
+  for (let k = 0; k <= 4; k++) { const x = T.x - T.w / 2 + k * T.w / 4; geo.box(x, top / 2, zb, 0.2, top, 0.2, rgb(P.iron)); geo.box(x, (top - 0.4) / 2, zf, 0.16, top - 0.4, 0.16, rgb(P.iron)); }
+  slab(geo, T.x - T.w / 2 - 0.4, T.x + T.w / 2 + 0.4, zb - 0.4, top + 0.1, zf + 0.8, top - 0.5, 0.08, { top: roofC, uv: winter ? null : A.roof, span: A.roofSpan, edge: sc(rgb(T.roof), 0.7), under: rgb(P.woodDark) });
+  shadeDown(geo, 2.0);
+  // шөнийн гэрэлтүүлэг: дөрвөн буланд, талбайн төв рүү
+  const lx = nx + S.lamps.inset, lz = nz + S.lamps.inset, lamps = [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz]) => floodlight(geo, px + sx * lx, sz * lz, S.lamps.h, [-sx, -sz]));
+  return { geo, door: { position: new THREE.Vector3(px, 0, nz + 1.5), inward: new THREE.Vector3(0, 0, -1), width: N.gate, height: 2.2 }, dims: { w: LW, d: LD, ridgeH: S.lamps.h + 1 }, interior: null, gameRole: 'playfield', chimneyTop: null, lamps,
+    points: [ { name: 'Цэнгэлдэх', position: new THREE.Vector3(T.x, 0, T.z + 2), inward: new THREE.Vector3(0, 0, -1) },
+              { name: 'Талбайн хаалга', position: new THREE.Vector3(px, 0, nz + 1.5), inward: new THREE.Vector3(0, 0, -1) } ], stats: { office: 0 } };
+}
+
+function buildWrestle(opts) {   // бөхийн талбай (жишээ зургаар): зууван зам, тоосгон багана-төмөр хашаа, гол тайз, дээвэртэй өнгийн суудлын эгнээ, сүлд
+  const C = BUILDING_CONFIG, W = C.wrestle, P = C.palette, A = C.atlas, geo = new Geo(px2uv(...A.white)), winter = opts.season === 'winter';
+  const [LW, LD] = W.lot, y = 0.014, grass = rgb(winter ? '#E6ECF3' : '#6E9A44'), white = rgb('#F4EEDF');
+  groundQuad(geo, -LW / 2, -LD / 2, LW / 2, LD / 2, grass, 0.008);
+  const ell = (rx, rz, t) => [Math.cos(t) * rx, Math.sin(t) * rz], NS = 22, Tr = W.track, tc = rgb(winter ? '#D9DEE6' : Tr.color);
+  for (let k = 0; k < NS; k++) { const t0 = k / NS * Math.PI * 2, t1 = (k + 1) / NS * Math.PI * 2, [a0, b0] = ell(Tr.rx, Tr.rz, t0), [a1, b1] = ell(Tr.rx, Tr.rz, t1), [c0, d0] = ell(Tr.rx + Tr.w, Tr.rz + Tr.w, t0), [c1, d1] = ell(Tr.rx + Tr.w, Tr.rz + Tr.w, t1);
+    geo.quad([[a0, y, b0], [c0, y, d0], [c1, y, d1], [a1, y, b1]], [0, 1, 0], tc);   // улаан гүйлтийн зам
+    for (const f of [0, 1]) { const r = f ? Tr.w : 0, [e0, g0] = ell(Tr.rx + r, Tr.rz + r, t0), [e1, g1] = ell(Tr.rx + r, Tr.rz + r, t1), [h0, i0] = ell(Tr.rx + r + 0.12, Tr.rz + r + 0.12, t0), [h1, i1] = ell(Tr.rx + r + 0.12, Tr.rz + r + 0.12, t1);
+      geo.quad([[e0, y + 0.002, g0], [h0, y + 0.002, i0], [h1, y + 0.002, i1], [e1, y + 0.002, g1]], [0, 1, 0], white); } }
+  // хашаа: тоосгон багана + хар төмөр хашлага, урд талд хаалга
+  const F = W.fence, brick = rgb(F.brick), iron = rgb(F.iron), per = Math.PI * (3 * (F.rx + F.rz) - Math.sqrt((3 * F.rx + F.rz) * (F.rx + 3 * F.rz))), nP = Math.round(per / F.every);
+  for (let k = 0; k < nP; k++) { const t0 = (k + 0.5) / nP * Math.PI * 2, t1 = (k + 1.5) / nP * Math.PI * 2, [x0, z0] = ell(F.rx, F.rz, t0), [x1, z1] = ell(F.rx, F.rz, t1);
+    geo.box(x0, 0.95, z0, 0.6, 1.9, 0.6, brick);
+    if (Math.abs(t0 + (t1 - t0) / 2 - Math.PI / 2) < 0.05) continue;   // хаалга (урд, +Z)
+    const dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz), ox = -dz / L * 0.04, oz = dx / L * 0.04;
+    for (const s2 of [1, -1]) { geo.quad([[x0 + ox * s2, 0, z0 + oz * s2], [x1 + ox * s2, 0, z1 + oz * s2], [x1 + ox * s2, 0.6, z1 + oz * s2], [x0 + ox * s2, 0.7, z0 + oz * s2]], [ox * s2, 0, oz * s2], sc(brick, 0.9));   // тоосгон доод хана
+      for (const yy of [1.45]) geo.quad([[x0 + ox * s2, yy, z0 + oz * s2], [x1 + ox * s2, yy, z1 + oz * s2], [x1 + ox * s2, yy + 0.06, z1 + oz * s2], [x0 + ox * s2, yy + 0.06, z0 + oz * s2]], [ox * s2, 0, oz * s2], iron); } }
+  // гол тайз: цагаан барилга, цэнхэр суудал, дээвэр
+  const Tb = W.tribune, tw = Tb.w / 2, tz = Tb.z, blue = rgb('#2E5E9E'), tg = new Geo(px2uv(...A.white));
+  tg.box(0, 0.25, tz, Tb.w + 6, 0.5, Tb.d + 2, rgb('#B9B2A4'));
+  for (const sx of [1, -1]) tg.box(sx * (tw + 1.5), 1.8, tz - 0.5, 3, 3.6, Tb.d - 1, rgb('#F4F1EA'));   // хоёр талын өрөө
+  for (let r = 0; r < 4; r++) { tg.box(0, 0.5 + r * 0.4 + 0.2, tz + 2.2 - r * 0.9, Tb.w, 0.4 + r * 0.4, 0.9, rgb('#D9D4C8')); tg.box(0, 0.5 + r * 0.4 + 0.45 + r * 0.2, tz + 2.2 - r * 0.9, Tb.w - 0.4, 0.25, 0.5, blue); }
+  tg.box(0, 2.3, tz - Tb.d / 2 + 0.2, Tb.w, 3.6, 0.3, rgb('#F4F1EA'));
+  for (const sx of [-1, -0.33, 0.33, 1]) tg.box(sx * tw, Tb.h / 2 + 0.5, tz + Tb.d / 2 - 0.3, 0.25, Tb.h, 0.25, rgb('#E6E2DA'));
+  slab(tg, -tw - 3.2, tw + 3.2, tz - Tb.d / 2 - 0.3, Tb.h + 0.9, tz + Tb.d / 2 + 0.6, Tb.h + 0.5, 0.25, { top: winter ? rgb(P.snow) : rgb('#E6E2DA'), edge: rgb('#F4F1EA'), under: rgb('#C9C4B8') });
+  tg.box(0, Tb.h + 1.15, tz + Tb.d / 2 + 0.62, 12, 0.7, 0.1, rgb('#2E5E9E'));   // самбар (бичиггүй)
+  shadeDown(tg, Tb.h); geo.append(tg);
+  // дээвэртэй суудлын эгнээ: замын гадна, хойд хагасаар (тайзаас бусад хэсэгт), өнгө өнгийн шатлалтай суудал
+  const B = W.bleachers, rows = ['#B03A22', '#D8A93A', '#4E8A3A', '#2E5E9E'], bRoof = winter ? rgb(P.snow) : rgb(B.roof);
+  for (let k = 0; k < B.n; k++) { const t = Math.PI * (0.95 + k / (B.n - 1) * 1.1) + (k >= B.n / 2 ? 0.25 : -0.25) * 0, [cx, cz] = ell(Tr.rx + Tr.w + 3.2, Tr.rz + Tr.w + 3.2, t);
+    if (Math.abs(cx) < tw + 4 && cz < 0) continue;   // гол тайзны өмнө
+    const phi = Math.atan2(-cx / (Tr.rx * Tr.rx), -cz / (Tr.rz * Tr.rz)), bg = new Geo(px2uv(...A.white)), hw2 = B.w / 2;
+    rows.forEach((c, r) => bg.box(0, 0.25 + r * 0.35, -0.9 + r * 0.6 - 0.3 + 0.3, B.w, 0.3, 0.55, rgb(c)));
+    for (const sx of [1, -1]) { bg.box(sx * hw2, 1.35, -1.2, 0.1, 2.7, 0.1, rgb(P.iron)); bg.box(sx * hw2, 1.6, 1.4, 0.1, 3.2, 0.1, rgb(P.iron)); }
+    slab(bg, -hw2 - 0.2, hw2 + 0.2, -1.4, 2.75, 1.6, 3.3, 0.06, { top: bRoof, edge: sc(rgb(B.roof), 0.75), under: sc(rgb(B.roof), 0.7) });
+    geo.append(bg, phi + Math.PI, cx, cz); }
+  // сүлд: ногоон дугуй суурь, 9 алтан шон, бараан хялгасан сүлд, алтан сэрээ орой
+  const S2 = W.sulde, gold = rgb('#D8A93A'), hair = rgb('#8A7558');   // хялгас (саарал хүрэн)
+  geo.lathe({ segs: 12, cx: S2.x, cz: S2.z, smooth: false, profile: [[3.0, 0], [3.0, 0.45], [1.6, 0.45], [1.6, 0.85], [0, 0.85]], color: rgb(winter ? '#DCE6EE' : '#5FB04A') });
+  for (let k = 0; k < 9; k++) { const c0 = k === 0, a = (k - 1) / 8 * Math.PI * 2, r = c0 ? 0 : (k % 2 ? 2.3 : 1.25), x = S2.x + Math.cos(a) * r, z = S2.z + Math.sin(a) * r, h = c0 ? 9 : 7.5 + (k % 3) * 0.4;
+    geo.beam([x, 0.45, z], [x, h, z], 0.09, 0.09, gold);
+    geo.lathe({ cx: x, cz: z, segs: 5, profile: [[0.45, h - 1.9], [0.55, h - 1.0], [0.4, h - 0.25]], color: hair });   // хялгас
+    geo.lathe({ cx: x, cz: z, smooth: false, segs: 5, profile: [[0.45, h - 0.3], [0.45, h - 0.12], [0, h - 0.08]], color: gold });
+    geo.beam([x - 0.25, h + 0.35, z], [x + 0.25, h + 0.35, z], 0.06, 0.06, gold); geo.beam([x, h - 0.1, z], [x, h + 0.75, z], 0.07, 0.07, gold); }   // сэрээ
+  shadeDown(geo, 1.8, 0);
+  const lamps = [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz]) => floodlight(geo, sx * (F.rx - 6), sz * (F.rz - 3), W.lamps.h, [-sx, -sz]));
+  return { geo, door: { position: new THREE.Vector3(0, 0, F.rz + 2), inward: new THREE.Vector3(0, 0, -1), width: 4, height: 2 }, dims: { w: LW, d: LD, ridgeH: 9.8 }, interior: null, gameRole: 'wrestling', chimneyTop: null, lamps,
+    points: [ { name: 'Бөх барилдах', position: new THREE.Vector3(6, 0, 4), inward: new THREE.Vector3(0, 0, -1) },
+              { name: 'Сүлдэнд мөргөх', position: new THREE.Vector3(S2.x, 0, S2.z + 4), inward: new THREE.Vector3(0, 0, -1) },
+              { name: 'Гол тайз', position: new THREE.Vector3(0, 0, tz + Tb.d / 2 + 3), inward: new THREE.Vector3(0, 0, -1) },
+              { name: 'Гол хаалга', position: new THREE.Vector3(0, 0, F.rz + 2), inward: new THREE.Vector3(0, 0, -1) } ], stats: { office: 0 } };
+}
+
+function buildKhashaa(opts) {
+  const C = BUILDING_CONFIG, K = C.khashaa, P = C.palette, A = C.atlas, geo = new Geo(px2uv(...A.white)), winter = opts.season === 'winter';
+  const w = opts.w || K.w, d = opts.d || K.d, hw = w / 2, hd = d / 2, gy = opts.groundAt || (() => 0);
+  let seed = opts.seed || 5; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const col = rgb(opts.fenceColor || P.fence), colIn = sc(col, 0.92), end = sc(col, 0.6), top = winter ? rgb(P.snow) : end, postCol = sc(col, 0.8);
+  const th = K.thick / 2, pw = K.post / 2, sb = C.shade.bottom;
+  const lo = c => sc(c, sb);
+
+  // нэг шулуун хашаа: хэсэг бүр өөр өндөртэй банзан хавтан + дотор талын багана. Газрын өндрийг дагана
+  const run = (ax, az, bx, bz) => {
+    const L = Math.hypot(bx - ax, bz - az), tx = (bx - ax) / L, tz = (bz - az) / L; let ox = tz, oz = -tx;
+    if (ox * (ax + bx) + oz * (az + bz) < 0) { ox = -ox; oz = -oz; }
+    const n = Math.max(1, Math.round(L / K.section)), at = (s, off, y) => [ax + tx * s + ox * off, y, az + tz * s + oz * off];
+    let prevY1 = null;
+    for (let i = 0; i < n; i++) {
+      const s0 = i * L / n, s1 = (i + 1) * L / n, g0 = gy(ax + tx * s0, az + tz * s0), g1 = gy(ax + tx * s1, az + tz * s1);
+      const y0 = Math.min(g0, g1) - K.sink, y1 = Math.max(g0, g1) + K.h + (rnd() - 0.5) * 2 * K.jitter, u0 = s0 / A.plankSpan, u1 = s1 / A.plankSpan;
+      const face = (off, nn, c, r) => geo.quad([at(s0, off, y0), at(s1, off, y0), at(s1, off, y1), at(s0, off, y1)], nn, [lo(c), lo(c), c, c],
+        [[u0, bandV(r, 0)], [u1, bandV(r, 0)], [u1, bandV(r, 1)], [u0, bandV(r, 1)]]);
+      face(th, [ox, 0, oz], col, A.planksOut); face(-th, [-ox, 0, -oz], colIn, A.planksIn);
+      geo.quad([at(s0, th, y1), at(s1, th, y1), at(s1, -th, y1), at(s0, -th, y1)], [0, 1, 0], top);
+      if (i === 0) geo.quad([at(s0, th, y0), at(s0, -th, y0), at(s0, -th, y1), at(s0, th, y1)], [-tx, 0, -tz], end);
+      else if (Math.abs(prevY1 - y1) > 0.005) { const hi = Math.max(prevY1, y1), lw = Math.min(prevY1, y1), sg = y1 > prevY1 ? -1 : 1;
+        geo.quad([at(s0, th, lw), at(s0, -th, lw), at(s0, -th, hi), at(s0, th, hi)], [sg * tx, 0, sg * tz], end); }
+      if (i === n - 1) geo.quad([at(s1, th, y0), at(s1, -th, y0), at(s1, -th, y1), at(s1, th, y1)], [tx, 0, tz], end);
+      prevY1 = y1;
+      const ps = s0 + (i === 0 ? K.post : 0), pb = y0, pt = y1 - K.postDrop, q = (s, off, y) => at(ps + s, -th - off, y);
+      geo.quad([q(-pw, 2 * pw, pb), q(pw, 2 * pw, pb), q(pw, 2 * pw, pt), q(-pw, 2 * pw, pt)], [-ox, 0, -oz], postCol);
+      geo.quad([q(-pw, 0, pb), q(-pw, 2 * pw, pb), q(-pw, 2 * pw, pt), q(-pw, 0, pt)], [-tx, 0, -tz], sc(postCol, 0.9));
+      geo.quad([q(pw, 0, pb), q(pw, 2 * pw, pb), q(pw, 2 * pw, pt), q(pw, 0, pt)], [tx, 0, tz], sc(postCol, 0.9));
+      geo.quad([q(-pw, 0, pt), q(pw, 0, pt), q(pw, 2 * pw, pt), q(-pw, 2 * pw, pt)], [0, 1, 0], winter ? rgb(P.snow) : end);
+    }
+  };
+
+  const gp = K.gatePost, tot = K.leafW * 2 + K.wicketW + gp * 3, xa = K.gateX - tot / 2, zg = hd, g = gy(K.gateX, zg);
+  const xLeaf = xa + gp, xMid = xLeaf + K.leafW * 2, xWk = xMid + gp, xEnd = xWk + K.wicketW;
+  const AG = opts.animalGate ? { x: hw - C.animalShed.W / 2 - K.extra.shedEast, w: C.animalShed.gateW } : null;   // хойд хашаан дахь малын хорооны хаалга
+  run(-hw, hd, xa, hd); run(xa + tot, hd, hw, hd); run(hw, hd, hw, -hd); run(-hw, -hd, -hw, hd);
+  if (AG) { run(hw, -hd, AG.x + AG.w / 2 + gp, -hd); run(AG.x - AG.w / 2 - gp, -hd, -hw, -hd); } else run(hw, -hd, -hw, -hd);
+  const gateCol = rgb(opts.gateColor || P.trim), gateLo = sc(gateCol, sb + 0.04);
+  for (const x of [xa + gp / 2, xMid + gp / 2, xEnd + gp / 2]) geo.box(x, g + K.gatePostH / 2 - K.sink / 2, zg, gp, K.gatePostH + K.sink, gp, postCol);
+  geo.box((xWk + xEnd) / 2, g + K.gatePostH - 0.08, zg, K.wicketW + gp * 2 + 0.16, 0.14, gp + 0.06, sc(postCol, 0.9));
+  const leaf = (xl, xr, r, flip, zg = hd) => { const y0 = g + K.gateLift, y1 = g + K.gateH, ua = flip ? r[2] - 1 : r[0] + 1, ub = flip ? r[0] + 1 : r[2] - 1;
+    for (const [z, nz] of [[zg + 0.022, 1], [zg - 0.022, -1]]) geo.quad([[xl, y0, z], [xr, y0, z], [xr, y1, z], [xl, y1, z]], [0, 0, nz], [gateLo, gateLo, gateCol, gateCol],
+      [px2uv(ua, r[3] - 1), px2uv(ub, r[3] - 1), px2uv(ub, r[1] + 1), px2uv(ua, r[1] + 1)]);
+    geo.quad([[xl, y1, zg + 0.022], [xr, y1, zg + 0.022], [xr, y1, zg - 0.022], [xl, y1, zg - 0.022]], [0, 1, 0], winter ? rgb(P.snow) : sc(gateCol, 0.6)); };
+  leaf(xLeaf, xLeaf + K.leafW, A.gateLeaf, false); leaf(xLeaf + K.leafW, xMid, A.gateLeaf, true); leaf(xWk, xEnd, A.wicket, false);
+  if (AG) { for (const sx of [1, -1]) geo.box(AG.x + sx * (AG.w / 2 + gp / 2), g + K.gatePostH / 2 - K.sink / 2, -hd, gp, K.gatePostH + K.sink, gp, postCol);
+    leaf(AG.x - AG.w / 2, AG.x, A.gateLeaf, false, -hd); leaf(AG.x, AG.x + AG.w / 2, A.gateLeaf, true, -hd); }
+
+  const inward = new THREE.Vector3(0, 0, -1), T = C.toilet;
+  return {
+    geo,
+    gate:   { position: new THREE.Vector3(xLeaf + K.leafW, g, zg + C.gateStandOff), inward, width: K.leafW * 2, height: K.gateH },
+    animalGate: AG && { position: new THREE.Vector3(AG.x, g, -hd - C.gateStandOff), inward: new THREE.Vector3(0, 0, 1), width: AG.w, height: K.gateH },   // гаднаас (хойноос) хороо руу
+    wicket: { position: new THREE.Vector3((xWk + xEnd) / 2, g, zg + C.doorStandOff), inward, width: K.wicketW, height: K.gateH - K.gateLift },
+    houseSlot(houseW, houseD) { return new THREE.Vector3(-(hw - houseW / 2 - K.houseSide), 0, -hd + houseD / 2 + K.houseGap); },   // хойд-баруун буланд, урагшаа
+    toiletSlot() { return { pos: new THREE.Vector3(hw - T.w / 2 - K.toiletIn, 0, hd - T.d / 2 - K.toiletIn), phi: Math.PI }; },   // зүүн-урд буланд, хаалга хойш
+    extraSlot(kind) { const E = K.extra;   // { pos, phi }
+      if (kind === 'woodshed') return { pos: new THREE.Vector3(E.woodshedX, 0, -hd + C.woodshed.d / 2 + E.woodshedBack), phi: 0 };
+      if (kind === 'animalShed') return { pos: new THREE.Vector3(hw - C.animalShed.W / 2 - E.shedEast, 0, -hd + C.animalShed.D / 2 + C.animalShed.pen), phi: Math.PI };   // хойшоо харна
+      if (kind === 'greenhouse') return { pos: new THREE.Vector3(-hw + C.greenhouse.L / 2 + E.greenWest, 0, hd - C.greenhouse.W / 2 - E.greenFront), phi: Math.PI / 2 }; },
+    gerSlot(R) { return new THREE.Vector3(-(hw - R - K.gerGap), 0, -hd + R + K.gerGap + 0.6); },
+    dims: { w, d, h: K.h, gateW: K.leafW * 2, wicketW: K.wicketW },
+  };
+}
+
+/* =====================================================================
+   makePlot(spec) — нэг айлын хашаа (sumlayout.ts-ийн нэг нүд). Байшин/гэр + хашаа + жорлон.
+   spec: { kind: 'houseA'|'houseB'|'houseC'|'gerYard', season, roofColor, seed, w, d, fenceColor, gateColor, yard: bool }
+   → { geo (бүх барилга, хашааны локал координат), gers: [{ ger, pos }], focus, door, yard, house, toilet, ... }
+   ===================================================================== */
+function makePorter(season, col = {}) {
+  const T = BUILDING_CONFIG.porter, g = new Geo(px2uv(...BUILDING_CONFIG.atlas.white)), hw = T.W / 2, cab = rgb(col.cab || T.cab), bed = rgb(col.bed || T.bed), glass = rgb(T.glass), dark = rgb(T.chassis);
+  const wheel = (cx, cz) => { const n = 8, r = T.wheelR, hwW = T.wheelW / 2, tire = rgb(T.tire), rim = rgb(T.rim);
+    const pt = (k, s, rr = r) => { const a = k / n * Math.PI * 2; return [cx + s * hwW, r + Math.sin(a) * rr, cz + Math.cos(a) * rr]; };
+    for (let k = 0; k < n; k++) { const a = (k + 0.5) / n * Math.PI * 2;
+      g.quad([pt(k, -1), pt(k + 1, -1), pt(k + 1, 1), pt(k, 1)], [0, Math.sin(a), Math.cos(a)], tire);
+      const sx = Math.sign(cx); g.tri([cx + sx * hwW, r, cz], pt(k, sx, r * 0.98), pt(k + 1, sx, r * 0.98), [sx, 0, 0], [sx, 0, 0], [sx, 0, 0], rim, tire, tire); } };
+  for (const z of T.axles) for (const sx of [1, -1]) wheel(sx * (hw - 0.14), z);
+  g.box(0, 0.5, (T.bedZ[0] + T.cabZ[1]) / 2, T.W - 0.5, 0.18, T.cabZ[1] - T.bedZ[0] - 0.2, dark);                    // рам
+  const [z0, z1] = T.cabZ, [y0, y1] = T.cabY;
+  g.box(0, (y0 + y1) / 2, (z0 + z1) / 2, T.W, y1 - y0, z1 - z0, cab);                                                 // кабин
+  g.quad([[-hw + 0.08, y1 - 0.62, z1 + 0.006], [hw - 0.08, y1 - 0.62, z1 + 0.006], [hw - 0.1, y1 - 0.08, z1 + 0.006], [-hw + 0.1, y1 - 0.08, z1 + 0.006]], [0, 0, 1], glass);   // салхины шил
+  for (const sx of [1, -1]) g.quad([[sx * (hw + 0.006), y1 - 0.62, z0 + 0.15], [sx * (hw + 0.006), y1 - 0.62, z1 - 0.12], [sx * (hw + 0.006), y1 - 0.1, z1 - 0.12], [sx * (hw + 0.006), y1 - 0.1, z0 + 0.15]], [sx, 0, 0], glass);
+  g.box(0, 0.62, z1 + 0.06, T.W + 0.04, 0.18, 0.12, dark);                                                               // бампер
+  for (const sx of [1, -1]) g.box(sx * (hw - 0.22), 0.86, z1 + 0.012, 0.26, 0.12, 0.02, rgb(T.light));                  // гэрэл
+  const [b0, b1] = T.bedZ, by = T.bedY;
+  g.box(0, by - 0.05, (b0 + b1) / 2, T.W, 0.1, b1 - b0, dark);                                                          // тэвшний шал
+  for (const sx of [1, -1]) g.box(sx * (hw - 0.025), by + T.sideH / 2, (b0 + b1) / 2, 0.05, T.sideH, b1 - b0, bed);   // хажуугийн хаалт
+  g.box(0, by + T.sideH / 2, b0 + 0.025, T.W, T.sideH, 0.05, bed); g.box(0, by + T.sideH / 2, b1 - 0.025, T.W, T.sideH, 0.05, bed);
+  shadeDown(g, y1);
+  if (season === 'winter') g.box(0, y1 + 0.04, (z0 + z1) / 2, T.W - 0.06, 0.08, z1 - z0 - 0.06, rgb(BUILDING_CONFIG.palette.snow));
+  return { geo: g, dims: { L: T.cabZ[1] + 0.12 - T.bedZ[0], W: T.W, H: T.cabY[1] } };
+}
+
+function makePlot(spec) {
+  const C = BUILDING_CONFIG, out = new Geo(px2uv(...C.atlas.white)), season = spec.season;
+  const sp = C.special[spec.kind]; if (sp) spec = { ...spec, kind: sp.base, gerSize: sp.gerSize, roofColor: spec.roofColor || sp.roofColor };
+  const yard = makeBuilding('khashaa', { season, seed: spec.seed, w: spec.w, d: spec.d, fenceColor: spec.fenceColor, gateColor: spec.gateColor, animalGate: (spec.extras || []).includes('animalShed') });
+  if (spec.yard !== false) out.append(yard.geo);
+  const toilet = makeBuilding('toilet', { season }), ts = yard.toiletSlot(); out.append(toilet.geo, ts.phi, ts.pos.x, ts.pos.z);
+  const td = rot(toilet.door.position.x, toilet.door.position.z, ts.phi, ts.pos.x, ts.pos.z), ti = rot(toilet.door.inward.x, toilet.door.inward.z, ts.phi);
+  const r = { geo: out, gers: [], yard, toilet, toiletSlot: ts, toiletDoor: { position: new THREE.Vector3(td[0], 0, td[1]), inward: new THREE.Vector3(ti[0], 0, ti[1]) } };
+  if (spec.kind === 'gerYard') {
+    const gsz = spec.gerSize || 'small4', ger = makeGer(gsz, { season, doorVariant: 0, outline: spec.outline }), gs = yard.gerSlot(ger.dims.diameter / 2); r.gerLabel = GER_CONFIG.sizes[gsz].label;
+    r.gers.push({ ger, pos: gs }); r.ger = ger; r.slot = gs;
+    r.door = ger.door.position.clone().add(gs); r.chimney = ger.chimneyTop.clone().add(gs);
+  } else {
+    const house = makeBuilding(spec.kind, { season, roofColor: spec.roofColor }), s = yard.houseSlot(house.dims.w, house.dims.d);
+    out.append(house.geo, 0, s.x, s.z);
+    r.house = house; r.slot = s; r.door = house.door.position.clone().add(s); r.chimney = house.chimneyTop.clone().add(s);
+    r.window = house.windows[0].clone().add(s);
+  }
+  r.extras = [];
+  for (const k of spec.extras || []) { const b = makeBuilding(k, { season, fenceFront: k === 'animalShed' }), es = yard.extraSlot(k); out.append(b.geo, es.phi, es.pos.x, es.pos.z); r.extras.push({ kind: k, b, ...es }); }
+  // зам: жижиг хаалганаас байшин/гэрийн хаалга хүртэл (L хэлбэртэй)
+  const Y = yard.dims, hdY = Y.d / 2;
+  if (spec.path && r.door) { const inw = r.house ? r.house.door.inward : new THREE.Vector3(0, 0, -1), wx = yard.wicket.position.x;
+    const ex = r.door.x + inw.x * 0.55, ez = r.door.z + inw.z * 0.55, half = (spec.path === 'dirt' ? C.path.dirtW : C.path.w) / 2;
+    if (Math.abs(wx - ex) < 0.4) pathSeg(out, [wx, hdY - 0.1], [wx, ez], spec.path);
+    else { pathSeg(out, [wx, hdY - 0.1], [wx, ez], spec.path, half); pathSeg(out, [wx, ez], [ex, ez], spec.path); } }
+  if (spec.drive) { const x = yard.gate.position.x, w = C.path.drive / 2, L = spec.drive;   // том хаалганаас гудамжны зам хүртэл
+    out.quad([[x - w, 0.01, hdY], [x + w, 0.01, hdY], [x + w, 0.01, hdY + L], [x - w, 0.01, hdY + L]], [0, 1, 0], rgb(C.ground.road)); }
+  r.plants = [];
+  if (spec.trees) { const hw = Y.w / 2, list = spec.trees === 'bush'   // хашааны урд хашаа даган мод, байшингийн дэргэд бут
+      ? [['bush', hw - 4.6, hdY - 1.4], ['bush', hw - 6.1, hdY - 1.3], ['bush', -hw + 1.6, hdY - 1.5]]
+      : [['tree', -hw + 1.8, hdY - 1.6], ['tree', -hw + 4.6, hdY - 1.7], ['tree', -hw + 1.6, 0.2], ['bush', hw - 4.6, hdY - 1.4], ['bush', hw - 6.1, hdY - 1.3]];
+    list.forEach(([k, x, z], i) => { const pg = plantGeo(k, season, (spec.seed || 3) * 31 + i * 7); out.append(pg, 0, x, z); r.plants.push({ kind: k, x, z, triangles: pg.triangles }); }); }
+  if (spec.kennel) { const kn = makeBuilding('kennel', { season }), x = -3.4, z = hdY - 1.3; out.append(kn.geo, Math.PI / 2, x, z);   // хаалганы баруун талд, хаалга руу харна
+    r.kennel = { x, z, b: kn }; }
+  r.special = sp || null; r.enterable = sp ? !!sp.enterable : false;
+  if (sp && sp.plaque) { const Q = C.plaque, x = yard.wicket.position.x + yard.dims.wicketW / 2 + Q.gap, z = yard.dims.d / 2 + 0.035;   // айлын самбар
+    out.box(x, Q.y, z, Q.w + 0.06, Q.h + 0.06, 0.03, rgb(Q.frame)); out.box(x, Q.y, z + 0.016, Q.w, Q.h, 0.01, rgb(Q.color)); }
+  if (sp && sp.porter) { const T = C.porter.at, pt = makePorter(season), px = yard.gate.position.x + T.dx, pz = yard.dims.d / 2 + T.dz;
+    out.append(pt.geo, T.phi, px, pz); r.porter = { pos: new THREE.Vector3(px, 0, pz), dims: pt.dims, triangles: pt.geo.triangles }; }
+  return r;
+}
+
+/* Гудамж: хоёр эгнээ, хашаанууд гудамж руу хаалгаа харуулна. Тоонууд дараа нь sumcenter.json */
+const STREET = { width: 9, gap: 0.4, setback: 1.2, plots: [
+  { side: 'n', kind: 'houseA', w: 22, d: 26, roofColor: 'orange', fenceColor: '#8C7453', gateColor: '#2E5E9E', seed: 5, extras: ['greenhouse'], path: 'walk', trees: 'full', kennel: true },
+  { side: 'n', kind: 'grandparents', w: 22, d: 25, fenceColor: '#6E5A44', gateColor: '#D9622B', seed: 11, extras: ['animalShed', 'woodshed'], path: 'dirt', trees: 'bush', kennel: true },
+  { side: 'n', kind: 'houseB', w: 21, d: 24, roofColor: 'blue', fenceColor: '#9A7A55', gateColor: '#4E6B3A', seed: 23, extras: ['woodshed'], path: 'dirt', trees: 'full' },
+  { side: 'n', kind: 'relative2', w: 23, d: 26, fenceColor: '#5E7A4A', gateColor: '#5E7A4A', seed: 31, extras: ['greenhouse', 'woodshed'], path: 'walk', trees: 'full', kennel: true },
+  { side: 's', kind: 'gerYard', w: 21, d: 24, fenceColor: '#8C7453', gateColor: '#9A3B2E', seed: 43, extras: ['animalShed'], path: 'dirt', kennel: true },
+  { side: 's', kind: 'relative1', w: 22, d: 25, fenceColor: '#6E5A44', gateColor: '#2E5E9E', seed: 57, extras: ['woodshed'], path: 'walk', trees: 'full' },
+  { side: 's', kind: 'houseB', w: 20, d: 24, roofColor: 'orange', fenceColor: '#2E5E9E', gateColor: '#2E5E9E', seed: 61, extras: ['greenhouse', 'animalShed'], path: 'dirt', trees: 'bush' },
+] };
+
+const SHOP_ROW = { spacing: 14, setback: 4.0 };   // дэлгүүрийн эгнээ: гол замын нэг талд
+
+/* Харьцааны хүн: гол дүрийн өндөр (1.7 м). Зөвхөн лабораторид. */
+function makeScaleFigure(h = 1.7) {
+  const g = new Geo(), k = h / 1.7, deel = rgb('#2F5D9B'), skin = rgb('#E2B890');
+  g.lathe({ segs: 14, color: deel, profile: [[0.25, 0.10], [0.21, 0.70], [0.175, 0.93]].map(p => [p[0] * k, p[1] * k]) });
+  g.lathe({ segs: 14, smooth: false, color: rgb('#D9622B'), profile: [[0.185, 0.93], [0.185, 1.00]].map(p => [p[0] * k, p[1] * k]) });
+  g.lathe({ segs: 14, color: deel, profile: [[0.18, 1.00], [0.225, 1.22], [0.20, 1.37], [0.07, 1.42]].map(p => [p[0] * k, p[1] * k]) });
+  g.lathe({ segs: 14, smooth: false, color: skin, profile: [[0.125, 1.42], [0.125, 1.70], [0, 1.70]].map(p => [p[0] * k, p[1] * k]) });
+  for (const sx of [1, -1]) {
+    g.box(sx * 0.09 * k, 0.06 * k, 0.03 * k, 0.11 * k, 0.12 * k, 0.26 * k, rgb('#3A2C22'));
+    g.beam([sx * 0.25 * k, 1.30 * k, 0], [sx * 0.30 * k, 0.78 * k, 0.03], 0.10 * k, 0.10 * k, deel);
+  }
+  const m = new THREE.Mesh(g.build(), new THREE.MeshLambertMaterial({ vertexColors: true }));
+  m.castShadow = true; return m;
+}
+
+/* =====================================================================
+   ЛАБОРАТОРИ (тоглоомд орохгүй хэсэг): тайз, гэрэл, утаа, самбар
+   ===================================================================== */
+const canvas = document.getElementById('c'), stage = document.getElementById('stage');
+let renderer;
+try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true }); }
+catch (err) { const e = document.getElementById('err'); e.style.display = 'block'; e.textContent = 'WebGL ажиллахгүй байна. Өөр хөтөч эсвэл төхөөрөмжөөр нээнэ үү.'; throw err; }
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene(); scene.fog = new THREE.Fog(0x9fc8e8, 90, 320);
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 600);
+
+const hemi = new THREE.HemisphereLight(0xffffff, 0xffffff, 1), sun = new THREE.DirectionalLight(0xffffff, 1);
+sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.04;
+sun.shadow.camera.near = 1; sun.shadow.camera.far = 200;
+const winLight = new THREE.PointLight('#FFB35C', 0, 9, 1.6);
+const lampLights = [0, 1, 2, 3].map(() => { const l = new THREE.PointLight('#FFF1D6', 0, 70, 1.2); scene.add(l); return l; });   // шөнийн гэрэлтүүлэг (лабораторид 4 гэрэл)
+scene.add(hemi, sun, sun.target, winLight);
+
+const ground = new THREE.Mesh(new THREE.CircleGeometry(320, 48), new THREE.MeshLambertMaterial());
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+const yardMat = new THREE.MeshLambertMaterial(), streetMat = new THREE.MeshLambertMaterial();
+const yardPlanes = new THREE.Group(); scene.add(yardPlanes);
+const street = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), streetMat), rutMat = new THREE.MeshLambertMaterial();
+const ruts = new THREE.Group(); for (const sx of [1, -1]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), rutMat); m.rotation.x = -Math.PI / 2; m.position.set(0, 0.007, sx * BUILDING_CONFIG.ground.rutAt); m.receiveShadow = true; ruts.add(m); }
+scene.add(ruts);
+function setRoad(L, z) { const G = BUILDING_CONFIG.ground; street.scale.set(L, G.roadW, 1); street.position.set(0, 0.004, z); street.visible = true;   // зөвхөн машины зам шороон
+  ruts.position.z = z; ruts.children.forEach(m => m.scale.set(L, G.rutW, 1)); ruts.visible = true; }
+street.rotation.x = -Math.PI / 2; street.position.y = 0.004; street.receiveShadow = true; scene.add(street);
+
+const mkMarker = () => { const grp = new THREE.Group(), m = new THREE.MeshBasicMaterial({ color: '#E23B6D' });
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.16, 0.22, 24), m); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.03;
+  const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.02, 0.45), m); shaft.position.set(0, 0.03, -0.33);
+  const head = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.2, 3), m); head.rotation.x = -Math.PI / 2; head.position.set(0, 0.03, -0.62);
+  grp.add(ring, shaft, head); scene.add(grp); return grp; };
+const markers = [mkMarker(), mkMarker(), mkMarker(), mkMarker(), mkMarker()];   // + малын хорооны хаалга   // барилгын хаалга, том хаалга, жижиг хаалга, жорлон
+const placeMarker = (m, pos, inward) => { m.position.copy(pos); m.rotation.y = Math.atan2(-inward.x, -inward.z); };
+
+const SMOKE_N = 18, smokePos = new Float32Array(SMOKE_N * 3), smokeCol = new Float32Array(SMOKE_N * 4), smokeAge = new Float32Array(SMOKE_N);
+for (let i = 0; i < SMOKE_N; i++) smokeAge[i] = i / SMOKE_N;
+const smokeGeo = new THREE.BufferGeometry();
+smokeGeo.setAttribute('position', new THREE.BufferAttribute(smokePos, 3)); smokeGeo.setAttribute('color', new THREE.BufferAttribute(smokeCol, 4));
+const puff = document.createElement('canvas'); puff.width = puff.height = 64;
+{ const g = puff.getContext('2d'), gr = g.createRadialGradient(32, 32, 2, 32, 32, 31); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); }
+const smoke = new THREE.Points(smokeGeo, new THREE.PointsMaterial({ size: 0.8, map: new THREE.CanvasTexture(puff), vertexColors: true, transparent: true, depthWrite: false }));
+smoke.frustumCulled = false; scene.add(smoke);
+
+const figure = makeScaleFigure(1.7); scene.add(figure);
+const state = { mode: 'one', kind: 'houseA', roof: null, season: 'summer', night: false, outline: true, figure: true, marker: false, yard: true, smoke: true, extras: { woodshed: true, animalShed: true, greenhouse: true, trees: true, kennel: true }, path: 'walk', spin: true };
+const SINGLE_KINDS = ['toilet', 'woodshed', 'animalShed', 'greenhouse', 'kennel'], COMPLEX = ['milkWool', 'carDealer', 'fuel', 'temple', 'market', 'stadium', 'wrestle'], PUBLIC = Object.keys(BUILDING_CONFIG.public.kinds);
+const isSingle = k => SINGLE_KINDS.includes(k) || COMPLEX.includes(k) || PUBLIC.includes(k) || !!BUILDING_CONFIG.shop.types[k];
+let built = null;
+const targets = { house: new THREE.Vector3(), yard: new THREE.Vector3(0, 1, 0), gate: new THREE.Vector3(), door: new THREE.Vector3(), street: new THREE.Vector3(0, 1, 0) };
+const chimneyW = new THREE.Vector3();
+let viewScale = 1;
+
+function applyEnv() {
+  const w = state.season === 'winter', n = state.night;
+  const sky = n ? (w ? '#131C33' : '#0E1830') : (w ? '#DDE8F1' : '#9FC8E8');
+  scene.background = new THREE.Color(sky); scene.fog.color.set(sky); document.body.style.background = sky;
+  ground.material.color.set(w ? '#EEF2F6' : '#7FA650'); yardMat.color.set(w ? '#E6ECF3' : BUILDING_CONFIG.ground.yard); streetMat.color.set(w ? '#DDE4EC' : BUILDING_CONFIG.ground.road); rutMat.color.set(w ? '#B9C2CC' : BUILDING_CONFIG.ground.rut);
+  if (n) { hemi.color.set('#6F86B8'); hemi.groundColor.set(w ? '#56678C' : '#26331F'); hemi.intensity = 0.55; sun.color.set('#9FB4E0'); sun.intensity = 0.55; sun.position.set(14, 22, -6); }
+  else if (w) { hemi.color.set('#E6EEF6'); hemi.groundColor.set('#C9D4E2'); hemi.intensity = 1.0; sun.color.set('#FFF1DC'); sun.intensity = 1.5; sun.position.set(16, 12, 20); }
+  else { hemi.color.set('#DFEEFF'); hemi.groundColor.set('#6B5A3A'); hemi.intensity = 1.0; sun.color.set('#FFE2B8'); sun.intensity = 1.6; sun.position.set(13, 22, 17); }
+  const big = state.mode === 'street', k = big ? 3.2 : 1;   // гудамжинд сүүдрийн камер том
+  sun.position.multiplyScalar(big ? 2.4 : 1);
+  Object.assign(sun.shadow.camera, { left: -24 * k, right: 24 * k, top: 24 * k, bottom: -24 * k }); sun.shadow.camera.updateProjectionMatrix();
+  renderer.toneMappingExposure = n ? 1.15 : 1.05;
+  winLight.intensity = n && state.mode === 'one' && built && built.window ? 5 : 0;
+  const lp = (built && built.lamps) || []; lampLights.forEach((l, i) => { const q = lp[i]; l.intensity = n && q ? 70 : 0; if (q) l.position.copy(q).add(new THREE.Vector3(0, -0.6, 0)); });
+  if (built) { built.mat.emissiveIntensity = n ? 1.6 : 0; for (const g of built.gers) g.ger.setGlow(n ? 1.6 : 0); }
+}
+
+function disposeBuilt() {
+  if (!built) return;
+  scene.remove(built.group); built.geometry.dispose(); built.mat.dispose(); built.outlineMat.dispose();
+  for (const sp of built.spinners || []) sp.geometry.dispose();
+  for (const g of built.gers) { scene.remove(g.ger.group); g.ger.dispose(); }
+  yardPlanes.clear();
+}
+
+function rebuild() {
+  disposeBuilt();
+  const C = BUILDING_CONFIG, season = state.season, all = new Geo(px2uv(...C.atlas.white)), gers = [];
+  const addYardPlane = (w, d, phi, x, z) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), yardMat); m.rotation.set(-Math.PI / 2, 0, phi); m.position.set(x, 0.006, z); m.receiveShadow = true; yardPlanes.add(m); };
+  let focus = null, stat = {};
+
+  if (state.mode === 'street') {
+    let xs = { n: 0, s: 0 }; const widths = { n: 0, s: 0 };
+    for (const p of STREET.plots) widths[p.side] += p.w + STREET.gap;
+    xs.n = -widths.n / 2; xs.s = widths.s / 2;   // урд эгнээ эсрэг чигт (хашаа бүр гудамж руу харна)
+    let yardTri = 0, bldTri = 0;
+    for (const p of STREET.plots) {
+      const r = makePlot({ ...p, season, outline: state.outline, roofColor: state.roof || p.roofColor, drive: STREET.setback + (STREET.width - C.ground.roadW) / 2 + 0.2 });
+      const north = p.side === 'n', phi = north ? 0 : Math.PI, zc = (north ? -1 : 1) * (STREET.width / 2 + STREET.setback + p.d / 2);
+      const xc = north ? xs.n + p.w / 2 : xs.s - p.w / 2; if (north) xs.n += p.w + STREET.gap; else xs.s -= p.w + STREET.gap;
+      all.append(r.geo, phi, xc, zc); addYardPlane(p.w, p.d, phi, xc, zc);
+      for (const g of r.gers) { const [gx, gz] = rot(g.pos.x, g.pos.z, phi, xc, zc); g.ger.group.position.set(gx, 0, gz); g.ger.group.rotation.y = phi; scene.add(g.ger.group); gers.push(g); }
+      yardTri += r.geo.triangles - (r.house ? r.house.geo.triangles : 0); bldTri += r.house ? r.house.geo.triangles : r.ger.stats.triangles;
+    }
+    const L = Math.max(widths.n, widths.s) + 20;
+    setRoad(L, 0);
+    stat = { yardTri, bldTri };
+    viewScale = 1;
+  } else if (state.mode === 'public') {   // олон нийтийн барилгууд: замын хоёр талд
+    let tri = 0; const rows = [PUBLIC.slice(0, 5), PUBLIC.slice(5)];
+    rows.forEach((ks, r) => { const tot = ks.reduce((a, k) => a + C.public.kinds[k].w + 12, -12); let xs = -tot / 2;
+      for (const k of ks) { const K = C.public.kinds[k], b = makeBuilding(k, { season }), x = xs + K.w / 2, z = (r ? 1 : -1) * (C.ground.roadW / 2 + 9 + K.d / 2);
+        all.append(b.geo, r ? Math.PI : 0, r ? -x : x, z); tri += b.geo.triangles; xs += K.w + 12; } });
+    setRoad(260, 0); stat = { bldTri: tri }; viewScale = 1;
+  } else if (state.mode === 'shops') {
+    const SH = C.shop, n = SH.order.length; let tri = 0;
+    SH.order.forEach((k, i) => { const b = makeBuilding(k, { season, roofColor: state.roof || undefined }), x = (i - (n - 1) / 2) * SHOP_ROW.spacing; all.append(b.geo, 0, x, -SHOP_ROW.setback - SH.d / 2); tri += b.geo.triangles; });
+    const south = [['teahouse', 10, 8 + SH.apron.d], ['milkWool', ...C.milkWool.lot], ['carDealer', ...C.carDealer.lot], ['fuel', ...C.fuel.lot]];   // замын нөгөө тал, хойшоо (зам руу) харна
+    let xs = south.reduce((a, q) => a + q[1] + 3, -3) / 2;
+    for (const [k, w, d] of south) { const b = makeBuilding(k, { season }), x = xs - w / 2, isLot = COMPLEX.includes(k), z = C.ground.roadW + 1.5 + (isLot ? d / 2 : SH.apron.d + 4);
+      all.append(b.geo, Math.PI, x, z); tri += b.geo.triangles; xs -= w + 3; }
+    setRoad(n * SHOP_ROW.spacing + 40, C.ground.roadW / 2); stat = { bldTri: tri }; viewScale = 1;
+  } else if (isSingle(state.kind)) {
+    const t = makeBuilding(state.kind, { season, roofColor: state.roof || undefined }); all.append(t.geo);
+    focus = { toilet: t, window: t.windows && t.windows[0] };
+    street.visible = ruts.visible = false; const pub = PUBLIC.includes(state.kind), big = C.shop.types[state.kind] || COMPLEX.includes(state.kind) || pub;
+    if (big) setRoad(160, COMPLEX.includes(state.kind) ? t.dims.d / 2 + C.ground.roadW / 2 + 1.0 : pub ? t.dims.d / 2 + 12 : t.dims.d / 2 + C.shop.apron.d + C.ground.roadW / 2 + 0.6);
+    if (big) { viewScale = COMPLEX.includes(state.kind) ? Math.max(1.9, t.dims.w / 16) : pub ? Math.max(1.3, t.dims.w / 16, t.dims.ridgeH / 7) : 0.95; if (t.chimneyTop) chimneyW.copy(t.chimneyTop); } else viewScale = { toilet: 0.32, woodshed: 0.42, greenhouse: 0.55, animalShed: 0.75, kennel: 0.22 }[state.kind];
+  } else {
+    const ex = Object.keys(state.extras).filter(k => state.extras[k]);
+    const r = makePlot({ kind: state.kind, season, roofColor: state.roof || undefined, seed: 5, outline: state.outline, yard: state.yard, extras: ex.filter(k => BUILDING_CONFIG[k] && BUILDING_CONFIG[k].label && k !== 'kennel'),
+      path: state.path, trees: state.extras.trees ? 'full' : null, kennel: state.extras.kennel, drive: state.yard ? 4.2 - BUILDING_CONFIG.ground.roadW / 2 + 0.2 : 0 });
+    all.append(r.geo); if (state.yard) addYardPlane(r.yard.dims.w, r.yard.dims.d, 0, 0, 0);
+    for (const g of r.gers) { g.ger.group.position.copy(g.pos); scene.add(g.ger.group); gers.push(g); }
+    focus = r; setRoad(90, r.yard.dims.d / 2 + 4.2); street.visible = ruts.visible = state.yard;
+    viewScale = r.ger ? (r.porter ? 1.05 : 0.8) : 1;
+  }
+
+  const tex = buildingAtlas(), geometry = all.build(), group = new THREE.Group();
+  const mat = new THREE.MeshLambertMaterial({ vertexColors: true, map: tex.map, emissive: 0xffffff, emissiveMap: tex.emissiveMap, emissiveIntensity: 0 });
+  const body = new THREE.Mesh(geometry, mat); body.castShadow = true; body.receiveShadow = true; body.name = 'buildings:body';
+  const outlineMat = new THREE.MeshBasicMaterial({ color: C.palette.outline, side: THREE.BackSide });
+  outlineMat.onBeforeCompile = s => { s.vertexShader = s.vertexShader.replace('#include <begin_vertex>', `vec3 transformed = position + normal * ${C.outlineW.toFixed(4)};`); };
+  const ol = new THREE.Mesh(geometry, outlineMat); ol.name = 'buildings:outline'; ol.visible = state.outline;
+  group.add(body, ol); scene.add(group);
+  const spinners = [];   // эргэдэг хүрд: тусдаа mesh (тоглоомд InstancedMesh)
+  for (const w of (focus && focus.toilet && focus.toilet.wheels) || []) { const m = new THREE.Mesh(w.geo.build(), mat); m.position.copy(w.position); m.castShadow = true; group.add(m); spinners.push(m); }
+  built = { group, mat, geometry, outlineMat, gers, window: focus && focus.window, spinners, lamps: focus && focus.toilet && focus.toilet.lamps };
+
+  // --- тэмдэг, хүн, утаа, камерын цэгүүд
+  markers.forEach(m => (m.visible = false));
+  const $ = id => document.getElementById(id), f = n => n.toFixed(1), set = (id, v) => ($(id).textContent = v);
+  if (state.mode === 'street') {
+    figure.position.set(3, 0, 1.5); figure.rotation.y = 0.4; smoke.visible = false;
+    targets.street.set(0, 1, 0);
+    set('l-tri', 'Гурвалжин (байшин, гэр — 7 айл)'); set('s-tri', stat.bldTri); $('p-tri').style.display = 'none';
+    set('s-yard', stat.yardTri); ['s-dim', 's-in', 's-porch', 's-door'].forEach(id => set(id, '—'));
+    set('s-fence', STREET.plots.length + ' хашаа · гудамж ' + STREET.width + ' м');
+  } else if (state.mode === 'public') {
+    figure.position.set(2, 0, -C.ground.roadW / 2 - 2); figure.rotation.y = -0.5; smoke.visible = false; targets.street.set(0, 3, 0);
+    set('l-tri', 'Гурвалжин (10 барилга)'); set('s-tri', stat.bldTri); $('p-tri').style.display = 'none';
+    set('s-yard', '—'); ['s-dim', 's-in', 's-porch', 's-door'].forEach(id => set(id, '—')); set('s-fence', '3-р бүлгийн 10 барилга замын хоёр талд');
+  } else if (state.mode === 'shops') {
+    figure.position.set(1.4, 0, -SHOP_ROW.setback + 2.6); figure.rotation.y = -0.5; smoke.visible = false; targets.street.set(0, 1.5, -6);
+    set('l-tri', 'Гурвалжин (6 дэлгүүр + 4)'); set('s-tri', stat.bldTri); $('p-tri').style.display = 'none';
+    set('s-yard', '—'); ['s-dim', 's-in', 's-porch', 's-door'].forEach(id => set(id, '—')); set('s-fence', '6 дэлгүүр · эсрэг талд цайны газар, сүү/ноос, машин, колонк');
+  } else if (isSingle(state.kind)) {
+    const pub = PUBLIC.includes(state.kind), cx = COMPLEX.includes(state.kind) || pub, isShop = !!BUILDING_CONFIG.shop.types[state.kind] || cx, lim = state.kind === 'temple' ? 2000 : cx ? 1500 : isShop ? 600 : 400;
+    const t = focus.toilet, nm = pub ? BUILDING_CONFIG.public.kinds[state.kind].label : cx ? { milkWool: 'Сүү, ноос хүлээн авах цэг', carDealer: 'Машин худалдаа', fuel: 'Колонк', temple: 'Дуган', market: 'Малын зах', stadium: 'Тоглоомын талбай', wrestle: 'Бөхийн талбай' }[state.kind] : isShop ? BUILDING_CONFIG.shop.types[state.kind].label : BUILDING_CONFIG[state.kind].label || { toilet: 'Жорлон', kennel: 'Нохойн үүр' }[state.kind]; placeMarker(markers[0], t.door.position, t.door.inward); markers[0].visible = state.marker;
+    figure.position.set(t.door.position.x + 1.0 + (isShop ? 0.6 : 0), 0, t.door.position.z - 0.2); figure.rotation.y = -0.5; smoke.visible = isShop && state.smoke && !!t.chimneyTop;
+    if (isShop && t.windows) winLight.position.set(t.windows[0].x, 1.6, t.windows[0].z + 1.2);
+    targets.house.set(0, pub ? t.dims.ridgeH * 0.4 : isShop ? 2.0 : 1.1, state.kind === 'animalShed' ? 2.2 : cx ? 0 : isShop ? 1.5 : 0);
+    (t.points || []).slice(0, 4).forEach((q, i) => { placeMarker(markers[i + 1], q.position, q.inward); markers[i + 1].visible = state.marker; }); targets.door.set(t.door.position.x, 1.0, t.door.position.z - 0.6); targets.gate.copy(targets.door); targets.yard.set(0, 1, 0);
+    set('l-tri', 'Гурвалжин (' + nm.toLowerCase() + ')'); set('s-tri', t.geo.triangles + (t.wheels ? t.wheels.reduce((a, w) => a + w.geo.triangles, 0) : 0)); $('p-tri').style.display = ''; $('p-tri').textContent = '≤ ' + lim; $('p-tri').className = 'pill' + ((state.kind === 'temple' ? t.stats.office : t.geo.triangles) <= lim ? '' : ' bad');   // дуганд хязгаар нь гол барилгад
+    set('s-yard', '—'); set('s-dim', f(t.dims.w) + ' × ' + f(t.dims.d) + ' м · орой ' + t.dims.ridgeH.toFixed(2) + ' м' + (t.dims.floors ? ' · ' + t.dims.floors + ' давхар' : ''));
+    set('s-in', t.interior ? f(t.interior.main.w) + ' × ' + f(t.interior.main.d) + ' × ' + t.interior.main.h.toFixed(2) + ' м' : '—'); set('s-porch', '—');
+    set('s-door', t.door.position.x.toFixed(2) + ', ' + t.door.position.z.toFixed(2) + ' → хойш'); set('s-fence', isShop ? 'gameRole: ' + t.gameRole + (t.points ? ' · цэг: ' + t.points.map(q => q.name).join(', ') : '') : '—');
+    if (cx && t.stats) set('s-yard', state.kind === 'temple' ? 'дуган ' + t.stats.office + ' · суварга ' + t.stats.stupa + ' · хүрд ' + t.stats.wheels + ' (' + t.wheels.length + ' ш, эргэдэг)' : 'оффис ' + t.stats.office);
+    if (pub) { set('s-yard', '—'); set('s-in', f(t.interior.main.w) + ' × ' + f(t.interior.main.d) + ' × ' + t.interior.main.h.toFixed(1) + ' м · ' + t.interior.floors + ' давхар'); }
+  } else {
+    const r = focus, Y = r.yard;
+    placeMarker(markers[0], r.door, r.house ? r.house.door.inward : r.ger.door.inward);
+    placeMarker(markers[1], Y.gate.position, Y.gate.inward); placeMarker(markers[2], Y.wicket.position, Y.wicket.inward);
+    placeMarker(markers[3], r.toiletDoor.position, r.toiletDoor.inward); if (Y.animalGate) placeMarker(markers[4], Y.animalGate.position, Y.animalGate.inward);
+    markers.forEach((m, i) => (m.visible = state.marker && (i === 0 || state.yard) && (i < 4 || !!Y.animalGate)));
+    const inw = r.house ? r.house.door.inward : new THREE.Vector3(0, 0, -1);
+    figure.position.set(r.door.x - inw.z * 1.2 + inw.x * 0.3, 0, r.door.z + inw.x * 1.2 + inw.z * 0.3); figure.rotation.y = -0.5; figure.visible = state.figure;
+    chimneyW.copy(r.chimney); smoke.visible = state.smoke;
+    targets.house.set(r.slot.x + 0.6, 1.5, r.slot.z + 0.6); targets.door.set(r.door.x + inw.x * 1.2, 1.2, r.door.z + inw.z * 1.2);
+    targets.gate.set(Y.gate.position.x + 0.6, 1.2, Y.dims.d / 2); targets.yard.set(0, 1, 0);
+    if (r.window) winLight.position.set(r.window.x + 0.6, 1.5, r.window.z + 0.9);
+    if (r.house) { const h = r.house, I = h.interior, t = h.geo.triangles;
+      set('l-tri', 'Гурвалжин (байшин)'); set('s-tri', t); $('p-tri').style.display = ''; $('p-tri').textContent = '≤ 400'; $('p-tri').className = 'pill' + (t <= 400 ? '' : ' bad');
+      set('s-dim', f(h.dims.w) + ' × ' + f(h.dims.d) + ' м · орой ' + h.dims.ridgeH.toFixed(2) + ' м');
+      set('s-in', f(I.main.w) + ' × ' + f(I.main.d) + ' × ' + f(I.main.h) + ' м' + (r.enterable ? ' · орж болно' : ''));
+      set('s-porch', f(I.porch.w) + ' × ' + f(I.porch.d) + ' × ' + I.porch.h.toFixed(2) + ' м');
+      set('s-door', h.door.position.x.toFixed(2) + ', ' + h.door.position.z.toFixed(2) + ' (байшингийн)');
+    } else { const g = r.ger, t = g.stats.triangles;
+      set('l-tri', 'Гурвалжин (гэр, батлагдсан)'); set('s-tri', t); $('p-tri').style.display = ''; $('p-tri').textContent = '≤ 1500'; $('p-tri').className = 'pill' + (t <= 1500 ? '' : ' bad');
+      set('s-dim', r.gerLabel + ' · Ø ' + g.dims.diameter.toFixed(1) + ' м' + (r.porter ? ' · Портер ' + r.porter.triangles + ' гурв.' : '')); set('s-in', r.enterable ? 'Ø ' + (g.dims.diameter - 0.07).toFixed(1) + ' × ' + g.dims.topH.toFixed(2) + ' м · орж болно' : '— (гэрийн дотор тал батлагдсан)'); set('s-porch', '—');
+      set('s-door', '0.00, ' + g.door.position.z.toFixed(2) + ' (гэрийн)'); }
+    const ex = r.geo.triangles - (r.house ? r.house.geo.triangles : 0) - (state.yard ? Y.geo.triangles : 0);
+    set('s-yard', r.geo.triangles - (r.house ? r.house.geo.triangles : 0) + ' (хашаа ' + (state.yard ? Y.geo.triangles : 0) + ' + бусад ' + ex + ')');
+    set('s-fence', Y.dims.w + ' × ' + Y.dims.d + ' м · ' + Y.dims.h + ' м · хаалга ' + Y.dims.gateW + ' + ' + Y.dims.wicketW + ' м');
+  }
+  figure.visible = state.figure;
+  set('s-all', all.triangles + gers.reduce((s, g) => s + g.ger.stats.triangles, 0));
+  set('s-dc', '1 бие' + (state.outline ? ' + 1 хүрээ' : '') + (gers.length ? ' · гэр ' + gers.length + ' × ' + gers[0].ger.stats.drawCalls : ''));
+  applyEnv();
+}
+
+// --- самбар
+const segs = [];
+function seg(id, items, get, set) {
+  const box = document.getElementById(id);
+  const paint = () => box.querySelectorAll('button').forEach(b => { b.setAttribute('aria-pressed', String(get(b._v))); if (b._dis) b.disabled = b._dis(); });
+  for (const it of items) {
+    const b = document.createElement('button'); b.type = 'button'; b._v = it.v; b._dis = it.dis; b.id = id + '-' + String(it.v);
+    if (it.sw) { const s = document.createElement('span'); s.className = 'sw'; s.style.background = it.sw; b.append(s); }
+    b.append(it.label);
+    b.addEventListener('click', () => { set(it.v); segs.forEach(p => p()); rebuild(); });
+    box.append(b);
+  }
+  segs.push(paint); paint();
+}
+const eq = k => v => state[k] === v, put = k => v => { state[k] = v; };
+const inStreet = () => state.mode !== 'one';
+seg('g-mode', [{ v: 'one', label: 'Нэг барилга' }, { v: 'street', label: 'Гудамж (хашаа байшин)' }, { v: 'shops', label: 'Дэлгүүрийн эгнээ' }, { v: 'public', label: 'Олон нийтийн барилга' }], eq('mode'), v => { state.mode = v; setTimeout(() => setView(v === 'one' ? 'house' : 'street')); });
+seg('g-kind', [...Object.entries(BUILDING_CONFIG.house).map(([k, h]) => ({ v: k, label: h.label, dis: inStreet })),
+  { v: 'gerYard', label: 'Гэртэй хашаа', dis: inStreet }, { v: 'toilet', label: 'Жорлон', dis: inStreet },
+  ...['woodshed', 'animalShed', 'greenhouse'].map(k => ({ v: k, label: BUILDING_CONFIG[k].label, dis: inStreet })),
+  { v: 'kennel', label: 'Нохойн үүр', dis: inStreet },
+  ...BUILDING_CONFIG.shop.order.map(k => ({ v: k, label: 'Дэлгүүр · ' + BUILDING_CONFIG.shop.types[k].label, dis: inStreet, sw: BUILDING_CONFIG.shop.types[k].signColor })),
+  { v: 'teahouse', label: 'Цайны газар', dis: inStreet, sw: '#D8A93A' }, { v: 'milkWool', label: 'Сүү, ноос хүлээн авах', dis: inStreet, sw: '#2E5E9E' },
+  { v: 'carDealer', label: 'Машин худалдаа', dis: inStreet, sw: '#3A5FB0' }, { v: 'fuel', label: 'Колонк', dis: inStreet, sw: '#D9622B' },
+  { v: 'temple', label: 'Дуган', dis: inStreet, sw: '#2FA84F' }, { v: 'market', label: 'Малын зах', dis: inStreet, sw: '#7A6448' }, { v: 'stadium', label: 'Тоглоомын талбай', dis: inStreet, sw: '#6E9A44' }, { v: 'wrestle', label: 'Бөхийн талбай', dis: inStreet, sw: '#B5533A' },
+  ...PUBLIC.map(k => ({ v: k, label: BUILDING_CONFIG.public.kinds[k].label, dis: inStreet, sw: BUILDING_CONFIG.public.kinds[k].roofColor })),
+  ...Object.entries(BUILDING_CONFIG.special).map(([k, sp]) => ({ v: k, label: sp.label, dis: inStreet }))], eq('kind'), v => { state.kind = v; setTimeout(() => setView('house')); });
+seg('g-roof', [{ v: null, label: 'Анхных' }, ...Object.entries(BUILDING_CONFIG.roofColors).map(([k, r]) => ({ v: k, label: r.label, sw: r.hex }))], eq('roof'), put('roof'));
+seg('g-extra', [...['woodshed', 'animalShed', 'greenhouse'].map(k => ({ v: k, label: BUILDING_CONFIG[k].label })), { v: 'trees', label: 'Мод бут' }, { v: 'kennel', label: 'Нохойн үүр' }].map(o => ({ ...o, dis: () => inStreet() || isSingle(state.kind) })),
+  v => state.extras[v], v => { state.extras[v] = !state.extras[v]; });
+seg('g-path', [{ v: 'walk', label: 'Явган зам (хавтан)' }, { v: 'dirt', label: 'Шороон зам' }, { v: null, label: 'Замгүй' }].map(o => ({ ...o, dis: () => inStreet() || isSingle(state.kind) })), eq('path'), put('path'));
+seg('g-season', [{ v: 'summer', label: 'Зун' }, { v: 'winter', label: 'Өвөл' }], eq('season'), put('season'));
+seg('g-time', [{ v: false, label: 'Өдөр' }, { v: true, label: 'Шөнө' }], eq('night'), put('night'));
+seg('g-show', [{ v: 'outline', label: 'Бэхэн хүрээ' }, { v: 'figure', label: 'Хүн 1.7 м' }, { v: 'marker', label: 'Хаалганы цэг' }, { v: 'yard', label: 'Хашаа' }, { v: 'smoke', label: 'Утаа' }, { v: 'spin', label: 'Хүрд эргэх' }],
+  v => state[v], v => { state[v] = !state[v]; });
+
+// --- камер
+const orbit = { th: 0.62, ph: 1.22, d: 19, target: new THREE.Vector3() };
+const views = { house: [0.62, 1.22, 19, 'house'], front: [0.0, 1.36, 17, 'house'], side: [1.5, 1.33, 17, 'house'], door: [0.45, 1.34, 8.5, 'door'],
+  gate: [0.22, 1.42, 15, 'gate'], yard: [0.45, 0.95, 52, 'yard'], top: [0.0, 0.12, 56, 'yard'], street: [0.35, 1.02, 105, 'street'] };
+const setView = k => { if (state.mode === 'street' && k !== 'street') { const m = { house: [0.5, 1.2, 60], front: [0, 1.35, 70], side: [1.3, 1.3, 70], door: [0.3, 1.38, 35],
+    gate: [0.1, 1.42, 45], yard: [0.35, 1.02, 105], top: [0, 0.12, 130] }[k]; [orbit.th, orbit.ph, orbit.d] = m; orbit.target.copy(targets.street); return; }
+  const v = views[k]; [orbit.th, orbit.ph] = v; orbit.d = v[2] * (k === 'house' || k === 'front' || k === 'side' || k === 'door' ? viewScale : 1); orbit.target.copy(targets[v[3]]); };
+for (const k in views) { const b = document.getElementById('view-' + k); if (b) b.addEventListener('click', () => setView(k)); }
+const ptrs = new Map(); let pinch = 0;
+canvas.addEventListener('pointerdown', e => { canvas.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]); });
+canvas.addEventListener('pointermove', e => {
+  const p = ptrs.get(e.pointerId); if (!p) return;
+  if (ptrs.size === 1) { orbit.th -= (e.clientX - p[0]) * 0.007; orbit.ph = Math.min(1.52, Math.max(0.08, orbit.ph - (e.clientY - p[1]) * 0.006)); }
+  ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+  if (ptrs.size === 2) { const [a, b] = [...ptrs.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (pinch) orbit.d = Math.min(200, Math.max(2, orbit.d * pinch / d)); pinch = d; }
+});
+const up = e => { ptrs.delete(e.pointerId); pinch = 0; };
+canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
+canvas.addEventListener('wheel', e => { e.preventDefault(); orbit.d = Math.min(200, Math.max(2, orbit.d * Math.exp(e.deltaY * 0.0012))); }, { passive: false });
+
+function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(stage); resize();
+state.kind = 'market';
+(document.fonts ? document.fonts.load('700 34px "Noto Sans"').catch(() => {}) : Promise.resolve()).then(() => { rebuild(); setView('house'); segs.forEach(p => p()); });
+
+const tag = document.getElementById('tag'), sScene = document.getElementById('s-scene'), v3 = new THREE.Vector3();
+let last = performance.now(), fpsT = 0, fpsN = 0, fps = 0;
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  const sp = Math.sin(orbit.ph);
+  camera.position.set(orbit.target.x + orbit.d * sp * Math.sin(orbit.th), orbit.target.y + orbit.d * Math.cos(orbit.ph), orbit.target.z + orbit.d * sp * Math.cos(orbit.th));
+  camera.lookAt(orbit.target);
+  if (built && built.spinners) for (const m of built.spinners) m.rotation.y += BUILDING_CONFIG.temple.spinDir * dt * (state.spin ? 1.6 : 0);
+  if (smoke.visible) {
+    const c = chimneyW, night = state.night ? 0.55 : 1;
+    for (let i = 0; i < SMOKE_N; i++) {
+      let a = smokeAge[i] + dt / 4.2; if (a > 1) a -= 1; smokeAge[i] = a;
+      const wob = Math.sin(a * 9 + i * 2.1) * 0.12 * a;
+      smokePos[i * 3] = c.x + a * a * 1.8 + wob; smokePos[i * 3 + 1] = c.y + a * 2.8; smokePos[i * 3 + 2] = c.z + Math.cos(a * 7 + i) * 0.1 * a;
+      const g = 0.86 * night; smokeCol[i * 4] = g; smokeCol[i * 4 + 1] = g; smokeCol[i * 4 + 2] = g * 1.03; smokeCol[i * 4 + 3] = Math.sin(Math.PI * Math.min(1, a * 1.05)) * 0.55;
+    }
+    smokeGeo.attributes.position.needsUpdate = true; smokeGeo.attributes.color.needsUpdate = true;
+  }
+  renderer.render(scene, camera);
+  if (state.figure) { v3.set(figure.position.x, 1.85, figure.position.z).project(camera);
+    tag.style.display = v3.z < 1 ? 'block' : 'none'; tag.style.left = ((v3.x + 1) / 2 * stage.clientWidth) + 'px'; tag.style.top = ((1 - v3.y) / 2 * stage.clientHeight) + 'px';
+  } else tag.style.display = 'none';
+  fpsT += dt; fpsN++; if (fpsT > 0.5) { fps = Math.round(fpsN / fpsT); fpsT = 0; fpsN = 0; sScene.textContent = renderer.info.render.calls + ' call · ' + fps + ' FPS'; }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+window.__lab = { state, rebuild, orbit, views, setView, BUILDING_CONFIG, makeBuilding, makePlot };
+</script>
+</body>
+</html>

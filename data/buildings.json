@@ -1,0 +1,1536 @@
+{
+ "palette": {
+  "wall": "#F1ECE0",
+  "plinth": "#8C8478",
+  "trim": "#2E5E9E",
+  "casing": "#F4EEDF",
+  "wood": "#B08A5E",
+  "woodDark": "#6E5A44",
+  "fence": "#8C7453",
+  "gable": "#9A7A55",
+  "brick": "#A8553A",
+  "iron": "#4A4640",
+  "glass": "#3D4C5E",
+  "snow": "#F2F5F8",
+  "snowShade": "#B8C8E0",
+  "fire": "#FFB35C",
+  "outline": "#1A130D"
+ },
+ "roofColors": {
+  "orange": {
+   "label": "Улбар шар",
+   "hex": "#D9622B"
+  },
+  "blue": {
+   "label": "Хөх",
+   "hex": "#2E5E9E"
+  },
+  "green": {
+   "label": "Ногоон",
+   "hex": "#4E6B3A"
+  },
+  "red": {
+   "label": "Хүрэн улаан",
+   "hex": "#9A3B2E"
+  },
+  "grey": {
+   "label": "Саарал",
+   "hex": "#8C8478"
+  }
+ },
+ "house": {
+  "houseA": {
+   "label": "А · шохойдсон ✓",
+   "wallMat": "plaster",
+   "gableMat": "planks",
+   "w": 7.2,
+   "d": 5.6,
+   "wallH": 2.6,
+   "plinthH": 0.35,
+   "plinthOut": 0.04,
+   "roofColor": "orange",
+   "roofPitch": 0.55,
+   "eave": 0.4,
+   "gableOut": 0.3,
+   "roofT": 0.06,
+   "roofLift": 0.03,
+   "wallT": 0.25,
+   "ceilingH": 2.4,
+   "window": {
+    "w": 1.15,
+    "h": 1.25,
+    "sill": 1,
+    "out": 0.05,
+    "front": [
+     -2.3,
+     -0.5
+    ],
+    "side": [
+     0
+    ]
+   },
+   "porch": {
+    "side": "front",
+    "x": 2,
+    "w": 2,
+    "d": 1.5,
+    "hBack": 2.25,
+    "hFront": 2.02,
+    "roofOut": 0.15,
+    "roofFront": 0.25,
+    "doorFace": "out"
+   },
+   "door": {
+    "w": 0.9,
+    "h": 1.85,
+    "sill": 0.1,
+    "out": 0.03
+   },
+   "step": {
+    "w": 1.3,
+    "d": 0.6,
+    "h": 0.1
+   },
+   "chimney": {
+    "x": -1.3,
+    "z": -0.9,
+    "size": 0.42,
+    "rise": 0.55
+   }
+  },
+  "houseB": {
+   "label": "Б · дүнзэн",
+   "wallMat": "logs",
+   "gableMat": "wall",
+   "wallColor": "#A97E50",
+   "corner": 0.13,
+   "w": 6,
+   "d": 4.8,
+   "wallH": 2.35,
+   "plinthH": 0.25,
+   "plinthOut": 0.04,
+   "roofColor": "blue",
+   "roofPitch": 0.5,
+   "eave": 0.38,
+   "gableOut": 0.3,
+   "roofT": 0.06,
+   "roofLift": 0.03,
+   "wallT": 0.22,
+   "ceilingH": 2.15,
+   "window": {
+    "w": 1,
+    "h": 1.1,
+    "sill": 0.95,
+    "out": 0.05,
+    "front": [
+     0.45,
+     1.95
+    ],
+    "side": [
+     0
+    ]
+   },
+   "porch": {
+    "side": "front",
+    "x": -1.65,
+    "w": 1.8,
+    "d": 1.35,
+    "hBack": 2.1,
+    "hFront": 1.92,
+    "roofOut": 0.15,
+    "roofFront": 0.25,
+    "doorFace": "out"
+   },
+   "door": {
+    "w": 0.85,
+    "h": 1.78,
+    "sill": 0.1,
+    "out": 0.03
+   },
+   "step": {
+    "w": 1.2,
+    "d": 0.55,
+    "h": 0.1
+   },
+   "chimney": {
+    "x": 1.1,
+    "z": -0.8,
+    "size": 0.4,
+    "rise": 0.5
+   }
+  },
+  "houseC": {
+   "label": "В · банзан, хажуу амбаартай",
+   "wallMat": "siding",
+   "gableMat": "wall",
+   "wallColor": "#B9CBB0",
+   "w": 8,
+   "d": 6.2,
+   "wallH": 2.7,
+   "plinthH": 0.4,
+   "plinthOut": 0.04,
+   "roofColor": "green",
+   "roofPitch": 0.48,
+   "eave": 0.42,
+   "gableOut": 0.32,
+   "roofT": 0.06,
+   "roofLift": 0.03,
+   "wallT": 0.2,
+   "ceilingH": 2.5,
+   "window": {
+    "w": 1.15,
+    "h": 1.3,
+    "sill": 1,
+    "out": 0.05,
+    "front": [
+     -2.5,
+     -0.85,
+     0.85,
+     2.5
+    ],
+    "side": [
+     -1.3,
+     1.3
+    ]
+   },
+   "porch": {
+    "side": "east",
+    "z": 1.4,
+    "w": 2.4,
+    "d": 1.7,
+    "hBack": 2.45,
+    "hFront": 2.2,
+    "roofOut": 0.15,
+    "roofFront": 0.25,
+    "doorFace": "left"
+   },
+   "door": {
+    "w": 0.9,
+    "h": 1.85,
+    "sill": 0.1,
+    "out": 0.03
+   },
+   "step": {
+    "w": 1.3,
+    "d": 0.6,
+    "h": 0.1
+   },
+   "chimney": {
+    "x": -1.6,
+    "z": -1,
+    "size": 0.44,
+    "rise": 0.55
+   }
+  }
+ },
+ "special": {
+  "grandparents": {
+   "label": "Өвөө эмээгийн гэр",
+   "base": "gerYard",
+   "gerSize": "small5",
+   "porter": true,
+   "plaque": true,
+   "enterable": true
+  },
+  "relative1": {
+   "label": "Хамаатан 1",
+   "base": "houseA",
+   "roofColor": "blue",
+   "enterable": true,
+   "plaque": true
+  },
+  "relative2": {
+   "label": "Хамаатан 2",
+   "base": "houseC",
+   "roofColor": "red",
+   "enterable": true,
+   "plaque": true
+  }
+ },
+ "plaque": {
+  "w": 0.62,
+  "h": 0.42,
+  "y": 1.45,
+  "color": "#F4EEDF",
+  "frame": "#2E5E9E",
+  "gap": 0.7
+ },
+ "porter": {
+  "cab": "#F4EEDF",
+  "bed": "#2E5E9E",
+  "glass": "#3D4C5E",
+  "tire": "#2A221C",
+  "rim": "#B0B6BB",
+  "chassis": "#4A4640",
+  "light": "#F2C12E",
+  "W": 1.7,
+  "cabZ": [
+   0.95,
+   2.45
+  ],
+  "cabY": [
+   0.55,
+   1.95
+  ],
+  "bedZ": [
+   -2.55,
+   0.85
+  ],
+  "bedY": 0.85,
+  "sideH": 0.4,
+  "wheelR": 0.33,
+  "wheelW": 0.2,
+  "axles": [
+   1.55,
+   -1.3
+  ],
+  "at": {
+   "dx": 5,
+   "dz": 2.2,
+   "phi": 1.5707963267948966
+  }
+ },
+ "woodshed": {
+  "label": "Новны амбаар",
+  "w": 3,
+  "d": 1.8,
+  "hFront": 2.1,
+  "hBack": 1.8,
+  "roofOut": 0.18,
+  "roofColor": "grey",
+  "color": "#8C7453",
+  "stackH": 1.35,
+  "post": 0.12
+ },
+ "animalShed": {
+  "label": "Малын саравч",
+  "W": 7,
+  "D": 3.2,
+  "hFront": 2.1,
+  "hBack": 1.7,
+  "roofOut": 0.25,
+  "roofColor": "grey",
+  "color": "#7A6448",
+  "post": 0.16,
+  "pen": 5,
+  "gateW": 1.6,
+  "railH": [
+   0.35,
+   0.75,
+   1.15
+  ],
+  "rail": 0.07,
+  "manure": "#6E5A44"
+ },
+ "greenhouse": {
+  "label": "Ногооны хүлэмж",
+  "W": 3.2,
+  "H": 2.2,
+  "L": 5,
+  "segs": 8,
+  "ribEvery": 1.25,
+  "ribW": 0.06,
+  "film": "#E2ECE6",
+  "rib": "#8C9A92",
+  "door": "#7A6448"
+ },
+ "ground": {
+  "yard": "#78A04A",
+  "road": "#A88A62",
+  "rut": "#8A7050",
+  "walk": "#B9B2A4",
+  "dirt": "#A08460",
+  "roadW": 5,
+  "rutW": 0.38,
+  "rutAt": 0.85
+ },
+ "path": {
+  "w": 1,
+  "slab": 1,
+  "joint": 0.06,
+  "walkH": 0.035,
+  "dirtW": 1.15,
+  "drive": 3.2
+ },
+ "tree": {
+  "trunk": "#6E5A44",
+  "trunkH": 1.7,
+  "trunkW": 0.22,
+  "crownR": 1.3,
+  "crownH": 2.7,
+  "crown": "#4E6B3A",
+  "crownTop": "#6E8E48",
+  "bare": "#6E5A44"
+ },
+ "bush": {
+  "crownR": 0.65,
+  "crownH": 1.05,
+  "crown": "#5E7A3A",
+  "crownTop": "#7A9A4E",
+  "bare": "#7A6448"
+ },
+ "kennel": {
+  "w": 0.8,
+  "d": 1,
+  "wallH": 0.62,
+  "ridgeH": 0.98,
+  "color": "#9A7A55",
+  "roof": "#6E5A44",
+  "holeW": 0.38,
+  "holeH": 0.46
+ },
+ "shop": {
+  "w": 9.6,
+  "d": 8,
+  "wallH": 4,
+  "plinthH": 0.45,
+  "roofPitch": 0.35,
+  "eave": 0.4,
+  "gableOut": 0.3,
+  "roofT": 0.06,
+  "roofLift": 0.03,
+  "wallT": 0.3,
+  "ceilingH": 3.2,
+  "sign": {
+   "w": 7.4,
+   "h": 0.82,
+   "y": 3.28,
+   "out": 0.15
+  },
+  "door": {
+   "w": 1.4,
+   "h": 2.1,
+   "out": 0.04
+  },
+  "win": {
+   "w": 1.9,
+   "h": 1.45,
+   "sill": 1,
+   "gap": 0.55,
+   "out": 0.05
+  },
+  "sideWin": {
+   "w": 1.15,
+   "h": 1.25,
+   "sill": 1
+  },
+  "canopy": {
+   "w": 2.8,
+   "d": 1.2,
+   "y": 2.64
+  },
+  "porch": {
+   "w": 3.2,
+   "d": 1.4,
+   "steps": 2,
+   "stepD": 0.32,
+   "rail": 0.9
+  },
+  "apron": {
+   "d": 3,
+   "color": "#B9B2A4"
+  },
+  "chimney": {
+   "x": -2.6,
+   "z": -1.6,
+   "size": 0.45,
+   "rise": 0.6
+  },
+  "order": [
+   "grocery",
+   "feed",
+   "equipment",
+   "gertent",
+   "clothes",
+   "pets"
+  ],
+  "extraSigns": {
+   "fuelCanopy": {
+    "sign": "ШАТАХУУН",
+    "signColor": "#D9622B",
+    "signText": "#FFFFFF"
+   },
+   "school": {
+    "sign": "ЕРӨНХИЙ БОЛОВСРОЛЫН СУРГУУЛЬ",
+    "signColor": "#5C8A94",
+    "signText": "#FFFFFF"
+   },
+   "dorm": {
+    "sign": "ДОТУУР БАЙР",
+    "signColor": "#3A5FB0",
+    "signText": "#FFFFFF"
+   },
+   "kinder": {
+    "sign": "ЦЭЦЭРЛЭГ",
+    "signColor": "#D9622B",
+    "signText": "#FFFFFF"
+   },
+   "zdtg": {
+    "sign": "ЗАСАГ ДАРГЫН ТАМГЫН ГАЗАР",
+    "signColor": "#B5633F",
+    "signText": "#FFFFFF"
+   },
+   "police": {
+    "sign": "ЦАГДАА",
+    "signColor": "#2E5E9E",
+    "signText": "#FFFFFF"
+   },
+   "bank": {
+    "sign": "БАНК",
+    "signColor": "#2E5C8A",
+    "signText": "#FFFFFF"
+   },
+   "culture": {
+    "sign": "СОЁЛЫН ТӨВ",
+    "signColor": "#8A2E2E",
+    "signText": "#F4EEDF"
+   },
+   "hospital": {
+    "sign": "ЭМНЭЛЭГ",
+    "signColor": "#FFFFFF",
+    "signText": "#B03A22"
+   },
+   "vet": {
+    "sign": "МАЛ ЭМНЭЛЭГ",
+    "signColor": "#4E6B3A",
+    "signText": "#FFFFFF"
+   },
+   "boiler": {
+    "sign": "УУРЫН ЗУУХ",
+    "signColor": "#4A4640",
+    "signText": "#F4EEDF"
+   },
+   "bath": {
+    "sign": "ХАЛУУН УС · ҮСЧИН",
+    "signColor": "#2E5E9E",
+    "signText": "#FFFFFF"
+   }
+  },
+  "types": {
+   "grocery": {
+    "label": "Хүнс",
+    "sign": "ХҮНСНИЙ ДЭЛГҮҮР",
+    "signColor": "#D9622B",
+    "signText": "#FFFFFF",
+    "roof": "orange",
+    "wall": "#F1ECE0",
+    "goods": "crates",
+    "gameRole": "grocery",
+    "central": true
+   },
+   "feed": {
+    "label": "Малын тэжээл",
+    "sign": "МАЛЫН ТЭЖЭЭЛ",
+    "signColor": "#4E6B3A",
+    "signText": "#FFFFFF",
+    "roof": "green",
+    "wall": "#E8DCC0",
+    "goods": "hay",
+    "gameRole": "feed",
+    "central": true
+   },
+   "equipment": {
+    "label": "Тоног төхөөрөмж",
+    "sign": "ТОНОГ ТӨХӨӨРӨМЖ",
+    "signColor": "#2E5E9E",
+    "signText": "#FFFFFF",
+    "roof": "blue",
+    "wall": "#EFEBE2",
+    "goods": "cans",
+    "gameRole": "equipment",
+    "central": true
+   },
+   "gertent": {
+    "label": "Гэр, майхан",
+    "sign": "ГЭР, МАЙХАН",
+    "signColor": "#9A3B2E",
+    "signText": "#F4EEDF",
+    "roof": "red",
+    "wall": "#E8DCC0",
+    "goods": "felt",
+    "gameRole": "gerTent",
+    "central": true
+   },
+   "clothes": {
+    "label": "Хувцас, гутал",
+    "sign": "ХУВЦАС, ГУТАЛ",
+    "signColor": "#7A3E6E",
+    "signText": "#F4EEDF",
+    "roof": "grey",
+    "wall": "#F1ECE0",
+    "goods": "clothes",
+    "gameRole": "clothes",
+    "central": true
+   },
+   "teahouse": {
+    "label": "Цайны газар",
+    "sign": "ЦАЙНЫ ГАЗАР",
+    "signColor": "#6E5A44",
+    "signText": "#F4EEDF",
+    "roof": "#D8A93A",
+    "wall": "#E8DCC0",
+    "goods": "bench",
+    "gameRole": "teahouse",
+    "w": 10,
+    "d": 8,
+    "winStyle": "house",
+    "windows": 2
+   },
+   "milkOffice": {
+    "label": "Сүү, ноос хүлээн авах",
+    "sign": "СҮҮ, НООС ХҮЛЭЭН АВНА",
+    "signColor": "#2E5E9E",
+    "signText": "#FFFFFF",
+    "roof": "blue",
+    "wall": "#F1ECE0",
+    "goods": null,
+    "gameRole": "milkWool",
+    "w": 7,
+    "d": 6,
+    "wallH": 3.6,
+    "canopy": false,
+    "apron": false
+   },
+   "carOffice": {
+    "label": "Машин худалдаа",
+    "sign": "МАШИН ХУДАЛДАА",
+    "signColor": "#2E5E9E",
+    "signText": "#FFFFFF",
+    "roof": "#3A5FB0",
+    "wall": "#EFEBE2",
+    "goods": null,
+    "gameRole": "vehicles",
+    "w": 10,
+    "d": 8,
+    "flat": true,
+    "apron": false
+   },
+   "fuelKiosk": {
+    "label": "Колонкийн касс",
+    "sign": "ШТС · КАСС",
+    "signColor": "#D9622B",
+    "signText": "#FFFFFF",
+    "roof": "#B03A22",
+    "wall": "#F1ECE0",
+    "goods": null,
+    "gameRole": "fuel",
+    "w": 6,
+    "d": 4.4,
+    "wallH": 3.4,
+    "flat": true,
+    "canopy": false,
+    "apron": false
+   },
+   "pets": {
+    "label": "Тэжээвэр амьтан",
+    "sign": "ТЭЖЭЭВЭР АМЬТАН",
+    "signColor": "#D8A93A",
+    "signText": "#2A221C",
+    "roof": "grey",
+    "wall": "#EFEBE2",
+    "goods": "cages",
+    "gameRole": "pets",
+    "central": true
+   }
+  }
+ },
+ "milkWool": {
+  "lot": [
+   26,
+   20
+  ],
+  "ground": "#A88A62",
+  "office": {
+   "x": -7.5,
+   "z": 3
+  },
+  "tanks": {
+   "x": -8.5,
+   "z": -4.5,
+   "r": 0.85,
+   "L": 3.6,
+   "gap": 2.1,
+   "legH": 0.7,
+   "color": "#B0B6BB"
+  },
+  "store": {
+   "x": 5.5,
+   "z": -1.5,
+   "w": 12,
+   "d": 9,
+   "wallH": 4.4,
+   "pitch": 0.25,
+   "color": "#8FA7B0",
+   "roof": "#8C8478",
+   "doorW": 3.6,
+   "doorH": 3.6
+  },
+  "bales": {
+   "x": 9,
+   "z": 5,
+   "n": [
+    3,
+    2
+   ],
+   "size": [
+    1,
+    0.8,
+    1.2
+   ],
+   "color": "#E8E0CC"
+  },
+  "scale": {
+   "x": -1.5,
+   "z": 6,
+   "w": 3.2,
+   "L": 8
+  }
+ },
+ "carDealer": {
+  "lot": [
+   32,
+   26
+  ],
+  "office": {
+   "x": 0,
+   "z": -8.5
+  },
+  "yard": {
+   "z": 4.5,
+   "w": 32,
+   "d": 14,
+   "color": "#B9B2A4"
+  },
+  "rail": {
+   "h": 0.8,
+   "every": 2.4,
+   "color": "#F4EEDF"
+  },
+  "flags": [
+   "#D9622B",
+   "#2E5E9E",
+   "#D8A93A",
+   "#4E6B3A",
+   "#9A3B2E"
+  ],
+  "slots": [
+   {
+    "item": "porter",
+    "x": -12,
+    "z": 4,
+    "phi": 0.35,
+    "cab": "#F4EEDF",
+    "bed": "#2E5E9E"
+   },
+   {
+    "item": "amjirgaa",
+    "x": -6,
+    "z": 4,
+    "phi": 0.35,
+    "cab": "#F4EEDF",
+    "bed": "#F4EEDF"
+   },
+   {
+    "item": "porter",
+    "x": 0,
+    "z": 4,
+    "phi": 0.35,
+    "cab": "#2E5E9E",
+    "bed": "#4A4640"
+   },
+   {
+    "item": "amjirgaa",
+    "x": 6,
+    "z": 4,
+    "phi": 0.35,
+    "cab": "#9A3B2E",
+    "bed": "#F4EEDF"
+   },
+   {
+    "item": "moto",
+    "x": 12,
+    "z": 4.5,
+    "phi": 0.6
+   }
+  ]
+ },
+ "fuel": {
+  "lot": [
+   20,
+   18
+  ],
+  "ground": "#B9B2A4",
+  "canopy": {
+   "w": 9,
+   "d": 7,
+   "h": 4.6,
+   "t": 0.6,
+   "color": "#F4EEDF"
+  },
+  "pillars": 0.4,
+  "island": {
+   "w": 4.4,
+   "d": 1.2
+  },
+  "pumps": [
+   -1.3,
+   1.3
+  ],
+  "kiosk": {
+   "x": 0,
+   "z": -6.4
+  },
+  "pylon": {
+   "x": 7.5,
+   "z": 6.5,
+   "h": 5.6,
+   "w": 1.5,
+   "d": 0.45,
+   "front": "#D9622B",
+   "side": "#B03A22",
+   "base": "#9AA3A8",
+   "name": "ШТС",
+   "prices": [
+    [
+     "92",
+     "#2E9A4A",
+     "дууссан"
+    ],
+    [
+     "92",
+     "#B03A22",
+     "3590"
+    ],
+    [
+     "95",
+     "#2E5E9E",
+     "дууссан"
+    ],
+    [
+     "ДТ",
+     "#2A221C",
+     "5600"
+    ]
+   ],
+   "note": "ЧАНАРТАЙ ШАТАХУУН"
+  },
+  "stripe": "#B03A22"
+ },
+ "public": {
+  "floorH": 3.2,
+  "plinth": 0.5,
+  "bay": 3,
+  "belt": 0.14,
+  "parapet": 0.35,
+  "pitch": 0.32,
+  "eave": 0.45,
+  "kinds": {
+   "school": {
+    "label": "Сургууль",
+    "w": 56,
+    "d": 15,
+    "floors": 3,
+    "roof": "flat",
+    "roofColor": "#9AA3A6",
+    "wall": "#EFEBE2",
+    "trim": "#5C8A94",
+    "central": true,
+    "gameRole": "school",
+    "entrances": [
+     {
+      "x": 0,
+      "w": 2.4,
+      "canopy": 4.2,
+      "columns": true
+     }
+    ],
+    "extras": [
+     "flag"
+    ]
+   },
+   "dorm": {
+    "label": "Дотуур байр",
+    "w": 34,
+    "d": 12,
+    "floors": 2,
+    "roof": "gable",
+    "roofColor": "#D9622B",
+    "wall": "#EFEBE2",
+    "trim": "#3A5FB0",
+    "central": true,
+    "gameRole": "dormitory",
+    "entrances": [
+     {
+      "x": 0
+     }
+    ]
+   },
+   "kinder": {
+    "label": "Цэцэрлэг",
+    "w": 40,
+    "d": 14,
+    "floors": 2,
+    "roof": "gable",
+    "roofColor": "#8A2E2E",
+    "wall": "#F1ECE0",
+    "trim": "#D9622B",
+    "central": true,
+    "gameRole": "kindergarten",
+    "entrances": [
+     {
+      "x": -9
+     },
+     {
+      "x": 9
+     }
+    ],
+    "extras": [
+     "playground"
+    ],
+    "stripe": [
+     "#D9622B",
+     "#D8A93A",
+     "#4E6B3A",
+     "#2E5E9E"
+    ]
+   },
+   "zdtg": {
+    "label": "ЗДТГ (цагдаа дотроо)",
+    "w": 28,
+    "d": 14,
+    "floors": 2,
+    "roof": "hip",
+    "roofColor": "#3F9E6E",
+    "wall": "#F3EDE2",
+    "trim": "#B5633F",
+    "central": true,
+    "gameRole": "admin",
+    "entrances": [
+     {
+      "x": 0,
+      "w": 2.4,
+      "canopy": 4.6,
+      "columns": true
+     },
+     {
+      "x": 10.5,
+      "sign": "police"
+     }
+    ],
+    "extras": [
+     "flags3"
+    ]
+   },
+   "bank": {
+    "label": "Банк",
+    "w": 18,
+    "d": 12,
+    "floors": 2,
+    "roof": "flat",
+    "roofColor": "#2E5C8A",
+    "wall": "#E8E4DA",
+    "trim": "#2E5C8A",
+    "central": true,
+    "gameRole": "bank",
+    "entrances": [
+     {
+      "x": -4.5
+     }
+    ],
+    "extras": [
+     "atm"
+    ]
+   },
+   "culture": {
+    "label": "Соёлын төв",
+    "w": 40,
+    "d": 18,
+    "floors": 1,
+    "floorH": 6.5,
+    "roof": "gable",
+    "roofColor": "#8A2E2E",
+    "wall": "#EFEBE2",
+    "trim": "#B5633F",
+    "central": true,
+    "gameRole": "culture",
+    "entrances": [
+     {
+      "x": 0,
+      "w": 3,
+      "portico": true
+     }
+    ],
+    "tallWin": true
+   },
+   "hospital": {
+    "label": "Эмнэлэг",
+    "w": 50,
+    "d": 12,
+    "floors": 2,
+    "roof": "flat",
+    "roofColor": "#4A4A4A",
+    "wall": "#E8DCC0",
+    "trim": "#5C8AB0",
+    "central": true,
+    "gameRole": "hospital",
+    "entrances": [
+     {
+      "x": -12,
+      "w": 2.4,
+      "canopy": 4,
+      "columns": true
+     },
+     {
+      "x": 14
+     }
+    ],
+    "extras": [
+     "cross"
+    ]
+   },
+   "vet": {
+    "label": "Мал эмнэлэг",
+    "w": 14,
+    "d": 9,
+    "floors": 1,
+    "roof": "gable",
+    "roofColor": "#6E8A5C",
+    "wall": "#E8DCC0",
+    "trim": "#4E6B3A",
+    "central": true,
+    "gameRole": "vet",
+    "entrances": [
+     {
+      "x": -3
+     }
+    ],
+    "extras": [
+     "pen"
+    ]
+   },
+   "boiler": {
+    "label": "Уурын зуух",
+    "w": 24,
+    "d": 14,
+    "floors": 1,
+    "floorH": 7,
+    "roof": "flat",
+    "roofColor": "#3A3A3A",
+    "wall": "#A8553A",
+    "trim": "#6E6A64",
+    "gameRole": "boiler",
+    "entrances": [
+     {
+      "x": 5
+     },
+     {
+      "x": -6,
+      "garage": true
+     }
+    ],
+    "extras": [
+     "stack",
+     "coal"
+    ]
+   },
+   "bath": {
+    "label": "Халуун ус, үсчин",
+    "w": 12,
+    "d": 8,
+    "floors": 1,
+    "roof": "gable",
+    "roofColor": "#6E8A5C",
+    "wall": "#E8DCC0",
+    "trim": "#2E5E9E",
+    "central": true,
+    "gameRole": "bath",
+    "entrances": [
+     {
+      "x": 0
+     }
+    ],
+    "extras": []
+   }
+  }
+ },
+ "temple": {
+  "yard": [
+   34,
+   26
+  ],
+  "fence": "#D9A441",
+  "gate": "#B03A22",
+  "hallZ": -2.5,
+  "plat": {
+   "w": 13,
+   "d": 14.5,
+   "h": 0.6,
+   "color": "#B9B2A4"
+  },
+  "hall": {
+   "w": 10,
+   "d": 10,
+   "h": 4,
+   "wall": "#F1ECE0",
+   "red": "#B03A22",
+   "gold": "#D8A93A"
+  },
+  "porch": {
+   "d": 2.4,
+   "cols": [
+    -4.2,
+    -1.5,
+    1.5,
+    4.2
+   ],
+   "colR": 0.2
+  },
+  "beamH": 0.6,
+  "roof": {
+   "color": "#2FA84F",
+   "under": "#8A2E2E",
+   "eave": 1.1,
+   "rise": 1.7,
+   "flare": 0.55
+  },
+  "upper": {
+   "w": 6,
+   "h": 1.4,
+   "eave": 0.8,
+   "rise": 1.5
+  },
+  "wheels": {
+   "row": {
+    "x": 8.6,
+    "n": 5,
+    "gap": 0.85,
+    "r": 0.24,
+    "h": 0.62,
+    "mid": 0.8,
+    "top": 1.75
+   },
+   "single": {
+    "x": -4.2,
+    "z": 10.6
+   },
+   "pavilion": {
+    "x": 8.6,
+    "z": 6.5,
+    "w": 2.6,
+    "h": 2.6
+   }
+  },
+  "stupa": {
+   "x": -10.2,
+   "z": 5
+  },
+  "spinDir": -1
+ },
+ "market": {
+  "lot": [
+   40,
+   30
+  ],
+  "ground": "#A08460",
+  "rail": "#7A6448",
+  "railH": [
+   0.55,
+   1.25
+  ],
+  "post": 0.16,
+  "pens": {
+   "cols": 4,
+   "rows": 2,
+   "w": 6,
+   "d": 6,
+   "x0": -15,
+   "z0": -9,
+   "gap": 1.5
+  },
+  "shed": {
+   "x": 10,
+   "z": -7,
+   "w": 12,
+   "d": 6
+  },
+  "ramp": {
+   "x": 15.5,
+   "z": 9,
+   "w": 3,
+   "L": 5,
+   "h": 1.2
+  },
+  "trough": {
+   "x": 6,
+   "z": 6
+  }
+ },
+ "stadium": {
+  "lot": [
+   74,
+   54
+  ],
+  "grass": "#6E9A44",
+  "line": "#F4EEDF",
+  "pitch": {
+   "x": 0,
+   "w": 56,
+   "d": 36
+  },
+  "goalW": 5,
+  "goalH": 2.2,
+  "net": {
+   "margin": 4,
+   "h": 5,
+   "every": 6,
+   "color": "#3F6E5A",
+   "board": 0.9,
+   "gate": 3
+  },
+  "stand": {
+   "x": 0,
+   "z": -24.5,
+   "w": 24,
+   "rows": 4,
+   "step": 0.45,
+   "rowD": 0.8,
+   "roof": "#D9622B"
+  },
+  "lamps": {
+   "h": 12,
+   "inset": 2.5
+  }
+ },
+ "wrestle": {
+  "lot": [
+   88,
+   72
+  ],
+  "track": {
+   "rx": 27,
+   "rz": 19,
+   "w": 5,
+   "color": "#B5533A"
+  },
+  "fence": {
+   "rx": 38,
+   "rz": 30,
+   "every": 9,
+   "brick": "#B5733F",
+   "iron": "#2A2622"
+  },
+  "tribune": {
+   "z": -27,
+   "w": 20,
+   "d": 7,
+   "h": 4.2
+  },
+  "bleachers": {
+   "n": 8,
+   "w": 6,
+   "d": 3,
+   "roof": "#3FA0A8"
+  },
+  "sulde": {
+   "x": -6,
+   "z": -14
+  },
+  "lamps": {
+   "h": 12
+  }
+ },
+ "toilet": {
+  "w": 1.1,
+  "d": 1.2,
+  "hFront": 2.15,
+  "hBack": 1.9,
+  "roofOut": 0.14,
+  "roofColor": "grey",
+  "color": "#8C7453",
+  "door": {
+   "w": 0.7,
+   "h": 1.75,
+   "sill": 0.08
+  }
+ },
+ "khashaa": {
+  "w": 22,
+  "d": 26,
+  "h": 1.9,
+  "jitter": 0.07,
+  "section": 4.8,
+  "thick": 0.035,
+  "sink": 0.1,
+  "post": 0.12,
+  "postDrop": 0.18,
+  "gateX": 0,
+  "leafW": 1.25,
+  "gateH": 1.85,
+  "wicketW": 0.9,
+  "gatePost": 0.18,
+  "gatePostH": 2.2,
+  "gateLift": 0.08,
+  "houseGap": 2,
+  "houseSide": 1.6,
+  "extra": {
+   "woodshedX": 0.8,
+   "woodshedBack": 0.9,
+   "shedEast": 0.15,
+   "greenWest": 1.5,
+   "greenFront": 5.9
+  },
+  "toiletIn": 1.4,
+  "gerGap": 2.4
+ },
+ "atlas": {
+  "size": 512,
+  "h": 2048,
+  "lamp": [
+   96,
+   32
+  ],
+  "shopWin": [
+   0,
+   512,
+   128,
+   640
+  ],
+  "shopDoor": [
+   128,
+   512,
+   224,
+   640
+  ],
+  "pubDoor": [
+   224,
+   512,
+   320,
+   640
+  ],
+  "niche": [
+   320,
+   512,
+   384,
+   640
+  ],
+  "ornament": [
+   384,
+   512,
+   512,
+   576
+  ],
+  "wheelScript": [
+   384,
+   576,
+   512,
+   640
+  ],
+  "pylon": [
+   0,
+   640,
+   512,
+   768
+  ],
+  "winBand": [
+   768,
+   896
+  ],
+  "templeBeam": [
+   1952,
+   2000
+  ],
+  "wheelBand": [
+   2000,
+   2048
+  ],
+  "white": [
+   32,
+   32
+  ],
+  "firewood": [
+   0,
+   64,
+   128,
+   128
+  ],
+  "signY": 896,
+  "signH": 48,
+  "window": [
+   128,
+   0,
+   256,
+   128
+  ],
+  "door": [
+   256,
+   0,
+   320,
+   128
+  ],
+  "gateLeaf": [
+   320,
+   0,
+   416,
+   128
+  ],
+  "wicket": [
+   416,
+   0,
+   512,
+   128
+  ],
+  "roof": [
+   130,
+   190
+  ],
+  "plaster": [
+   194,
+   254
+  ],
+  "planksOut": [
+   258,
+   318
+  ],
+  "planksIn": [
+   322,
+   382
+  ],
+  "logs": [
+   386,
+   446
+  ],
+  "siding": [
+   450,
+   510
+  ],
+  "roofSpan": 6.4,
+  "plasterSpan": 6.4,
+  "plankSpan": 3.2,
+  "plankH": 1.9,
+  "hSpan": 2.56
+ },
+ "shade": {
+  "bottom": 0.84
+ },
+ "doorStandOff": 0.75,
+ "gateStandOff": 1.2,
+ "outlineW": 0.03,
+ "town": {
+  "_doc": "Сумын төвийн барилга (data/sumcenter.json-ийн id) → лабораторийн төрөл. rot: градус (нүүр урагшаа +Z, цагийн зүүн — Geo.append phi=-rot·π/180); dx,dz: барилгын (x,z)-ээс загварын эхлэл цэг хүртэл. byId-д байхгүй барилга хуучин хайрцгаар. compounds/fields/props: id/kind-аар нийлмэл талбай (хашаа, цэнгэлдэх…) — sumcenter.json-ийн байрлал хэвээр, хэмжээ нь лабораторийнх. plotHouses: хашаа байшингийн гол байшингийн төрлүүд.",
+  "byId": {
+   "school": {
+    "type": "public",
+    "kind": "school"
+   },
+   "dorm": {
+    "type": "public",
+    "kind": "dorm",
+    "rot": 90
+   },
+   "zdtg": {
+    "type": "public",
+    "kind": "zdtg"
+   },
+   "bank": {
+    "type": "public",
+    "kind": "bank"
+   },
+   "hospital_a": {
+    "type": "public",
+    "kind": "hospital"
+   },
+   "hospital_b": {
+    "type": "public",
+    "kind": "hospital"
+   },
+   "culture": {
+    "type": "public",
+    "kind": "culture"
+   },
+   "kinder": {
+    "type": "public",
+    "kind": "kinder"
+   },
+   "boiler": {
+    "type": "public",
+    "kind": "boiler"
+   },
+   "bath": {
+    "type": "public",
+    "kind": "bath"
+   },
+   "vet": {
+    "type": "public",
+    "kind": "vet"
+   },
+   "teahouse": {
+    "type": "shop",
+    "kind": "teahouse",
+    "rot": 180
+   },
+   "shop_1_1": {
+    "type": "shop",
+    "kind": "pets"
+   },
+   "shop_1_2": {
+    "type": "shop",
+    "kind": "clothes"
+   },
+   "shop_1_3": {
+    "type": "shop",
+    "kind": "feed"
+   },
+   "shop_1_4": {
+    "type": "shop",
+    "kind": "grocery"
+   },
+   "equipment": {
+    "type": "shop",
+    "kind": "equipment"
+   },
+   "car_dealer": {
+    "type": "shop",
+    "kind": "carOffice"
+   },
+   "buyer": {
+    "type": "shop",
+    "kind": "milkOffice"
+   },
+   "ger_shop": {
+    "type": "shop",
+    "kind": "gertent"
+   },
+   "wool_store": {
+    "type": "woolStore"
+   },
+   "temple": {
+    "type": "temple",
+    "dz": 2.5
+   }
+  },
+  "compounds": {
+   "market": {
+    "type": "market",
+    "rot": 180
+   }
+  },
+  "fields": {
+   "stadium": {
+    "type": "stadium"
+   },
+   "wrestling": {
+    "type": "wrestle"
+   }
+  },
+  "props": {
+   "fuelStation": {
+    "type": "fuel"
+   }
+  },
+  "plotHouses": [
+   "houseA",
+   "houseB",
+   "houseC"
+  ]
+ }
+}
