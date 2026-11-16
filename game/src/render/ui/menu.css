@@ -83,3 +83,8 @@ body.menu-open #hud, body.menu-open #perf, body.menu-open .joy, body.menu-open .
 #menu .codein { flex: 1; font: 700 22px ui-monospace, Menlo, Consolas, monospace; letter-spacing: 3px; text-align: center; text-transform: uppercase; padding: 6px; border-radius: 8px; border: 1px solid rgba(232, 182, 76, 0.5); background: rgba(20, 14, 8, 0.7); color: #f4ead6; }
 #menu .mb small { opacity: 0.75; font-size: 11px; }
 @media (max-height: 520px) { #menu .codebox .code { font-size: 26px; } #menu .codein { font-size: 17px; padding: 3px; } }
+
+/* Эхлэлийн дэлгэцийн хэл солих товч (тод, дээд талд) */
+#menu .langbar { display: flex; gap: 6px; justify-content: flex-end; margin: -4px 0 4px; }
+#menu .langbar .mb { min-width: 84px; }
+#menu .langbar .mb.on { background: #e8b64c; color: #2b1d14; font-weight: 700; }

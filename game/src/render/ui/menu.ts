@@ -43,16 +43,6 @@ export function putIntent(i: Intent): void {
   sessionStorage.setItem(INTENT_KEY, JSON.stringify(i));
 }
 
-/** Хадгалсан хэл (localStorage) */
-export function storedLang(): Lang | null {
-  try {
-    const v = localStorage.getItem(LANG_KEY);
-    return v === 'mn' || v === 'en' ? v : null;
-  } catch {
-    return null;
-  }
-}
-
 export interface MenuDeps {
   cfg: GameConfig;
   state: GameState;
@@ -199,7 +189,9 @@ export class MenuUI {
   private rStart(): string {
     const persist = !!this.d.store;
     const canInstall = pwa.available;
-    return `<h1>${t('menu.title')}</h1><div class="sub">${t('menu.subtitle')}</div>
+    const lang = getLang();
+    const langBar = `<div class="langbar"><button class="mb sm ${lang === 'en' ? 'on' : ''}" data-a="lang" data-v="en">English</button><button class="mb sm ${lang === 'mn' ? 'on' : ''}" data-a="lang" data-v="mn">Монгол</button></div>`;   // i18n-skip: хэлний нэр өөрийн хэл дээр
+    return `${langBar}<h1>${t('menu.title')}</h1><div class="sub">${t('menu.subtitle')}</div>
       <div class="grid">
         <button class="mb gold wide" data-a="continue" ${this.d.hasGame ? '' : 'disabled'}>▶ ${t('menu.continue')}</button>
         <button class="mb" data-a="new" ${persist ? '' : 'disabled'}>🆕 ${t('menu.new')}</button>

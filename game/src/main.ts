@@ -30,12 +30,12 @@ import { GameView } from './render/scene';
 import { Panels } from './render/ui/panels';
 import { PRODUCT_EMOJI, SEASON_EMOJI, SEASON_NAME, fmtMinutes, fmtMoney, fmtNum } from './render/ui/names';
 import { PlayerController } from './input/controller';
-import { t, setLang } from './i18n/i18n';
+import { t } from './i18n/i18n';
 import { tm } from './i18n/msg';
 import type { Msg } from './sim/msg';
 import { SaveStore } from './persist/idb';
 import { Autosave, attachPageEvents, attachSimEvents } from './persist/autosave';
-import { MenuUI, storedLang, takeIntent } from './render/ui/menu';
+import { MenuUI, takeIntent } from './render/ui/menu';
 import { TouchUI } from './input/touch';
 import { registerServiceWorker, onConnectionChange } from './pwa';
 import { isTouch, touchKeys, quality, QUALITIES, QUALITY_NAME, QUALITY_SPEC, setQuality } from './device';
@@ -174,7 +174,11 @@ function start(boot?: Boot): void {
     toast, getQuality: () => curQuality,
     setQuality: (q) => { curQuality = q; setQuality(q); view.applyQuality(QUALITY_SPEC[q], q, state); },
     openHelp: () => { document.getElementById('help')!.style.display = 'block'; },
-    reload: () => location.reload(),
+    reload: () => {
+      // ?lang=mn (туршилт) хэл солиход саад болохгүй: параметрийг авч хаяад дахин ачаална
+      const u = new URL(location.href);
+      if (u.searchParams.has('lang')) { u.searchParams.delete('lang'); location.replace(u.toString()); } else location.reload();
+    },
     onFirstTap: () => touchUI?.enterLandscape(),
   });
   const panels = new Panels(cfg, state, { dispatch: (cmd) => { const r = sim.command(cmd); if (r.ok && cmd.type === 'moveCamp') autosave?.request('move'); return r; }, toast, toggleZones: () => view.zones.toggle() });
@@ -512,8 +516,6 @@ const TEST_PARAMS = ['seed', 'shot', 'herd', 'home', 'door', 'fresh'];
 
 async function boot(): Promise<void> {
   const qs = new URLSearchParams(location.search);
-  const lang = storedLang();
-  if (lang) setLang(lang);
   if (TEST_PARAMS.some((k) => qs.has(k)) || !SaveStore.available()) { start(); return; }
   const cfg = loadConfig();
   const store = new SaveStore(indexedDB);

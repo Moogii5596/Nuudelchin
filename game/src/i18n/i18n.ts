@@ -5,18 +5,23 @@ export type Lang = 'mn' | 'en';
 const tables: Record<Lang, Record<string, string>> = { mn, en };
 export const LANG_KEY = 'nuudel.lang';
 
-/** Анхны хэл: хадгалсан сонголт, үгүй бол хөтчийн хэл (mn* → Монгол, бусад → English). Модулиуд ачаалагдахаас өмнө тогтоогдоно */
+/**
+ * Анхны хэл (хэрэглэгчийн шийдвэр): ?lang=mn|en (туршилт, хадгалахгүй) > хадгалсан сонголт (localStorage) > АНГЛИ.
+ * Хөтчийн хэлийг (navigator.language) ТООЦОХГҮЙ: шинэ тоглогч хэлнээс үл хамааран англиар эхэлнэ, Монголыг ⚙ Settings → Language
+ * эсвэл эхлэлийн дэлгэцийн хэл солих товчоор сонгоно.
+ */
+export function resolveLang(search: string, stored: string | null): Lang {
+  const q = new URLSearchParams(search).get('lang');
+  if (q === 'mn' || q === 'en') return q;
+  return stored === 'mn' || stored === 'en' ? stored : 'en';
+}
+
 function initialLang(): Lang {
-  if (typeof window === 'undefined') return 'mn';   // тест (Node): Монгол
-  try {
-    const v = localStorage.getItem(LANG_KEY);
-    if (v === 'mn' || v === 'en') return v;
-  } catch { /* хадгалалт хаалттай */ }
-  try {
-    return typeof navigator !== 'undefined' && /^mn/i.test(navigator.language) ? 'mn' : typeof navigator !== 'undefined' ? 'en' : 'mn';
-  } catch {
-    return 'mn';
-  }
+  let search = '';
+  let stored: string | null = null;
+  try { search = typeof location !== 'undefined' ? location.search : ''; } catch { /* DOM-гүй */ }
+  try { stored = typeof localStorage !== 'undefined' ? localStorage.getItem(LANG_KEY) : null; } catch { /* хадгалалт хаалттай */ }
+  return resolveLang(search, stored);
 }
 
 let lang: Lang = initialLang();

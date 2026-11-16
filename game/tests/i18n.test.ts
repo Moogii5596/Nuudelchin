@@ -129,10 +129,24 @@ describe('i18n: кодын хэрэглээ', () => {
     expect(missing).toEqual([]);
   });
 
-  it('хэл: тест (Node) орчинд анхдагч Монгол', async () => {
-    const { getLang, t } = await import('../src/i18n/i18n');
-    expect(getLang()).toBe('mn');
-    expect(t('menu.continue')).toBe('Үргэлжлүүлэх');
+  it('анхдагч хэл АНГЛИ: хадгалсан сонголтгүй бол хөтчийн хэл mn-MN байсан ч en; ?lang=mn туршилт; хадгалсан сонголт хүчинтэй', async () => {
+    const { getLang, resolveLang, t } = await import('../src/i18n/i18n');
+    // navigator.language-г огт уншдаггүй: тэр нь 'mn-MN' байсан ч үр дүн нөлөөлөхгүй
+    const nav = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+    Object.defineProperty(globalThis, 'navigator', { value: { language: 'mn-MN', languages: ['mn-MN'] }, configurable: true });
+    try {
+      expect(resolveLang('', null)).toBe('en');
+      expect(resolveLang('?seed=1', null)).toBe('en');
+      expect(resolveLang('', 'garbage')).toBe('en');
+      expect(resolveLang('', 'mn')).toBe('mn');           // сонгосон Монгол хадгалагдана
+      expect(resolveLang('?lang=mn', null)).toBe('mn');    // туршилтын параметр
+      expect(resolveLang('?lang=mn', 'en')).toBe('mn');
+      expect(resolveLang('?lang=xx', 'mn')).toBe('mn');
+      expect(getLang()).toBe('en');                         // модуль ачаалахад (Node, хадгалалтгүй)
+      expect(t('menu.continue')).toBe('Continue');
+    } finally {
+      if (nav) Object.defineProperty(globalThis, 'navigator', nav); else delete (globalThis as { navigator?: unknown }).navigator;
+    }
   });
 });
 
@@ -152,7 +166,7 @@ describe('sim мессеж (Msg → tm)', () => {
       expect(tm(raw('debug'))).toBe('debug');
       expect(tm(undefined)).toBe('');
     } finally {
-      setLang('mn');
+      setLang('en');
     }
   });
 });
