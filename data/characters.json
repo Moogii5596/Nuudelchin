@@ -8,6 +8,22 @@
     "ruddy": { "base": "#d39e7e", "shade": "#c69173", "nail": "#e0b49c" }
   },
   "presets": {
+    "lama": {
+      "_doc": "V6.3: дуганы лам — улаан дээл, хуссан толгой",
+      "base": "elder", "hair": { "style": "bald", "color": "#8a8680", "strands": ["#6e6a63", "#cfcac2"] },
+      "figure": { "stature": 0.98, "hunch": 0.1 },
+      "face": { "beard": "none", "wrinkles": 0.5 },
+      "deel": { "color": "#a8231f", "hem": "#7a1a17", "furTrim": "#c9a84a", "winterTrim": "#c9a84a" },
+      "sash": { "color": "#e0b030", "fold": "#b8891e" },
+      "wear": { "summer": "none", "autumn": "none", "winter": "shawl", "spring": "none" }
+    },
+    "cook": {
+      "_doc": "V6.3: Цайны газрын тогооч — цагаан хормогч, цагаан алчуур",
+      "base": "woman_plait", "apron": { "color": "#f4f1ea" },
+      "deel": { "color": "#8a5a36", "hem": "#6b4428" },
+      "hats": { "scarf": { "color": "#f4f1ea", "knot": "back" } },
+      "wear": { "summer": "scarf", "autumn": "scarf", "winter": "shawl", "spring": "scarf" }
+    },
     "man": {
       "skin": "medium",
       "hair": { "color": "#44332a", "strands": ["#0c0806", "#84644c"], "style": "short" },

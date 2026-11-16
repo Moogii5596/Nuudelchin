@@ -99,10 +99,18 @@ function buildBody(spec: CharacterSpec, kit: Kit, g: THREE.Group, name: OutfitBo
   };
   slitLine(-0.8, 0.009, smooth(hc));       // давхцлын зах: өмсөгчийн баруун урд
   slitLine(-0.74, 0.005, sash);
+  if (spec.apron) buildApron(spec, kit, u, b, k, skirtH);
   if (v.winter && spec.vest.worn) buildVest(spec, kit, u, b, k, skirtH);
   else if (v.winter) winterHem(spec, kit, b, k, skirtH);   // хантаазгүй: зөвхөн хормойн үс
   g.add(b, u);
   return u;
+}
+
+/** Хормогч (V6.3 тогооч): цээжний хормогч (u) ба хормойн урд хагас (b) — дээлийн гадуур 1.4 см-ээр */
+function buildApron(spec: CharacterSpec, kit: Kit, u: THREE.Group, b: THREE.Group, k: number, skirtH: number): void {
+  const am = fabric(spec.apron!.color), open = { phiStart: -0.85, phiLength: 1.7 };
+  kit.lathe([[0.314 * k, -0.08], [0.332 * k, 0.08], [0.349 * k, 0.2]], 0.62, am, 0, CHEST_Y, 0, u, { ...open, rows: 8 });
+  kit.lathe([[0.414 * k, -skirtH * 0.8], [0.369 * k, -skirtH * 0.52], [0.309 * k, -0.15], [0.276 * k, 0]], 0.7, am, 0, TOP, 0, b, { ...open, grad: [1, 0.78], folds: skirtH, rows: 12 });
 }
 
 /**

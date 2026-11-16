@@ -71,6 +71,8 @@ export interface CharacterSpec {
   legs: number;
   deel: { color: number; hem: number; button: number; furTrim: number; winterTrim: number; terlegLighten: number };
   sash: { color: number; fold: number };
+  /** V6.3: хормогч (тогооч) — дээлийн урдуур цээжнээс хормой хүртэл; байхгүй бол null */
+  apron: { color: number } | null;
   /** worn — өвлийн дээлийн гадуур хантааз өмсөх эсэх (false — зөвхөн зузаан дээл) */
   vest: { color: number; lining: number; fur: number; worn: boolean };
   boots: BootPalette;
@@ -191,7 +193,7 @@ function parseWear(v: unknown, path: string): CharacterSpec['wear'] {
 }
 type Skins = Record<string, CharacterSpec['skin']>;
 
-const SPEC_KEYS = ['base', 'skin', 'hair', 'figure', 'headShape', 'face', 'wear', 'legs', 'deel', 'sash', 'vest', 'boots', 'bodies', 'hats', 'pose', 'props'] as const;
+const SPEC_KEYS = ['base', 'skin', 'hair', 'figure', 'headShape', 'face', 'wear', 'legs', 'deel', 'sash', 'vest', 'boots', 'bodies', 'hats', 'pose', 'props', 'apron'] as const;
 
 /** Бүрэн нийлүүлсэн (base шийдсэн) түүхий утгыг төрөлжүүлнэ */
 function parseSpec(raw: Obj, path: string, skins: Skins): CharacterSpec {
@@ -221,6 +223,7 @@ function parseSpec(raw: Obj, path: string, skins: Skins): CharacterSpec {
     legs: color(r.legs, `${path}.legs`),
     deel: { ...colors(deel, `${path}.deel`, deelKeys, ['terlegLighten']), terlegLighten: num(deel.terlegLighten, `${path}.deel.terlegLighten`, 0, 0.6) },
     sash: colors(r.sash, `${path}.sash`, ['color', 'fold']),
+    apron: r.apron === undefined || r.apron === null ? null : colors(r.apron, `${path}.apron`, ['color']),
     vest: { ...colors(r.vest, `${path}.vest`, ['color', 'lining', 'fur'], ['worn']), worn: bool((r.vest as Obj).worn, `${path}.vest.worn`) },
     boots: colors(r.boots, `${path}.boots`, ['shaft', 'tan', 'sole', 'teal', 'gold', 'pattern']),
     bodies: parsedBodies,
