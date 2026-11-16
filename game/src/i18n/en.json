@@ -816,5 +816,17 @@
   "sleep.hint": "Pick a wake-up time. While you sleep, animals, helpers and dogs carry on as usual; the night wolf risk remains.",
   "sleep.wake": "Wake-up time",
   "sleep.go": "😴 Sleep — wake at {x}",
-  "sleep.closed": "Not sleeping time (you can sleep between 18:00 and 03:00)"
+  "sleep.closed": "Not sleeping time (you can sleep between 18:00 and 03:00)",
+  "ui.e_send_to_sum_center": " · <kbd>E</kbd> send to sum center (driver)",
+  "ui.send_act": "Send",
+  "ui.driver_waits_for_orders": "🚚 Driver — auto trip off; load a cart/vehicle and press E next to it",
+  "ui.auto_trip_toggle": "<button class=\"btn sm {cls}\" data-act=\"autoTrip:{on}\">⏰ {departHour}:00 auto trip: {state}</button>",
+  "sim.no_driver": "No hired driver",
+  "sim.driver_is_busy": "The driver is busy (already on a trip)",
+  "sim.driver_goods_only": "The driver only sells goods — unload the animals and purchases first",
+  "sim.driver_no_cargo": "Nothing loaded — load goods first (T)",
+  "sim.driver_no_fuel": "No fuel — not enough money for fuel",
+  "sim.driver_sent": "🚚 The driver left for the sum center",
+  "sim.auto_trip_on": "Auto trip on",
+  "sim.auto_trip_off": "Auto trip off"
 }

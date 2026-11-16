@@ -9,7 +9,7 @@
 import { t } from '../i18n/i18n';
 import type { GameConfig } from '../sim/config';
 import type { GameState } from '../sim/state';
-import type { PlayerController } from './controller';
+import { driverSendTarget, type PlayerController } from './controller';
 import { nearestVehicle } from '../sim/systems/travel';
 import { pwa, isIOS, inAppBrowser, canLockLandscape, landscapeFullscreen } from '../pwa';
 
@@ -94,7 +94,8 @@ export class TouchUI {
     const nearV = (s: GameState): boolean => !!nearestVehicle(this.cfg, s, this.cfg.vehicles.road.enterRange);
     addAct('📣', t('ui.shout'), 'Space', camp);
     addAct('🐺', t('ui.scare'), 'KeyQ', camp);
-    addAct('✋', t('ui.pick_up'), 'KeyE', camp);
+    addAct('✋', t('ui.pick_up'), 'KeyE', (s) => camp(s) && !driverSendTarget(this.cfg, s));
+    addAct('📦', t('ui.send_act'), 'KeyE', (s) => camp(s) && !!driverSendTarget(this.cfg, s));
     addAct('🏪', t('ui.trade'), 'KeyE', (s) => s.player.place === 'sum' && !s.player.driving && !s.player.interior);
     addAct('🚪', t('ui.leave_act'), 'KeyE', (s) => !!s.player.interior);   // V6.1: дотор E — гарах эсвэл лангуунд цонх нээх
     addAct('🪵', t('ui.switch'), 'KeyU', camp);

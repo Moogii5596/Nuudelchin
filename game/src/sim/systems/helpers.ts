@@ -42,6 +42,8 @@ export interface HelperTrip {
   remaining: number;     // минут
   total: number;
   cargo: Partial<Record<ProductId, number>>;
+  /** Сумын төвд зарсан орлого (бүтээгдэхүүнээр, ₮) — зарах хүртэл байхгүй */
+  sale?: Partial<Record<ProductId, number>>;
 }
 
 export interface Helper {
@@ -61,6 +63,8 @@ export interface Helper {
   tx: number;
   tz: number;
   mode: 'work' | 'sleep' | 'away';
+  /** Автомат аялалд сүүлд гарсан өдөр (өдөрт нэг удаа) */
+  autoTripDay?: number;
   carry: { product: ProductId; amount: number; age: number }[];
   trip: HelperTrip | null;
   lastPasture: number;   // сүүлд бэлчээр сольсон алхам
@@ -111,6 +115,8 @@ export interface HelpersState {
   dwellings: Dwelling[];
   /** Худалдаачнаас авсан отрын майхан */
   otorTents: number;
+  /** Жолоочийн departHour-ийн автомат аялал (анхдагч: асаалттай; false бол унтраасан) */
+  autoTrip?: boolean;
 }
 
 export type HelperEvent =
@@ -594,24 +600,79 @@ function childStep(cfg: GameConfig, state: GameState, h: Helper): void {
   }
 }
 
+/** Тээврийн хоёр талын аялал: хугацаа (минут), түлшний зардал (₮) */
+function tripCost(cfg: GameConfig, state: GameState, id: VehicleId): { total: number; fuelCost: number } {
+  const camp = cfg.worldmap.locations[state.campId]!, sum = cfg.worldmap.locations[sumId(cfg)]!;
+  const km = Math.hypot(sum.x - camp.x, sum.z - camp.z);
+  const total = Math.round((2 * km) / mapSpeedKmPerMin(cfg, id));
+  return { total, fuelCost: ((2 * km * vehicleCfg(cfg, id).fuelPer100km) / 100) * cfg.vehicles.fuelPricePerL };
+}
+
+/** Жолооч ачаатай тээврээр хөдөлнө (автомат ба гараар явуулах хоёрт нийтлэг) */
+function startTrip(cfg: GameConfig, state: GameState, h: Helper, f: GameState['fleet'][number], cargo: Partial<Record<ProductId, number>>): void {
+  const { total, fuelCost } = tripCost(cfg, state, f.id);
+  if (fuelCost > 0) {
+    state.money -= fuelCost;
+    state.today.expenses.fuel = (state.today.expenses.fuel ?? 0) + fuelCost;
+  }
+  f.place = 'map';
+  f.cargo = {};
+  h.trip = { vehicle: f.id, remaining: total, total, cargo };
+  h.mode = 'away';
+}
+
+/** Сул (аялалд яваагүй) жолооч */
+export function idleDriver(state: GameState): Helper | undefined {
+  return state.helpers.list.find((h) => h.task === 'drive' && !h.trip);
+}
+export function hasDriver(state: GameState): boolean {
+  return state.helpers.list.some((h) => h.task === 'drive');
+}
+
+/** Тоглогч ачсан тээврээ жолоочоор сумын төв рүү шууд явуулна. Болохгүй бол шалтгааныг буцаана */
+export function sendDriver(cfg: GameConfig, state: GameState, vehicle: VehicleId): Msg | null {
+  const f = state.fleet.find((x) => x.id === vehicle);
+  if (!f || f.place !== 'camp' || state.player.driving === f.id) return m('sim.the_vehicle_must_be');
+  if (!hasDriver(state)) return m('sim.no_driver');
+  const h = idleDriver(state);
+  if (!h) return m('sim.driver_is_busy');
+  if (f.animals.length || f.orders.length) return m('sim.driver_goods_only');
+  if (!Object.values(f.cargo).some((n) => (n ?? 0) > 1e-9)) return m('sim.driver_no_cargo');
+  if (tripCost(cfg, state, f.id).fuelCost > state.money + 1e-9) return m('sim.driver_no_fuel');
+  startTrip(cfg, state, h, f, { ...f.cargo });
+  return null;
+}
+
+/** 9 цагийн автомат аяллыг асаах/унтраах */
+export function setAutoTrip(state: GameState, on: boolean): void {
+  state.helpers.autoTrip = on;
+}
+
 /** Жолоочийн аялал: departHour-д ачаад сумын төв явна (газрын зургаар хийсвэр) */
 function driverStep(cfg: GameConfig, state: GameState, h: Helper): HelperEvent[] {
   const D = cfg.helpers.driver;
   if (h.trip) {
-    h.trip.remaining -= 1;
-    // Сумын төвд (аяллын дунд) хүрэхэд Худалдаачин хаалттай бол нээгдэхийг хүлээнэ
-    const atSum = Math.ceil(h.trip.total / 2);
-    if (h.trip.remaining < atSum && !isOpen(cfg, 'buyer', state.time.minute)) h.trip.remaining = atSum;
-    if (h.trip.remaining > 0) return [];
+    const tr = h.trip;
+    tr.remaining -= 1;
+    // Сумын төвд (аяллын дунд) хүрэхэд Худалдаачин хаалттай бол нээгдэхийг хүлээнэ; нээлттэй бол тэр үеийн үнээр зарна.
+    // Зарсны дараа буцах замд дэлгүүр хаагдсан ч буцааж татахгүй (өмнө нь татаад маргаашийн аялал алгасдаг байв).
+    const atSum = Math.ceil(tr.total / 2);
+    if (!tr.sale && tr.remaining < atSum) {
+      if (!isOpen(cfg, 'buyer', state.time.minute)) tr.remaining = atSum;
+      else {
+        tr.sale = {};
+        for (const [p, n] of Object.entries(tr.cargo)) tr.sale[p as ProductId] = (n ?? 0) * productPrice(cfg, p as ProductId);
+      }
+    }
+    if (tr.remaining > 0) return [];
     // Буцаж ирлээ — зарсан мөнгө
     let income = 0;
-    for (const [p, n] of Object.entries(h.trip.cargo)) {
-      const inc = (n ?? 0) * productPrice(cfg, p as ProductId);
-      income += inc;
-      state.today.income[p as ProductId] = (state.today.income[p as ProductId] ?? 0) + inc;
+    for (const [p, inc] of Object.entries(tr.sale ?? {})) {
+      income += inc ?? 0;
+      state.today.income[p as ProductId] = (state.today.income[p as ProductId] ?? 0) + (inc ?? 0);
     }
     state.money += income;
-    const f = state.fleet.find((x) => x.id === h.trip!.vehicle);
+    const f = state.fleet.find((x) => x.id === tr.vehicle);
     if (f) {
       const pk = parkingSpot(cfg, f.id);
       f.place = 'camp';
@@ -626,45 +687,38 @@ function driverStep(cfg: GameConfig, state: GameState, h: Helper): HelperEvent[]
     h.trip = null;
     return [{ type: 'helperTrip', name: h.name, income }];
   }
-  if (state.time.minute !== D.departHour * 60) {
-    // Хотод хүлээнэ
-    const p = homeOf(state, h);
-    h.tx = p.x;
-    h.tz = p.z;
-    moveToward(h, cfg.helpers.child.speed);
-    h.mode = isNight(state.time, cfg.time) ? 'sleep' : 'work';
-    return [];
-  }
-  const free = state.fleet.filter((f) => f.place === 'camp' && f.id !== state.player.driving && !Object.keys(f.cargo).length && !f.animals.length);
+  // Хотод хүлээнэ
+  const hp = homeOf(state, h);
+  h.tx = hp.x;
+  h.tz = hp.z;
+  moveToward(h, cfg.helpers.child.speed);
+  h.mode = isNight(state.time, cfg.time) ? 'sleep' : 'work';
+  // Автомат аялал: departHour–departUntilHour цонхонд өдөрт нэг удаа. Яг 9:00-д нөхцөл бүрдээгүй бол (тээвэр эзэнтэй,
+  // ачаа дутуу) цонх дуустал дахин оролдоно — өмнө нь зөвхөн яг тэр минутад шалгаад өдрийг алгасдаг байв.
+  const min = state.time.minute;
+  if (state.helpers.autoTrip === false || h.autoTripDay === state.time.day) return [];
+  if (min < D.departHour * 60 || min > D.departUntilHour * 60) return [];
+  const free = state.fleet.filter((f) => f.place === 'camp' && f.id !== state.player.driving && !f.animals.length && !f.orders.length);
   if (!free.length) return [];
   free.sort((a, b) => vehicleCfg(cfg, b.id).capacity - vehicleCfg(cfg, a.id).capacity);
   const f = free[0]!;
   const cap = vehicleCfg(cfg, f.id).capacity;
   const keepMilk = state.processors.some((p) => p.kind === 'pot' || p.kind === 'separator');
-  const cargo: Partial<Record<ProductId, number>> = {};
-  let units = 0;
+  // Тоглогч урьдчилж ачсан ачаа хамт явна; үлдсэн зайг агуулахаас дүүргэнэ (эхлээд тоолно — авч буцааж хийвэл шинэлэг байдал эвдэрнэ)
+  const plan: Partial<Record<ProductId, number>> = {};
+  let units = Object.values(f.cargo).reduce((s, n) => s + (n ?? 0), 0);
   for (const p of ['cashmere', 'urum', 'aaruul', 'felt', 'wool', 'tarag', 'milk'] as ProductId[]) {
     if (p === 'milk' && keepMilk) continue;
     const n = Math.min(storage.count(state, p), cap - units);
-    if (n <= 0) continue;
-    cargo[p] = storage.take(state, p, n);
-    units += cargo[p]!;
+    if (n <= 1e-9) continue;
+    plan[p] = n;
+    units += n;
   }
-  if (units < Math.min(D.minUnits, cap)) {
-    for (const [p, n] of Object.entries(cargo)) storage.add(cfg, state, p as ProductId, n ?? 0, 0);
-    return [];
-  }
-  const camp = cfg.worldmap.locations[state.campId]!, sum = cfg.worldmap.locations[sumId(cfg)]!;
-  const km = Math.hypot(sum.x - camp.x, sum.z - camp.z);
-  const total = Math.round((2 * km) / mapSpeedKmPerMin(cfg, f.id));
-  const fuel = (2 * km * vehicleCfg(cfg, f.id).fuelPer100km) / 100;
-  if (fuel > 0) {
-    state.money -= fuel * cfg.vehicles.fuelPricePerL;
-    state.today.expenses.fuel = (state.today.expenses.fuel ?? 0) + fuel * cfg.vehicles.fuelPricePerL;
-  }
-  f.place = 'map';
-  h.trip = { vehicle: f.id, remaining: total, total, cargo };
-  h.mode = 'away';
+  if (units < Math.min(D.minUnits, cap)) return [];
+  const cargo: Partial<Record<ProductId, number>> = { ...f.cargo };
+  for (const [p, n] of Object.entries(plan)) cargo[p as ProductId] = (cargo[p as ProductId] ?? 0) + storage.take(state, p as ProductId, n ?? 0);
+  h.autoTripDay = state.time.day;
+  startTrip(cfg, state, h, f, cargo);
   return [];
 }
 

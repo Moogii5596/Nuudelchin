@@ -815,8 +815,10 @@ export class Panels {
       } else if (h.trip) {
         what = t('ui.heading_to_the_sum', { x: cfg.vehicles[h.trip.vehicle].emoji, x2: fmtMinutes(Math.round(h.trip.remaining)) });
       } else {
-        what = h.task === 'drive' ? t('ui.driver_sells_the_storage', { departHour: cfg.helpers.driver.departHour }) : t('ui.herding', { x: HERD_NAME[h.herd] });
+        const auto = hs.autoTrip !== false;
+        what = h.task === 'drive' ? t(auto ? 'ui.driver_sells_the_storage' : 'ui.driver_waits_for_orders', { departHour: cfg.helpers.driver.departHour }) : t('ui.herding', { x: HERD_NAME[h.herd] });
         btns = t('ui.driver_otor', { x: herdBtn(h, 'sheep'), x2: herdBtn(h, 'cow'), x3: herdBtn(h, 'horse'), x4: h.task === 'drive' ? 'gold' : '', id: h.id, id2: h.id });
+        if (h.task === 'drive') btns += ' ' + t('ui.auto_trip_toggle', { cls: auto ? 'gold' : '', on: auto ? 0 : 1, departHour: cfg.helpers.driver.departHour, state: t(auto ? 'ui.on' : 'ui.off') });
       }
       const pay = h.task === 'otor' || h.trip ? '' : t('ui.pay_in_animals_fire', { id: h.id, id2: h.id });
       const own = owned(h);
@@ -1075,6 +1077,11 @@ export class Panels {
         const [id, task, herd] = arg.split('|');
         const r = this.hooks.dispatch({ type: 'helperTask', helper: Number(id), task: task as 'herd' | 'drive', herd: herd as HerdGroup | undefined });
         if (!r.ok) this.hooks.toast(r.msg ?? '', 'bad');
+        break;
+      }
+      case 'autoTrip': {
+        const r = this.hooks.dispatch({ type: 'setAutoTrip', on: arg === '1' });
+        this.hooks.toast(r.msg ?? '', 'good');
         break;
       }
       case 'fire': {

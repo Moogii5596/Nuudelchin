@@ -26,7 +26,7 @@ import { newAnimal } from './state';
 import { SPECIES } from './config';
 import { orderDog, DOG_ORDER_NAME, type DogOrderKind } from './systems/dogs';
 import { applyCheat, type CheatAction } from './systems/cheats';
-import { fire, hire, payWithAnimal, recallOtor, refreshCandidates, sendOtor, setOtorCollector, setTask, takeFromOtor, type HelperTask, type HerdGroup } from './systems/helpers';
+import { fire, hire, payWithAnimal, recallOtor, refreshCandidates, sendDriver, sendOtor, setAutoTrip, setOtorCollector, setTask, takeFromOtor, type HelperTask, type HerdGroup } from './systems/helpers';
 import { clampDifficulty, type Difficulty } from './systems/difficulty';
 
 export type Command =
@@ -80,6 +80,8 @@ export type Command =
   | { type: 'hire'; candidate: number }                                   // цайны газар (M5)
   | { type: 'fireHelper'; helper: number }
   | { type: 'helperTask'; helper: number; task: HelperTask; herd?: HerdGroup }
+  | { type: 'sendDriver'; vehicle: VehicleId }   // ачсан тээврээ жолоочоор сум руу явуулах
+  | { type: 'setAutoTrip'; on: boolean }          // 9 цагийн автомат аялал
   | { type: 'payWithAnimal'; helper: number; animal: number }
   | { type: 'sendOtor'; helper: number; animalIds: number[]; camp: string }
   | { type: 'recallOtor'; helper: number }
@@ -98,9 +100,9 @@ export function nearHome(cfg: { camps: { home: { x: number; z: number; storageRa
   return Math.hypot(p.x - h.x, p.z - h.z) <= h.storageRadius * 2;
 }
 
-const CAMP_ONLY = new Set<Command['type']>(['payWithAnimal', 'sendOtor', 'recallOtor', 'shout', 'callHorse', 'scareWolves', 'pickup', 'deposit', 'drive', 'process', 'moveCamp', 'dogOrder', 'loadCargo', 'unloadCargo', 'takeFromStorage', 'droveAnimals']);
+const CAMP_ONLY = new Set<Command['type']>(['payWithAnimal', 'sendDriver', 'sendOtor', 'recallOtor', 'shout', 'callHorse', 'scareWolves', 'pickup', 'deposit', 'drive', 'process', 'moveCamp', 'dogOrder', 'loadCargo', 'unloadCargo', 'takeFromStorage', 'droveAnimals']);
 /** Тэрэг/машин жолоодож байхад хийхгүй ажлууд */
-const NOT_DRIVING = new Set<Command['type']>(['toggleMount', 'callHorse', 'pickup', 'deposit', 'drive', 'process', 'moveCamp', 'dogOrder', 'takeFromStorage']);
+const NOT_DRIVING = new Set<Command['type']>(['toggleMount', 'sendDriver', 'callHorse', 'pickup', 'deposit', 'drive', 'process', 'moveCamp', 'dogOrder', 'takeFromStorage']);
 
 /** Гаднах ертөнцөд гарч хийх үйлдлүүд: барилга дотор байвал эхлээд гаргана */
 const LEAVES_BUILDING = new Set<Command['type']>(['movePlayer', 'shout', 'scareWolves', 'toggleMount', 'callHorse', 'pickup', 'deposit', 'drive', 'process', 'toggleVehicle', 'boardBest', 'driveVehicle', 'leaveToMap', 'quickMap', 'mapGo', 'migrateHere', 'moveCamp', 'loadCargo', 'unloadCargo', 'takeFromStorage', 'droveAnimals', 'buyLotVehicle']);
@@ -395,6 +397,14 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
     case 'helperTask': {
       const err = setTask(state, cmd.helper, cmd.task, cmd.herd);
       return err ? fail(err) : ok();
+    }
+    case 'sendDriver': {
+      const err = sendDriver(cfg, state, cmd.vehicle);
+      return err ? fail(err) : ok(m('sim.driver_sent'));
+    }
+    case 'setAutoTrip': {
+      setAutoTrip(state, cmd.on);
+      return ok(m(cmd.on ? 'sim.auto_trip_on' : 'sim.auto_trip_off'));
     }
     case 'payWithAnimal': {
       const err = payWithAnimal(cfg, state, cmd.helper, cmd.animal);

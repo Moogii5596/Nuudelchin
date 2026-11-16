@@ -29,7 +29,7 @@ import { campAccess, seasonProgress, yearOf } from './sim/systems/seasons';
 import { GameView } from './render/scene';
 import { Panels } from './render/ui/panels';
 import { PRODUCT_EMOJI, SEASON_EMOJI, SEASON_NAME, fmtMinutes, fmtMoney, fmtNum } from './render/ui/names';
-import { PlayerController } from './input/controller';
+import { driverSendTarget, PlayerController } from './input/controller';
 import { t } from './i18n/i18n';
 import { tm } from './i18n/msg';
 import { nextStage, seasonGoal } from './sim/systems/milestones';
@@ -373,6 +373,7 @@ function start(boot?: Boot): void {
       if (carried >= cfg.products.carryUnits - 1e-9 && dHome > home.storageRadius) html = t('ui.hands_full_bring_it');
       else if (nearItems) html = t('ui.e_pick_up', { nearItems });
       else if (!carried && !p.mounted && nearEnterDoor(cfg, state)) html = t('interior.hint.enter', { name: interiorName(nearEnterDoor(cfg, state)!.id, nearEnterDoor(cfg, state)!.room) });
+      else if (driverSendTarget(cfg, state)) html = t('ui.v_board_your_cart') + t('ui.e_send_to_sum_center');
       else if (dHome <= home.storageRadius * 2) html = t('ui.b_storage_processing_t');
       else if (!p.mounted && nearestVehicle(cfg, state, cfg.vehicles.road.enterRange)) html = t('ui.v_board_your_cart');
       else if (!p.mounted && horse && Math.hypot(horse.x - p.x, horse.z - p.z) <= cfg.player.mountRange) html = t('ui.f_mount_the_horse');

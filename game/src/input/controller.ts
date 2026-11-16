@@ -5,7 +5,9 @@
  * Байрлалыг кадр бүр `movePlayer` командаар sim-д өгнө.
  */
 import type { GameConfig } from '../sim/config';
-import type { GameState } from '../sim/state';
+import type { GameState, VehicleId } from '../sim/state';
+import { hasDriver } from '../sim/systems/helpers';
+import { nearestVehicle } from '../sim/systems/travel';
 import type { Command, CommandResult } from '../sim/commands';
 import { riverZ } from '../sim/terrain';
 import { nearLotSlot, worldLimit } from '../sim/systems/sumtown';
@@ -34,6 +36,20 @@ const angDiff = (a: number, b: number): number => {
   if (d < -Math.PI) d += Math.PI * 2;
   return d;
 };
+
+/**
+ * Бууцанд E дарахад жолоочоор сум руу явуулах тээвэр (үгүй бол null): явган, гар хоосон, ойролцоо түүх зүйлгүй,
+ * хөлсний жолоочтой, тээвэр хүрэх зайд. Хаалганы дэргэд бол зөвхөн ачаатай тээвэр хаалганаас түрүүлнэ.
+ */
+export function driverSendTarget(cfg: GameConfig, st: GameState): VehicleId | null {
+  const p = st.player;
+  if (p.place !== 'camp' || p.away || p.driving || p.mounted || p.interior || p.carry.length || !hasDriver(st)) return null;
+  if (st.items.some((it) => Math.hypot(it.x - p.x, it.z - p.z) <= cfg.products.pickupRadius)) return null;
+  const f = nearestVehicle(cfg, st, cfg.vehicles.road.enterRange);
+  if (!f || f.place !== 'camp') return null;
+  if (!Object.keys(f.cargo).length && nearEnterDoor(cfg, st)) return null;
+  return f.id;
+}
 
 export class PlayerController {
   private keys = new Set<string>();
@@ -180,6 +196,12 @@ export class PlayerController {
     if (p.place === 'sum') {
       if (!p.driving && !nearLotSlot(cfg, st) && nearEnterDoor(cfg, st)) this.hooks.onAction('interior', this.hooks.dispatch({ type: 'enterBuilding' }));
       else this.hooks.onToggle('trade');
+      return;
+    }
+    // Бууц: хөлсний жолоочтой бол тээврийн дэргэд E — ачааг сумын төв рүү явуулна (түүх/хийх нь түрүүлнэ)
+    const sendV = driverSendTarget(cfg, st);
+    if (sendV) {
+      this.hooks.onAction('vehicle', this.hooks.dispatch({ type: 'sendDriver', vehicle: sendV }));
       return;
     }
     // Бууц: ачаа барьсан эсвэл ойролцоо бүтээгдэхүүн байвал түүх/хийх нь түрүүлнэ
