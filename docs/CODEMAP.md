@@ -1066,7 +1066,7 @@ SYM game/src/sim/rng.ts:32 method Rng.range
 SYM game/src/sim/rng.ts:37 method Rng.int
 SYM game/src/sim/rng.ts:41 method Rng.chance
 SYM game/src/sim/rng.ts:45 method Rng.pick
-FILE game/src/sim/save.ts 14.3KB 221L exports: SAVE_FORMAT,SaveMeta,SaveFile,SaveError,saveMeta,serialize,deserialize,migrationChainComplete,validateState
+FILE game/src/sim/save.ts 14.5KB 222L exports: SAVE_FORMAT,SaveMeta,SaveFile,SaveError,saveMeta,serialize,deserialize,migrationChainComplete,validateState
 SYM game/src/sim/save.ts:12 const SAVE_FORMAT
 SYM game/src/sim/save.ts:15 interface SaveMeta
 SYM game/src/sim/save.ts:25 interface SaveFile
@@ -1079,47 +1079,47 @@ SYM game/src/sim/save.ts:90 fn isObj
 SYM game/src/sim/save.ts:91 fn fin
 SYM game/src/sim/save.ts:92 fn u32
 SYM game/src/sim/save.ts:97 fn validateState
-FILE game/src/sim/sim.ts 12.4KB 264L exports: DayReport,SimEvent,Sim
-SYM game/src/sim/sim.ts:32 interface DayReport
-SYM game/src/sim/sim.ts:56 type SimEvent
-SYM game/src/sim/sim.ts:58 class Sim
-SYM game/src/sim/sim.ts:79 method Sim.on
-SYM game/src/sim/sim.ts:86 method Sim.emit
-SYM game/src/sim/sim.ts:90 method Sim.command
-SYM game/src/sim/sim.ts:99 method Sim.emitTravel
-SYM game/src/sim/sim.ts:104 method Sim.step
-SYM game/src/sim/sim.ts:167 method Sim.refreshQuality
-SYM game/src/sim/sim.ts:172 method Sim.runDays
-SYM game/src/sim/sim.ts:177 method Sim.endDay
-SYM game/src/sim/sim.ts:255 method Sim.spend
-SYM game/src/sim/sim.ts:261 method Sim.random
-FILE game/src/sim/state.ts 18.2KB 368L exports: SAVE_VERSION,ProductId,PRODUCTS,AnimalMode,Animal,GroundItem,Batch,ProcessorKind,ProcessorState,VehicleId,VEHICLES,BuyOrder,Place,InteriorState,+12
+FILE game/src/sim/sim.ts 12.6KB 266L exports: DayReport,SimEvent,Sim
+SYM game/src/sim/sim.ts:33 interface DayReport
+SYM game/src/sim/sim.ts:57 type SimEvent
+SYM game/src/sim/sim.ts:59 class Sim
+SYM game/src/sim/sim.ts:80 method Sim.on
+SYM game/src/sim/sim.ts:87 method Sim.emit
+SYM game/src/sim/sim.ts:91 method Sim.command
+SYM game/src/sim/sim.ts:100 method Sim.emitTravel
+SYM game/src/sim/sim.ts:105 method Sim.step
+SYM game/src/sim/sim.ts:169 method Sim.refreshQuality
+SYM game/src/sim/sim.ts:174 method Sim.runDays
+SYM game/src/sim/sim.ts:179 method Sim.endDay
+SYM game/src/sim/sim.ts:257 method Sim.spend
+SYM game/src/sim/sim.ts:263 method Sim.random
+FILE game/src/sim/state.ts 18.7KB 378L exports: SAVE_VERSION,ProductId,PRODUCTS,AnimalMode,Animal,GroundItem,Batch,ProcessorKind,ProcessorState,VehicleId,VEHICLES,BuyOrder,Place,InteriorState,+12
 SYM game/src/sim/state.ts:19 const SAVE_VERSION
 SYM game/src/sim/state.ts:21 type ProductId
 SYM game/src/sim/state.ts:22 const PRODUCTS
 SYM game/src/sim/state.ts:26 type AnimalMode
 SYM game/src/sim/state.ts:28 interface Animal
-SYM game/src/sim/state.ts:60 interface GroundItem
-SYM game/src/sim/state.ts:69 interface Batch
-SYM game/src/sim/state.ts:75 type ProcessorKind
-SYM game/src/sim/state.ts:77 interface ProcessorState
-SYM game/src/sim/state.ts:83 type VehicleId
-SYM game/src/sim/state.ts:84 const VEHICLES
-SYM game/src/sim/state.ts:86 type BuyOrder
-SYM game/src/sim/state.ts:99 type Place
-SYM game/src/sim/state.ts:105 interface InteriorState
-SYM game/src/sim/state.ts:117 interface FleetVehicle
-SYM game/src/sim/state.ts:129 interface MapState
-SYM game/src/sim/state.ts:137 interface CampState
-SYM game/src/sim/state.ts:145 interface DayStats
-SYM game/src/sim/state.ts:158 interface PlayerState
-SYM game/src/sim/state.ts:174 interface GameState
-SYM game/src/sim/state.ts:222 fn emptyDayStats
-SYM game/src/sim/state.ts:226 fn newAnimal
-SYM game/src/sim/state.ts:259 fn createInitialState
-SYM game/src/sim/state.ts:325 const MIGRATIONS
-SYM game/src/sim/state.ts:356 const MIN_SAVE_VERSION
-SYM game/src/sim/state.ts:359 fn migrateState
+SYM game/src/sim/state.ts:63 interface GroundItem
+SYM game/src/sim/state.ts:72 interface Batch
+SYM game/src/sim/state.ts:78 type ProcessorKind
+SYM game/src/sim/state.ts:80 interface ProcessorState
+SYM game/src/sim/state.ts:86 type VehicleId
+SYM game/src/sim/state.ts:87 const VEHICLES
+SYM game/src/sim/state.ts:89 type BuyOrder
+SYM game/src/sim/state.ts:102 type Place
+SYM game/src/sim/state.ts:108 interface InteriorState
+SYM game/src/sim/state.ts:120 interface FleetVehicle
+SYM game/src/sim/state.ts:132 interface MapState
+SYM game/src/sim/state.ts:140 interface CampState
+SYM game/src/sim/state.ts:148 interface DayStats
+SYM game/src/sim/state.ts:161 interface PlayerState
+SYM game/src/sim/state.ts:180 interface GameState
+SYM game/src/sim/state.ts:230 fn emptyDayStats
+SYM game/src/sim/state.ts:234 fn newAnimal
+SYM game/src/sim/state.ts:267 fn createInitialState
+SYM game/src/sim/state.ts:334 const MIGRATIONS
+SYM game/src/sim/state.ts:366 const MIN_SAVE_VERSION
+SYM game/src/sim/state.ts:369 fn migrateState
 FILE game/src/sim/systems/animals.ts 5.2KB 123L exports: AnimalBody,frameKg,liveWeightKg,salePrice,buyPrice,sheepUnits,herdSheepUnits,grazingSheepUnits,dailyConditionDelta,dailyAnimals
 SYM game/src/sim/systems/animals.ts:8 interface AnimalBody
 SYM game/src/sim/systems/animals.ts:21 fn frameKg
@@ -1258,12 +1258,21 @@ SYM game/src/sim/systems/helpers.ts:735 fn setOtorCollector
 SYM game/src/sim/systems/helpers.ts:758 fn takeFromOtor
 SYM game/src/sim/systems/helpers.ts:789 fn dailyOtor
 SYM game/src/sim/systems/helpers.ts:871 fn relocateHelpers
-FILE game/src/sim/systems/herder.ts 4.8KB 127L exports: ridingHorse,herderStep,shout,toggleUurga,toggleMount
-SYM game/src/sim/systems/herder.ts:14 fn ridingHorse
-SYM game/src/sim/systems/herder.ts:19 fn herderStep
-SYM game/src/sim/systems/herder.ts:69 fn shout
-SYM game/src/sim/systems/herder.ts:103 fn toggleUurga
-SYM game/src/sim/systems/herder.ts:109 fn toggleMount
+FILE game/src/sim/systems/herder.ts 5.8KB 140L exports: ridingHorse,herderStep,shout,toggleUurga,toggleMount
+SYM game/src/sim/systems/herder.ts:15 fn ridingHorse
+SYM game/src/sim/systems/herder.ts:20 fn herderStep
+SYM game/src/sim/systems/herder.ts:80 fn shout
+SYM game/src/sim/systems/herder.ts:114 fn toggleUurga
+SYM game/src/sim/systems/herder.ts:120 fn toggleMount
+FILE game/src/sim/systems/herding.ts 6.1KB 109L exports: refreshLeaders,leaderOf,followLeaders,followHerder,horseGrazeStep
+SYM game/src/sim/systems/herding.ts:18 fn flockOf
+SYM game/src/sim/systems/herding.ts:21 fn pickLeader
+SYM game/src/sim/systems/herding.ts:33 fn refreshLeaders
+SYM game/src/sim/systems/herding.ts:46 const leaderOf
+SYM game/src/sim/systems/herding.ts:55 fn followLeaders
+SYM game/src/sim/systems/herding.ts:70 fn followHerder
+SYM game/src/sim/systems/herding.ts:88 fn hash
+SYM game/src/sim/systems/herding.ts:95 fn horseGrazeStep
 FILE game/src/sim/systems/herds.ts 10.8KB 246L exports: Herd,flockKey,findHerds,drinkPoint,cellScore,areaScore,FlockCenter,cohesionCenters,HerdDecision,herdDecide
 SYM game/src/sim/systems/herds.ts:20 interface Herd
 SYM game/src/sim/systems/herds.ts:29 const flockKey
@@ -1642,6 +1651,7 @@ FILE game/tests/gers.test.ts 9.9KB 170L
 FILE game/tests/grazing.test.ts 2.3KB 46L
 FILE game/tests/helpers.ts 0.8KB 20L
 FILE game/tests/herder.test.ts 6.3KB 139L
+FILE game/tests/herding.test.ts 6.5KB 131L
 FILE game/tests/herds.test.ts 5.1KB 112L
 FILE game/tests/i18n.test.ts 9.1KB 172L
 FILE game/tests/interior.test.ts 10.5KB 203L
@@ -1665,15 +1675,15 @@ FILE game/tests/town.test.ts 6.1KB 127L
 FILE game/tests/transfer.test.ts 14.2KB 255L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 29.7KB 123L
+FILE docs/CONTEXT.md 30.4KB 124L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-29 ## 2. Стек ба командууд
-DOC docs/CONTEXT.md:30-97 ## 3. Файлын зураглал (`game/src/`)
-DOC docs/CONTEXT.md:98-100 ## 4. `data/*.json` → аль файл хэрэглэдэг
-DOC docs/CONTEXT.md:101-109 ## 5. Архитектурын дүрэм ([[architecture]])
-DOC docs/CONTEXT.md:110-113 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
-DOC docs/CONTEXT.md:114-116 ## 7. Нээлттэй асуултууд
-DOC docs/CONTEXT.md:117-123 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
+DOC docs/CONTEXT.md:30-98 ## 3. Файлын зураглал (`game/src/`)
+DOC docs/CONTEXT.md:99-101 ## 4. `data/*.json` → аль файл хэрэглэдэг
+DOC docs/CONTEXT.md:102-110 ## 5. Архитектурын дүрэм ([[architecture]])
+DOC docs/CONTEXT.md:111-114 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
+DOC docs/CONTEXT.md:115-117 ## 7. Нээлттэй асуултууд
+DOC docs/CONTEXT.md:118-124 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
 FILE docs/INDEX.md 14.1KB 136L
 DOC docs/INDEX.md:16-30 ## 1. Унших дараалал ба давуу эрх
 DOC docs/INDEX.md:31-107 ## 2. Баримтууд
@@ -1856,7 +1866,7 @@ DOC docs/plan/LEAD.md:26-32 ## 3. Явж буй ажил (энэ тэмдэгл�
 DOC docs/plan/LEAD.md:33-41 ## 4. Хэрэглэгчийн шийдвэр хүлээж буй
 DOC docs/plan/LEAD.md:42-46 ## 5. Дараагийн алхам
 DOC docs/plan/LEAD.md:47-50 ## 6. Контекст хэмнэх (2026-11-16)
-FILE docs/plan/M6.md 18.3KB 66L
+FILE docs/plan/M6.md 18.7KB 66L
 DOC docs/plan/M6.md:15-17 ## Зорилго
 DOC docs/plan/M6.md:18-34 ## MVP «дууссан» шалгуур (D1–D10 — M6 ба M7-ийн нийт)
 DOC docs/plan/M6.md:35-37 ## Одоогийн байдал
@@ -1872,12 +1882,13 @@ DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
 DOC docs/plan/V.md:24-265 ## Блокууд ба чеклист (2026-11-15)
 DOC docs/plan/V.md:266-287 ## Зогссон цэг
-FILE docs/plan/playtest.md 18.0KB 112L
+FILE docs/plan/playtest.md 18.9KB 119L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
 DOC docs/plan/playtest.md:19-39 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
-DOC docs/plan/playtest.md:40-103 ## C. Мэдрэмж, үе шат бүрээр
-DOC docs/plan/playtest.md:104-107 ## V4.6 хонь, ямаа (🧑 мэдрэмж)
-DOC docs/plan/playtest.md:108-112 ## V4.6 S2 үхэр, адуу, нохой, чоно (🧑 мэдрэмж)
+DOC docs/plan/playtest.md:40-107 ## C. Мэдрэмж, үе шат бүрээр
+DOC docs/plan/playtest.md:108-111 ## V4.6 хонь, ямаа (🧑 мэдрэмж)
+DOC docs/plan/playtest.md:112-117 ## V4.6 S2 үхэр, адуу, нохой, чоно (🧑 мэдрэмж)
+DOC docs/plan/playtest.md:118-119 ## Хүний масштаб 1.7 м (characters.json scale 0.70) (🧑 мэдрэмж)
 FILE docs/seasons-camps.md 10.2KB 104L
 DOC docs/seasons-camps.md:17-40 ## 1. Хэрэглэгчийн шийдвэрүүд
 DOC docs/seasons-camps.md:41-54 ## 2. Улирал
