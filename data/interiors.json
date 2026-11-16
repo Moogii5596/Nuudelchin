@@ -1,5 +1,5 @@
 ﻿{
-  "_doc": "gerSize = гэр төрлийн өрөө (render/ger makeGerInterior): r, entry, exit, саад нь data/ger.json-оос тооцогдоно (home — тоглогчийн гэр, helper — туслахын гэр); тавилга нь гэрийн загварын нэг хэсэг тул spots хоосон. dwellingBaseRadius = туслахын/айлын гэрийн хуучин загварын радиус (S1-ээр шинэ загвар холбогдтол). V6.1 Орж болдог барилгын дотор тал. Өрөө бүр өөрийн координаттай (төв 0,0; хаалга нь урд (z+) ханын голд). enterR = гаднах хаалганаас E дарж орох зай (м). exitR = хаалганы дэргэд E дарж гарах зай. counterR = лангуу/тооцооны цэгээс E дарах зай. campDoorOut/dwellingDoorOut = гэрийн хаалганы цэг (гэрийн гадна талаас, м). kindRoom = сумын төвийн барилгын kind → өрөөний төрөл; idRoom = тодорхой барилгын id-д өөр өрөө (хоосон бол kindRoom). V3.5: өрөөний w,d,h нь data/buildings.json-ийн барилгын «дотор өрөө»-д багтана (tests/buildings.test.ts). rooms.*.spots = тавилга байрлуулах цэгүүд (V6.2-т ашиглана, одоохондоо дүрслэгдэхгүй). counter = лангуу: энд E дарвал тухайн барилгын цонх (худалдаа, дуган, ЗДТГ, банк, цайны газар) нээгдэнэ — гаднах хаалганы үйлдэл дотроос ч ажиллана. V3.5: house* өрөө — хашаа байшингийн дотор тал (render/building/interior.ts), хэмжээ, саад, орох/гарах цэг, лангуу нь data/buildings.json-оос тооцогдоно (sim/systems/houseLayout.ts); idRoom «:owned» = худалдаж авсны дараа тавилгатай.",
+  "_doc": "gerSize = гэр төрлийн өрөө (render/ger makeGerInterior): r, entry, exit, саад нь data/ger.json-оос тооцогдоно (home — тоглогчийн гэр, helper — туслахын гэр); тавилга нь гэрийн загварын нэг хэсэг тул spots хоосон. dwellingBaseRadius = туслахын/айлын гэрийн хуучин загварын радиус (S1-ээр шинэ загвар холбогдтол). V6.1 Орж болдог барилгын дотор тал. Өрөө бүр өөрийн координаттай (төв 0,0; хаалга нь урд (z+) ханын голд). enterR = гаднах хаалганаас E дарж орох зай (м). exitR = хаалганы дэргэд E дарж гарах зай. counterR = лангуу/тооцооны цэгээс E дарах зай. campDoorOut/dwellingDoorOut = гэрийн хаалганы цэг (гэрийн гадна талаас, м). kindRoom = сумын төвийн барилгын kind → өрөөний төрөл; idRoom = тодорхой барилгын id-д өөр өрөө (хоосон бол kindRoom). V3.5: өрөөний w,d,h нь data/buildings.json-ийн барилгын «дотор өрөө»-д багтана (tests/buildings.test.ts). rooms.*.spots = тавилга байрлуулах цэгүүд (V6.2-т ашиглана, одоохондоо дүрслэгдэхгүй). counter = лангуу: энд E дарвал тухайн барилгын цонх (худалдаа, дуган, ЗДТГ, банк, цайны газар) нээгдэнэ — гаднах хаалганы үйлдэл дотроос ч ажиллана. V3.5: house* өрөө — хашаа байшингийн дотор тал (render/building/interior.ts), хэмжээ, саад, орох/гарах цэг, лангуу нь data/buildings.json-оос тооцогдоно (sim/systems/houseLayout.ts); idRoom «:owned» = худалдаж авсны дараа тавилгатай. V6.2: school, temple — publicInterior (render/building/publicInterior.ts, лабораторийн батлагдсан дотор тал; тавилгын саад sim/systems/publicLayout.ts-ээр data/buildings.json interior.public-оос тооцогдоно). spots: kind work = NPC-ийн ажлын цэг.",
   "enterR": 3.2,
   "exitR": 1.8,
   "counterR": 2.0,
@@ -71,7 +71,7 @@
       "spots": []
     },
     "school": {
-      "shape": "box", "w": 14, "d": 10, "h": 2.9,
+      "shape": "box", "w": 14, "d": 10, "h": 2.9, "publicInterior": "school",
       "floor": "#b9a37a", "wall": "#e7e2d0", "trim": "#5d7a4a",
       "light": { "color": "#fff1d0", "intensity": 12 },
       "entry": [0, 3.8], "exit": [0, 4.8], "counter": null,
@@ -83,21 +83,37 @@
         { "id": "desk_3", "kind": "desk", "x": 3.5, "z": -0.8, "rot": 0 },
         { "id": "desk_4", "kind": "desk", "x": -3.5, "z": 1.6, "rot": 0 },
         { "id": "desk_5", "kind": "desk", "x": 0, "z": 1.6, "rot": 0 },
-        { "id": "desk_6", "kind": "desk", "x": 3.5, "z": 1.6, "rot": 0 }
+        { "id": "desk_6", "kind": "desk", "x": 3.5, "z": 1.6, "rot": 0 },
+        { "id": "desk_7", "kind": "desk", "x": -3.5, "z": -2.0, "rot": 0 },
+        { "id": "desk_8", "kind": "desk", "x": 0, "z": -2.0, "rot": 0 },
+        { "id": "desk_9", "kind": "desk", "x": 3.5, "z": -2.0, "rot": 0 },
+        { "id": "desk_10", "kind": "desk", "x": -3.5, "z": 0.4, "rot": 0 },
+        { "id": "desk_11", "kind": "desk", "x": 0, "z": 0.4, "rot": 0 },
+        { "id": "desk_12", "kind": "desk", "x": 3.5, "z": 0.4, "rot": 0 },
+        { "id": "map", "kind": "map", "x": -7, "z": -1.2, "rot": 1.57 },
+        { "id": "bookcase", "kind": "shelf", "x": -6.55, "z": 2.6, "rot": 1.57 },
+        { "id": "teacher_board", "kind": "work", "x": -1.25, "z": -4.1, "rot": 0 },
+        { "id": "teacher_chair", "kind": "work", "x": 0, "z": -3.85, "rot": 0 }
       ]
     },
     "temple": {
-      "shape": "box", "w": 9.4, "d": 9, "h": 3.7,
+      "shape": "box", "w": 9.4, "d": 9, "h": 3.7, "publicInterior": "temple",
       "floor": "#6b4a2e", "wall": "#b8402a", "trim": "#d9a93a",
       "light": { "color": "#ffbf6a", "intensity": 9 },
-      "entry": [0, 3.3], "exit": [0, 4.2], "counter": [0, -2.4],
+      "entry": [0, 3.3], "exit": [0, 4.2], "counter": [0, -1.8],
       "spots": [
         { "id": "altar", "kind": "altar", "x": 0, "z": -3.8, "rot": 0 },
         { "id": "donation", "kind": "chest", "x": 0, "z": -2.4, "rot": 0 },
         { "id": "seat_w1", "kind": "seat", "x": -2.82, "z": -1, "rot": 0 },
         { "id": "seat_w2", "kind": "seat", "x": -2.82, "z": 0.8, "rot": 0 },
         { "id": "seat_e1", "kind": "seat", "x": 2.82, "z": -1, "rot": 0 },
-        { "id": "seat_e2", "kind": "seat", "x": 2.82, "z": 0.8, "rot": 0 }
+        { "id": "seat_e2", "kind": "seat", "x": 2.82, "z": 0.8, "rot": 0 },
+        { "id": "lama_head", "kind": "work", "x": -2.82, "z": -2.7, "rot": 1.57 },
+        { "id": "lama_read", "kind": "work", "x": -2.82, "z": -1.0, "rot": 1.57 },
+        { "id": "lama_drum", "kind": "work", "x": 2.82, "z": -2.7, "rot": -1.57 },
+        { "id": "pilgrim", "kind": "work", "x": 0, "z": -1.9, "rot": 3.14 },
+        { "id": "drum", "kind": "drum", "x": 1.87, "z": -2.7, "rot": -1.57 },
+        { "id": "prayer_wheel", "kind": "wheel", "x": 3.75, "z": 3.45, "rot": 0 }
       ]
     },
     "admin": {

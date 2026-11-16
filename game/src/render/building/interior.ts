@@ -148,14 +148,14 @@ export function makeInterior(key) {
  * Тэр ханын хавтгай (z ≈ zi, x ≈ xi) ба амбаарын гадна хананы ойр дахь ийм өнгийн жижиг гурвалжныг хасна. Лабораторид: хүрээ, тавцанг
  * гадна талд зурахгүй (эсвэл тусдаа mesh) болгох нь зөв.
  */
-export function trimFrontStrip(geo, zi, xi, extra = []) {
+export function trimFrontStrip(geo, zi, xi, extra = [], tol = 0.2) {
   const BC = BUILDING_CONFIG, tr = rgb(BC.palette.trim, 0.7), sill = rgb('#F4F1EA'), near = (a, b) => Math.abs(a - b) < 0.004;
   const isCol = (i, c) => near(geo.c[i], c[0]) && near(geo.c[i + 1], c[1]) && near(geo.c[i + 2], c[2]);
   const planes = [{ ax: 2, v: zi }, { ax: 0, v: xi }, ...extra];
   const drop = (i) => { let lo = Infinity, hi = -Infinity, ymin = Infinity;
     const isTr = isCol(i, tr), isSill = isCol(i, sill); if (!isTr && !isSill) return false;
     for (const p of planes) { lo = Infinity; hi = -Infinity; for (let k = 0; k < 3; k++) { const a = geo.p[i + k * 3 + p.ax]; lo = Math.min(lo, a); hi = Math.max(hi, a); ymin = Math.min(ymin, geo.p[i + k * 3 + 1]); }
-      if (lo >= p.v - 0.2 && hi <= p.v + 0.12) return isTr || ymin >= 0.8; }
+      if (lo >= p.v - tol && hi <= p.v + 0.12) return isTr || ymin >= 0.8; }
     return false; };
   const P = [], N = [], Cc = [], U = [];
   for (let i = 0; i < geo.p.length; i += 9) if (!drop(i)) { for (let k = 0; k < 9; k++) { P.push(geo.p[i + k]); N.push(geo.n[i + k]); Cc.push(geo.c[i + k]); } const u = i / 9 * 6; for (let k = 0; k < 6; k++) U.push(geo.u[u + k]); }

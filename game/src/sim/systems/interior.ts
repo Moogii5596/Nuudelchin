@@ -11,6 +11,7 @@ import type { GameConfig } from '../config';
 import type { GameState, InteriorState } from '../state';
 import { allBuildings, facingOf, plotHouse, sumDoors, TRADE_ROLES, type Facing } from './sumtown';
 import { houseRoom, clampToWalk, type WalkRect } from './houseLayout';
+import { publicBlockers } from './publicLayout';
 import { GATE_PHI } from './buildingSize';
 import { gerBlockers, gerBoxes, gerDoorOffset, gerInnerRadius, pushOutOfBox, type LayoutBox } from './gerLayout';
 
@@ -50,6 +51,8 @@ export interface RoomSpec {
   blockers?: LayoutBox[];
   /** V3.5 хашаа байшин: data/buildings.json interior түлхүүр (houseA|houseB|houseBf|houseC). w, d, h, entry, exit, counter, walk, blockers нь тооцогдоно (houseLayout.ts) */
   house?: string;
+  /** V6.2 нийтийн барилгын дотор тал (school | temple) — render/building/publicInterior.ts; саад publicLayout.ts-ээс (blockers) */
+  publicInterior?: string;
   /** Алхах талбай (биеийн төв): гол өрөө + амбаар + хаалганы завсар. Байхгүй бол w × d тэгш өнцөгт */
   walk?: WalkRect[];
 }
@@ -173,11 +176,15 @@ const resolved = new WeakMap<GameConfig, Map<string, RoomSpec>>();
 export function roomSpec(cfg: GameConfig, id: string, homeSize: string = cfg.ger.home.size): RoomSpec | null {
   const raw = cfg.interiors.rooms[id];
   if (!raw) return null;
-  if (!raw.gerSize && !raw.house) return raw;
+  if (!raw.gerSize && !raw.house && !raw.publicInterior) return raw;
   let m = resolved.get(cfg);
   if (!m) resolved.set(cfg, (m = new Map()));
   const ck = `${id}|${raw.gerSize === 'home' ? homeSize : ''}`;
   let r = m.get(ck);
+  if (!r && raw.publicInterior) {
+    r = { ...raw, blockers: publicBlockers(raw.publicInterior, raw) };
+    m.set(ck, r);
+  }
   if (!r && raw.house) {
     const H = houseRoom(raw.house, cfg.interiors.bodyR);
     r = { ...raw, shape: 'box', w: H.w, d: H.d, h: H.h, entry: H.entry, exit: H.exit, exitR: 0.9, counter: H.counter, spots: [], walk: H.walk, blockers: H.blockers };
@@ -200,7 +207,7 @@ export function roomGerSize(cfg: GameConfig, room: RoomSpec, homeSize: string = 
 /** Тоглогч орсон өрөө (дотор биш бол null) */
 export function currentRoom(cfg: GameConfig, state: GameState): RoomSpec | null {
   const it = state.player.interior;
-  return it ? roomSpec(cfg, it.room, state.homeSize) : null;
+  return it ? roomSpec(cfg, it.room, gerSizeOfDoor(state, it.door)) : null;
 }
 
 /** Өрөөний хэмжээнд байрлалыг хязгаарлана (хана, bodyR) */
@@ -233,7 +240,14 @@ export function clampToRoom(cfg: GameConfig, room: RoomSpec, x: number, z: numbe
     return p;
   }
   const hx = (room.w ?? 6) / 2 - b, hz = (room.d ?? 6) / 2 - b;
-  return { x: Math.max(-hx, Math.min(hx, x)), z: Math.max(-hz, Math.min(hz, z)) };
+  let px = Math.max(-hx, Math.min(hx, x)), pz = Math.max(-hz, Math.min(hz, z));
+  for (let pass = 0; room.blockers && pass < 4; pass++) {   // тавилгын саад (нийтийн барилга)
+    for (const o of room.blockers) ({ x: px, z: pz } = pushOutOfBox(o, px, pz, b));
+    const qx = Math.max(-hx, Math.min(hx, px)), qz = Math.max(-hz, Math.min(hz, pz));
+    if (qx === px && qz === pz) break;
+    px = qx; pz = qz;
+  }
+  return { x: px, z: pz };
 }
 
 // ======================= Орох, гарах, хөдлөх =======================
@@ -247,7 +261,7 @@ export function enterBuilding(cfg: GameConfig, state: GameState, doorId?: string
   if (p.mounted) return m('sim.dismount');
   const door = doorId ? enterDoors(cfg, state).find((d) => d.id === doorId) : nearEnterDoor(cfg, state);
   if (!door) return m('sim.no_door_nearby_to');
-  const room = roomSpec(cfg, door.room, state.homeSize);
+  const room = roomSpec(cfg, door.room, gerSizeOfDoor(state, door.id));
   if (!room) return m('sim.the_interior_is_not');
   p.x = door.x;
   p.z = door.z;
@@ -343,7 +357,7 @@ export function validateInteriors(cfg: GameConfig): string[] {
     for (const s of r.spots) {
       if (ids.has(s.id)) e.push(`${w}.spots: "${s.id}" давхардсан`);
       ids.add(s.id);
-      if (!inside(s.x, s.z)) e.push(`${w}.spots.${s.id}: өрөөнөөс гарсан`);
+      if (r.shape === 'box' && r.publicInterior ? Math.abs(s.x) > (r.w ?? 0) / 2 || Math.abs(s.z) > (r.d ?? 0) / 2 : !inside(s.x, s.z)) e.push(`${w}.spots.${s.id}: өрөөнөөс гарсан`);   // нийтийн барилгын spot: тавилга, ханан дээрх зүйл — зөвхөн өрөөний хүрээ
     }
   }
   const seen = new Set<string>();

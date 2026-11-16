@@ -11,10 +11,11 @@ import { buildHouse, buildToilet, buildWoodshed, buildAnimalShed, buildGreenhous
 import { buildShop, buildMilkWool, buildCarDealer, buildFuel } from './shops';
 import { buildPublic, buildTemple, buildMarket, buildStadium, buildWrestle } from './civic';
 import { makeInterior, mirrorGeoX, mirroredHouse } from './interior';
+import { makePublicInterior } from './publicInterior';
 import { buildKhashaa, makePlot as makePlotRaw } from './yard';
 import type { GerBuilt } from '../ger/ger';
 
-export { buildingAtlas, makeInterior, mirrorGeoX, mirroredHouse };
+export { buildingAtlas, makeInterior, mirrorGeoX, mirroredHouse, makePublicInterior };
 export { BUILDING_CONFIG, TOWN, buildingConfigErrors, validateBuildingData } from './config';
 
 export interface BuildingDoor { position: THREE.Vector3; inward: THREE.Vector3; width: number; height: number }

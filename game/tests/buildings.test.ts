@@ -165,3 +165,42 @@ describe('хашаа байшингийн дотор тал (V6.1/V6.2, лабо
     expect(houseRoom('houseB', 0.35).blockers.length).toBeLessThan(houseRoom('houseBf', 0.35).blockers.length);
   });
 });
+
+import { makePublicInterior } from '../src/render/building';
+
+describe('нийтийн барилгын дотор тал (V6.2, S2 батлагдсан): сургуулийн анги, дуган', () => {
+  const ids = ['school', 'temple'];
+  it('geometr: шал, хана, тавилга; лабораторийн хэмжилттэй ойролцоо (анги ~5.7k, дуган ~4.6k гурвалжин)', () => {
+    for (const [id, lim] of [['school', 6500], ['temple', 5300]] as const) {
+      const room = roomSpec(cfg, id)!, it = makePublicInterior(id, room)!;
+      const tri = it.shell.triangles + it.ceil.triangles + it.furn.triangles;
+      expect(tri, id).toBeGreaterThan(3000); expect(tri, id).toBeLessThanOrEqual(lim);
+      expect(it.shell.p.every(Number.isFinite) && it.furn.p.every(Number.isFinite), id).toBe(true);
+      expect(it.lights.length).toBe(4);
+    }
+  });
+  it('саад: орох цэгээс E лангуу, NPC-ийн ажлын цэг, гарах цэгт хүрч болно; өрөөний бүх spot хүрээнд', () => {
+    expect(validateInteriors(cfg)).toEqual([]);
+    for (const id of ids) {
+      const room = roomSpec(cfg, id)!, step = 0.1, seen = new Set<string>(), key = (x: number, z: number): string => Math.round(x * 1000) + ',' + Math.round(z * 1000);
+      const free = (x: number, z: number): boolean => { const c = clampToRoom(cfg, room, x, z); return Math.abs(c.x - x) < 1e-6 && Math.abs(c.z - z) < 1e-6; };
+      expect(room.blockers!.length, id).toBeGreaterThan(5);
+      expect(free(room.entry[0], room.entry[1]), id + ' entry').toBe(true);
+      const q: [number, number][] = [[room.entry[0], room.entry[1]]]; seen.add(key(q[0]![0], q[0]![1]));
+      while (q.length) { const [x, z] = q.pop()!; for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) { const nx = x + dx * step, nz = z + dz * step, k = key(nx, nz); if (!seen.has(k) && free(nx, nz)) { seen.add(k); q.push([nx, nz]); } } }
+      const near = (p: [number, number]): boolean => [...seen].some((s) => { const [a, b] = s.split(',').map(Number) as [number, number]; return Math.hypot(a / 1000 - p[0], b / 1000 - p[1]) < 0.3; });
+      if (room.counter) expect(near(room.counter), id + ' counter').toBe(true);
+      expect(near(room.exit), id + ' exit').toBe(true);
+      for (const s of room.spots.filter((p) => ['teacher_board', 'pilgrim'].includes(p.id)))   // зогсох ажлын цэг (сандал, олбог — суудал)
+        expect(near([s.x, s.z]), `${id} ${s.id} (NPC ажлын цэг)`).toBe(true);
+    }
+  });
+  it('NPC-ийн дотор байрлал (npcs.json inside) тавилганд орохгүй', () => {
+    for (const n of cfg.npcs.npcs) for (const id of ids) {
+      const p = n.inside[id]; if (!p) continue;
+      if (n.role === 'pupil') { expect(Math.abs(p[0]), n.id).toBeLessThan(7); continue; }   // сурагч сандал дээр сууна (саадтай хэсэг)
+      const room = roomSpec(cfg, id)!, c = clampToRoom(cfg, room, p[0], p[1]);
+      expect(Math.hypot(c.x - p[0], c.z - p[1]), `${n.id} ${id}`).toBeLessThan(0.45);   // зогсож байгаа тул бага зэрэг түлхэлтийг зөвшөөрнө
+    }
+  });
+});

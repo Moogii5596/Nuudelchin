@@ -13,7 +13,8 @@ import type { NpcView } from './npcs';
 import { GER } from './ger/config';
 import { makeGer } from './ger/ger';
 import { makeGerInterior } from './ger/gerInterior';
-import { makeBuildingMaterials, makeInterior } from './building';
+import { BUILDING_CONFIG, makeBuildingMaterials, makeInterior, makePublicInterior } from './building';
+import { outlineMaterial } from './ger/geo';
 import { trimFrontStrip } from './building/interior';
 
 const GOLD = 0xf2c14e;
@@ -182,10 +183,54 @@ export class InteriorView {
     return g;
   }
 
+  /**
+   * V6.2 нийтийн барилга (сургуулийн анги, дуган): лабораторийн makePublicInterior — хана (доод тос будаг), банзан шал, цонх, хаалга, тааз, чийдэн,
+   * тавилга. Бүгд нэг Geo + атлас (шөнө чийдэн гэрэлтэнэ), бэхэн хүрээ зөвхөн тавилгад. Ороход л ачаална. Саад — sim/systems/publicLayout (room.blockers).
+   */
+  private buildPublic(room: RoomSpec): THREE.Group {
+    const g = new THREE.Group();
+    const it = makePublicInterior(room.publicInterior!, room);
+    if (!it) throw new Error(`public interior "${room.publicInterior}" алга`);
+    const mats = makeBuildingMaterials();
+    mats.setGlow(0.9);
+    const all = it.shell;
+    all.append(it.furn);   // тааз (it.ceil) нэмэхгүй: дээрээс харахад зөвхөн чийдэнгийн хайрцаг харагдана (гэрэл — PointLight)
+    { const hw = (room.w ?? 6) / 2, hd = (room.d ?? 6) / 2; trimFrontStrip(all, hd, hw, [], 0.3); }   // камерын талын (урд, зүүн) хаагдсан ханын цонхны хүрээ, тавцан
+    const geometry = all.build(), furnGeo = it.furn.build();
+    const outline = outlineMaterial(BUILDING_CONFIG.palette.outline, BUILDING_CONFIG.interior.public.style.outlineW);
+    this.disposers.push(() => { geometry.dispose(); furnGeo.dispose(); mats.dispose(); outline.dispose(); });
+    const body = new THREE.Mesh(geometry, mats.mat);
+    body.name = 'public:interior';
+    const ol = new THREE.Mesh(furnGeo, outline);
+    ol.name = 'public:furniture-outline';
+    g.add(body, ol);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(room.w ?? 6, room.d ?? 6).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ visible: false }));
+    floor.name = 'ground';
+    g.add(floor);
+    this.ground = floor;
+    if (room.counter) {
+      const ring = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.75, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: GOLD, transparent: true, opacity: 0.85 }));
+      ring.position.set(room.counter[0], 0.03, room.counter[1]);
+      g.add(ring);
+      this.ring = ring;
+    }
+    const lights = it.lights.map((v) => {
+      const l = new THREE.PointLight(new THREE.Color(room.light.color), room.light.intensity * 0.5, 10, 1.2);
+      l.position.set(v.x, v.y, v.z);
+      this.scene.add(l);
+      this.disposers.push(() => this.scene.remove(l));
+      return l;
+    });
+    this.lamp = lights[0] ?? null;
+    this.hemi.color.set(room.light.color).lerp(new THREE.Color(0xffffff), 0.6);
+    return g;
+  }
+
   private build(room: RoomSpec): THREE.Group {
     const gerSize = roomGerSize(this.cfg, room, this.homeSize);
     if (gerSize) return this.buildGer(room, gerSize);
     if (room.house) return this.buildHouse(room);
+    if (room.publicInterior) return this.buildPublic(room);
     const g = new THREE.Group();
     const I = this.cfg.interiors;
     const mat = (c: string, side: THREE.Side = THREE.FrontSide): THREE.MeshLambertMaterial => new THREE.MeshLambertMaterial({ color: new THREE.Color(c), side });
