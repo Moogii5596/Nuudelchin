@@ -26,7 +26,7 @@
 <div id="canvas-wrap"></div>
 <div id="loading">Ачааллаж байна…</div>
 <div id="hud">
-  <h1>Хонь, ямаа (батлагдсан), үхэр C1–C3 — дэлгэрэнгүй ба сүргийн хөнгөн хувилбар</h1>
+  <h1>Хонь, ямаа, үхэр (батлагдсан) — дэлгэрэнгүй ба сүргийн хөнгөн хувилбар</h1>
   <p>Чирж эргүүлнэ, гүйлгэж томруулна. Малчин (1.7 м) жишиг.</p>
 </div>
 <div id="stats"></div>
@@ -34,7 +34,7 @@
 <div id="panel">
   <div class="grp" id="gSpecies"><span class="t">Амьтан</span></div>
   <div class="grp" id="gGoat" style="display:none"><span class="t">Ямаа</span></div>
-  <div class="grp" id="gCow" style="display:none"><span class="t">Үхрийн загвар</span></div>
+  <div class="grp" id="gCow" style="display:none"><span class="t">Эвэр</span></div>
   <div class="grp" id="gMode"><span class="t">Загвар</span></div>
   <div class="grp" id="gHead"><span class="t">Толгойг ойроос</span></div>
   <div class="grp" id="gAngle"><span class="t">Өнцөг</span></div>
@@ -56,7 +56,7 @@
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 
 /* =====================================================================
  * Хэв маяг: render/character/ (малчин)-тай ижил хэл — гөлгөр Lambert, эргэлтийн биет (Lathe),
@@ -97,7 +97,7 @@ const triOf = (g) => (g.index ? g.index.count : g.attributes.position.count) / 3
 
 /* ---------- Хонины хэсгүүд (дэлгэрэнгүй ба хөнгөн хоёулаа хэрэглэнэ; seg/rows параметртэй) ---------- */
 /** Бие: нэг цэвэр торх (superellipse профайлтай lathe, урт нь z тэнхлэгт) */
-function bodyGeo({ L, R, wide, p, sag = 0 }, seg = 44, rows = 44) {
+function bodyGeo({ L, R, wide, p, sag = 0, crest = null }, seg = 44, rows = 44) {
   const pts = [];
   for (let i = 0; i <= rows; i++) {
     const t = -Math.cos(Math.PI * i / rows);       // үзүүр рүү нягт
@@ -116,7 +116,18 @@ function bodyGeo({ L, R, wide, p, sag = 0 }, seg = 44, rows = 44) {
     if (sag) { const y = pos.getY(i), u = pos.getZ(i) / (L / 2); if (y > 0) pos.setY(i, y - sag * (1 - u * u) * (y / R)); }   // хөгшин: нуруу бага зэрэг хонхойно
   }
   g.setAttribute('normal', new THREE.Float32BufferAttribute(an, 3));
-  return g;
+  if (!crest) return g;
+  /* Бухын мөр: нурууны урд хагас (мөр, сэрвээ) дээш өргөгдөж хажуу тийш өргөсөнө — биетэйгээ нэг гөлгөр гадаргуу.
+   * crest.h — өргөлт (м), wide — өргөсөлт (харьцаа), zm/zw — уртын дагуух төв ба тархалт (−1 хойд … 1 урд) */
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), y = pos.getY(i), u = pos.getZ(i) / (L / 2), w = Math.exp(-(((u - crest.zm) / crest.zw) ** 2)), top = Math.max(0, y / R);
+    pos.setY(i, y + crest.h * w * Math.pow(top, 1.3));
+    pos.setX(i, x * (1 + crest.wide * w * (0.35 + 0.65 * top)));
+  }
+  g.deleteAttribute('uv');
+  const mg = mergeVertices(g);
+  mg.computeVertexNormals();
+  return mg;
 }
 /** Хүзүү: богино бүдүүн хоолой (+z руу), урт нь len */
 function neckGeo(len, seg = 24, rows = 5, rk = 1) {
@@ -154,10 +165,9 @@ function skirtGeo(d, NZ, NJ) {
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
   return g;
 }
-/** Үхрийн биеийн нэмэлт: бух = мөр (хөх), үнээ = дэлэн; adult=false бол байхгүй */
+/** Үхрийн биеийн нэмэлт: үнээ = дэлэн (бухын мөр нь bodyGeo crest); adult=false бол байхгүй */
 function bodyExtraGeos(d, male, adult, q) {
   const R = d.body.R, out = [];
-  if (adult && male && d.hump) { const h = d.hump; out.push({ g: ellipsoid(h.r[0], h.r[1], h.r[2], [0, R * h.y, h.z], q[0], q[1]), slot: 1, rgb: 0xffffff }); }
   if (adult && !male && d.udder) { const u = d.udder; out.push({ g: ellipsoid(u.r[0], u.r[1], u.r[2], [0, -R * u.y, u.z], q[0], q[1]), slot: 0, rgb: LAB.palette.udder }); }
   return out;
 }
@@ -179,14 +189,16 @@ function legGeoDetail(len, r0, r1) {
   const g = new THREE.LatheGeometry(pts, 16); g.computeVertexNormals(); return g;
 }
 /** Хоёр үетэй хөл: дээд (хонго→өвдөг/шагай), доод (өвдөг→туурай); хоёр хэсгийн хэлбэр нь нэг профайлын хоёр хагас */
-const legRm = (d) => (d.legR0 + d.legR1) / 2 + 0.004;
+const legRm = (d) => d.kneeR ?? (d.legR0 + d.legR1) / 2 + 0.004;
 const legLens = (d) => { const lu = d.legLen * (d.legSplit ?? 0.5); return { lu, ll: d.legLen - lu, hh: d.hoofH ?? 0.045, hk: d.hoofK ?? 1 }; };
-function legUpperGeo(lu, r0, rm) {
-  const pts = [[0, 0], [r0 * 0.92, -0.012], [r0, -0.04], [rm, -lu]].map(([x, y]) => new THREE.Vector2(x, y));
+function legUpperGeo(lu, r0, rm, thigh = 0) {
+  const pts = (thigh ? [[0, 0], [r0 * 0.9, -0.012], [r0 * thigh, -lu * 0.3], [(r0 + rm) / 2, -lu * 0.7], [rm * 1.12, -lu * 0.94], [rm, -lu]]   // булчинлаг гуя/шуу → өвдөг
+    : [[0, 0], [r0 * 0.92, -0.012], [r0, -0.04], [rm, -lu]]).map(([x, y]) => new THREE.Vector2(x, y));
   const g = new THREE.LatheGeometry(pts, 16); g.computeVertexNormals(); return g;
 }
-function legLowerGeo(len, rm, r1) {
-  const pts = [[rm, 0], [(rm + r1) / 2 + 0.002, -len * 0.45], [r1, -len * 0.92], [r1 * 0.96, -len], [0, -len]].map(([x, y]) => new THREE.Vector2(x, y));
+function legLowerGeo(len, rm, r1, thigh = 0) {
+  const pts = (thigh ? [[rm, 0], [r1 * 1.08, -len * 0.3], [r1, -len * 0.72], [r1 * 1.18, -len * 0.9], [r1 * 0.98, -len], [0, -len]]   // нарийн шилбэ, шагайн товгор
+    : [[rm, 0], [(rm + r1) / 2 + 0.002, -len * 0.45], [r1, -len * 0.92], [r1 * 0.96, -len], [0, -len]]).map(([x, y]) => new THREE.Vector2(x, y));
   const g = new THREE.LatheGeometry(pts, 16); g.computeVertexNormals(); return g;
 }
 function hoofGeo(r, ys = 1) {
@@ -209,6 +221,8 @@ function tailGeo({ w, h, d }, sw = 28, sh = 20) {
  * чих = навч хэлбэртэй, хажуу тийш доош унжсан нимгэн хавтан (гадна тал толгойн өнгө, дотор тал ягаан саарал).
  * Бүх тоо нь sp.head (LAB-ийн доор) — hx: хажуу тийш нарийсалт, zb: эргэх цэг (уртын хувь). */
 const FW = 2048, FH = 1024;                                       // малчны нүүрний canvas (жишиг малчинд)
+/** Хөндлөн огтлолын дөрвөлжин хэлбэр: superellipse (h.square = n; байхгүй бол дугуй) */
+const sqK = (h, a) => (h.square ? Math.pow(Math.pow(Math.abs(Math.cos(a)), h.square) + Math.pow(Math.abs(Math.sin(a)), h.square), -1 / h.square) : 1);
 const radAt = (h, t) => {
   const base = h.rn + (h.r - h.rn) * (1 - smooth01(0.28, 0.85, t));
   const cap = t < 0.12 ? Math.sqrt(Math.max(0, 1 - Math.pow(1 - t / 0.12, 2))) : 1;
@@ -222,7 +236,7 @@ function headSkull(h, seg, rows) {
   g.applyMatrix4(new THREE.Matrix4().makeRotationX(Math.PI / 2));    // y → z (урагш)
   const p = g.attributes.position;
   for (let i = 0; i < p.count; i++) {
-    const x = p.getX(i) * h.hx, z = p.getZ(i); let y = p.getY(i);
+    const k = sqK(h, Math.atan2(p.getY(i), p.getX(i))), x = p.getX(i) * k * h.hx, z = p.getZ(i); let y = p.getY(i) * k;
     if (h.bridge && y > 0) y += h.bridge * Math.sin(Math.PI * Math.min(1, Math.max(0, (z / h.L - 0.3) / 0.6))) * Math.min(1, y / (h.r * 0.5));
     p.setXYZ(i, x, y, z - h.zb * h.L);
   }
@@ -230,7 +244,7 @@ function headSkull(h, seg, rows) {
   return g;
 }
 const surf = (h, t, phi, sx, out = 0) => {
-  const r = radAt(h, t) + out;
+  const r = radAt(h, t) * sqK(h, phi) + out;
   return new THREE.Vector3(sx * Math.cos(phi) * r * h.hx, Math.sin(phi) * r, t * h.L - h.zb * h.L);
 };
 /** Өнгө: headC өгвөл (дэлгэрэнгүй) оройн өнгөнд шууд шингээнэ; үгүй бол (хөнгөн) slot 1 = instanceColor-оор үржинэ, slot 0 = тогтмол */
@@ -249,7 +263,7 @@ function paintSkull(g, h, headC) {
   paint(g, 1, 0xffffff, headC);
   const p = g.attributes.position, col = g.attributes.color, sl = g.attributes.aSlot, tip = new THREE.Color(h.tip ?? LAB.palette.muzzleTip);
   for (let i = 0; i < p.count; i++) {
-    const w = smooth01(0.72, 0.95, (p.getZ(i) + h.zb * h.L) / h.L);       // хошууны үзүүр цайвар саарал
+    const tt = h.tipT ?? [0.72, 0.95], w = smooth01(tt[0], tt[1], (p.getZ(i) + h.zb * h.L) / h.L);       // хошууны үзүүр цайвар
     if (headC) col.setXYZ(i, headC.r + (tip.r - headC.r) * w, headC.g + (tip.g - headC.g) * w, headC.b + (tip.b - headC.b) * w);
     else { sl.setX(i, 1 - w); col.setXYZ(i, 1 + w * (tip.r - 1), 1 + w * (tip.g - 1), 1 + w * (tip.b - 1)); }
   }
@@ -288,7 +302,7 @@ function makeHead(h, q, headC, o = {}) {
   const M = new THREE.Matrix4(), M2 = new THREE.Matrix4();
   for (const sx of [-1, 1]) {
     // нүд: толгойн хажуу, өндрийн дунд-дээд, духнаас хошуу хүртэлх зайн ~1/3
-    const phi = 0.38, pos = surf(h, h.eyeT, phi, sx, 0.0015), pk = h.pupil || [0.55, 0.7];
+    const phi = h.eyePhi ?? 0.38, pos = surf(h, h.eyeT, phi, sx, 0.0015), pk = h.pupil || [0.55, 0.7];
     M.makeRotationZ(sx * phi).multiply(M2.makeRotationY(sx * Math.PI / 2));
     const nrm = new THREE.Vector3(sx * Math.cos(phi), Math.sin(phi), 0);
     const cream = new THREE.CircleGeometry(1, q.eyeSeg); cream.scale(h.ea, h.eb, 1); cream.applyMatrix4(M);
@@ -303,7 +317,7 @@ function makeHead(h, q, headC, o = {}) {
     const curve = new THREE.CatmullRomCurve3([0.965, 0.915, 0.86].map((t) => surf(h, t, -0.5, sx, 0.0015)));
     out.details.push(paint(new THREE.TubeGeometry(curve, q.tube[0], 0.0035, q.tube[1], false), 0, P.nose, headC));
     // чих: толгойн дээд хойд булан, навч хэлбэртэй нимгэн хавтан (оройгоороо эргэлтийн цэгтэй)
-    const e = h.ear, ep = surf(h, 0.13, 0.85, sx, -0.004);
+    const e = h.ear, ep = surf(h, e.t ?? 0.13, e.phi ?? 0.85, sx, -0.004);
     const outer = ellipsoid(0.011, e.l / 2, e.w / 2, [0, -e.l * 0.45, 0], q.ear[0], q.ear[1]);
     const op = outer.attributes.position;
     for (let i = 0; i < op.count; i++) { const u = -op.getY(i) / e.l; op.setZ(i, op.getZ(i) * (1 - 0.55 * smooth01(0.3, 1.0, u))); }
@@ -396,7 +410,7 @@ const LAB = {
     walkHz: 5.5, walkAmp: 0.5, kneeWalk: 0.9, stepLen: 0.244, stepGap: [3, 6], stepRepeat: [5, 9], stepDur: 0.9,   // бэлчих үеийн хагас алхам
     blink: { gap: [2, 5], dur: 0.12 }, headNod: 0.03, chewHz: 5.5, earSway: 0.07, walkSpeed: 0.8,
   },
-  herd: { count: 200, cows: 30, radius: 14, goatShare: 0.4, maleShare: 0.35, ageCum: [0.12, 0.2, 0.27, 0.34, 0.93], actCum: [0.2, 0.45, 0.8], fat: [0.1, 1] },
+  herd: { count: 200, cows: 30, polledShare: 0.3, radius: 14, goatShare: 0.4, maleShare: 0.35, ageCum: [0.12, 0.2, 0.27, 0.34, 0.93], actCum: [0.2, 0.45, 0.8], fat: [0.1, 1] },
   lightCap: 320,
 };
 const ageScale = (a) => (a >= 5 ? LAB.age.oldSize : LAB.age.growth[a]);
@@ -450,63 +464,63 @@ const GOAT = {
     { n: 'Саарал', wool: 0x8d8984, head: 0x5d5753 },
   ],
 };
-/* ---------- Үхэр (C1–C3): монгол үхэр — жижиг бүдүүн биетэй, богино хөл, богино эвэр (зарим нь эвэргүй), сэмж, урт сүүл.
- * Ташаа (нурууны орой) ≈ 1.05 м = малчны бүсний түвшин ---------- */
-const deepMerge = (a, b) => { if (b === undefined) return a; if (Array.isArray(b) || typeof b !== 'object' || b === null) return b; const o = { ...a }; for (const k in b) o[k] = deepMerge(a?.[k], b[k]); return o; };
-const COW_BASE = {
-  id: 'cow', name: 'Үхэр', sexBody: true, ageNames: ['Тугал', '1 нас', '2 нас', '3 нас', 'Нас гүйцсэн', 'Хөгшин'],
+/* ---------- Үхэр (батлагдсан: C2-ын бүдүүн намхан бие + C1-ийн богино эвэр; эвэргүй нь сонголт). Монгол үхэр — жижиг бүдүүн
+ * биетэй, богино хөл, өргөн богино дөрвөлжин толгой, сэмж, урт сүүл. Бух: мөр, хүзүүний дээд тал биетэйгээ нэг гөлгөр өргөн
+ * булчин (тусдаа бөх биш). Ташаа (нурууны орой) ≈ 1.05 м = малчны бүсний түвшин ---------- */
+const COW = {
+  id: 'cow', name: 'Үхэр', sexBody: true, polledOption: true, ageNames: ['Тугал', '1 нас', '2 нас', '3 нас', 'Нас гүйцсэн', 'Хөгшин'],
   d: {
-    body: { L: 1.3, R: 0.31, wide: 0.95, p: 2.8 }, bodyY: 0.74,
-    neckAt: [0, 0.78, 0.55], neckRest: 0.1, neckLen: 0.38, neckR: 1.35, headAt: [0, 0, 0.39], headTilt: 0.75,
-    legLen: 0.46, legY: 0.46, legR0: 0.088, legR1: 0.052, legX: 0.17, legZ: 0.46, legSplit: 0.5, hock: 0.22, hoofH: 0.06, hoofK: 1.25,
+    body: { L: 1.25, R: 0.33, wide: 0.97, p: 2.7 }, bodyY: 0.72,
+    neckAt: [0, 0.76, 0.52], neckRest: 0.1, neckLen: 0.34, neckR: 1.45, headAt: [0, 0, 0.3], headTilt: 0.72,
+    legLen: 0.42, legY: 0.42, legR0: 0.1, legR1: 0.04, kneeR: 0.054, thigh: 1.16, legX: 0.18, legZ: 0.46, legSplit: 0.5, hock: 0.22, hoofH: 0.06, hoofK: 1.3,
     tail: { w: 0, h: 0, d: 0 }, tailLong: { len: 0.62, r: 0.022, tuft: 0.06 }, tailAt: [0, 0.9, -0.62], tailRaise: 0.08, wag: 0.1,
-    hump: { r: [0.13, 0.1, 0.17], y: 0.85, z: 0.36 }, udder: { r: [0.1, 0.085, 0.11], y: 0.88, z: -0.42 }, dewlap: { r: [0.022, 0.09, 0.15], y: 0.1, z: 0.12 },
+    crest: { h: 0.085, wide: 0.12, zm: 0.42, zw: 0.34, neck: 1.12 },   // бухын мөр (биеийн гадаргуу), бухын хүзүү ×1.12
+    udder: { r: [0.1, 0.085, 0.11], y: 0.88, z: -0.42 }, dewlap: { r: [0.022, 0.09, 0.15], y: 0.1, z: 0.12 },
   },
   head: {
-    L: 0.40, r: 0.13, rn: 0.092, bridge: 0, eyeT: 0.38, ea: 0.026, eb: 0.021, hx: 1.0, zb: 0.22,
-    pupil: [0.7, 0.75], pupilFwd: 0.1, eyeC: 0x6a4a32, tip: 0xb88a84,
-    ear: { l: 0.17, w: 0.1, droop: 1.3 },
-    horn: { len: 0.2, r0: 0.024, t: 0.12, phi: 1.0, fk: 0.6, pts: [[0, 0, 0], [0.55, 0.1, -0.05], [1.0, 0.45, 0.05], [1.25, 1.0, 0.25]] },
+    // өргөн (hx), богино (L), дөрвөлжиндүү (square), хамар бүдүүн өргөн (rn ≈ r), цайвар хошуу (tip, tipT)
+    L: 0.33, r: 0.14, rn: 0.12, bridge: 0, hx: 1.2, square: 2.7, zb: 0.24,
+    eyeT: 0.33, eyePhi: 0.1, ea: 0.034, eb: 0.029, pupil: [0.72, 0.8], pupilFwd: 0.1, eyeC: 0x6a4a32,   // нүд хажуу тийш, том
+    tip: 0xdccab6, tipT: [0.58, 0.84],
+    ear: { l: 0.16, w: 0.095, droop: 1.45, t: 0.12, phi: 0.32 },                                       // чих хэвтээ, эврийн доор
+    horn: { len: 0.15, r0: 0.026, t: 0.1, phi: 0.95, fk: 0.6, pts: [[0, 0, 0], [0.5, 0.15, 0.02], [0.85, 0.55, 0.12], [0.95, 1.05, 0.2]] },   // C1 богино эвэр, үзүүрээрээ дээш
   },
   motion: { fatX: [0.9, 0.2], fatY: [0.9, 0.2], pitch: 0.22, neckGraze: 1.05, headGraze: 1.35 },
   light: { bodySeg: 14, bodyRows: 8, tail: [5, 3], neck: [6, 2] },
   patchMask: true,
+  patchMap: [[0.15, 0.32, 0.75, 0.32], [-0.55, -0.4, 0.6, 0.3], [0.9, -0.15, 0.45, 0.25], [2.95, 0.05, 0.8, 0.38], [-2.4, -0.55, 0.55, 0.28], [2.2, 0.7, 0.4, 0.2], [1.6, -0.75, 0.5, 0.18]],
+  // Сүргийн дунд хонь, ямаанаас ялгарах тод зүс
   variants: [
-    { n: 'Хүрэн', wool: 0x7a4a2b, head: 0x5e3720 },
-    { n: 'Хар', wool: 0x2b2523, head: 0x1c1816 },
-    { n: 'Алаг (хар цагаан)', wool: 0xf0ebe0, head: 0x2a2420, patch: true },
-    { n: 'Шар', wool: 0xc89a4a, head: 0xa87a38 },
-    { n: 'Хүрэн, цагаан толгойтой', wool: 0x8a5a38, head: 0xe9ddc6 },
+    { n: 'Хар', wool: 0x171312, head: 0x100d0c },
+    { n: 'Улаан хүрэн', wool: 0x8c3416, head: 0x6c260f },
+    { n: 'Алаг (хар цагаан)', wool: 0xf5f1e7, head: 0x171312, leg: 0xddd6ca, patch: true },
+    { n: 'Хүрэн халзан (цагаан толгой)', wool: 0x7a2c12, head: 0xf2ece0, leg: 0x6a2610 },
+    { n: 'Шар', wool: 0xc4782a, head: 0x9c5a1e },
   ],
 };
-const COWS = {
-  C1: deepMerge(COW_BASE, { name: 'Үхэр C1 — ердийн' }),
-  C2: deepMerge(COW_BASE, {
-    name: 'Үхэр C2 — бүдүүн намхан, эвэргүй',
-    d: { body: { L: 1.25, R: 0.33, wide: 0.97, p: 2.7 }, bodyY: 0.72, neckAt: [0, 0.76, 0.52], neckLen: 0.34, neckR: 1.45, headAt: [0, 0, 0.35], legLen: 0.42, legY: 0.42, legR0: 0.095, legR1: 0.056, legX: 0.18 },
-    head: { L: 0.38, r: 0.135, rn: 0.096, ear: { l: 0.19, w: 0.11, droop: 1.15 }, horn: null },
-  }),
-  C3: deepMerge(COW_BASE, {
-    name: 'Үхэр C3 — арай өндөр, урт эвэртэй',
-    d: { body: { L: 1.35, R: 0.30, wide: 0.92, p: 2.9 }, bodyY: 0.76, neckAt: [0, 0.8, 0.56], neckLen: 0.42, neckR: 1.3, headAt: [0, 0, 0.43], legLen: 0.5, legY: 0.5, legR0: 0.08, legR1: 0.048 },
-    head: { L: 0.43, r: 0.12, rn: 0.085, horn: { len: 0.19, r0: 0.022, fk: 0.7, pts: [[0, 0, 0], [0.7, 0.2, -0.1], [1.2, 0.8, -0.1], [1.1, 1.5, 0.2], [0.8, 1.9, 0.5]] } },
-  }),
-};
-const SPECIES = { sheep: SHEEP, goat: GOAT, cow: COWS.C1 };
+const SPECIES = { sheep: SHEEP, goat: GOAT, cow: COW };
 /** Алаг зүсний толбо: бие дээрх гөлгөр толбо (биеийн локал координат, м) */
 const PATCH = [[-0.13, 0.06, 0.24, 0.16], [-0.14, -0.04, -0.04, 0.17], [-0.1, 0.1, -0.3, 0.15], [-0.12, -0.1, 0.36, 0.1], [0.13, 0.08, 0.1, 0.18], [0.14, -0.06, -0.26, 0.16], [0.1, 0.1, 0.34, 0.12]];
 const patchK = (x, y, z, sc = 1) => { x /= sc; y /= sc; z /= sc; let v = 0; for (const [bx, by, bz, r] of PATCH) v += Math.exp(-((x - bx) ** 2 + (y - by) ** 2 * 0.8 + (z - bz) ** 2) / (r * r)); return smooth01(0.58, 0.68, v); };
-function paintBodyPatch(g, baseHex, darkHex, sc = 1) {
+/** Үхрийн алаг: биеийн гадаргуу дээрх том толбо — цилиндр координатаар (θ = тойргийн өнцөг, +x баруун = 0; u = урт −1…1),
+ * гадаргуугаас үл хамаарч тод хил. sp.patchMap = [[θ, u, rθ, ru], ...] */
+const patchCyl = (map, L) => (x, y, z) => {
+  const th = Math.atan2(y, x), u = z / (L / 2); let v = 0;
+  for (const [t0, u0, rt, ru] of map) { const dt = Math.atan2(Math.sin(th - t0), Math.cos(th - t0)); v += Math.exp(-((dt / rt) ** 2 + ((u - u0) / ru) ** 2)); }
+  return smooth01(0.42, 0.62, v);
+};
+const patchFn = (sp) => (sp.patchMap ? patchCyl(sp.patchMap, sp.d.body.L) : (x, y, z) => patchK(x, y, z, sp.d.body.R / 0.285));
+function paintBodyPatch(g, baseHex, darkHex, fn) {
   const p = g.attributes.position, col = new Float32Array(p.count * 3), a = new THREE.Color(baseHex), b = new THREE.Color(darkHex), c = new THREE.Color();
-  for (let i = 0; i < p.count; i++) { c.copy(a).lerp(b, patchK(p.getX(i), p.getY(i), p.getZ(i), sc)); col.set([c.r, c.g, c.b], i * 3); }
+  for (let i = 0; i < p.count; i++) { c.copy(a).lerp(b, fn(p.getX(i), p.getY(i), p.getZ(i))); col.set([c.r, c.g, c.b], i * 3); }
   g.setAttribute('color', new THREE.BufferAttribute(col, 3));
 }
-const ui = { species: 'sheep', cow: 'C1', male: true, age: 4, fat: 0.6, variant: 0, action: 'stand', mode: 'detail', herd: false, angle: 'side', blink: true };
+const ui = { species: 'sheep', polled: false, male: true, age: 4, fat: 0.6, variant: 0, action: 'stand', mode: 'detail', herd: false, angle: 'side', blink: true };
 const colorsOf = (V, age) => {
   const o = LAB.age.old;
   const wool = age === 5 ? mix(V.wool, o.woolTo, o.woolK) : V.wool;          // хөгшин: бүдэг саарал
   const head = age === 5 ? mix(V.head, o.headTo, o.headK) : V.head;
-  return { wool, head, leg: mix(head, wool, 0.5) };
+  return { wool, head, leg: V.leg !== undefined ? (age === 5 ? mix(V.leg, o.woolTo, o.woolK) : V.leg) : mix(head, wool, 0.5) };   // V.leg — зүсний хөлийн өнгө (байхгүй бол толгой, биеийн дундаж)
 };
 const newSt = () => ({ ph: Math.random() * 6, t: Math.random() * 40, c: { walk: 0, graze: 0, lie: 0, browse: 0 }, blink: 0, bt: 0, nextBlink: 2, brOn: false, brT: rnd(5, 9) });
 
@@ -533,22 +547,24 @@ function buildDetail(sp) {
   S.headMat = lam(0xffffff, { vertexColors: true });
   S.legMat = lam(col.leg);
   S.hoofMat = lam(LAB.palette.hoof);
-  const bg = bodyGeo({ ...d.body, sag: ui.age === 5 ? LAB.age.old.sag : 0 });
-  if (V.patch) { paintBodyPatch(bg, col.wool, LAB.palette.patch, d.body.R / 0.285); mesh(bg, lam(0xffffff, { vertexColors: true }), S.shape); }
+  const bull = sp.sexBody && ui.male && ui.age >= 3;
+  const bg = bodyGeo({ ...d.body, sag: ui.age === 5 ? LAB.age.old.sag : 0, crest: bull ? d.crest : null });
+  if (V.patch) { paintBodyPatch(bg, col.wool, LAB.palette.patch, patchFn(sp)); mesh(bg, lam(0xffffff, { vertexColors: true }), S.shape); }
   else mesh(bg, S.woolMat, S.shape);
-  mesh(neckGeo(d.neckLen, 24, 5, d.neckR), S.woolMat, S.neck);
+  mesh(neckGeo(d.neckLen, 24, 5, d.neckR * (bull && d.crest ? d.crest.neck : 1)), S.woolMat, S.neck);
   for (const x of bodyExtraGeos(d, ui.male, ui.age >= 3, [20, 14])) mesh(x.g, x.slot ? S.woolMat : lam(x.rgb), S.shape);
   if (d.dewlap) mesh(dewlapGeo(d, 14, 10), S.woolMat, S.neck);
   const tilt = group(S.head); tilt.rotation.x = d.headTilt;
-  const hp = makeHead(sp.head, Q_DETAIL, new THREE.Color(col.head), { hornK: hornK(sp, ui.age, ui.male) });
+  const hp = makeHead(sp.head, Q_DETAIL, new THREE.Color(col.head), { hornK: sp.polledOption && ui.polled ? 0 : hornK(sp, ui.age, ui.male) });
   mesh(mergeGeometries([hp.skull, ...hp.details]), S.headMat, tilt);
   S.eyes = hp.eyes.map((e) => { const g = group(tilt, e.pos.x, e.pos.y, e.pos.z); mesh(e.cream, S.headMat, g); mesh(e.pupil, S.headMat, g); return g; });
   S.ears = hp.ears.map((e) => { const g = group(tilt, e.pos.x, e.pos.y, e.pos.z); g.rotation.z = e.sx * e.droop; g.userData = { sx: e.sx, base: e.droop }; mesh(e.outer, S.headMat, g); mesh(e.inner, S.headMat, g); return g; });
   S.legs.forEach((g) => {
     const { lu, ll, hh, hk } = legLens(d), rm = legRm(d);
-    mesh(legUpperGeo(lu, d.legR0, rm), S.legMat, g.up);
-    mesh(ellipsoid(rm * 0.6, rm * 0.6, rm * 0.6, [0, 0, 0], 12, 8), S.legMat, g.knee);
-    mesh(legLowerGeo(ll - hh, rm, d.legR1), S.legMat, g.low);
+    mesh(legUpperGeo(lu, d.legR0, rm, d.thigh), S.legMat, g.up);
+    const kk = d.thigh ? 0.98 : 0.6;   // булчинлаг хөлд өвдөг тод товойно
+    mesh(ellipsoid(rm * kk, rm * kk, rm * kk, [0, 0, 0], 12, 8), S.legMat, g.knee);
+    mesh(legLowerGeo(ll - hh, rm, d.legR1, d.thigh), S.legMat, g.low);
     mesh(hoofGeo(d.legR1 * hk, hh / 0.045), S.hoofMat, g.low, 0, -(ll - hh) + 0.002, 0);
   });
   mesh(d.tailLong ? cowTailGeo(d, 10, false) : tailGeo(d.tail), S.woolMat, S.tail);
@@ -576,12 +592,16 @@ function prep(g, slot, rgb = 0xffffff) {
 function buildLight(sp) {
   const d = sp.d, Lq = sp.light;
   // 1. бие + сүүл (сүүл нь биеийн хөдөлгөөнтэй хамт; fat-аар хамт томорно)
-  const body = prep(bodyGeo(d.body, Lq.bodySeg, Lq.bodyRows), 1);
-  if (sp.patchMask) { const bp = body.attributes.position, bs = body.attributes.aSlot; for (let i = 0; i < bp.count; i++) bs.setX(i, 1 + patchK(bp.getX(i), bp.getY(i), bp.getZ(i), d.body.R / 0.285)); }
+  const mkTorso = (crest) => {
+    const b = prep(bodyGeo({ ...d.body, crest }, Lq.bodySeg, Lq.bodyRows), 1);
+    if (sp.patchMask) { const pf = patchFn(sp), bp = b.attributes.position, bs = b.attributes.aSlot; for (let i = 0; i < bp.count; i++) bs.setX(i, 1 + pf(bp.getX(i), bp.getY(i), bp.getZ(i))); }
+    return b;
+  };
+  const body = mkTorso(null), bodyBull = d.crest ? mkTorso(d.crest) : body;
   const tail = d.tailLong ? cowTailGeo(d, 4, true) : tailGeo(d.tail, Lq.tail[0], Lq.tail[1]); tail.applyMatrix4(new THREE.Matrix4().makeRotationX(d.tailRaise));
   tail.translate(d.tailAt[0], d.tailAt[1] - d.bodyY, d.tailAt[2]); prep(tail, 1);
   const sk = d.skirt ? prep(skirtGeo(d, ...Lq.skirt), 1, 0xe6e0d8) : null;
-  const mkBody = (male) => mergeGeometries([body, tail, ...(sk ? [sk] : []), ...bodyExtraGeos(d, male, true, [6, 4]).map((x) => prep(x.g, x.slot, x.rgb))]);
+  const mkBody = (male) => mergeGeometries([male ? bodyBull : body, tail, ...(sk ? [sk] : []), ...bodyExtraGeos(d, male, true, [6, 4]).map((x) => prep(x.g, x.slot, x.rgb))]);
   const bodyTail = mkBody(true), bodyTailF = sp.sexBody ? mkBody(false) : null;
   // 2. хүзүү
   const neckG = prep(neckGeo(d.neckLen, Lq.neck[0], Lq.neck[1], d.neckR), 1);
@@ -589,11 +609,14 @@ function buildLight(sp) {
   // 3. толгой + чих + нүд: нүд, хошуу нь оройн өнгө
   // 4. хөл: дээд ×4, доод+туурай ×4 (тус бүр instance); 5 талт
   const { lu, ll, hh, hk } = legLens(d), rm = legRm(d), r0 = d.legR0, r1 = d.legR1, hy = -(ll - hh);
-  const legU = new THREE.LatheGeometry([[r0, 0], [rm, -lu], [rm * 0.6, -lu - 0.012]].map(([x, y]) => new THREE.Vector2(x, y)), 5); legU.computeVertexNormals(); prep(legU, 1);
-  const legL = new THREE.LatheGeometry([[rm, 0], [r1, hy], [r1 * 1.1 * hk, hy], [r1 * 1.02 * hk, -ll]].map(([x, y]) => new THREE.Vector2(x, y)), 5); legL.computeVertexNormals(); prep(legL, 1);
-  const slot = legL.attributes.aSlot, lc = legL.attributes.color, hoof = new THREE.Color(LAB.palette.hoof);
+  const th = d.thigh;   // булчинлаг хөл: гуя товгор, өвдөг тод, шилбэ нарийн (хөнгөн хувилбарт ч)
+  const uPts = th ? [[r0 * 0.95, 0], [r0 * th, -lu * 0.32], [rm * 1.15, -lu]] : [[r0, 0], [rm, -lu], [rm * 0.6, -lu - 0.012]];
+  const lPts = th ? [[rm * 1.1, 0], [r1, hy], [r1 * 1.1 * hk, hy], [r1 * 1.02 * hk, -ll]] : [[rm, 0], [r1, hy], [r1 * 1.1 * hk, hy], [r1 * 1.02 * hk, -ll]];
+  const legU = new THREE.LatheGeometry(uPts.map(([x, y]) => new THREE.Vector2(x, y)), 5); legU.computeVertexNormals(); prep(legU, 1);
+  const legL = new THREE.LatheGeometry(lPts.map(([x, y]) => new THREE.Vector2(x, y)), 5); legL.computeVertexNormals(); prep(legL, 1);
+  const slot = legL.attributes.aSlot, lc = legL.attributes.color, hoof = new THREE.Color(LAB.palette.hoof), nP = lPts.length;
   for (let i = 0; i < legL.attributes.position.count; i++) {
-    if (i % 4 >= 2) { slot.setX(i, 0); lc.setXYZ(i, hoof.r, hoof.g, hoof.b); }   // lathe-ийн 3, 4-р цагираг = туурай
+    if (i % nP >= nP - 2) { slot.setX(i, 0); lc.setXYZ(i, hoof.r, hoof.g, hoof.b); }   // lathe-ийн сүүлийн 2 цагираг = туурай
   }
   const mk = (geo, mult) => {
     const m = new THREE.InstancedMesh(geo, LMAT, LAB.lightCap * mult);
@@ -609,7 +632,10 @@ function buildLight(sp) {
       : { name: 'бие+сүүл', geo: bodyTail, mult: 1, node: (S) => [S.shape], col: (c) => c.wool },
     ...(sp.sexBody ? [{ name: 'бие+сүүл ♀ дэлэн', geo: bodyTailF, mult: 1, node: (S) => [S.shape], col: (c) => c.wool, use: (r) => !(r.male && r.age >= 3), alt: true }] : []),
     { name: 'хүзүү', geo: neck, mult: 1, node: (S) => [S.neck], col: (c) => c.wool },
-    ...(sp.head.horn && !sp.sexBody
+    ...(sp.polledOption   // үхэр: эвэртэй / эвэргүй (тугал ч эвэргүй толгойгоор)
+      ? [{ name: 'толгой+эвэр', geo: lightHeadGeo(sp, { hornK: 1 }), mult: 1, node: (S) => [S.head], col: (c) => c.head, use: (r) => !r.polled && r.age >= 2 },
+         { name: 'толгой эвэргүй', geo: lightHeadGeo(sp, { hornK: 0 }), mult: 1, node: (S) => [S.head], col: (c) => c.head, use: (r) => r.polled || r.age < 2, alt: true }]
+      : sp.head.horn && !sp.sexBody
       ? [{ name: 'толгой ♂+эвэр', geo: lightHeadGeo(sp, { hornK: 1 }), mult: 1, node: (S) => [S.head], col: (c) => c.head, use: (r) => r.male && r.age >= 3 },
          { name: 'толгой ♀', geo: lightHeadGeo(sp, { hornK: sp.head.horn.fk }), mult: 1, node: (S) => [S.head], col: (c) => c.head, use: (r) => !(r.male && r.age >= 3), alt: true }]
       : [{ name: 'толгой+чих+нүд', geo: lightHeadGeo(sp, { hornK: 1 }), mult: 1, node: (S) => [S.head], col: (c) => c.head }]),
@@ -768,7 +794,7 @@ function genRecs() {
       recs.push(newRec({
         sp, x: r * Math.cos(th), z: r * Math.sin(th), yaw: rnd(0, 6.283), age: pickAge(Math.random()),
         fat: rnd(...LAB.herd.fat), variant: Math.floor(Math.random() * SPECIES[sp].variants.length), male: Math.random() < LAB.herd.maleShare,
-        action: pickAct(Math.random()), actT: rnd(2, 12),
+        action: pickAct(Math.random()), actT: rnd(2, 12), polled: sp === 'cow' && Math.random() < LAB.herd.polledShare,
       }));
     }
   }
@@ -792,7 +818,7 @@ function simulateLight(dt) {
         r.x += Math.sin(r.yaw) * spd * dt; r.z += Math.cos(r.yaw) * spd * dt;
       }
     } else {
-      r.sp = ui.species; r.action = ui.action; r.age = ui.age; r.fat = ui.fat; r.variant = ui.variant; r.male = ui.male;
+      r.sp = ui.species; r.action = ui.action; r.age = ui.age; r.fat = ui.fat; r.variant = ui.variant; r.male = ui.male; r.polled = ui.polled;
       r.x = lightX(); r.z = 0; r.yaw = Math.PI / 2;
     }
     rig.st = r.st;
@@ -850,7 +876,7 @@ function frame() {
 
 /* ---------- Самбар ---------- */
 const $ = (id) => document.getElementById(id);
-const btns = { mode: {}, angle: {}, action: {}, species: {}, cow: {} };
+const btns = { mode: {}, angle: {}, action: {}, species: {} };
 const mk = (parent, label, onclick) => { const b = document.createElement('button'); b.textContent = label; b.onclick = onclick; parent.appendChild(b); return b; };
 function syncBtns() {
   for (const [k, b] of Object.entries(btns.mode)) b.classList.toggle('active', k === 'herd' ? ui.herd : (!ui.herd && k === ui.mode));
@@ -859,7 +885,6 @@ function syncBtns() {
   for (const [k, b] of Object.entries(btns.species)) b.classList.toggle('active', k === ui.species);
   $('gGoat').style.display = ui.species === 'sheep' ? 'none' : '';
   $('gCow').style.display = ui.species === 'cow' ? '' : 'none';
-  for (const [k, b] of Object.entries(btns.cow)) b.classList.toggle('active', k === ui.cow);
   btns.action.browse.style.display = ui.species === 'goat' ? '' : 'none';
   $('gAction').style.opacity = ui.herd ? 0.4 : 1;
   bush.visible = !ui.herd && ui.mode !== 'both' && ui.mode !== 'cmp' && ui.species === 'goat' && ui.action === 'browse';
@@ -884,13 +909,10 @@ function headCam(kind) {
 }
 window.headCam = headCam;
 for (const [l, k] of [['Хажуу ойроос', 'side'], ['Ташуу ойроос', 'obl'], ['Урдаас', 'front']]) mk($('gHead'), l, () => headCam(k));
-function setCow(v) {
-  ui.cow = v; SPECIES.cow = COWS[v];
-  for (const p of LIGHTS.cow.parts) { scene.remove(p.mesh); p.mesh.geometry.dispose(); p.mesh.dispose(); }
-  LIGHTS.cow = buildLight(SPECIES.cow); lightRig.cow = makeRig(SPECIES.cow);
-  rebuildDetail('cow'); frame();
-}
-for (const k of Object.keys(COWS)) btns.cow[k] = mk($('gCow'), k, () => setCow(k));
+const polledSel = document.createElement('select');
+polledSel.innerHTML = '<option value="0">Эвэртэй</option><option value="1">Эвэргүй</option>';
+polledSel.onchange = () => { ui.polled = polledSel.value === '1'; rebuildDetail('cow'); frame(); };
+$('gCow').appendChild(polledSel);
 const sexSel = document.createElement('select');
 const fillSex = () => { sexSel.innerHTML = ui.species === 'cow' ? '<option value="m">Бух (мөртэй)</option><option value="f">Үнээ (дэлэнтэй)</option>' : '<option value="m">Эр (урт эвэр)</option><option value="f">Эм (богино эвэр)</option>'; sexSel.value = ui.male ? 'm' : 'f'; };
 for (const [k, sp] of [['sheep', 'Хонь'], ['goat', 'Ямаа'], ['cow', 'Үхэр']]) btns.species[k] = mk($('gSpecies'), sp, () => { ui.species = k; if (ui.action === 'browse' && k !== 'goat') ui.action = 'graze'; fillSex(); fillVariants(); genRecs(); frame(); });
