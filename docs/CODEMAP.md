@@ -943,43 +943,49 @@ SYM game/src/render/ui/names.ts:101 const SEASON_EMOJI
 SYM game/src/render/ui/names.ts:103 const CAMP_HINT
 SYM game/src/render/ui/names.ts:110 const WATER_NAME
 SYM game/src/render/ui/names.ts:111 const WOLF_LEVEL_NAME
-FILE game/src/render/ui/panels.ts 71.7KB 1142L exports: UiHooks,Panels
-SYM game/src/render/ui/panels.ts:93 interface UiHooks
-SYM game/src/render/ui/panels.ts:100 class Panels
-SYM game/src/render/ui/panels.ts:141 method Panels.isOpen
-SYM game/src/render/ui/panels.ts:145 method Panels.open
-SYM game/src/render/ui/panels.ts:175 method Panels.closedShop
-SYM game/src/render/ui/panels.ts:182 method Panels.close
-SYM game/src/render/ui/panels.ts:197 method Panels.showReport
-SYM game/src/render/ui/panels.ts:209 method Panels.refresh
-SYM game/src/render/ui/panels.ts:215 method Panels.showArrive
-SYM game/src/render/ui/panels.ts:221 method Panels.render
-SYM game/src/render/ui/panels.ts:244 method Panels.milestonesHtml
-SYM game/src/render/ui/panels.ts:255 method Panels.spark
-SYM game/src/render/ui/panels.ts:263 method Panels.ceremonyHtml
-SYM game/src/render/ui/panels.ts:274 method Panels.storageHtml
-SYM game/src/render/ui/panels.ts:328 method Panels.buyItems
-SYM game/src/render/ui/panels.ts:352 method Panels.vehicleButtons
-SYM game/src/render/ui/panels.ts:360 method Panels.cargoList
-SYM game/src/render/ui/panels.ts:374 method Panels.cargoHtml
-SYM game/src/render/ui/panels.ts:430 method Panels.selectedAnimals
-SYM game/src/render/ui/panels.ts:438 method Panels.shopHtml
-SYM game/src/render/ui/panels.ts:498 method Panels.traderHtml
-SYM game/src/render/ui/panels.ts:521 method Panels.gerSellHtml
-SYM game/src/render/ui/panels.ts:528 method Panels.townCommand
-SYM game/src/render/ui/panels.ts:558 method Panels.townHtml
-SYM game/src/render/ui/panels.ts:620 method Panels.lotHtml
-SYM game/src/render/ui/panels.ts:648 method Panels.arriveHtml
-SYM game/src/render/ui/panels.ts:674 method Panels.reportHtml
-SYM game/src/render/ui/panels.ts:692 method Panels.wolfKillsHtml
-SYM game/src/render/ui/panels.ts:699 method Panels.dogsHtml
-SYM game/src/render/ui/panels.ts:722 method Panels.campsHtml
-SYM game/src/render/ui/panels.ts:753 method Panels.cheatHtml
-SYM game/src/render/ui/panels.ts:762 method Panels.teahouseHtml
-SYM game/src/render/ui/panels.ts:780 method Panels.helpersHtml
-SYM game/src/render/ui/panels.ts:827 method Panels.otorHtml
-SYM game/src/render/ui/panels.ts:847 method Panels.payHtml
-SYM game/src/render/ui/panels.ts:863 method Panels.act
+FILE game/src/render/ui/panels.ts 72.0KB 1146L exports: UiHooks,Panels
+SYM game/src/render/ui/panels.ts:94 interface UiHooks
+SYM game/src/render/ui/panels.ts:101 class Panels
+SYM game/src/render/ui/panels.ts:144 method Panels.isOpen
+SYM game/src/render/ui/panels.ts:148 method Panels.open
+SYM game/src/render/ui/panels.ts:178 method Panels.closedShop
+SYM game/src/render/ui/panels.ts:185 method Panels.close
+SYM game/src/render/ui/panels.ts:200 method Panels.showReport
+SYM game/src/render/ui/panels.ts:212 method Panels.refresh
+SYM game/src/render/ui/panels.ts:218 method Panels.showArrive
+SYM game/src/render/ui/panels.ts:224 method Panels.render
+SYM game/src/render/ui/panels.ts:247 method Panels.milestonesHtml
+SYM game/src/render/ui/panels.ts:258 method Panels.spark
+SYM game/src/render/ui/panels.ts:266 method Panels.ceremonyHtml
+SYM game/src/render/ui/panels.ts:277 method Panels.storageHtml
+SYM game/src/render/ui/panels.ts:331 method Panels.buyItems
+SYM game/src/render/ui/panels.ts:355 method Panels.vehicleButtons
+SYM game/src/render/ui/panels.ts:363 method Panels.cargoList
+SYM game/src/render/ui/panels.ts:377 method Panels.cargoHtml
+SYM game/src/render/ui/panels.ts:433 method Panels.selectedAnimals
+SYM game/src/render/ui/panels.ts:441 method Panels.shopHtml
+SYM game/src/render/ui/panels.ts:501 method Panels.traderHtml
+SYM game/src/render/ui/panels.ts:524 method Panels.gerSellHtml
+SYM game/src/render/ui/panels.ts:531 method Panels.townCommand
+SYM game/src/render/ui/panels.ts:561 method Panels.townHtml
+SYM game/src/render/ui/panels.ts:623 method Panels.lotHtml
+SYM game/src/render/ui/panels.ts:651 method Panels.arriveHtml
+SYM game/src/render/ui/panels.ts:677 method Panels.reportHtml
+SYM game/src/render/ui/panels.ts:695 method Panels.wolfKillsHtml
+SYM game/src/render/ui/panels.ts:702 method Panels.dogsHtml
+SYM game/src/render/ui/panels.ts:725 method Panels.campsHtml
+SYM game/src/render/ui/panels.ts:756 method Panels.cheatHtml
+SYM game/src/render/ui/panels.ts:765 method Panels.teahouseHtml
+SYM game/src/render/ui/panels.ts:783 method Panels.helpersHtml
+SYM game/src/render/ui/panels.ts:830 method Panels.otorHtml
+SYM game/src/render/ui/panels.ts:850 method Panels.payHtml
+SYM game/src/render/ui/panels.ts:866 method Panels.act
+FILE game/src/render/ui/sleepPanel.ts 2.4KB 49L exports: SleepCtx,SleepPanel
+SYM game/src/render/ui/sleepPanel.ts:12 interface SleepCtx
+SYM game/src/render/ui/sleepPanel.ts:19 fn hhmm
+SYM game/src/render/ui/sleepPanel.ts:21 class SleepPanel
+SYM game/src/render/ui/sleepPanel.ts:29 method SleepPanel.html
+SYM game/src/render/ui/sleepPanel.ts:37 method SleepPanel.act
 FILE game/src/render/util.ts 4.3KB 123L exports: VisualRng,strSeed,clamp,angDiff,mat,boxGeo,merge,meshBox,limb,batchStatic
 SYM game/src/render/util.ts:8 class VisualRng
 SYM game/src/render/util.ts:13 method VisualRng.next
@@ -1058,37 +1064,37 @@ SYM game/src/sim/clock.ts:56 fn tick
 SYM game/src/sim/clock.ts:77 fn realSecondsPerMinute
 SYM game/src/sim/clock.ts:83 fn realSecondsPerDay
 SYM game/src/sim/clock.ts:89 fn formatTime
-FILE game/src/sim/commands.ts 20.7KB 424L exports: Command,CommandResult,nearHome,applyCommand
-SYM game/src/sim/commands.ts:31 type Command
-SYM game/src/sim/commands.ts:88 interface CommandResult
-SYM game/src/sim/commands.ts:94 fn nearHome
-SYM game/src/sim/commands.ts:106 fn ok
-SYM game/src/sim/commands.ts:107 fn fail
-SYM game/src/sim/commands.ts:109 fn applyCommand
-FILE game/src/sim/config.ts 23.9KB 454L exports: Species,Sex,Season,SeasonsConfig,SPECIES,TimeConfig,SpeciesConfig,AnimalsConfig,PastureTypeConfig,GrazingConfig,HerdConfig,PastureConfig,WaterShape,TerrainConfig,+9
-SYM game/src/sim/config.ts:41 type Species
-SYM game/src/sim/config.ts:42 type Sex
-SYM game/src/sim/config.ts:43 type Season
-SYM game/src/sim/config.ts:46 interface SeasonsConfig
-SYM game/src/sim/config.ts:64 const SPECIES
-SYM game/src/sim/config.ts:66 interface TimeConfig
-SYM game/src/sim/config.ts:80 interface SpeciesConfig
-SYM game/src/sim/config.ts:95 interface AnimalsConfig
-SYM game/src/sim/config.ts:114 interface PastureTypeConfig
-SYM game/src/sim/config.ts:121 interface GrazingConfig
-SYM game/src/sim/config.ts:146 interface HerdConfig
-SYM game/src/sim/config.ts:165 interface PastureConfig
-SYM game/src/sim/config.ts:187 type WaterShape
-SYM game/src/sim/config.ts:192 interface TerrainConfig
-SYM game/src/sim/config.ts:203 interface CampConfig
-SYM game/src/sim/config.ts:213 interface HomeConfig
-SYM game/src/sim/config.ts:225 interface WorldLocation
-SYM game/src/sim/config.ts:230 interface WorldMapConfig
-SYM game/src/sim/config.ts:252 interface StartAnimal
-SYM game/src/sim/config.ts:260 interface GameConfig
-SYM game/src/sim/config.ts:296 fn loadConfig
-SYM game/src/sim/config.ts:332 fn validateConfig
-SYM game/src/sim/config.ts:399 fn validateSumLayout
+FILE game/src/sim/commands.ts 21.1KB 430L exports: Command,CommandResult,nearHome,applyCommand
+SYM game/src/sim/commands.ts:32 type Command
+SYM game/src/sim/commands.ts:90 interface CommandResult
+SYM game/src/sim/commands.ts:96 fn nearHome
+SYM game/src/sim/commands.ts:108 fn ok
+SYM game/src/sim/commands.ts:109 fn fail
+SYM game/src/sim/commands.ts:111 fn applyCommand
+FILE game/src/sim/config.ts 24.6KB 462L exports: Species,Sex,Season,SeasonsConfig,SPECIES,TimeConfig,SpeciesConfig,AnimalsConfig,PastureTypeConfig,GrazingConfig,HerdConfig,PastureConfig,WaterShape,TerrainConfig,+9
+SYM game/src/sim/config.ts:42 type Species
+SYM game/src/sim/config.ts:43 type Sex
+SYM game/src/sim/config.ts:44 type Season
+SYM game/src/sim/config.ts:47 interface SeasonsConfig
+SYM game/src/sim/config.ts:65 const SPECIES
+SYM game/src/sim/config.ts:67 interface TimeConfig
+SYM game/src/sim/config.ts:81 interface SpeciesConfig
+SYM game/src/sim/config.ts:96 interface AnimalsConfig
+SYM game/src/sim/config.ts:115 interface PastureTypeConfig
+SYM game/src/sim/config.ts:122 interface GrazingConfig
+SYM game/src/sim/config.ts:147 interface HerdConfig
+SYM game/src/sim/config.ts:166 interface PastureConfig
+SYM game/src/sim/config.ts:188 type WaterShape
+SYM game/src/sim/config.ts:193 interface TerrainConfig
+SYM game/src/sim/config.ts:204 interface CampConfig
+SYM game/src/sim/config.ts:214 interface HomeConfig
+SYM game/src/sim/config.ts:226 interface WorldLocation
+SYM game/src/sim/config.ts:231 interface WorldMapConfig
+SYM game/src/sim/config.ts:253 interface StartAnimal
+SYM game/src/sim/config.ts:261 interface GameConfig
+SYM game/src/sim/config.ts:299 fn loadConfig
+SYM game/src/sim/config.ts:336 fn validateConfig
+SYM game/src/sim/config.ts:403 fn validateSumLayout
 FILE game/src/sim/msg.ts 0.9KB 18L exports: MsgParam,Msg,raw,m
 SYM game/src/sim/msg.ts:5 type MsgParam
 SYM game/src/sim/msg.ts:6 interface Msg
@@ -1493,6 +1499,12 @@ SYM game/src/sim/systems/shops.ts:52 fn fmtHour
 SYM game/src/sim/systems/shops.ts:57 fn closedMsg
 SYM game/src/sim/systems/shops.ts:62 fn tradeDoorOf
 SYM game/src/sim/systems/shops.ts:66 fn validateShops
+FILE game/src/sim/systems/sleep.ts 3.3KB 60L exports: wakeOptions,sleepHours,sleepPlace,minutesUntilWake,sleepUntil
+SYM game/src/sim/systems/sleep.ts:15 fn wakeOptions
+SYM game/src/sim/systems/sleep.ts:22 fn sleepHours
+SYM game/src/sim/systems/sleep.ts:28 fn sleepPlace
+SYM game/src/sim/systems/sleep.ts:36 fn minutesUntilWake
+SYM game/src/sim/systems/sleep.ts:43 fn sleepUntil
 FILE game/src/sim/systems/storage.ts 3.0KB 76L exports: capacity,used,freeSpace,count,add,take,dailyStorageAging
 SYM game/src/sim/systems/storage.ts:9 fn capacity
 SYM game/src/sim/systems/storage.ts:14 fn used
@@ -1775,6 +1787,7 @@ FILE game/tests/save.test.ts 11.7KB 233L
 FILE game/tests/seasons.test.ts 7.2KB 140L
 FILE game/tests/shops.test.ts 3.1KB 62L
 FILE game/tests/sim.test.ts 1.4KB 30L
+FILE game/tests/sleep.test.ts 5.6KB 124L
 FILE game/tests/staff.test.ts 13.5KB 248L
 FILE game/tests/stuck.test.ts 4.4KB 80L
 FILE game/tests/style.test.ts 8.9KB 165L
@@ -1785,15 +1798,15 @@ FILE game/tests/trader.test.ts 8.4KB 164L
 FILE game/tests/transfer.test.ts 14.2KB 255L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 32.1KB 129L
+FILE docs/CONTEXT.md 32.6KB 131L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-29 ## 2. Стек ба командууд
-DOC docs/CONTEXT.md:30-103 ## 3. Файлын зураглал (`game/src/`)
-DOC docs/CONTEXT.md:104-106 ## 4. `data/*.json` → аль файл хэрэглэдэг
-DOC docs/CONTEXT.md:107-115 ## 5. Архитектурын дүрэм ([[architecture]])
-DOC docs/CONTEXT.md:116-119 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
-DOC docs/CONTEXT.md:120-122 ## 7. Нээлттэй асуултууд
-DOC docs/CONTEXT.md:123-129 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
+DOC docs/CONTEXT.md:30-105 ## 3. Файлын зураглал (`game/src/`)
+DOC docs/CONTEXT.md:106-108 ## 4. `data/*.json` → аль файл хэрэглэдэг
+DOC docs/CONTEXT.md:109-117 ## 5. Архитектурын дүрэм ([[architecture]])
+DOC docs/CONTEXT.md:118-121 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
+DOC docs/CONTEXT.md:122-124 ## 7. Нээлттэй асуултууд
+DOC docs/CONTEXT.md:125-131 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
 FILE docs/INDEX.md 14.1KB 136L
 DOC docs/INDEX.md:16-30 ## 1. Унших дараалал ба давуу эрх
 DOC docs/INDEX.md:31-107 ## 2. Баримтууд
@@ -1946,22 +1959,22 @@ DOC docs/helpers-m5.md:45-55 ## 3. Тэнцвэр (улиралгүй үед; 6 
 DOC docs/helpers-m5.md:56-61 ## 4. Хязгаарлалт / 🙋
 FILE docs/milestones.md 8.9KB 45L
 DOC docs/milestones.md:39-45 ## Эрсдэл
-FILE docs/mvp-spec.md 53.4KB 468L
-DOC docs/mvp-spec.md:17-22 ## 0. Хэрэглэгчийн шийдвэрийн түүх
-DOC docs/mvp-spec.md:23-50 ## 1. Хүрээ
-DOC docs/mvp-spec.md:51-69 ## 2. Цаг (M4.5, M5.5)
-DOC docs/mvp-spec.md:70-109 ## 3. Эхлэл
-DOC docs/mvp-spec.md:110-158 ## 4. Бүтээгдэхүүн: мал үлдээнэ, малчин цуглуулна (Farm Frenzy маяг)
-DOC docs/mvp-spec.md:159-215 ## 5. Үнэ, тээвэр ба сумын төв
-DOC docs/mvp-spec.md:216-258 ## 6. Туслах малчид (M5 — [[helpers-m5]])
-DOC docs/mvp-spec.md:259-300 ## 7. Бэлчээр, бууц сэлгэх, доройтол
-DOC docs/mvp-spec.md:301-338 ## 8. Чоно (M4, M4.5, B6)
-DOC docs/mvp-spec.md:339-354 ## 9. Төллөлт ба нас (M5.5)
-DOC docs/mvp-spec.md:355-430 ## 10. Тоглоомын зорилго ба замын тэмдэгтүүд
-DOC docs/mvp-spec.md:431-453 ## 11. Прототипоос хасагдах, өөрчлөгдөх зүйл
-DOC docs/mvp-spec.md:454-459 ## 12. Хөгжүүлэлтийн явц
-DOC docs/mvp-spec.md:460-464 ## 13. Нээлттэй шийдвэр байхгүй
-DOC docs/mvp-spec.md:465-468 ## Эх сурвалж
+FILE docs/mvp-spec.md 54.4KB 470L
+DOC docs/mvp-spec.md:17-24 ## 0. Хэрэглэгчийн шийдвэрийн түүх
+DOC docs/mvp-spec.md:25-52 ## 1. Хүрээ
+DOC docs/mvp-spec.md:53-71 ## 2. Цаг (M4.5, M5.5)
+DOC docs/mvp-spec.md:72-111 ## 3. Эхлэл
+DOC docs/mvp-spec.md:112-160 ## 4. Бүтээгдэхүүн: мал үлдээнэ, малчин цуглуулна (Farm Frenzy маяг)
+DOC docs/mvp-spec.md:161-217 ## 5. Үнэ, тээвэр ба сумын төв
+DOC docs/mvp-spec.md:218-260 ## 6. Туслах малчид (M5 — [[helpers-m5]])
+DOC docs/mvp-spec.md:261-302 ## 7. Бэлчээр, бууц сэлгэх, доройтол
+DOC docs/mvp-spec.md:303-340 ## 8. Чоно (M4, M4.5, B6)
+DOC docs/mvp-spec.md:341-356 ## 9. Төллөлт ба нас (M5.5)
+DOC docs/mvp-spec.md:357-432 ## 10. Тоглоомын зорилго ба замын тэмдэгтүүд
+DOC docs/mvp-spec.md:433-455 ## 11. Прототипоос хасагдах, өөрчлөгдөх зүйл
+DOC docs/mvp-spec.md:456-461 ## 12. Хөгжүүлэлтийн явц
+DOC docs/mvp-spec.md:462-466 ## 13. Нээлттэй шийдвэр байхгүй
+DOC docs/mvp-spec.md:467-470 ## Эх сурвалж
 FILE docs/night-transport.md 9.4KB 106L
 DOC docs/night-transport.md:18-32 ## 1. Цаг ба шөнө
 DOC docs/night-transport.md:33-44 ## 2. Хотлох (хэрэглэгчийн дүрэм)
@@ -1969,13 +1982,13 @@ DOC docs/night-transport.md:45-68 ## 3. Сүү, ноос хоносон газр
 DOC docs/night-transport.md:69-87 ## 4. Шөнийн чоно (хэрэглэгчийн дүрэм)
 DOC docs/night-transport.md:88-103 ## 5. Тээвэр
 DOC docs/night-transport.md:104-106 ## 6. Хэрэглэгчийн шийдвэр 🙋
-FILE docs/plan/LEAD.md 9.5KB 53L
+FILE docs/plan/LEAD.md 9.7KB 54L
 DOC docs/plan/LEAD.md:12-16 ## 1. Ажлын загвар
 DOC docs/plan/LEAD.md:17-25 ## 2. Хийгдсэн (2026-11-15 19:00 → 11-16 15:00, ~60 commit, push хийгээгүй)
 DOC docs/plan/LEAD.md:26-32 ## 3. Явж буй ажил (энэ тэмдэглэлийн үед)
-DOC docs/plan/LEAD.md:33-44 ## 4. Хэрэглэгчийн шийдвэр хүлээж буй
-DOC docs/plan/LEAD.md:45-49 ## 5. Дараагийн алхам
-DOC docs/plan/LEAD.md:50-53 ## 6. Контекст хэмнэх (2026-11-16)
+DOC docs/plan/LEAD.md:33-45 ## 4. Хэрэглэгчийн шийдвэр хүлээж буй
+DOC docs/plan/LEAD.md:46-50 ## 5. Дараагийн алхам
+DOC docs/plan/LEAD.md:51-54 ## 6. Контекст хэмнэх (2026-11-16)
 FILE docs/plan/M6.md 19.0KB 66L
 DOC docs/plan/M6.md:15-17 ## Зорилго
 DOC docs/plan/M6.md:18-34 ## MVP «дууссан» шалгуур (D1–D10 — M6 ба M7-ийн нийт)
@@ -1992,15 +2005,15 @@ DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
 DOC docs/plan/V.md:24-265 ## Блокууд ба чеклист (2026-11-15)
 DOC docs/plan/V.md:266-287 ## Зогссон цэг
-FILE docs/plan/playtest.md 21.6KB 134L
+FILE docs/plan/playtest.md 22.3KB 135L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
 DOC docs/plan/playtest.md:19-39 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
-DOC docs/plan/playtest.md:40-111 ## C. Мэдрэмж, үе шат бүрээр
-DOC docs/plan/playtest.md:112-115 ## V4.6 хонь, ямаа (🧑 мэдрэмж)
-DOC docs/plan/playtest.md:116-121 ## V4.6 S2 үхэр, адуу, нохой, чоно (🧑 мэдрэмж)
-DOC docs/plan/playtest.md:122-124 ## Хүний масштаб 1.7 м (characters.json scale 0.70) (🧑 мэдрэмж)
-DOC docs/plan/playtest.md:125-131 ## Сумын төвийн NPC жигд алхалт ба мөргөлдөөн (🧑 мэдрэмж, 2026-11-16)
-DOC docs/plan/playtest.md:132-134 ## Мэдэгдэж буй дутагдал: NPC хашаа гаталгах (sumwalk, 2026-11-16)
+DOC docs/plan/playtest.md:40-112 ## C. Мэдрэмж, үе шат бүрээр
+DOC docs/plan/playtest.md:113-116 ## V4.6 хонь, ямаа (🧑 мэдрэмж)
+DOC docs/plan/playtest.md:117-122 ## V4.6 S2 үхэр, адуу, нохой, чоно (🧑 мэдрэмж)
+DOC docs/plan/playtest.md:123-125 ## Хүний масштаб 1.7 м (characters.json scale 0.70) (🧑 мэдрэмж)
+DOC docs/plan/playtest.md:126-132 ## Сумын төвийн NPC жигд алхалт ба мөргөлдөөн (🧑 мэдрэмж, 2026-11-16)
+DOC docs/plan/playtest.md:133-135 ## Мэдэгдэж буй дутагдал: NPC хашаа гаталгах (sumwalk, 2026-11-16)
 FILE docs/seasons-camps.md 10.2KB 104L
 DOC docs/seasons-camps.md:17-40 ## 1. Хэрэглэгчийн шийдвэрүүд
 DOC docs/seasons-camps.md:41-54 ## 2. Улирал
