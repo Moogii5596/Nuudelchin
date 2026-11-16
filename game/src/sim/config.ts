@@ -26,6 +26,8 @@ import { npcConfigErrors, type NpcsConfig } from './systems/npc';
 import gerJson from '../../../data/ger.json';
 import difficultyJson from '../../../data/difficulty.json';
 import milestonesJson from '../../../data/milestones.json';
+import traderJson from '../../../data/trader.json';
+import { validateTrader, type TraderConfig } from './systems/trader';
 import { validateMilestones, type MilestonesConfig } from './systems/milestones';
 import type { StuckConfig } from './systems/safety';
 import { validateDifficultyConfig, type DifficultyConfig } from './systems/difficulty';
@@ -280,6 +282,8 @@ export interface GameConfig {
   /** Гэрийн загварын хэмжээс, тавилгын байрлал (data/ger.json — render/ger-тэй хуваалцана; хаалганы цэг, дотор саад) */
   ger: GerSimConfig;
   start: { camp: string; home: string; vehicles: string[]; storageLevel: number; animals: StartAnimal[] };
+  /** M6.12: явуулын худалдаачин — data/trader.json */
+  trader: TraderConfig;
 }
 
 export function loadConfig(): GameConfig {
@@ -310,6 +314,7 @@ export function loadConfig(): GameConfig {
   };
   const errors = validateConfig(cfg);
   if (errors.length) {
+    trader: traderJson as unknown as TraderConfig,
     throw new Error('Тохиргооны алдаа (data/*.json):\n- ' + errors.join('\n- '));
   }
   return cfg;
@@ -377,6 +382,7 @@ export function validateConfig(cfg: GameConfig): string[] {
   if (!cfg.storage.levels[cfg.start.storageLevel]) e.push('start.storageLevel: агуулахын түвшин алга');
   for (const a of cfg.start.animals) if (!cfg.animals.species[a.species]) e.push(`start.animals: "${a.species}" алга`);
   return e;
+  e.push(...validateTrader(cfg));
 }
 
 /** V3.3: сумын төвийн байршил (data/sumcenter.json) ба worldmap.sum3d */

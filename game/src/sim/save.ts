@@ -112,6 +112,10 @@ export function validateState(cfg: GameConfig, s: GameState): string[] {
   need(typeof s.homeSize === 'string' && s.homeSize in cfg.ger.sizes, `homeSize: data/ger.json sizes-ийн түлхүүр (${String(s.homeSize)})`);
   need(Array.isArray(s.extraGers) && s.extraGers.every((g) => isObj(g) && typeof g.size === 'string' && g.size in cfg.ger.sizes && fin(g.x) && fin(g.z)), 'extraGers: [{size, x, z}]');
   need(isObj(s.leaders) && Object.values(s.leaders).every((v) => Number.isInteger(v)), 'leaders: {сүрэг: малын id}');
+  if (need(isObj(s.trader), 'trader алга')) {
+    need(fin(s.trader.nextDay) && fin(s.trader.visits), 'trader.nextDay, visits: тоо');
+    need(s.trader.visit === null || (isObj(s.trader.visit) && typeof s.trader.visit.kind === 'string' && s.trader.visit.kind in cfg.trader.kinds && fin(s.trader.visit.day) && fin(s.trader.visit.from) && fin(s.trader.visit.to) && fin(s.trader.visit.hay)), 'trader.visit: null эсвэл {kind, day, from, to, hay}');
+  }
   need(Number.isInteger(s.stuckEvents) && s.stuckEvents >= 0, 'stuckEvents: сөрөггүй бүхэл тоо');
   need(fin(s.dayStartMoney ?? 0), 'dayStartMoney: тоо эсвэл null');
   need(Array.isArray(s.flockCenters) && s.flockCenters.every((c) => Array.isArray(c) && fin(c[0]) && isObj(c[1]) && fin(c[1].x) && fin(c[1].z) && fin(c[1].n)), 'flockCenters: [id, {x,z,n}][]');

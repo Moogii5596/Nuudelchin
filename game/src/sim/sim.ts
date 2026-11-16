@@ -26,6 +26,7 @@ import { ensureInteriorValid } from './systems/interior';
 import { goalGerReached } from './systems/gerLayout';
 import { checkMilestones, recordDay } from './systems/milestones';
 import { detectStuck } from './systems/safety';
+import { traderDaily, traderHour, type TraderEvent } from './systems/trader';
 import { refreshLeaders } from './systems/herding';
 import { townDaily, townMonthly, townSeason, type TownEvent } from './systems/town';
 import { wolvesDaily, wolvesStep, nightRaid, endRaid, type WolfEvent } from './systems/wolves';
@@ -54,7 +55,7 @@ export interface DayReport extends DayStats {
   milestones: string[];
 }
 
-export type SimEvent = { type: 'milestone'; id: string; kind: 'stage' | 'first'; ceremony: boolean; day: number } | ClockEvent | WolfEvent | TravelEvent | HelperEvent | { type: 'dayReport'; report: DayReport } | TownEvent | { type: 'season'; season: Season; day: number };
+export type SimEvent = TraderEvent | { type: 'milestone'; id: string; kind: 'stage' | 'first'; ceremony: boolean; day: number } | ClockEvent | WolfEvent | TravelEvent | HelperEvent | { type: 'dayReport'; report: DayReport } | TownEvent | { type: 'season'; season: Season; day: number };
 
 export class Sim {
   readonly cfg: GameConfig;
@@ -136,6 +137,7 @@ export class Sim {
 
     const events = tick(state.time, cfg.time);
     for (const ev of events) {
+      if (ev.type === 'hour') for (const e2 of traderHour(state)) this.emit(e2);
       if (ev.type === 'dayEnd') this.endDay(ev.day);
       else if (ev.type === 'monthEnd') {
         for (const e2 of payWages(cfg, state)) this.emit(e2);
@@ -155,6 +157,7 @@ export class Sim {
           this.emit({ type: 'season', season, day: ev.day });
           for (const e2 of townSeason(cfg, state, () => state.helpers.nextId++)) this.emit(e2);
         }
+        traderDaily(cfg, state);   // M6.12 ченж
         morning(cfg, state, rng);
         endRaid(state);
         for (const e2 of wolvesDaily(cfg, state)) this.emit(e2);

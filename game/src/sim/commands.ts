@@ -7,6 +7,7 @@
  */
 import { m, raw, type Msg } from './msg';
 import { sellGer } from './systems/ownGers';
+import { traderTrade } from './systems/trader';
 import type { Species } from './config';
 import type { BuyOrder, ProcessorKind, ProductId, VehicleId } from './state';
 import type { Sim } from './sim';
@@ -38,6 +39,7 @@ export type Command =
   | { type: 'toggleUurga' }           // шилбүүр/уурга барих/тавих (U)
   | { type: 'callHorse' }             // морь дуудах (H)
   | { type: 'scareWolves' }           // чоно үргээх (Q)
+  | { type: 'traderTrade'; sell: Partial<Record<ProductId, number>>; buyHay: number }   // M6.12: явуулын худалдаачинтай арилжаа
   | { type: 'sellGer'; index: number }            // M6.13: гэр зарах (гэр/майхны дэлгүүрт 50%; сүүлийн гэрийг зарахгүй)
   | { type: 'ackCeremony' }                       // M6.5: баярын мөчийг хаах («▶ Үргэлжлүүлэх»)
   | { type: 'setShowMilestones'; on: boolean }   // M6.5: HUD-ийн замын тэмдгийн самбар
@@ -168,6 +170,11 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
     case 'scareWolves': {
       const n = scareWolves(cfg, state);
       return n ? ok(m('sim.huu_hai_wolves_fled', { n })) : fail(m('sim.no_wolves_nearby'));
+    }
+
+    case 'traderTrade': {
+      const err = traderTrade(cfg, state, { sell: cmd.sell, buyHay: cmd.buyHay }, proximity);
+      return err ? fail(err) : ok(m('sim.trade_done_trader'));
     }
 
     case 'sellGer': {

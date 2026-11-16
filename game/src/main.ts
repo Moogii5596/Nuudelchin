@@ -33,6 +33,7 @@ import { PlayerController } from './input/controller';
 import { t } from './i18n/i18n';
 import { tm } from './i18n/msg';
 import { nextStage, seasonGoal } from './sim/systems/milestones';
+import { nearTrader } from './sim/systems/trader';
 import type { Msg } from './sim/msg';
 import { SaveStore } from './persist/idb';
 import { Autosave, attachPageEvents, attachSimEvents } from './persist/autosave';
@@ -188,6 +189,8 @@ function start(boot?: Boot): void {
   let huntToastT = 0;
   sim.on((e) => {
     if (e.type === 'dayReport' && showReports) panels.showReport(e.report);
+    else if (e.type === 'traderArrive') toast(t('trader.arrive', { kind: t('trader.kind.' + e.kind), until: formatTime({ day: state.time.day, minute: e.until }) }), 'good');
+    else if (e.type === 'traderLeave') toast(t('trader.leave'), '');
     else if (e.type === 'milestone') toast(t(e.kind === 'stage' ? 'ms.reached' : 'ms.first_toast', { name: t((e.kind === 'stage' ? 'ms.stage.' : 'ms.first.') + e.id) }), 'good');
     else if (e.type === 'wolfHunt') {
       const now = performance.now();
@@ -220,6 +223,7 @@ function start(boot?: Boot): void {
     else if (e.type === 'hour' && e.hour === Math.ceil(Math.min(...Object.values(cfg.time.homeMinute)) / 60)) toast(t('ui.evening_the_animals_are'), '');
   });
 
+  const controllerWalk = view.sum.walk;   // сумын төвийн саад (барилга, хашаа) — тоглогч нэвтлэхгүй
   let speedIdx = Math.max(0, Math.min(cfg.time.speeds.length - 1, (Number(qs.get('speed')) || 1) - 1));
   const controller = new PlayerController(cfg, {
     dispatch: (cmd) => sim.command(cmd),
@@ -241,7 +245,7 @@ function start(boot?: Boot): void {
         if (!photoMode) toast(t('ui.left_photo_mode'), 'good');
       }
       else if (what === 'storage') panels.open('storage');
-      else if (what === 'trade') panels.open(state.player.place === 'sum' ? (nearLotSlot(cfg, state) ? 'lot' : nearTownDoor(cfg, state) ? 'town' : nearTeahouse(cfg, state) ? 'teahouse' : 'shop') : 'cargo');
+      else if (what === 'trade') panels.open(state.player.place === 'sum' ? (nearTrader(cfg, state) ? 'trader' : nearLotSlot(cfg, state) ? 'lot' : nearTownDoor(cfg, state) ? 'town' : nearTeahouse(cfg, state) ? 'teahouse' : 'shop') : 'cargo');
       else if (what === 'helpers') panels.open('helpers');
       else if (what === 'dogs') panels.open('dogs');
       else if (what === 'camps') panels.open('camps');
@@ -251,6 +255,7 @@ function start(boot?: Boot): void {
       else menu.toggleGame();   // ❓ / F1 → тоглоомын цэс (M6.3); тусламж цэснээс
     },
   });
+  controller.walk = controllerWalk;
   // Утасны удирдлага (мэдрэгч дэлгэц)
   const touchUI = isTouch && !captureMode ? new TouchUI(cfg, controller, { speedIdx: () => speedIdx, speeds: cfg.time.speeds }, { menuGate: !!boot }) : null;
   let hudCompact = isTouch;

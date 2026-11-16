@@ -35,9 +35,11 @@ import {
 import { t } from '../../i18n/i18n';
 import { gerLadder, goalGerReached } from '../../sim/systems/gerLayout';
 import { sellableGers } from '../../sim/systems/ownGers';
+import { formatTime } from '../../sim/clock';
+import { nearTrader, traderBuyPrice, traderHayPrice, traderPresent } from '../../sim/systems/trader';
 import type { Msg } from '../../sim/msg';
 
-type Kind = 'storage' | 'cargo' | 'shop' | 'lot' | 'town' | 'arrive' | 'report' | 'dogs' | 'camps' | 'cheat' | 'teahouse' | 'helpers' | 'milestones' | 'ceremony';
+type Kind = 'storage' | 'cargo' | 'shop' | 'lot' | 'town' | 'arrive' | 'report' | 'dogs' | 'camps' | 'cheat' | 'teahouse' | 'helpers' | 'milestones' | 'ceremony' | 'trader';
 
 /** Туслахуудын цонхны дэд хэсэг: жагсаалт, отор явуулах, малаар цалинжуулах */
 interface HelperView {
@@ -156,6 +158,10 @@ export class Panels {
       if (this.state.player.place !== 'sum') return;
       this.hooks.dispatch({ type: 'teahouse' });
     }
+    if (kind === 'trader') {
+      if (!traderPresent(this.state) || this.state.player.place !== 'sum') return;
+      this.tr = { sell: {}, hay: 0 };
+    }
     if (kind === 'helpers') this.hv = { mode: 'list', helper: 0, camp: '', counts: {} };
     this.kind = kind;
     this.root.style.display = 'flex';
@@ -218,6 +224,7 @@ export class Panels {
     else if (this.kind === 'helpers') html = this.helpersHtml();
     else if (this.kind === 'milestones') html = this.milestonesHtml();
     else if (this.kind === 'ceremony') html = this.ceremonyHtml();
+    else if (this.kind === 'trader') html = this.traderHtml();
     this.box.innerHTML = touchKeys(html);   // утсанд товчны нэрийг товчны дүрсээр
     this.box.scrollTop = scroll;
   }
@@ -472,6 +479,31 @@ export class Panels {
       ? t('ui.buy_animals_price', { x: groups.length ? t('ui.sell_animals_price', { animalRows }) : '', buyAnimalRows, animalNote }) : '';
     const itemSec = itemRows ? t('ui.buy_goods_price', { itemRows }) : '';
     return t('ui.money_income_expenses_after', { title, how, x: fmtMoney(state.money), x2: f ? ' · ' : '', x3: this.cargoList().replace(/^<p>|<\/p>$/g, ''), sellSec, animalSec, itemSec: itemSec + (role === 'ger_tent' ? this.gerSellHtml() : ''), x4: fmtMoney(income), x5: fmtMoney(cost), x6: after < 0 ? 'bad' : '', x7: fmtMoney(after), x8: !roomOk ? t('ui.the_animals_you_want') : '', x9: after < 0 ? t('ui.not_enough_money_items') : '', x10: empty || !near ? 'disabled' : '', x11: role === 'livestock' ? t('ui.use_the_neighbor_s', { x: state.neighborBull ? 'checked' : '', x2: fmtMoney(cfg.economy.neighborBullFee) }) : '' });
+  }
+
+  private tr: { sell: Partial<Record<ProductId, number>>; hay: number } = { sell: {}, hay: 0 };
+
+  /** Явуулын худалдаачин (M6.12): бүтээгдэхүүнийг дэлгүүрээс хямд авна, боодол өвс зарна */
+  private traderHtml(): string {
+    const { cfg, state } = this;
+    const v = traderPresent(state);
+    if (!v) return `<h2>${t('trader.title', { kind: '' })} <span class="close" data-act="close">✕</span></h2><p class="bad">${t('sim.the_trader_is_not_here')}</p>`;
+    const K = cfg.trader.kinds[v.kind]!;
+    const have = sellableAtShop(state);
+    const rows = K.products.filter((p) => (have[p] ?? 0) > 1e-9).map((p) => {
+      const n0 = have[p] ?? 0, n = this.tr.sell[p] ?? 0;
+      return `<tr><td>${PRODUCT_EMOJI[p]} ${productName(p)} <span class="muted">(${fmtNum(n0)} ${unitOf(p)})</span></td><td class="num">${fmtMoney(traderBuyPrice(cfg, v.kind, p))}</td><td class="ctl"><button class="btn sm" data-act="tr-:${p}">−</button><b>${fmtNum(n)}</b><button class="btn sm" data-act="tr+:${p}">+</button><button class="btn sm" data-act="trAll:${p}">${t('trader.all')}</button></td></tr>`;
+    }).join('');
+    const income = K.products.reduce((s, p) => s + (this.tr.sell[p] ?? 0) * traderBuyPrice(cfg, v.kind, p), 0);
+    const hayCost = this.tr.hay * traderHayPrice(cfg, v.kind);
+    const near = nearTrader(cfg, state);
+    const until = formatTime({ day: state.time.day, minute: v.to });
+    return `<h2>${t('trader.title', { kind: t('trader.kind.' + v.kind) })} <span class="close" data-act="close">✕</span></h2><p class="muted">${t('trader.until', { until })}</p>
+      ${near ? '' : `<p class="bad">${t('trader.far')}</p>`}
+      <h3>${t('trader.sell', { pct: Math.round(K.buyMult * 100) })}</h3><table>${rows || `<tr><td class="muted">${t('trader.nothing')}</td></tr>`}</table>
+      <h3>${t('trader.hay', { left: v.hay })}</h3><table><tr><td>🌾 ${fmtMoney(traderHayPrice(cfg, v.kind))}</td><td class="ctl"><button class="btn sm" data-act="trh-:1">−</button><b>${this.tr.hay}</b><button class="btn sm" data-act="trh+:1">+</button></td></tr></table>
+      <table><tr class="total"><td>${t('trader.income')}</td><td class="num">+${fmtMoney(income)}</td></tr><tr class="total"><td>${t('trader.expenses')}</td><td class="num">−${fmtMoney(hayCost)}</td></tr></table>
+      <p><button class="btn gold" data-act="doTrader" ${near && (income > 0 || this.tr.hay > 0) ? '' : 'disabled'}>${t('trader.do')}</button></p>`;
   }
 
   /** Гэр зарах (M6.13): гэр/майхны дэлгүүрт үнийн 50%; сүүлийн гэрийг зарахгүй */
@@ -905,6 +937,23 @@ export class Panels {
           this.close();
           return;
         }
+        break;
+      }
+      case 'tr+': case 'tr-': case 'trAll': {
+        const p = arg as ProductId, have = sellableAtShop(state)[p] ?? 0;
+        const cur = this.tr.sell[p] ?? 0;
+        this.tr.sell[p] = cmd === 'trAll' ? have : Math.max(0, Math.min(have, cur + (cmd === 'tr+' ? 1 : -1)));
+        break;
+      }
+      case 'trh+': case 'trh-': {
+        const v = traderPresent(state);
+        this.tr.hay = Math.max(0, Math.min(v?.hay ?? 0, this.tr.hay + (cmd === 'trh+' ? 1 : -1)));
+        break;
+      }
+      case 'doTrader': {
+        const r = this.hooks.dispatch({ type: 'traderTrade', sell: this.tr.sell, buyHay: this.tr.hay });
+        this.hooks.toast(r.msg ?? '', r.ok ? 'good' : 'bad');
+        this.tr = { sell: {}, hay: 0 };
         break;
       }
       case 'sellGer': {

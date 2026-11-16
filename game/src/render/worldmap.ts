@@ -16,6 +16,7 @@ import { makeVehicleModel } from './vehicles';
 import { seasonLook } from '../sim/systems/seasons';
 import { t } from '../i18n/i18n';
 import { paletteHex, visualStyle, type MapPaperVisual } from './style';
+import { driversOnMap } from '../sim/systems/mapTraffic';
 
 const U = 6;   // 1 км = 6 нэгж
 
@@ -90,6 +91,8 @@ export class WorldMapView {
   readonly camera = new THREE.PerspectiveCamera(45, 1, 1, 2000);
   private ground: THREE.Mesh;
   private party = new THREE.Group();
+  /** M6.12: жолоочийн машин газрын зураг дээр (helperId → тэмдэг) */
+  private traffic = new Map<number, THREE.Sprite>();
   private partyModels = new Map<string, THREE.Object3D>();
   private target: THREE.Mesh;
   private line: THREE.Line;
@@ -397,6 +400,29 @@ export class WorldMapView {
     attr.needsUpdate = true;
   }
 
+  /** Жолоочийн машинууд гэрээс сумын төв рүү явж буцахыг тэмдгээр харуулна */
+  private syncTraffic(state: GameState): void {
+    const list = driversOnMap(this.cfg, state);
+    const seen = new Set<number>();
+    for (const d of list) {
+      seen.add(d.helperId);
+      let sp = this.traffic.get(d.helperId);
+      if (!sp) {
+        sp = textSprite(this.cfg.vehicles[d.vehicle].emoji, visualStyle.palette.mapInk, 'rgba(239,232,218,0.0)');
+        sp.scale.multiplyScalar(0.7);
+        this.scene.add(sp);
+        this.traffic.set(d.helperId, sp);
+      }
+      sp.position.set(d.x * U, this.heightAt(d.x, d.z) + 2.2, d.z * U);
+    }
+    for (const [id, sp] of this.traffic) if (!seen.has(id)) {
+      this.scene.remove(sp);
+      sp.material.map?.dispose();
+      sp.material.dispose();
+      this.traffic.delete(id);
+    }
+  }
+
   update(state: GameState, dt: number, daylight: number, alpha = 1): void {
     this.applySeason(state);
     const m0 = state.map;
@@ -415,6 +441,7 @@ export class WorldMapView {
       this.homeId = state.campId;
       this.replaceLabel(state.campId, t('ui.your_camp', { x: t('camp.' + state.campId) }));
     }
+    this.syncTraffic(state);
     const model = this.partyModel(state);
     const moving = Math.hypot(m.tx - m.x, m.tz - m.z) > 1e-3 || m.dest !== null;
     this.bob += dt * (moving ? 8 : 0);

@@ -1,0 +1,11 @@
+{
+  "_doc": "Явуулын худалдаачин (ченж) (M6.12, A7). intervalDays хоног тутам машинтай сумын төвийн ТҮР цэг (stand) дээр ирж, ирсэн цагаасаа хойш stayHours цаг зогсоно. Төрөл (жижиг/дунд/том) жингээрээ (weight) санамсаргүй: buyMult — бүтээгдэхүүнийг дэлгүүрийн (хүлээн авах цэгийн) үнийн ХУВИЙГААР авна (<1: хямд); products — авдаг бараа; hayMax — зарах боодол өвсний нөөц, hayMult — боодол өвсний дэлгүүрийн үнийн хувь. 🙋 Түр тоо — тэнцвэр (M6.6)-д тааруулна.",
+  "intervalDays": [4, 8],
+  "arriveHours": [9, 14],
+  "stand": { "x": 360, "z": -14, "r": 5 },
+  "kinds": {
+    "small": { "weight": 5, "stayHours": [3, 4], "buyMult": 0.8, "products": ["milk", "tarag", "wool"], "hayMax": 4, "hayMult": 0.9 },
+    "medium": { "weight": 3, "stayHours": [4, 5], "buyMult": 0.85, "products": ["milk", "tarag", "aaruul", "urum", "wool", "cashmere"], "hayMax": 10, "hayMult": 0.85 },
+    "large": { "weight": 2, "stayHours": [5, 6], "buyMult": 0.9, "products": ["milk", "tarag", "aaruul", "urum", "wool", "felt", "cashmere"], "hayMax": 24, "hayMult": 0.8 }
+  }
+}
