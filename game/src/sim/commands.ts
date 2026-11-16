@@ -23,6 +23,7 @@ import { SPECIES } from './config';
 import { orderDog, DOG_ORDER_NAME, type DogOrderKind } from './systems/dogs';
 import { applyCheat, type CheatAction } from './systems/cheats';
 import { fire, hire, payWithAnimal, recallOtor, refreshCandidates, sendOtor, setOtorCollector, setTask, takeFromOtor, type HelperTask, type HerdGroup } from './systems/helpers';
+import { clampDifficulty, type Difficulty } from './systems/difficulty';
 
 export type Command =
   | { type: 'movePlayer'; x: number; z: number; heading?: number }
@@ -35,6 +36,7 @@ export type Command =
   | { type: 'toggleUurga' }           // шилбүүр/уурга барих/тавих (U)
   | { type: 'callHorse' }             // морь дуудах (H)
   | { type: 'scareWolves' }           // чоно үргээх (Q)
+  | { type: 'setDifficulty'; patch: Partial<Difficulty> }   // M6.10: гулсуур (тоглолтын дундаас ч)
   | { type: 'debugAddAnimals'; n: number; x?: number; z?: number }   // туршилтын цэс: мал нэмэх
   | { type: 'pickup'; ids: number[] | 'nearby' }
   | { type: 'deposit' }
@@ -161,6 +163,11 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
     case 'scareWolves': {
       const n = scareWolves(cfg, state);
       return n ? ok(`Хуу-хай! ${n} чоно үүр лүүгээ зугтлаа`) : fail('Ойрхон чоно алга');
+    }
+
+    case 'setDifficulty': {
+      state.settings.difficulty = clampDifficulty(cfg, state.settings.difficulty, cmd.patch);
+      return { ok: true };
     }
 
     case 'debugAddAnimals': {

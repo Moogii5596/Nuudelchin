@@ -6,6 +6,7 @@
  * `state.ts → MIGRATIONS`-д алхам нэмнэ; `tests/save.test.ts`-ийн «15 + хадгалах + ачаалах + 15» тест нуугдмал төлөвийг барина.
  */
 import { SPECIES, type GameConfig } from './config';
+import { difficultyProblems } from './systems/difficulty';
 import { MIGRATIONS, MIN_SAVE_VERSION, PRODUCTS, SAVE_VERSION, VEHICLES, migrateState, type GameState } from './state';
 
 export const SAVE_FORMAT = 'nuudelchin-save';
@@ -198,6 +199,7 @@ export function validateState(cfg: GameConfig, s: GameState): string[] {
     need(isObj(s.town.houses) && isObj(s.town.relatives) && Array.isArray(s.town.summerKids), 'town.houses/relatives/summerKids буруу');
   }
   need(isObj(s.today), 'today алга');
+  if (need(isObj(s.settings), 'settings алга')) e.push(...difficultyProblems(cfg, s.settings.difficulty));
   need(s.goalReachedDay === null || fin(s.goalReachedDay), 'goalReachedDay: тоо эсвэл null');
   void o;
   return e;

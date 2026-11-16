@@ -84,11 +84,12 @@ function drop(state: GameState, rng: Rng, product: ProductId, amount: number, x:
 /** Өглөө (06:00): хоносон газраа сүү, ноос үлдээгээд бэлчээрт гарна */
 export function morning(cfg: GameConfig, state: GameState, rng: Rng): void {
   const d = cfg.products.drops;
+  const dif = state.settings.difficulty;   // M6.10: бүтээгдэхүүний гарц ×0.5–2
   for (const a of state.animals) {
     if (a.riding) continue;
     // Туслахын малын сүү, ноос ч тоглогчийнх (тоглогчийн бэлчээрт бэлчдэг)
     if (a.species === 'cow' && a.sex === 'f' && a.lactating) {
-      a.milkTimer += dailyMilkLiters(cfg, a);
+      a.milkTimer += dailyMilkLiters(cfg, a) * dif.products;
       while (a.milkTimer >= d.milk.amount) {
         a.milkTimer -= d.milk.amount;
         drop(state, rng, 'milk', d.milk.amount, a.x, a.z, 1.2);
@@ -96,7 +97,7 @@ export function morning(cfg: GameConfig, state: GameState, rng: Rng): void {
     }
     const rule = a.species === 'sheep' ? d.wool : a.species === 'goat' ? d.cashmere : null;
     if (rule && a.age >= 1 && a.condition >= rule.minCondition) {
-      a.fiberDays += intakeFactor(cfg, a.lastGut);
+      a.fiberDays += intakeFactor(cfg, a.lastGut) * dif.products;
       if (a.fiberDays >= rule.everyDays) {
         a.fiberDays -= rule.everyDays;
         drop(state, rng, a.species === 'sheep' ? 'wool' : 'cashmere', rule.amount, a.x, a.z, 0.6);

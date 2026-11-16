@@ -22,6 +22,8 @@ import sumcenterJson from '../../../data/sumcenter.json';
 import townJson from '../../../data/town.json';
 import interiorsJson from '../../../data/interiors.json';
 import gerJson from '../../../data/ger.json';
+import difficultyJson from '../../../data/difficulty.json';
+import { validateDifficultyConfig, type DifficultyConfig } from './systems/difficulty';
 import { validateInteriors, type InteriorsConfig } from './systems/interior';
 import type { GerSimConfig } from './systems/gerLayout';
 import { lotSlots, sumDoors, allBuildings, TRADE_ROLES, type SumLayout } from './systems/sumtown';
@@ -262,6 +264,8 @@ export interface GameConfig {
   town: typeof townJson;
   /** V6.1: орж болдог барилгын дотор тал — data/interiors.json */
   interiors: InteriorsConfig;
+  /** M6.10: тайван тохиргооны гулсуурын хүрээ, анхдагч — data/difficulty.json */
+  difficulty: DifficultyConfig;
   /** Гэрийн загварын хэмжээс, тавилгын байрлал (data/ger.json — render/ger-тэй хуваалцана; хаалганы цэг, дотор саад) */
   ger: GerSimConfig;
   start: { camp: string; home: string; vehicles: string[]; storageLevel: number; animals: StartAnimal[] };
@@ -289,6 +293,7 @@ export function loadConfig(): GameConfig {
     town: townJson,
     interiors: interiorsJson as unknown as InteriorsConfig,
     ger: gerJson.ger as unknown as GerSimConfig,
+    difficulty: difficultyJson as unknown as DifficultyConfig,
   };
   const errors = validateConfig(cfg);
   if (errors.length) {
@@ -351,6 +356,7 @@ export function validateConfig(cfg: GameConfig): string[] {
   if (!Object.values(cfg.worldmap.locations).some((l) => l.kind === 'sum')) e.push('worldmap: сумын төв алга');
   e.push(...validateSumLayout(cfg));
   e.push(...validateInteriors(cfg));
+  e.push(...validateDifficultyConfig(cfg));
   if (!cfg.storage.levels[cfg.start.storageLevel]) e.push('start.storageLevel: агуулахын түвшин алга');
   for (const a of cfg.start.animals) if (!cfg.animals.species[a.species]) e.push(`start.animals: "${a.species}" алга`);
   return e;

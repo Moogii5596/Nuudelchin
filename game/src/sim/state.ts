@@ -6,6 +6,7 @@ import type { GameConfig, Sex, Species } from './config';
 import { newTime, type TimeState } from './clock';
 import { Rng } from './rng';
 import type { FlockCenter } from './systems/herds';
+import { defaultDifficulty, type Difficulty } from './systems/difficulty';
 import { buildGrid, type GrassGrid } from './systems/pasture';
 import { spawnWolves, type WolfState } from './systems/wolves';
 import type { Dog } from './systems/dogs';
@@ -13,7 +14,7 @@ import { initFleetVehicle } from './systems/travel';
 import { newHelpersState, type HelpersState } from './systems/helpers';
 import { newTownState, type TownState } from './systems/town';
 
-export const SAVE_VERSION = 13;   // 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих · 6: нохой, чонын дайралт, сүргийн нүүдэл (M4) · 7: шөнө, хотлох, өглөөний бүтээгдэхүүн, Портер/Амжиргаа, шөнийн чоно (M4.5) · 8: газрын зураг, тээвэр жолоодох, ачаа, Худалдаачин (M4.6) · 9: туслах малчид, цайны газар, отор, туслахын мал (M5) · 10: улирал, цас, боодол өвс, 4 бууц, отрын бүтээгдэхүүн (M5.5) · 11: сумын төвийн амьдрал — байшин, нэр хүнд, зээл, хамаатан (V3.4) · 12: орж болдог барилга — player.interior (V6.1) · 13: Sim-ийн нуугдмал төлөв state-д — dayStartMoney, flockCenters (M6.1)
+export const SAVE_VERSION = 14;   // 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих · 6: нохой, чонын дайралт, сүргийн нүүдэл (M4) · 7: шөнө, хотлох, өглөөний бүтээгдэхүүн, Портер/Амжиргаа, шөнийн чоно (M4.5) · 8: газрын зураг, тээвэр жолоодох, ачаа, Худалдаачин (M4.6) · 9: туслах малчид, цайны газар, отор, туслахын мал (M5) · 10: улирал, цас, боодол өвс, 4 бууц, отрын бүтээгдэхүүн (M5.5) · 11: сумын төвийн амьдрал — байшин, нэр хүнд, зээл, хамаатан (V3.4) · 12: орж болдог барилга — player.interior (V6.1) · 13: Sim-ийн нуугдмал төлөв state-д — dayStartMoney, flockCenters (M6.1) · 14: settings.difficulty — тайван тохиргооны гулсуурууд (M6.10)
 
 export type ProductId = 'milk' | 'tarag' | 'aaruul' | 'urum' | 'wool' | 'felt' | 'cashmere';
 export const PRODUCTS: readonly ProductId[] = ['milk', 'tarag', 'aaruul', 'urum', 'wool', 'felt', 'cashmere'];
@@ -198,6 +199,8 @@ export interface GameState {
   dayStartMoney: number | null;
   /** M6.1: малын нэгдэх төв (systems/herds.ts cohesionCenters): [малын id, төв]. Сүүлийн шийдвэрийн алхмын үр дүн — ачаалсны дараа ч үргэлжилнэ */
   flockCenters: [number, FlockCenter][];
+  /** M6.10: тоглогчийн тохиргоо. Тоглолтын дундаас `setDifficulty` командаар солино */
+  settings: { difficulty: Difficulty };
 }
 
 export function emptyDayStats(): DayStats {
@@ -286,6 +289,7 @@ export function createInitialState(cfg: GameConfig, seed: number): GameState {
     goalReachedDay: null,
     dayStartMoney: null,
     flockCenters: [],
+    settings: { difficulty: defaultDifficulty(cfg) },
   };
   const loc = cfg.worldmap.locations[cfg.start.camp];
   if (loc) st.map = { x: loc.x, z: loc.z, tx: loc.x, tz: loc.z, dest: null };
@@ -300,6 +304,8 @@ export function createInitialState(cfg: GameConfig, seed: number): GameState {
 export const MIGRATIONS: Record<number, (s: GameState) => void> = {
   11: (s) => { if (!s.player.interior) s.player.interior = null; },
   12: (s) => { s.dayStartMoney ??= null; s.flockCenters ??= []; },
+  // 13 → 14: гулсуур байгаагүй үеийн тоглолт = бүгд ×1 (data/difficulty.json-ийн анхдагчтай тест тулгана)
+  13: (s) => { s.settings ??= { difficulty: { wolves: 1, animalsDie: true, products: 1, timeSpeed: 1 } }; },
 };
 /** Хамгийн эртний дэмжих хувилбар (түүнээс өмнөх нь прототип — шилжүүлэхгүй) */
 export const MIN_SAVE_VERSION = 11;

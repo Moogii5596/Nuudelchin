@@ -862,7 +862,8 @@ export function dailyOtor(cfg: GameConfig, state: GameState, rng: Rng): HelperEv
     const lvl = cfg.camps.camps[g.campId]?.wolfLevel ?? 'medium';
     const p = ((cfg.helpers.otor.wolfLossPerDay as Record<string, number>)[lvl] ?? 0.02) * (cfg.seasons.otorWolfMult[season] ?? 1);
     const prey = g.animals.filter((a) => a.species === 'sheep' || a.species === 'goat');
-    if (prey.length && rng.chance(p)) {
+    const dif = state.settings.difficulty;   // M6.10
+    if (prey.length && rng.chance(p * dif.wolves) && dif.animalsDie) {
       const v = prey[Math.floor(rng.next() * prey.length)]!;
       g.animals = g.animals.filter((a) => a !== v);
       state.today.wolfKills[v.species] = (state.today.wolfKills[v.species] ?? 0) + 1;

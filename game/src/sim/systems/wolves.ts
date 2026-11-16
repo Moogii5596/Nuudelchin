@@ -274,7 +274,8 @@ export function wolvesStep(cfg: GameConfig, state: GameState): WolfEvent[] {
   const zones = protectionZones(cfg, state);
   const level = cfg.camps.camps[state.campId]?.wolfLevel ?? 'medium';
   const notice = (at.noticeChance as Record<string, number>)[level] ?? 0;
-  const attacks = Boolean(at.enabled) && !ws.peaceful;
+  const dif = state.settings.difficulty;   // M6.10: чоно ×0–1.5, мал чонод үхэх
+  const attacks = Boolean(at.enabled) && !ws.peaceful && dif.wolves > 0;
   const vul = at.vulnerability as unknown as Record<string, number>;
   const vulnerability = (a: Animal): number => (a.age < 1 ? vul.young ?? 1 : vul[a.species] ?? 1);
   let byId: Map<number, Animal> | null = null;
@@ -298,7 +299,7 @@ export function wolvesStep(cfg: GameConfig, state: GameState): WolfEvent[] {
     if (o.fed > 0) o.fed -= 1;
 
     // Өлсгөлөн ба хооллолт (B6): үүрэндээ байгаа чоно нөөцийг тэнцүү хувааж иднэ
-    o.hunger = Math.min(H.maxDays, (o.hunger ?? H.hungryAtDays) + perMin);
+    o.hunger = Math.min(H.maxDays, (o.hunger ?? H.hungryAtDays) + perMin * dif.wolves);
     const k = eaters.get(o.den);
     if (k && (den.food ?? 0) > 0 && o.hunger > 0 && o.mode !== 'hunt' && Math.hypot(o.x - den.x, o.z - den.z) <= den.r) {
       const eat = Math.min(H.eatKgPerMinute, o.hunger * H.dailyKg, den.food! / k);
@@ -339,7 +340,19 @@ export function wolvesStep(cfg: GameConfig, state: GameState): WolfEvent[] {
         o.tx = a.x;
         o.tz = a.z;
         moveToward(o, w.speed.hunt);
-        if (Math.hypot(a.x - o.x, a.z - o.z) <= at.killRange) {
+        if (Math.hypot(a.x - o.x, a.z - o.z) <= at.killRange && !dif.animalsDie) {
+          // «Мал чонод үхэхгүй»: чоно малыг айлгаж тараана, барихгүй — ангаа орхино
+          const ang = Math.atan2(a.x - o.x, a.z - o.z);
+          a.mode = 'flee';
+          a.tx = a.x + Math.sin(ang) * cfg.wolves.fear.fleeDistance[1]!;
+          a.tz = a.z + Math.cos(ang) * cfg.wolves.fear.fleeDistance[1]!;
+          events.push({ type: 'wolfGiveUp', species: a.species, animalId: a.id, x: a.x, z: a.z });
+          o.mode = 'roam';
+          o.targetId = 0;
+          o.forced = false;
+          o.raid = false;
+          o.fed = at.giveUpCooldown;
+        } else if (Math.hypot(a.x - o.x, a.z - o.z) <= at.killRange) {
           killed.add(a.id);
           state.today.wolfKills[a.species] = (state.today.wolfKills[a.species] ?? 0) + 1;
           // Олзны мах үүрний нөөцөд — үүрний чоно тэнцүү хувааж олон хоног иднэ (B6)
@@ -529,10 +542,10 @@ function raidStep(
 export function nightRaid(cfg: GameConfig, state: GameState): number {
   const ws = state.wolves;
   const n = cfg.wolves.night;
-  if (!ws.list.length || ws.peaceful || !cfg.wolves.attack.enabled) return 0;
+  if (!ws.list.length || ws.peaceful || !cfg.wolves.attack.enabled || state.settings.difficulty.wolves <= 0) return 0;
   const season = seasonOf(cfg, state.time.day);
   const level = cfg.camps.camps[state.campId]?.wolfLevel ?? 'medium';
-  const p = Math.min(1, ((n.raidChance as Record<string, number>)[season] ?? 0) * ((n.levelMult as Record<string, number>)[level] ?? 1));
+  const p = Math.min(1, ((n.raidChance as Record<string, number>)[season] ?? 0) * ((n.levelMult as Record<string, number>)[level] ?? 1) * state.settings.difficulty.wolves);
   const max = (n.maxRaiders as Record<string, number>)[season] ?? 1;
   const rng = Rng.fromState(ws.rngState);
   let count = 0;
