@@ -435,7 +435,9 @@ export class Panels {
     html += this.cargoList() + t('ui.load_from_storage_price', { x: loadRows || t('ui.storage_is_empty'), animalRows, x2: errs.length ? `<p class="bad">${errs.join(' · ')}</p>` : '', x3: errs.length || (!loadUnits && !loadSlots) ? 'disabled' : '', x4: atSpot && (cargoUnits(f) || f.animals.length || f.orders.length) ? '' : 'disabled' });
     if (d.atVehicle) {
       const ready = hasDriver(state) && cargoUnits(f) > 1e-9 && !f.animals.length && !f.orders.length && state.player.driving !== f.id;
-      html += t('ui.cart_send', { x: ready ? '' : 'disabled', x2: hasDriver(state) ? '' : t('ui.cart_send_no_driver') });
+      // Тэргэн дээрх ачааны нийт үнэ (одоогийн үнээр, ойролцоо — жолооч хүрэх үеийн үнээр зарна)
+      const total = PRODUCTS.reduce((sum, pr) => sum + (f.cargo[pr] ?? 0) * productPrice(cfg, pr), 0);
+      html += t('ui.cart_send', { x: ready ? '' : 'disabled', x2: hasDriver(state) ? '' : t('ui.cart_send_no_driver'), total: fmtMoney(Math.round(total)) });
     }
     return html;
   }

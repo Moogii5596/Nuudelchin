@@ -958,7 +958,7 @@ SYM game/src/render/ui/names.ts:101 const SEASON_EMOJI
 SYM game/src/render/ui/names.ts:103 const CAMP_HINT
 SYM game/src/render/ui/names.ts:110 const WATER_NAME
 SYM game/src/render/ui/names.ts:111 const WOLF_LEVEL_NAME
-FILE game/src/render/ui/panels.ts 74.0KB 1174L exports: UiHooks,Panels
+FILE game/src/render/ui/panels.ts 74.3KB 1176L exports: UiHooks,Panels
 SYM game/src/render/ui/panels.ts:96 interface UiHooks
 SYM game/src/render/ui/panels.ts:105 class Panels
 SYM game/src/render/ui/panels.ts:148 method Panels.isOpen
@@ -977,24 +977,24 @@ SYM game/src/render/ui/panels.ts:337 method Panels.buyItems
 SYM game/src/render/ui/panels.ts:361 method Panels.vehicleButtons
 SYM game/src/render/ui/panels.ts:369 method Panels.cargoList
 SYM game/src/render/ui/panels.ts:383 method Panels.cargoHtml
-SYM game/src/render/ui/panels.ts:443 method Panels.selectedAnimals
-SYM game/src/render/ui/panels.ts:451 method Panels.shopHtml
-SYM game/src/render/ui/panels.ts:511 method Panels.traderHtml
-SYM game/src/render/ui/panels.ts:534 method Panels.gerSellHtml
-SYM game/src/render/ui/panels.ts:541 method Panels.townCommand
-SYM game/src/render/ui/panels.ts:571 method Panels.townHtml
-SYM game/src/render/ui/panels.ts:633 method Panels.lotHtml
-SYM game/src/render/ui/panels.ts:661 method Panels.arriveHtml
-SYM game/src/render/ui/panels.ts:687 method Panels.reportHtml
-SYM game/src/render/ui/panels.ts:705 method Panels.wolfKillsHtml
-SYM game/src/render/ui/panels.ts:712 method Panels.dogsHtml
-SYM game/src/render/ui/panels.ts:735 method Panels.campsHtml
-SYM game/src/render/ui/panels.ts:766 method Panels.cheatHtml
-SYM game/src/render/ui/panels.ts:776 method Panels.teahouseHtml
-SYM game/src/render/ui/panels.ts:794 method Panels.helpersHtml
-SYM game/src/render/ui/panels.ts:843 method Panels.otorHtml
-SYM game/src/render/ui/panels.ts:863 method Panels.payHtml
-SYM game/src/render/ui/panels.ts:879 method Panels.act
+SYM game/src/render/ui/panels.ts:445 method Panels.selectedAnimals
+SYM game/src/render/ui/panels.ts:453 method Panels.shopHtml
+SYM game/src/render/ui/panels.ts:513 method Panels.traderHtml
+SYM game/src/render/ui/panels.ts:536 method Panels.gerSellHtml
+SYM game/src/render/ui/panels.ts:543 method Panels.townCommand
+SYM game/src/render/ui/panels.ts:573 method Panels.townHtml
+SYM game/src/render/ui/panels.ts:635 method Panels.lotHtml
+SYM game/src/render/ui/panels.ts:663 method Panels.arriveHtml
+SYM game/src/render/ui/panels.ts:689 method Panels.reportHtml
+SYM game/src/render/ui/panels.ts:707 method Panels.wolfKillsHtml
+SYM game/src/render/ui/panels.ts:714 method Panels.dogsHtml
+SYM game/src/render/ui/panels.ts:737 method Panels.campsHtml
+SYM game/src/render/ui/panels.ts:768 method Panels.cheatHtml
+SYM game/src/render/ui/panels.ts:778 method Panels.teahouseHtml
+SYM game/src/render/ui/panels.ts:796 method Panels.helpersHtml
+SYM game/src/render/ui/panels.ts:845 method Panels.otorHtml
+SYM game/src/render/ui/panels.ts:865 method Panels.payHtml
+SYM game/src/render/ui/panels.ts:881 method Panels.act
 FILE game/src/render/ui/sleepPanel.ts 2.4KB 49L exports: SleepCtx,SleepPanel
 SYM game/src/render/ui/sleepPanel.ts:12 interface SleepCtx
 SYM game/src/render/ui/sleepPanel.ts:19 fn hhmm

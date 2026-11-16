@@ -850,6 +850,6 @@
   "ui.load_act": "Load",
   "ui.process_act": "Process",
   "ui.cart_cargo_head": "<h2>🧺 Load the cart <span class=\"close\" data-act=\"close\">✕</span></h2>\n      <p class=\"muted\">Load goods from storage onto the cart, unload them, or send the loaded cart to the sum center with your driver.</p>",
-  "ui.cart_send": "<p><button class=\"btn gold big\" data-act=\"doSend\" {x}>📦 Send to the sum center</button> <span class=\"muted\">{x2}</span></p>",
+  "ui.cart_send": "<p><button class=\"btn gold big\" data-act=\"doSend\" {x}>📦 Send to the sum center</button> <b>Total: ~{total}</b> <span class=\"muted\">{x2}</span></p>",
   "ui.cart_send_no_driver": "Needs a hired driver (teahouse)."
 }
