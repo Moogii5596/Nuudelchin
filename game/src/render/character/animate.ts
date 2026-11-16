@@ -67,13 +67,18 @@ export function animateCharacter(H: CharacterRig, p: CharacterPose): number {
   else if (!a.moving && a.speed > cfg.moveMin) a.moving = true;
   else if (a.moving && a.speed < cfg.moveStop) a.moving = false;
   const moving = a.moving;
-  a.gait += ((moving ? 1 : 0) - a.gait) * Math.min(1, dt * cfg.gaitRate);
+  // алхааны жин хурдтай хамт тасралтгүй буурна (moving-ийн унтрал дээр үсрэхгүй): gaitFade-ээс бага хурдад 0 рүү
+  a.gait += ((moving ? sstep(0, cfg.gaitFade, a.speed) : 0) - a.gait) * Math.min(1, dt * cfg.gaitRate);
   if (a.gait < 0.01 && !moving) a.gait = 0;
   const mv = a.gait;
   a.run += ((moving ? sstep(cfg.runFrom, cfg.runFull, a.speed) : 0) - a.run) * Math.min(1, dt * 5);
   const run = a.run;
   a.time += dt;
-  if (mv > 0) a.phase += dt * a.speed * mix(cfg.strideWalk, cfg.strideRun, run);
+  if (moving) a.phase += dt * a.speed * mix(cfg.strideWalk, cfg.strideRun, run);
+  else if (mv > 0) {   // зогсож байна: фазыг хөлүүд огтлолцох (дэвхцэл = 0) хамгийн ойрын байрлал руу зөөлөн эргүүлнэ
+    const rest = Math.round(a.phase / Math.PI) * Math.PI;
+    a.phase += (rest - a.phase) * Math.min(1, dt * cfg.settleRate);
+  }
   const t = a.time, phase = a.phase;
   const sw = Math.sin(phase) * mix(0.7, 1.1, run) * mv;
   const f = Math.sin(phase);
@@ -115,7 +120,8 @@ export function animateCharacter(H: CharacterRig, p: CharacterPose): number {
   const lean = mv * mix(0.07, 0.3, run);
   H.neck.rotation.y = Math.sin(t * 0.45) * 0.3 * (1 - run);
   H.neck.rotation.x = Math.sin(t * 0.3 + 1) * 0.07 * (1 - run) - lean * 0.55 * run;
-  const b = Math.sin(t * mix(1.6, 5, run)) * mix(1, 1.6, run);
+  a.breath += dt * mix(cfg.breathIdle, cfg.breathRun, run);   // давтамж өөрчлөгдөхөд фаз үсрэхгүй (sin(t·f) биш, нийлбэр)
+  const b = Math.sin(a.breath) * mix(1, 1.6, run);
   for (const body of H.bodies) body.scale.set((1 + b * 0.015) * H.build, 1, (1 + b * 0.035) * H.build);
   arm0.position.y = arm1.position.y = H.armY + b * 0.012;
   H.neck.position.y = H.neckY + b * 0.012;

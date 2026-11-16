@@ -19,6 +19,8 @@ export interface WalkConfig {
   /** Хөдөлгөөн хүссэн мөртлөө N сек нүүхгүй бол гацсан гэж үзнэ */ stuckSec: number;
   /** Нэг кадрт энэ зайгаас бага шилжвэл «хөдлөөгүй» (м/с) */ stuckSpeed: number;
   /** Гацсан үед түлхэх зай (м) */ unstickStep: number;
+  /** Ханыг налуу шахахад ханын дагуух хурд (хүссэн хурдны хувь) энэ хэмжээнээс буурахгүй (0–1) */ slideMin: number;
+  /** slideMin бүрэн үйлчлэх налуугийн босго: ханын дагуух бүрэлдэхүүн / хурд (0–1); бага бол шууд шахалтад удаан */ slideAngle: number;
 }
 
 export interface Pushed { x: number; z: number; hit: boolean }
@@ -52,6 +54,27 @@ export function pushOut(s: WalkSolids, x: number, z: number, r: number): Pushed 
     if (!moved) break;
   }
   return { x, z, hit };
+}
+
+/**
+ * Хөдөлгөөн: (px, pz) → (x, z) хүссэн байрлал. pushOut нь зөвхөн хананд ЦОГЦ бүрэлдэхүүнийг арилгадаг тул налуу шахахад
+ * ханын дагуух хурд нь cos(өнцөг)-өөр буурна. Энд тангенциал хурдыг хадгалж (хүссэн хурдны ≥ slideMin хувь, налуу өнцөг
+ * босгоос бага үед пропорциональ), дахин саадаас гаргана. Шууд (перпендикуляр) шахалтад гулсахгүй.
+ */
+export function slideMove(s: WalkSolids, px: number, pz: number, x: number, z: number, r: number, cfg: Pick<WalkConfig, 'slideMin' | 'slideAngle'>): Pushed {
+  const q = pushOut(s, x, z, r);
+  if (!q.hit) return q;
+  const dx = x - px, dz = z - pz, dl = Math.hypot(dx, dz);
+  const cx = q.x - x, cz = q.z - z, cl = Math.hypot(cx, cz);
+  if (dl < 1e-9 || cl < 1e-9) return q;
+  const nx = cx / cl, nz = cz / cl, dn = dx * nx + dz * nz;     // нормал (хананаас гадагш), хүссэн хөдөлгөөний нормал бүрэлдэхүүн
+  const tx = dx - dn * nx, tz = dz - dn * nz, tl = Math.hypot(tx, tz);
+  if (tl < 1e-9) return q;
+  const want = Math.max(tl, cfg.slideMin * dl * Math.min(1, tl / (cfg.slideAngle * dl)));
+  if (want <= tl * 1.0001) return q;
+  const k = want / tl;
+  const r2 = pushOut(s, px + tx * k, pz + tz * k, r);
+  return { x: r2.x, z: r2.z, hit: true };
 }
 
 /** Хашааны хана — 4 талын тусдаа хайрцаг; gateSide талд хаалганы нүх (gateOff — төвөөс зөөлт). fence()-тэй ижил томьёо */

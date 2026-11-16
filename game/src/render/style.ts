@@ -69,6 +69,13 @@ export interface HerderAnimVisual {
   speedSmooth: number;
   /** алхаа↔зогсолтын жинг зөөлөн өөрчлөх хурд (1/с) */
   gaitRate: number;
+  /** зогсохдоо алхааны фазыг хөлүүд огтлолцох (бөөрөнхий) байрлал руу эргүүлэх хурд (1/с) — дэвхцэл тэг рүү зөөлөн */
+  settleRate: number;
+  /** энэ хурдаас (м/с) бага болоход алхааны жин 0 рүү уруудна */
+  gaitFade: number;
+  /** амьсгалын давтамж (рад/с): зогсонги, гүйлт */
+  breathIdle: number;
+  breathRun: number;
   runFrom: number;
   runFull: number;
   strideWalk: number;
@@ -266,7 +273,7 @@ function parseHerderAnim(h: Record<string, unknown>): HerderAnimVisual {
   const isEmotion = (v: unknown): v is HerderEmotion => herderEmotions.includes(v as HerderEmotion);
   if (!isPositive(h.moveMin)) bad('moveMin');
   if (!isPositive(h.moveStop) || (h.moveStop as number) >= (h.moveMin as number)) bad('moveStop');
-  if (!isPositive(h.deadzone) || !isPositive(h.speedSmooth) || !isPositive(h.gaitRate)) bad('deadzone/speedSmooth/gaitRate');
+  if (!isPositive(h.deadzone) || !isPositive(h.speedSmooth) || !isPositive(h.gaitRate) || !isPositive(h.settleRate) || !isPositive(h.gaitFade) || !isPositive(h.breathIdle) || !isPositive(h.breathRun)) bad('deadzone/speedSmooth/gaitRate/settleRate/breath');
   if (!isPositive(h.runFrom) || !isPositive(h.runFull) || (h.runFull as number) <= (h.runFrom as number)) bad('runFrom/runFull');
   if (!isPositive(h.strideWalk) || !isPositive(h.strideRun)) bad('stride');
   if (!isEmotion(h.threat)) bad('threat');
@@ -283,7 +290,7 @@ function parseHerderAnim(h: Record<string, unknown>): HerderAnimVisual {
     });
   }
   return {
-    moveMin: h.moveMin as number, moveStop: h.moveStop as number, deadzone: h.deadzone as number, speedSmooth: h.speedSmooth as number, gaitRate: h.gaitRate as number, runFrom: h.runFrom as number, runFull: h.runFull as number,
+    moveMin: h.moveMin as number, moveStop: h.moveStop as number, deadzone: h.deadzone as number, speedSmooth: h.speedSmooth as number, gaitRate: h.gaitRate as number, settleRate: h.settleRate as number, gaitFade: h.gaitFade as number, breathIdle: h.breathIdle as number, breathRun: h.breathRun as number, runFrom: h.runFrom as number, runFull: h.runFull as number,
     strideWalk: h.strideWalk as number, strideRun: h.strideRun as number, threat: h.threat as HerderEmotion, events,
   };
 }

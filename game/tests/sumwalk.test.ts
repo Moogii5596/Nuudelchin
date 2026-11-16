@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chaseVia, nearestFreeSpot, pushOut, stuckStep, wallRing, yardWaypoint, type WalkBox, type WalkSolids, type WalkYard } from '../src/sim/systems/sumwalk';
+import { chaseVia, nearestFreeSpot, pushOut, slideMove, stuckStep, wallRing, yardWaypoint, type WalkBox, type WalkSolids, type WalkYard } from '../src/sim/systems/sumwalk';
 
 const solids = (boxes: WalkBox[], cyls: WalkSolids['cyls'] = []): WalkSolids => ({ boxes, cyls });
 
@@ -123,5 +123,50 @@ describe('sumwalk: хашааны хаалгаар дамжуулах (render NP
   });
   it('хэт хол зөрвөл шууд очно (снап)', () => {
     expect(chaseVia([y], { x: -6, z: 0 }, { x: 30, z: 30 }, 0.2)).toEqual({ x: 30, z: 30 });
+  });
+});
+
+describe('sumwalk: ханын дагуу гулсалт (slideMove)', () => {
+  const wall: WalkSolids = { boxes: [{ x: 0, z: 5, hw: 20, hd: 0.15 }], cyls: [] };   // z=5 дээрх хана, нормал −z
+  const cfg = { slideMin: 0.85, slideAngle: 0.25 };
+  const r = 0.35, step = 0.1;
+  /** 1 алхам: (px, pz)-ээс ханыг налуу (өнцөг a рад, ханатай параллелээс) шахна */
+  const move = (px: number, pz: number, a: number, c: Pick<typeof cfg, 'slideMin' | 'slideAngle'>): { x: number; z: number } => slideMove(wall, px, pz, px + Math.cos(a) * step, pz + Math.sin(a) * step, r, c);
+
+  it('налуу (10°) шахахад ханын дагуух хурд хадгалагдана (≥ pushOut, ≥ slideMin-ээс бага биш), хананд орохгүй', () => {
+    const z0 = 5 - 0.15 - r;
+    const a = (10 * Math.PI) / 180, plain = pushOut(wall, 0 + Math.cos(a) * step, z0 + Math.sin(a) * step, r);
+    expect(plain.x).toBeCloseTo(Math.cos(a) * step, 6);          // pushOut тангенциалыг хэвээр (cos10°)
+    const m = move(0, z0, a, cfg);
+    expect(m.x).toBeGreaterThanOrEqual(plain.x - 1e-9);
+    expect(m.z).toBeLessThanOrEqual(z0 + 1e-6);                    // хананд орохгүй
+  });
+
+  it('бага налуу (3°) шахахад хурд slideMin·(налуу/босго) хүртэл өснө, шууд шахалтад (90°) гулсахгүй', () => {
+    const z0 = 5 - 0.15 - r;
+    const shallow = move(0, z0, (3 * Math.PI) / 180, cfg), plain = pushOut(wall, Math.cos(0.05236) * step, z0 + Math.sin(0.05236) * step, r);
+    expect(shallow.x).toBeGreaterThan(plain.x - 1e-9);
+    const head = move(0, z0, Math.PI / 2, cfg);
+    expect(Math.abs(head.x)).toBeLessThan(1e-6);
+    expect(head.z).toBeLessThanOrEqual(z0 + 1e-6);
+  });
+
+  it('саадгүй бол хүссэн байрлал хэвээр, давхар шахалтад хана дотор орохгүй (булан)', () => {
+    expect(move(0, 0, 0.3, cfg).x).toBeCloseTo(Math.cos(0.3) * step, 9);
+    const corner: WalkSolids = { boxes: [{ x: 0, z: 5, hw: 20, hd: 0.15 }, { x: 5, z: 0, hw: 0.15, hd: 20 }], cyls: [] };
+    let x = 4.4, z = 4.4;
+    for (let i = 0; i < 40; i++) { const q = slideMove(corner, x, z, x + 0.07, z + 0.07, r, cfg); x = q.x; z = q.z; }
+    expect(pushOut(corner, x, z, r - 1e-6).hit).toBe(false);
+  });
+});
+
+describe('sumwalk: 45° шахалт', () => {
+  it('pushOut cos45°=71% хурдтай, slideMove slideMin=85% хурдтай гулсана', () => {
+    const wall: WalkSolids = { boxes: [{ x: 0, z: 5, hw: 20, hd: 0.15 }], cyls: [] };
+    const z0 = 5 - 0.15 - 0.35, a = Math.PI / 4, d = 0.1;
+    const plain = pushOut(wall, Math.cos(a) * d, z0 + Math.sin(a) * d, 0.35);
+    const m = slideMove(wall, 0, z0, Math.cos(a) * d, z0 + Math.sin(a) * d, 0.35, { slideMin: 0.85, slideAngle: 0.25 });
+    expect(plain.x).toBeCloseTo(0.0707, 3);
+    expect(m.x).toBeCloseTo(0.085, 3);
   });
 });

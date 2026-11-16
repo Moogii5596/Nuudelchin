@@ -132,6 +132,31 @@ describe('Дүрийн сан (render/character, V4.5 R1–R2)', () => {
     expect(flips2).toBeLessThanOrEqual(1);
   });
 
+  it('animateCharacter: зогсоход толгой/мөрний өндөр кадр бүрт < 2 мм алхмаар, эргэлтгүй (алхаа 20 кадр; гүйлтийн сүүл тогтвортой)', () => {
+    for (const speed of [2.2, 6]) {
+      const rig = lab.buildCharacter(characterSpec('player'));
+      const pose = { dt: 1 / 60, speed, mode: 'foot', raise: false, uurga: false, talk: false, emotion: 'neutral' } as const;
+      for (let i = 0; i < 120; i++) rig.root.position.y = lab.animateCharacter(rig, pose);
+      const v = new THREE.Vector3(), ys: number[][] = [];
+      for (let i = 0; i < 60; i++) {
+        rig.root.position.y = lab.animateCharacter(rig, { ...pose, speed: 0 });
+        rig.root.updateMatrixWorld(true);
+        ys.push([rig.neck.getWorldPosition(v).y * 1000, rig.arms[0].getWorldPosition(v).y * 1000]);
+      }
+      // алхаа: эхний 20 кадр; гүйлт: тоормослолтын 15 кадрын дараа (тэр хүртэл гүйлтийн дэвхцэл өөрөө)
+      const from = speed > 4 ? 15 : 1, to = speed > 4 ? 60 : 20;
+      for (let k = 0; k < 2; k++) {
+        let dir = 0;
+        for (let i = from; i < to; i++) {
+          const d = ys[i]![k]! - ys[i - 1]![k]!;
+          expect(Math.abs(d)).toBeLessThan(2);
+          if (Math.abs(d) > 0.6) { if (dir) expect(Math.sign(d)).toBe(dir); dir = Math.sign(d); }   // чиглэл эргэхгүй
+        }
+      }
+      expect(Math.abs(ys[59]![0]! - ys[58]![0]!)).toBeLessThan(0.1);   // ~1 сек орчимд тогтсон
+    }
+  });
+
   it('animateCharacter: алхаа, морь, суух байрлал ба дэвхцэлт', () => {
     const rig = lab.buildCharacter(characterSpec('player'));
     const pose = { dt: 1 / 60, speed: 1.6, mode: 'foot', raise: false, uurga: false, talk: false, emotion: 'happy' } as const;
