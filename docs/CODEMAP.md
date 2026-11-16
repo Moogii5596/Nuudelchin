@@ -45,9 +45,45 @@ SYM game/src/input/touch.ts:260 method TouchUI.fullscreen
 SYM game/src/input/touch.ts:273 method TouchUI.paused
 SYM game/src/input/touch.ts:277 method TouchUI.portrait
 SYM game/src/input/touch.ts:282 method TouchUI.update
-FILE game/src/main.ts 29.4KB 463L
-SYM game/src/main.ts:37 fn toast
-SYM game/src/main.ts:50 fn start
+FILE game/src/main.ts 31.9KB 492L
+SYM game/src/main.ts:39 fn toast
+SYM game/src/main.ts:55 fn start
+SYM game/src/main.ts:477 fn boot
+FILE game/src/persist/autosave.ts 4.7KB 102L exports: SaveReason,AutosaveDeps,Autosave,attachSimEvents,attachPageEvents
+SYM game/src/persist/autosave.ts:11 type SaveReason
+SYM game/src/persist/autosave.ts:13 interface AutosaveDeps
+SYM game/src/persist/autosave.ts:26 class Autosave
+SYM game/src/persist/autosave.ts:38 method Autosave.request
+SYM game/src/persist/autosave.ts:43 method Autosave.flush
+SYM game/src/persist/autosave.ts:54 method Autosave.saveNow
+SYM game/src/persist/autosave.ts:81 method Autosave.idle
+SYM game/src/persist/autosave.ts:87 fn attachSimEvents
+SYM game/src/persist/autosave.ts:96 fn attachPageEvents
+FILE game/src/persist/file.ts 2.3KB 54L exports: FILE_EXT,exportBytes,importBytes,fileName,downloadFile,readFile
+SYM game/src/persist/file.ts:9 const FILE_EXT
+SYM game/src/persist/file.ts:11 fn pipe
+SYM game/src/persist/file.ts:17 fn exportBytes
+SYM game/src/persist/file.ts:22 fn importBytes
+SYM game/src/persist/file.ts:36 fn fileName
+SYM game/src/persist/file.ts:42 fn downloadFile
+SYM game/src/persist/file.ts:52 fn readFile
+FILE game/src/persist/idb.ts 8.8KB 201L exports: SLOTS,DB_NAME,SlotInfo,fnv1a,StoreHooks,SaveStore,requestPersistence
+SYM game/src/persist/idb.ts:12 const SLOTS
+SYM game/src/persist/idb.ts:13 const DB_NAME
+SYM game/src/persist/idb.ts:29 interface SlotInfo
+SYM game/src/persist/idb.ts:40 fn fnv1a
+SYM game/src/persist/idb.ts:49 fn intact
+SYM game/src/persist/idb.ts:52 interface StoreHooks
+SYM game/src/persist/idb.ts:57 class SaveStore
+SYM game/src/persist/idb.ts:64 method SaveStore.available
+SYM game/src/persist/idb.ts:68 method SaveStore.open
+SYM game/src/persist/idb.ts:80 method SaveStore.close
+SYM game/src/persist/idb.ts:122 method SaveStore.rows
+SYM game/src/persist/idb.ts:130 method SaveStore.list
+SYM game/src/persist/idb.ts:146 method SaveStore.load
+SYM game/src/persist/idb.ts:174 method SaveStore.remove
+SYM game/src/persist/idb.ts:187 fn checkSlot
+SYM game/src/persist/idb.ts:192 fn requestPersistence
 FILE game/src/pwa.ts 4.9KB 107L exports: isIOS,isAndroid,inAppBrowser,installed,canLockLandscape,pwa,landscapeFullscreen,registerServiceWorker,onConnectionChange
 SYM game/src/pwa.ts:17 const isIOS
 SYM game/src/pwa.ts:18 const isAndroid
@@ -1104,6 +1140,7 @@ FILE game/tests/herds.test.ts 5.1KB 112L
 FILE game/tests/interior.test.ts 10.1KB 200L
 FILE game/tests/night.test.ts 6.5KB 127L
 FILE game/tests/pasture.test.ts 3.8KB 72L
+FILE game/tests/persist.test.ts 10.2KB 212L
 FILE game/tests/playthrough.test.ts 6.3KB 133L
 FILE game/tests/products.test.ts 3.0KB 56L
 FILE game/tests/rng.test.ts 0.8KB 26L
@@ -1116,22 +1153,22 @@ FILE game/tests/sumtown.test.ts 4.5KB 90L
 FILE game/tests/town.test.ts 6.1KB 127L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 17.5KB 103L
+FILE docs/CONTEXT.md 18.3KB 106L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-28 ## 2. Стек ба командууд
-DOC docs/CONTEXT.md:29-77 ## 3. Файлын зураглал (`game/src/`)
-DOC docs/CONTEXT.md:78-80 ## 4. `data/*.json` → аль файл хэрэглэдэг
-DOC docs/CONTEXT.md:81-89 ## 5. Архитектурын дүрэм ([[architecture]])
-DOC docs/CONTEXT.md:90-93 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
-DOC docs/CONTEXT.md:94-96 ## 7. Нээлттэй асуултууд
-DOC docs/CONTEXT.md:97-103 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
+DOC docs/CONTEXT.md:29-80 ## 3. Файлын зураглал (`game/src/`)
+DOC docs/CONTEXT.md:81-83 ## 4. `data/*.json` → аль файл хэрэглэдэг
+DOC docs/CONTEXT.md:84-92 ## 5. Архитектурын дүрэм ([[architecture]])
+DOC docs/CONTEXT.md:93-96 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
+DOC docs/CONTEXT.md:97-99 ## 7. Нээлттэй асуултууд
+DOC docs/CONTEXT.md:100-106 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
 FILE docs/INDEX.md 13.9KB 135L
 DOC docs/INDEX.md:16-30 ## 1. Унших дараалал ба давуу эрх
 DOC docs/INDEX.md:31-106 ## 2. Баримтууд
 DOC docs/INDEX.md:107-110 ## 3. Гол тоо
 DOC docs/INDEX.md:111-129 ## 4. Нэр томьёо
 DOC docs/INDEX.md:130-135 ## 5. Баримт засах дүрэм
-FILE docs/architecture.md 18.2KB 236L
+FILE docs/architecture.md 18.8KB 236L
 DOC docs/architecture.md:16-29 ## 1. Технологи
 DOC docs/architecture.md:30-68 ## 2. Хавтасны бүтэц
 DOC docs/architecture.md:69-138 ## 3. Гол зарчмууд
@@ -1316,10 +1353,10 @@ DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
 DOC docs/plan/V.md:24-79 ## Блокууд ба чеклист (2026-11-15)
 DOC docs/plan/V.md:80-85 ## Зогссон цэг
-FILE docs/plan/playtest.md 9.3KB 61L
+FILE docs/plan/playtest.md 10.1KB 66L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
 DOC docs/plan/playtest.md:19-39 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
-DOC docs/plan/playtest.md:40-61 ## C. Мэдрэмж, үе шат бүрээр
+DOC docs/plan/playtest.md:40-66 ## C. Мэдрэмж, үе шат бүрээр
 FILE docs/seasons-camps.md 10.2KB 104L
 DOC docs/seasons-camps.md:17-40 ## 1. Хэрэглэгчийн шийдвэрүүд
 DOC docs/seasons-camps.md:41-54 ## 2. Улирал

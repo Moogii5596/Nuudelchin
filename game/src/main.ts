@@ -5,10 +5,10 @@
  *
  * Утас (мэдрэгч дэлгэц) автоматаар танигдана: input/touch.ts, device.ts. ?mobile=1 — компьютер дээр утасны горим.
  *
- * URL параметр (туршилт): ?seed=123 · ?herd=300 (нийт малын тоо) · ?speed=3 (1/2/3) · ?heatmap=1 · ?report=0 (өдрийн тайлангүй)
+ * URL параметр (туршилт; тэдний аль нэг байвал хадгалалтыг ачаалахгүй/хадгалахгүй, M6.2): ?fresh=1 · ?seed=123 · ?herd=300 (нийт малын тоо) · ?speed=3 (1/2/3) · ?heatmap=1 · ?report=0 (өдрийн тайлангүй)
  */
 import { loadConfig, SPECIES } from './sim/config';
-import { createInitialState } from './sim/state';
+import { createInitialState, type GameState } from './sim/state';
 import { Sim } from './sim/sim';
 import { Rng } from './sim/rng';
 import { buildGrid } from './sim/systems/pasture';
@@ -30,6 +30,8 @@ import { Panels } from './render/ui/panels';
 import { PRODUCT_EMOJI, SEASON_EMOJI, SEASON_NAME, fmtMinutes, fmtMoney, fmtNum } from './render/ui/names';
 import { PlayerController } from './input/controller';
 import { t } from './i18n/i18n';
+import { SaveStore } from './persist/idb';
+import { Autosave, attachPageEvents, attachSimEvents } from './persist/autosave';
 import { TouchUI } from './input/touch';
 import { registerServiceWorker, onConnectionChange } from './pwa';
 import { isTouch, touchKeys, quality, QUALITIES, QUALITY_NAME, QUALITY_SPEC, setQuality } from './device';
@@ -47,7 +49,10 @@ function toast(msg: string, kind: '' | 'good' | 'bad' = ''): void {
   setTimeout(() => d.remove(), kind === 'bad' ? 5000 : 3500);
 }
 
-function start(): void {
+/** Хөтчийн хадгалалт (M6.2): ачаалсан слот, эсвэл шинэ тоглоомд ашиглах слот. Эхлэлийн дэлгэц M6.3 */
+interface Persistence { store: SaveStore; slot: number; resumed: boolean }
+
+function start(resume?: { slot: number; state: GameState; store: SaveStore }, freshStore?: SaveStore): void {
   const cfg = loadConfig();
   const qs = new URLSearchParams(location.search);
   const shotParam = qs.get('shot');
@@ -58,7 +63,8 @@ function start(): void {
   const captureMode = shot !== null;
   let photoMode = captureMode;
   const seed = captureMode ? 20261113 : Number(qs.get('seed')) || 20261113;
-  const state = createInitialState(cfg, seed);
+  const state = resume?.state ?? createInitialState(cfg, seed);
+  const persistence: Persistence | null = resume ? { store: resume.store, slot: resume.slot, resumed: true } : freshStore ? { store: freshStore, slot: 1, resumed: false } : null;
   if (shot !== null) {
     const presets = {
       1: { camp: 'river', season: 'summer', minute: 600, yaw: 0.6, pitch: 0.42, dist: 58 },
@@ -137,7 +143,18 @@ function start(): void {
   help.innerHTML = `<h3>${t('help.title')}</h3>${isTouch ? t('help.touch') + '\n\n' + touchKeys(t('help.body')) : t('help.body')}<p><b>P</b> — зургийн горим (тоглоом түр зогсоно)</p>`;
   document.title = t('app.title');
 
-  const panels = new Panels(cfg, state, { dispatch: (cmd) => sim.command(cmd), toast, toggleZones: () => view.zones.toggle() });
+  // M6.2: автомат хадгалалт. Sim-ийн алхмын дунд бичихгүй — хүсэлт тэмдэглээд кадрын давталт алхмуудын дараа flush хийнэ
+  const autosave = persistence ? new Autosave({
+    store: persistence.store, state: () => state, slot: () => persistence.slot,
+    onSaved: (reason) => { if (reason !== 'hidden') toast(t('save.done'), 'good'); },
+    onError: (err) => { console.error(err); toast(t('save.failed'), 'bad'); },
+  }) : null;
+  if (autosave) {
+    attachSimEvents(sim, autosave);
+    attachPageEvents(autosave, window, document);
+    if (persistence!.resumed) toast(t('save.resumed', { day: state.time.day }), 'good');
+  }
+  const panels = new Panels(cfg, state, { dispatch: (cmd) => { const r = sim.command(cmd); if (r.ok && cmd.type === 'moveCamp') autosave?.request('move'); return r; }, toast, toggleZones: () => view.zones.toggle() });
   const showReports = qs.get('report') !== '0';
   let huntToastT = 0;
   sim.on((e) => {
@@ -345,6 +362,7 @@ function start(): void {
       }
       if (steps >= 60) acc = 0;
     }
+    autosave?.flush();   // алхмуудын завсарт (state бүтэн)
     if (placeKey() !== previousPlace) {
       previousPlace = placeKey();
       const fade = document.getElementById('sceneFade')!;
@@ -444,7 +462,7 @@ function start(): void {
   requestAnimationFrame(frame);
 
   // Туршилт, алдаа олоход (хөтчийн console)
-  (window as unknown as { __game: unknown }).__game = { cfg, state, sim, view, panels, get fps() { return fps; } };
+  (window as unknown as { __game: unknown }).__game = { cfg, state, sim, view, panels, autosave, store: persistence?.store, get fps() { return fps; } };
 }
 
 // Интернетгүй тоглох: анх нээхэд бүх файл утсанд хадгалагдана (sw-template.js)
@@ -453,11 +471,22 @@ registerServiceWorker((firstTime) =>
 );
 onConnectionChange((online) => toast(online ? '📶 Интернет сэргэлээ' : '📴 Интернет тасарлаа — тоглоом үргэлжилнэ, санаа зовох хэрэггүй', online ? 'good' : ''));
 
-try {
-  start();
-} catch (err) {
+/** Туршилтын URL параметртэй (seed, shot, herd, home, door, fresh) бол хадгалалтыг ачаалахгүй, хадгалахгүй */
+const TEST_PARAMS = ['seed', 'shot', 'herd', 'home', 'door', 'fresh'];
+
+async function boot(): Promise<void> {
+  const qs = new URLSearchParams(location.search);
+  if (TEST_PARAMS.some((k) => qs.has(k)) || !SaveStore.available()) { start(); return; }
+  const store = new SaveStore(indexedDB);
+  // Түр зам: хамгийн сүүлийн слотыг шууд ачаална (эхлэлийн дэлгэц — M6.3)
+  const last = await store.latest(loadConfig()).catch((e) => { console.error('хадгалалт ачаалж чадсангүй', e); return null; });
+  if (last) start({ slot: last.slot, state: last.state, store });
+  else start(undefined, store);
+}
+
+boot().catch((err) => {
   const el = document.getElementById('err')!;
   el.style.display = 'grid';
   el.textContent = err instanceof Error ? err.message : String(err);
   console.error(err);
-}
+});

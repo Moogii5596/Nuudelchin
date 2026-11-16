@@ -69,7 +69,10 @@ TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `gam
 ### Бусад
 | Файл | Үүрэг |
 |---|---|
-| `main.ts` | Эхлэл: тохиргоо, sim, render, input холбох; HUD, ❓ цэс, тоглоомын давталт |
+| `main.ts` | Эхлэл: тохиргоо, sim, render, input холбох; HUD, ❓ цэс, тоглоомын давталт. M6.2: `boot()` хамгийн сүүлийн слотыг ачаална (туршилтын URL параметртэй бол үгүй), `Autosave`-ийг холбоно (эхлэлийн дэлгэц M6.3) |
+| `persist/idb.ts` | M6.2 IndexedDB: `SaveStore` — 3 слот, A/B хуулбар (нэг гүйлгээнд хуучныг нь шинэчилнэ, нийлбэр шалгана), `list`/`load`/`latest`/`remove`, `requestPersistence()` |
+| `persist/autosave.ts` | `Autosave` (request → алхмуудын дараа flush; hidden/manual шууд), `attachSimEvents` (dayReport 20:00, leftToMap, arrived), `attachPageEvents` (visibilitychange, pagehide) |
+| `persist/file.ts` | `.nuudel` gzip экспорт/импорт: `exportBytes`/`importBytes`, `downloadFile`/`readFile` (UI — M6.3) |
 | `input/controller.ts` · `touch.ts` | Гар/хулгана → Command · утасны джойстик, товчнууд |
 | `device.ts` · `pwa.ts` | Чанар `low/mid/high`, мэдрэгч илрүүлэх · PWA суулгах, service worker |
 | `i18n/i18n.ts`, `mn.json`, `en.json` | Текстийн түлхүүр; `en.json` бүрэн биш (M6.7) |

@@ -73,5 +73,8 @@
   "interior.status": "🚪 {name} · inside",
   "interior.toast.enter": "{name} — went inside",
   "interior.toast.exit": "Back outside",
-  "interior.nothing": "Nothing to do here — press E at the door to leave"
+  "interior.nothing": "Nothing to do here — press E at the door to leave",
+  "save.done": "💾 Saved",
+  "save.failed": "⚠ Could not save — browser storage may be blocked or full",
+  "save.resumed": "📂 Resumed saved game — day {day}"
 }
