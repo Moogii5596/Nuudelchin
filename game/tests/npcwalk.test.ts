@@ -30,7 +30,7 @@ beforeAll(async () => {
 });
 
 /** Сумын төвд айлгүй (гадаа амьдардаг) — гэрийн цэгээс л гарч ирж/алга болно */
-const HOMELESS = ['lkhagvasuren', 'munkhbat'];
+const HOMELESS: string[] = [];
 const dayOf = (season: string): number => { for (let d = 1; d < 800; d++) if (seasonOf(cfg, d) === season) return d; throw new Error(season); };
 
 /** Нэг өдрийг (06:00–20:30) 1 минутын дөрөвний нэг алхмаар «тоглуулж» NPC бүрийн дэлгэц дээрх байрлалыг бүртгэнэ */

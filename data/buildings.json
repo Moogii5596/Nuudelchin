@@ -1491,7 +1491,7 @@
    "dorm": {
     "type": "public",
     "kind": "dorm",
-    "rot": 90
+    "rot": 270
    },
    "zdtg": {
     "type": "public",
@@ -1627,6 +1627,10 @@
    "plot_rel_2": {
     "house": "houseC",
     "roofColor": "#6E2222"
+   },
+   "plot_rel_3": {
+    "house": "houseA",
+    "roofColor": "#3A5FB0"
    }
   },
   "skip": []

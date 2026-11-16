@@ -150,12 +150,12 @@ describe('sumwalk: NPC-ийн гудамжны зам (хаалга, булан,
   });
 });
 
-describe('sumwalk: бүх NPC-ийн бодит зам (72 хашаа, барилга)', () => {
-  it('хашаа бүртгэгдсэн (72), үүдтэй; NPC-ийн гэр хашааны дотор → үүдэнтэй', async () => {
+describe('sumwalk: бүх NPC-ийн бодит зам (73 хашаа, барилга)', () => {
+  it('хашаа бүртгэгдсэн (73), үүдтэй; NPC-ийн гэр хашааны дотор → үүдэнтэй', async () => {
     const { cfg } = await import('./helpers');
     const { buildSumCenter } = await import('../src/render/sumlayout');
     const W = cfg.worldmap.sum3d.walk, b = buildSumCenter(cfg.sumcenter, { seed: 7, walk: W });
-    expect(b.walk.yards!.length).toBe(72);
+    expect(b.walk.yards!.length).toBe(73);
     const noGate = b.walk.yards!.filter((y) => !['n', 's', 'e', 'w'].includes(y.gate) || y.gw < 2);
     expect(noGate).toEqual([]);
     // хашаа бүрийн хаалганы нүх бодитоор чөлөөтэй (хоёр талаас)
@@ -169,7 +169,7 @@ describe('sumwalk: бүх NPC-ийн бодит зам (72 хашаа, бари�
     for (const n of cfg.npcs.npcs) {
       if (typeof n.home !== 'object') continue;
       const y = b.walk.yards!.find((q) => inY(q, (n.home as { x: number }).x, (n.home as { z: number }).z));
-      if (y || !['lkhagvasuren', 'munkhbat'].includes(n.id)) expect(y?.door, `${n.id}: хашааны үүд`).toBeDefined();   // шатахууны түшмэл, малчин: сумын төвд өөр айлгүй (нүүдэлчин, гадаа)
+      expect(y?.door, `${n.id}: хашааны үүд`).toBeDefined();
     }
   });
 

@@ -436,7 +436,7 @@
       "w": 12,
       "d": 34,
       "floors": 2,
-      "front": "w",
+      "front": "e",
       "roof": {
         "type": "gable",
         "color": "#D9622E"
@@ -1090,6 +1090,22 @@
         "floors": 2,
         "roof": "#6E2222",
         "wall": "#EFEBE2"
+      }
+    },
+    {
+      "id": "plot_rel_3",
+      "role": "relative",
+      "name": "Хамаатны айл (түлшний цэгийн хажуу)",
+      "x": 365,
+      "z": 30,
+      "w": 24,
+      "d": 28,
+      "house": {
+        "w": 8,
+        "d": 6.5,
+        "floors": 1,
+        "roof": "#3A5FB0",
+        "wall": "#E8DCC0"
       }
     }
   ],
