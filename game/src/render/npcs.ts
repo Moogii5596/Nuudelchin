@@ -46,6 +46,7 @@ export class NpcView {
   private season = '';
   private awaySign: THREE.Mesh | null = null;
   private talkWith: { e: Entry; t: number; line: number } | null = null;
+  private talkLost = 0;   // ярилцлагын нөхцөл алдагдсанаас хойших хугацаа (holdSec хүртэл бөмбөлгийг хадгална)
   private speech: HTMLDivElement | null = null;
   private readonly maxLive = MAX_LIVE[quality] ?? 5;
   /** Камерын байрлал (scene тавина): камер дүрийн биед орвол тэр дүрийг нууна */
@@ -137,9 +138,20 @@ export class NpcView {
   /** Ярилцлага: хамгийн ойр, зогсож буй NPC (амьд дүр) руу; тоглогч бас зогсож байх ёстой */
   private pickTalk(cands: { e: Entry; d: number }[], active: boolean, dt: number): Entry | null {
     const T = characters.talk;
+    // hysteresis: ярьж буй хүнд гарах босго (exitScale дахин) томорно — босго орчим анивчихгүй
+    const cur = this.talkWith?.e ?? null, X = T.exitScale;
     let best: { e: Entry; d: number } | null = null;
-    for (const c of cands) if (c.d < T.partnerR && c.e.speed < T.stillSpeed && (!best || c.d < best.d)) best = c;
-    if (!active || !best) { this.talkWith = null; this.showSpeech(null); return null; }
+    for (const c of cands) {
+      const k = c.e === cur ? X : 1;
+      if (c.d < T.partnerR * k && c.e.speed < T.stillSpeed * k && (!best || c.d < best.d)) best = c;
+    }
+    if (cur && best && best.e !== cur) { const c = cands.find((q) => q.e === cur); if (c && c.d < T.partnerR * X && c.e.speed < T.stillSpeed * X) best = c; }   // одоогийн ярилцагчаа хадгална
+    if (!active || !best) {
+      // богино тасалдалд бөмбөлгийг шууд алга болгохгүй
+      if (this.talkWith && (this.talkLost += dt) < T.holdSec) return this.talkWith.e;
+      this.talkLost = 0; this.talkWith = null; this.showSpeech(null); return null;
+    }
+    this.talkLost = 0;
     if (!this.talkWith || this.talkWith.e !== best.e) {
       best.e.lineNo++;
       this.talkWith = { e: best.e, t: 0, line: best.e.lineNo };
@@ -180,7 +192,7 @@ export class NpcView {
     const live = cand.filter((c, i) => c.d < R && i < this.maxLive);
     const liveSet = new Set(live.map((c) => c.e));
     // ярилцлага: ойрын амьд дүрүүдээс
-    const talker = this.pickTalk(live.map((c) => ({ e: c.e, d: c.d })), pspeed < characters.talk.stillSpeed, dt);
+    const talker = this.pickTalk(live.map((c) => ({ e: c.e, d: c.d })), pspeed < characters.talk.stillSpeed * (this.talkWith ? characters.talk.exitScale : 1), dt);
     for (const c of cand) {
       const y = heightAt(c.n.x, c.n.z);
       if (liveSet.has(c.e)) {
@@ -235,7 +247,7 @@ export class NpcView {
       rig.root.visible = true;
       c.e.speed = 0; c.e.placed = true;
     }
-    const talker = this.pickTalk(cand.map((c) => ({ e: c.e, d: c.d })), pspeed < characters.talk.stillSpeed, dt);
+    const talker = this.pickTalk(cand.map((c) => ({ e: c.e, d: c.d })), pspeed < characters.talk.stillSpeed * (this.talkWith ? characters.talk.exitScale : 1), dt);
     for (const c of cand) this.drive(c.e, c.n, c.n.x, 0, c.n.z, dt, px, pz, talker === c.e);
     const tn = talker ? cand.find((c) => c.e === talker) : undefined;
     talkBus.partner = tn ? { x: tn.n.x, z: tn.n.z } : null;

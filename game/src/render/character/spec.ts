@@ -95,7 +95,7 @@ export const TALK_EVENTS: readonly TalkEventName[] = ['sell', 'buy', 'wolfSeen']
 /** Сэтгэл хөдлөлийн дараалал [[сэтгэл хөдлөл, сек], ...] */
 export type EmotionSeq = Array<[HerderEmotion, number]>;
 /** Ярилцлага, NPC-ийн сэтгэл хөдлөл (V4.5 R7) */
-export interface TalkConfig { partnerR: number; turnRate: number; stillSpeed: number; wolfSeeR: number; events: Record<TalkEventName, EmotionSeq> }
+export interface TalkConfig { partnerR: number; turnRate: number; stillSpeed: number; exitScale: number; holdSec: number; wolfSeeR: number; events: Record<TalkEventName, EmotionSeq> }
 const EMOTION_NAMES: readonly HerderEmotion[] = ['neutral', 'happy', 'angry', 'sad', 'surprised'];
 
 export interface CharactersData {
@@ -301,7 +301,7 @@ export function validateCharacters(json: unknown): CharactersData {
       return { preset: known(o.preset, `crowd.looks[${i}].preset`), body: oneOf(o.body, `crowd.looks[${i}].body`, OUTFIT_BODIES), hat: oneOf(o.hat, `crowd.looks[${i}].hat`, [...CHARACTER_HATS, 'none'] as const) };
     }),
   };
-  const t = group(root.talk, 'talk', ['partnerR', 'turnRate', 'stillSpeed', 'wolfSeeR', 'events']);
+  const t = group(root.talk, 'talk', ['partnerR', 'turnRate', 'stillSpeed', 'exitScale', 'holdSec', 'wolfSeeR', 'events']);
   const ev = group(t.events, 'talk.events', TALK_EVENTS);
   const events = {} as Record<TalkEventName, EmotionSeq>;
   for (const k of TALK_EVENTS) {
@@ -314,7 +314,8 @@ export function validateCharacters(json: unknown): CharactersData {
   }
   const talk: TalkConfig = {
     partnerR: num(t.partnerR, 'talk.partnerR', 1, 30), turnRate: num(t.turnRate, 'talk.turnRate', 0.5, 30),
-    stillSpeed: num(t.stillSpeed, 'talk.stillSpeed', 0, 3), wolfSeeR: num(t.wolfSeeR, 'talk.wolfSeeR', 1, 200), events,
+    stillSpeed: num(t.stillSpeed, 'talk.stillSpeed', 0, 3),
+    exitScale: num(t.exitScale, 'talk.exitScale', 1, 3), holdSec: num(t.holdSec, 'talk.holdSec', 0, 2), wolfSeeR: num(t.wolfSeeR, 'talk.wolfSeeR', 1, 200), events,
   };
   return { scale: num(root.scale, 'scale', 0.3, 1.5), detail, presets, player, ready, roles, crowd, talk };
 }

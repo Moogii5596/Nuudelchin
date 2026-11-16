@@ -345,6 +345,8 @@
     "partnerR": 6,
     "turnRate": 5,
     "stillSpeed": 0.3,
+    "exitScale": 1.5,
+    "holdSec": 0.35,
     "wolfSeeR": 28,
     "events": {
       "sell": [["surprised", 0.3], ["happy", 2.5]],

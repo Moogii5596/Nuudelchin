@@ -98,6 +98,8 @@ export class SumCenterView {
   private live: { idx: number; rig: CharacterRig; yaw: number; emo: EmotionQueue } | null = null;
   private talkClock = 0;
   private talkPrev = { x: 0, z: 0 };
+  private talkSpeed = 0;   // тоглогчийн жигдрүүлсэн хурд (кадр бүрийн шуугианыг арилгана)
+  private talkOn = false;
   private talkMoney = NaN;
 
   constructor(cfg: GameConfig) {
@@ -376,17 +378,22 @@ export class SumCenterView {
     const dt = this.talkClock ? Math.min(0.1, (now - this.talkClock) / 1000) : 0;
     this.talkClock = now;
     const p = state.player, T = characters.talk;
-    const speed = dt > 0 ? Math.hypot(p.x - this.talkPrev.x, p.z - this.talkPrev.z) / dt : 0;
+    const raw = dt > 0 ? Math.hypot(p.x - this.talkPrev.x, p.z - this.talkPrev.z) / dt : 0;
+    this.talkSpeed += (raw - this.talkSpeed) * Math.min(1, dt * 10);
+    const speed = this.talkSpeed;
     this.talkPrev = { x: p.x, z: p.z };
     // V6.3: хуваарьтай NPC — хамгийн ойрын нь ярина (оршин суугчийн ярианаас түрүүлнэ)
     const npcP = p.place === 'sum' && !p.interior ? this.npcs.updateOutdoor(state, dt, this.built.heightAt, p.x, p.z, speed) : (this.npcs.hideOutdoor(), null);
     const trade = nearTradeDoor(this.cfg, state);
     const atDoor = p.place === 'sum' && !p.interior && (trade !== null || nearTownDoor(this.cfg, state) !== null || nearTeahouse(this.cfg, state));
-    const active = !npcP && atDoor && speed < T.stillSpeed;
+    const active = !npcP && atDoor && speed < T.stillSpeed * (this.talkOn ? T.exitScale : 1);
+    this.talkOn = active;
     let idx = -1;
     if (active) {
       let bd = T.partnerR;
       this.people.forEach((r, i) => { const d = Math.hypot(r.x - p.x, r.z - p.z); if (d < bd) { bd = d; idx = i; } });
+      const L0 = this.live ? this.people[this.live.idx] : null;   // одоогийн ярилцагч томорсон гарах босгоор хадгалагдана
+      if (L0 && Math.hypot(L0.x - p.x, L0.z - p.z) < T.partnerR * T.exitScale) idx = this.live!.idx;
     }
     if (!active || idx !== this.live?.idx) this.releaseLive();
     if (active && idx >= 0 && !this.live) this.takeLive(idx);
