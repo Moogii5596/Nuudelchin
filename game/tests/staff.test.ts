@@ -227,3 +227,22 @@ describe('Туслах малчид (M5)', () => {
     });
   });
 });
+
+describe('Туслахын байрны загвар (render/staff.ts → render/ger)', () => {
+  it('айлын гэр, туслахын гэр — makeGer (туслахынх GER.helper), майхан — отрын/адуучны makeTent', async () => {
+    const { makeDwelling } = await import('../src/render/staff');
+    const { GER } = await import('../src/render/ger/config');
+    const names = (b: { group: { traverse: (f: (o: { name: string }) => void) => void } }): string[] => { const n: string[] = []; b.group.traverse((o) => { if (o.name) n.push(o.name); }); return n; };
+    const fam = makeDwelling({ kind: 'familyGer', x: 0, z: 0, familyId: 1 }, 'summer');
+    const hg = makeDwelling({ kind: 'helperGer', x: 0, z: 0 }, 'winter');
+    const ht = makeDwelling({ kind: 'helperTent', x: 0, z: 0 }, 'summer');
+    const hc = makeDwelling({ kind: 'horseCamp', x: 0, z: 0 }, 'summer');
+    expect(names(fam)).toContain('ger:body');
+    expect(names(hg)).toContain('ger:body');
+    expect(hg.dims.belts).toBe(GER.helper.belts);
+    expect(names(ht)).toContain('tent:body');
+    // адуучны майхан отрынхоос том
+    expect(hc.door.width).toBeGreaterThan(ht.door.width);
+    for (const b of [fam, hg, ht, hc]) { expect(b.stats.drawCalls).toBeLessThanOrEqual(3); b.dispose(); }
+  });
+});

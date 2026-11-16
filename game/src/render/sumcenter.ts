@@ -17,6 +17,9 @@ import { visualStyle } from './style';
 import { makeDog, poseDogLying } from './characters';
 import { makeCrowdFar, makeCrowdParts } from './character/crowd';
 import { bakeStatic, staticMeshes } from './character/bake';
+import { GER } from './ger/config';
+import { makeGer, type GerBuilt } from './ger/ger';
+import { seasonOf } from '../sim/systems/seasons';
 import { LabelAtlas, type LabelStyle } from './labelAtlas';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { characters, characterSpec } from './character/spec';
@@ -75,6 +78,9 @@ export class SumCenterView {
   /** ойрын/нуусан оршин суугчдын түлхүүр — өөрчлөгдвөл л InstancedMesh-ийг шинэчилнэ */
   private crowdKey = '';
   private labels = new LabelAtlas();
+  /** V3.5: айлын гэрүүд (makeGer → bakeStatic, бүгд нэг mesh + бэхэн хүрээ); улирал солигдоход дахин угсарна */
+  private gerMeshes: THREE.Mesh[] = [];
+  private gerWinter: boolean | null = null;
   private liveRigs = new Map<number, CharacterRig>();
   private live: { idx: number; rig: CharacterRig; yaw: number; emo: EmotionQueue } | null = null;
   private talkClock = 0;
@@ -207,11 +213,51 @@ export class SumCenterView {
 
   /** V3.4: худалдаж авсан байшингийн шошго (R7: сумын төвд кадр бүр дуудагддаг тул ярилцлагыг ч эндээс) */
   syncTown(state: GameState): void {
+    const winter = seasonOf(this.cfg, state.time.day) === 'winter';
+    if (winter !== this.gerWinter) this.buildGers(winter);
     this.syncTalk(state);
     for (const s of this.houseSigns) {
       const own = !!state.town.houses[s.plot];
       if (own !== s.own) { this.labels.setText(s.quad, own ? MINE : SALE); s.own = own; }
     }
+  }
+
+  /**
+   * Сумын айлын гэр (sumlayout-ийн байрлал, хана r → хамгийн ойрын GER.sizes диаметр, бүрээсийн өнгө): хэмжээ × өнгө бүрд
+   * makeGer нэг удаа, байрлал бүрд хуулбар → bakeStatic (ижил тохиргоотой материалыг түлхүүрээр нэгтгэнэ). Хаалга урагшаа.
+   * Draw call: бие 1 + бэхэн хүрээ 1 (+ сүүдэр 1), гэрийн тооноос үл хамаарна.
+   */
+  private buildGers(winter: boolean): void {
+    this.gerWinter = winter;
+    for (const m of this.gerMeshes) { this.group.remove(m); m.geometry.dispose(); }
+    this.gerMeshes = [];
+    const list = this.built.gers;
+    if (!list.length) return;
+    const season = winter ? 'winter' : 'summer', sizes = Object.entries(GER.sizes);
+    const protos = new Map<string, GerBuilt>(), roots: THREE.Object3D[] = [];
+    for (const g of list) {
+      const size = sizes.reduce((a, b) => (Math.abs(b[1].diameter - 2 * g.r) < Math.abs(a[1].diameter - 2 * g.r) ? b : a))[0];
+      const key = size + '|' + g.color;
+      let b = protos.get(key);
+      if (!b) { b = makeGer(size, { season, coverColor: g.color }); protos.set(key, b); }
+      const holder = new THREE.Group();
+      holder.position.set(g.x, g.y, g.z);
+      for (const c of b.group.children) holder.add(c.clone());
+      roots.push(holder);
+    }
+    const matKey = (m: THREE.Material): string => {
+      const x = m as THREE.MeshLambertMaterial;
+      return `${m.type}|${x.map?.uuid ?? ''}|${x.emissiveMap?.uuid ?? ''}|${m.side}|${x.color?.getHexString() ?? ''}`;
+    };
+    const parts = bakeStatic(roots, { key: matKey });
+    const used = new Set(parts.map((p) => p.material));
+    for (const b of protos.values()) b.group.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (!m.isMesh) return;
+      m.geometry.dispose();
+      if (!used.has(m.material as THREE.Material)) (m.material as THREE.Material).dispose();
+    });
+    for (const m of staticMeshes(parts)) { m.name = 'gers'; this.group.add(m); this.gerMeshes.push(m); }
   }
 
   /**

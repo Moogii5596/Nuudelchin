@@ -13,7 +13,10 @@ import { EmotionQueue } from './character/talk';
 import type { Wolf } from '../sim/systems/wolves';
 import type { HelperRole } from './style';
 import type { Season } from '../sim/config';
-import { angDiff, mat, meshBox } from './util';
+import { angDiff } from './util';
+import { GER } from './ger/config';
+import { makeGer, type GerBuilt } from './ger/ger';
+import { makeTent } from './ger/tent';
 
 /** Туслахын үүрэг → preset ба дээлийн өнгө (V4.1, V4.5 R5 data/characters.json roles). Адуу хариулж буй малчин = адуучин. */
 function helperRole(h: Helper): HelperRole {
@@ -21,34 +24,18 @@ function helperRole(h: Helper): HelperRole {
   return h.task;
 }
 
-function smallGer(scale: number): THREE.Group {
-  const g = new THREE.Group();
-  const wall = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.65, 1.7, 16), mat(0xf2efe6));
-  wall.position.y = 0.85;
-  const roof = new THREE.Mesh(new THREE.ConeGeometry(2.85, 1.1, 16), mat(0xe8e1cf));
-  roof.position.y = 2.25;
-  const band = new THREE.Mesh(new THREE.CylinderGeometry(2.63, 2.63, 0.16, 16), mat(0x8a3b1a));
-  band.position.y = 1.5;
-  wall.castShadow = roof.castShadow = true;
-  g.add(wall, roof, band);
-  meshBox(0.8, 1.3, 0.12, 0xd2691e, 0, 0.65, 2.62, g);
-  g.scale.setScalar(scale);
-  return g;
-}
-
-function smallTent(): THREE.Group {
-  const g = new THREE.Group();
-  const sh = new THREE.Shape();
-  sh.moveTo(-1.2, 0);
-  sh.lineTo(1.2, 0);
-  sh.lineTo(0, 1.6);
-  sh.lineTo(-1.2, 0);
-  const tg = new THREE.ExtrudeGeometry(sh, { depth: 2.6, bevelEnabled: false });
-  tg.translate(0, 0, -1.3);
-  const t = new THREE.Mesh(tg, mat(0xb8ab84));
-  t.castShadow = true;
-  g.add(t);
-  return g;
+/**
+ * Туслахын байр (V3.5/V6.2 загвар, render/ger): айлын гэр — үндсэн бүрээс, хаалганы хээ айлаар; туслахын гэр — GER.helper
+ * (бүрээсийн өнгө, бүслүүр, энгийн хаалга); ганц биеийн майхан — «отрын майхан», адуучных — «адуучны майхан».
+ */
+export function makeDwelling(d: Dwelling, season: 'summer' | 'winter'): GerBuilt {
+  if (d.kind === 'helperTent') return makeTent('otor', { season });
+  if (d.kind === 'horseCamp') return makeTent('horse', { season });
+  if (d.kind === 'helperGer') {
+    const H = GER.helper;
+    return makeGer(H.size, { season, coverColor: H.coverColor, belts: H.belts, doorVariant: Math.max(0, GER.doors.findIndex((v) => v.motif === H.doorMotif)) });
+  }
+  return makeGer(GER.home.size, { season, doorVariant: (d.familyId ?? 0) % GER.doors.length });
 }
 
 interface HelperView {
@@ -68,7 +55,7 @@ interface HelperView {
 export class StaffView {
   readonly group = new THREE.Group();
   private views = new Map<number, HelperView>();
-  private dwellings = new Map<string, THREE.Object3D>();
+  private dwellings = new Map<string, GerBuilt>();
 
   private season: Season = 'summer';
   /** Улирал солигдоход туслахуудын хувцас (V4.1) */
@@ -143,19 +130,21 @@ export class StaffView {
   private syncDwellings(list: Dwelling[], heightAt: (x: number, z: number) => number): void {
     const keys = new Set<string>();
     for (const d of list) {
-      const key = `${d.kind}|${d.x}|${d.z}`;
+      const season = this.season === 'winter' ? 'winter' : 'summer';
+      const key = `${d.kind}|${d.x}|${d.z}|${d.familyId ?? ''}|${season}`;
       keys.add(key);
       let o = this.dwellings.get(key);
       if (!o) {
-        o = d.kind === 'helperTent' || d.kind === 'horseCamp' ? smallTent() : smallGer(d.kind === 'helperGer' ? 0.85 : 1);
-        o.rotation.y = Math.atan2(-d.x, -d.z);   // хаалга хот руу
-        this.group.add(o);
+        o = makeDwelling(d, season);
+        o.group.rotation.y = Math.atan2(-d.x, -d.z);   // хаалга (+z) хот руу
+        this.group.add(o.group);
         this.dwellings.set(key, o);
       }
-      o.position.set(d.x, heightAt(d.x, d.z), d.z);
+      o.group.position.set(d.x, heightAt(d.x, d.z), d.z);
     }
     for (const [k, o] of this.dwellings) if (!keys.has(k)) {
-      this.group.remove(o);
+      this.group.remove(o.group);
+      o.dispose();
       this.dwellings.delete(k);
     }
   }

@@ -373,14 +373,13 @@ SYM game/src/render/scene.ts:393 method GameView.applyDaylight
 SYM game/src/render/scene.ts:453 method GameView.updateFlakes
 SYM game/src/render/scene.ts:469 method GameView.drawCalls
 SYM game/src/render/scene.ts:473 method GameView.triangleCount
-FILE game/src/render/staff.ts 6.7KB 162L exports: StaffView
-SYM game/src/render/staff.ts:19 fn helperRole
-SYM game/src/render/staff.ts:24 fn smallGer
-SYM game/src/render/staff.ts:39 fn smallTent
-SYM game/src/render/staff.ts:68 class StaffView
-SYM game/src/render/staff.ts:75 method StaffView.setSeason
-SYM game/src/render/staff.ts:81 method StaffView.update
-SYM game/src/render/staff.ts:143 method StaffView.syncDwellings
+FILE game/src/render/staff.ts 6.8KB 151L exports: makeDwelling,StaffView
+SYM game/src/render/staff.ts:22 fn helperRole
+SYM game/src/render/staff.ts:31 fn makeDwelling
+SYM game/src/render/staff.ts:55 class StaffView
+SYM game/src/render/staff.ts:62 method StaffView.setSeason
+SYM game/src/render/staff.ts:68 method StaffView.update
+SYM game/src/render/staff.ts:130 method StaffView.syncDwellings
 FILE game/src/render/style.ts 25.4KB 613L exports: TimeVisual,SeasonVisual,GrassVisual,WaterVisual,SmokeVisual,DogRestVisual,HerderEmotion,HerderEvent,HerderAnimVisual,SumResidentsVisual,OutfitBody,OutfitHat,HelperRole,OutfitsVisual,+10
 SYM game/src/render/style.ts:5 interface TimeVisual
 SYM game/src/render/style.ts:17 interface SeasonVisual
@@ -414,34 +413,36 @@ SYM game/src/render/style.ts:285 fn parseOutfits
 SYM game/src/render/style.ts:315 fn validateVisualStyle
 SYM game/src/render/style.ts:609 const visualStyle
 SYM game/src/render/style.ts:611 fn paletteHex
-FILE game/src/render/sumcenter.ts 16.9KB 313L exports: SumCenterView
-SYM game/src/render/sumcenter.ts:35 fn residentMatrix
-SYM game/src/render/sumcenter.ts:39 fn residents
-SYM game/src/render/sumcenter.ts:64 class SumCenterView
-SYM game/src/render/sumcenter.ts:209 method SumCenterView.syncTown
-SYM game/src/render/sumcenter.ts:222 method SumCenterView.syncTalk
-SYM game/src/render/sumcenter.ts:261 method SumCenterView.syncCrowd
-SYM game/src/render/sumcenter.ts:286 method SumCenterView.takeLive
-SYM game/src/render/sumcenter.ts:303 method SumCenterView.releaseLive
-SYM game/src/render/sumcenter.ts:310 method SumCenterView.syncLot
-FILE game/src/render/sumlayout.ts 37.0KB 727L exports: Rect,VehicleSlotView,HomeDoor,SumPlotView,SumCenterBuild,buildSumCenter
+FILE game/src/render/sumcenter.ts 19.5KB 359L exports: SumCenterView
+SYM game/src/render/sumcenter.ts:38 fn residentMatrix
+SYM game/src/render/sumcenter.ts:42 fn residents
+SYM game/src/render/sumcenter.ts:67 class SumCenterView
+SYM game/src/render/sumcenter.ts:215 method SumCenterView.syncTown
+SYM game/src/render/sumcenter.ts:230 method SumCenterView.buildGers
+SYM game/src/render/sumcenter.ts:268 method SumCenterView.syncTalk
+SYM game/src/render/sumcenter.ts:307 method SumCenterView.syncCrowd
+SYM game/src/render/sumcenter.ts:332 method SumCenterView.takeLive
+SYM game/src/render/sumcenter.ts:349 method SumCenterView.releaseLive
+SYM game/src/render/sumcenter.ts:356 method SumCenterView.syncLot
+FILE game/src/render/sumlayout.ts 37.1KB 728L exports: Rect,VehicleSlotView,HomeDoor,SumPlotView,SumGer,SumCenterBuild,buildSumCenter
 SYM game/src/render/sumlayout.ts:12 interface Rect
 SYM game/src/render/sumlayout.ts:14 interface VehicleSlotView
 SYM game/src/render/sumlayout.ts:16 interface HomeDoor
 SYM game/src/render/sumlayout.ts:17 interface SumPlotView
-SYM game/src/render/sumlayout.ts:18 interface SumCenterBuild
-SYM game/src/render/sumlayout.ts:33 fn rng
-SYM game/src/render/sumlayout.ts:49 fn mat
-SYM game/src/render/sumlayout.ts:55 class Batch
-SYM game/src/render/sumlayout.ts:57 method Batch.add
-SYM game/src/render/sumlayout.ts:70 method Batch.box
-SYM game/src/render/sumlayout.ts:73 method Batch.cyl
-SYM game/src/render/sumlayout.ts:76 method Batch.mesh
-SYM game/src/render/sumlayout.ts:91 fn gableGeometry
-SYM game/src/render/sumlayout.ts:107 fn nearestOnPolyline
-SYM game/src/render/sumlayout.ts:120 fn rectsOverlap
-SYM game/src/render/sumlayout.ts:123 fn rectNearPolyline
-SYM game/src/render/sumlayout.ts:140 fn buildSumCenter
+SYM game/src/render/sumlayout.ts:18 interface SumGer
+SYM game/src/render/sumlayout.ts:19 interface SumCenterBuild
+SYM game/src/render/sumlayout.ts:36 fn rng
+SYM game/src/render/sumlayout.ts:52 fn mat
+SYM game/src/render/sumlayout.ts:58 class Batch
+SYM game/src/render/sumlayout.ts:60 method Batch.add
+SYM game/src/render/sumlayout.ts:73 method Batch.box
+SYM game/src/render/sumlayout.ts:76 method Batch.cyl
+SYM game/src/render/sumlayout.ts:79 method Batch.mesh
+SYM game/src/render/sumlayout.ts:94 fn gableGeometry
+SYM game/src/render/sumlayout.ts:110 fn nearestOnPolyline
+SYM game/src/render/sumlayout.ts:123 fn rectsOverlap
+SYM game/src/render/sumlayout.ts:126 fn rectNearPolyline
+SYM game/src/render/sumlayout.ts:143 fn buildSumCenter
 FILE game/src/render/terrain.ts 59.8KB 1360L exports: TerrainView
 SYM game/src/render/terrain.ts:31 fn typeLookup
 SYM game/src/render/terrain.ts:62 fn grassClumpGeometry
@@ -1109,13 +1110,13 @@ FILE game/tests/rng.test.ts 0.8KB 26L
 FILE game/tests/save.test.ts 11.7KB 233L
 FILE game/tests/seasons.test.ts 7.2KB 140L
 FILE game/tests/sim.test.ts 1.4KB 32L
-FILE game/tests/staff.test.ts 12.0KB 229L
+FILE game/tests/staff.test.ts 13.3KB 248L
 FILE game/tests/style.test.ts 8.9KB 165L
 FILE game/tests/sumtown.test.ts 4.5KB 90L
 FILE game/tests/town.test.ts 6.1KB 127L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 17.2KB 103L
+FILE docs/CONTEXT.md 17.5KB 103L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-28 ## 2. Стек ба командууд
 DOC docs/CONTEXT.md:29-77 ## 3. Файлын зураглал (`game/src/`)
@@ -1310,7 +1311,7 @@ FILE docs/plan/M7.md 7.6KB 31L
 DOC docs/plan/M7.md:12-22 ## Блокууд
 DOC docs/plan/M7.md:23-27 ## Асуулга (10 асуулт)
 DOC docs/plan/M7.md:28-31 ## Эрсдэл
-FILE docs/plan/V.md 33.9KB 85L
+FILE docs/plan/V.md 34.9KB 85L
 DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
 DOC docs/plan/V.md:24-79 ## Блокууд ба чеклист (2026-11-15)

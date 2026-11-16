@@ -15,6 +15,7 @@ export interface VehicleSlotView { id: string; vehicle: string; x: number; y: nu
 /** Хашаа байшингийн гол байшингийн хаалга (нохой, оршин суугч байрлуулахад) */
 export interface HomeDoor { x: number; y: number; z: number }
 export interface SumPlotView { id: string; role: SumSpecialPlotSpec['role']; x: number; z: number; door: HomeDoor }
+export interface SumGer { x: number; y: number; z: number; color: string; r: number }
 export interface SumCenterBuild {
   group: THREE.Group;
   /** Газар (raycast) */
@@ -24,6 +25,8 @@ export interface SumCenterBuild {
   vehicleSlots: VehicleSlotView[];
   plots: SumPlotView[];
   homes: HomeDoor[];
+  /** Айлын гэрийн байрлал (V3.5: render/ger-ээр sumcenter.ts зурна) — y газрын өндөр, r хананы радиус */
+  gers: SumGer[];
   colliders: Rect[];
   heightAt: (x: number, z: number) => number;
   dispose: () => void;
@@ -256,12 +259,9 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
   };
 
   // --- Гэр ---
+  const gers: SumGer[] = [];
   const ger = (x: number, z: number, color = '#F3EDE2', r = 3.2) => {
-    const y = heightAt(x, z);
-    B.cyl(r, r, 1.7, x, y, z, color, 12);
-    B.add(new THREE.ConeGeometry(r * 1.03, 1.3, 12), color, mat(x, y + 1.7 + 0.65, z));
-    B.cyl(0.55, 0.55, 0.25, x, y + 2.95, z, '#D9A441', 8);
-    B.box(0.9, 1.4, 0.1, x, y, z + r, 0, '#D9622E'); // хаалга урагшаа
+    gers.push({ x, y: heightAt(x, z), z, color, r });   // хаалга урагшаа (+z); загвар — sumcenter.ts (makeGer)
   };
 
   // --- Барилга ---
@@ -719,6 +719,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     vehicleSlots,
     plots,
     homes,
+    gers,
     ground: terrainMesh,
     colliders,
     heightAt,
