@@ -21,7 +21,16 @@ export interface Rect { id: string; x: number; z: number; w: number; d: number }
 /** Худалдаанд гаргасан тээврийн зогсоол */
 export interface VehicleSlotView { id: string; vehicle: string; x: number; y: number; z: number; rot: number }
 /** Хашаа байшингийн гол байшингийн хаалга (нохой, оршин суугч байрлуулахад) */
-export interface HomeDoor { x: number; y: number; z: number }
+export interface HomeDoor {
+  x: number; y: number; z: number;
+  /** айлын тогтмол id (особый хашаа → plot id; бусад → бүс#дугаар): гэрэл, утаа, NPC-ийн хамаарал */
+  id?: string;
+  /** гэр: chimney/windows-ийн y нь зөвхөн газрын өндөр (өндрийг data/visuals.json homeLights өгнө) */
+  ger?: boolean;
+  /** яндангийн орой (утаа гарах цэг), цонх/гэрийн гэрэл (дэлхийн координат) */
+  chimney?: { x: number; y: number; z: number };
+  windows?: { x: number; y: number; z: number; nx: number; nz: number }[];   // nx,nz — хананаас гадагш чиглэл
+}
 export interface SumPlotView { id: string; role: SumSpecialPlotSpec['role']; x: number; z: number; door: HomeDoor }
 export interface SumGer { x: number; y: number; z: number; color: string; r: number }
 export interface SumCenterBuild {
@@ -356,7 +365,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
   };
   /** Нэг айлын хашаа (лабораторийн makePlot): хашааны төв (x, z), хаалганы чиглэл gate. Орчуулга: хашааны локал нүүр +Z */
   const plotLab = (o: { x: number; z: number; w: number; d: number; gate: 'n' | 's' | 'e' | 'w'; kind: string; seed: number; roofColor?: string; extras?: string[];
-    path?: 'walk' | 'dirt'; trees?: 'full' | 'bush'; kennel?: boolean; fenceColor: string; gateColor: string; gerColor?: string }): HomeDoor => {
+    path?: 'walk' | 'dirt'; trees?: 'full' | 'bush'; kennel?: boolean; fenceColor: string; gateColor: string; gerColor?: string; id: string }): HomeDoor => {
     wallRing(walk.boxes, o.x, o.z, o.w, o.d, o.gate, WK.plotGateW, 0, WK.fenceT);   // айлын хашаа: хаалга төвд (building/yard.ts gateX = 0)
     walk.yards!.push({ x: o.x, z: o.z, w: o.w, d: o.d, gate: o.gate, off: 0, gw: WK.plotGateW });
     const vertical = o.gate === 'e' || o.gate === 'w', lw = vertical ? o.d : o.w, ld = vertical ? o.w : o.d, phi = GATE_PHI[o.gate], y = heightAt(o.x, o.z);
@@ -369,13 +378,16 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     if (o.kind === 'gerYard') {
       const gs = gerSlotLocal(lw, ld, GER_R), g = toW(gs.x, gs.z), dd = toW(gs.x, gs.z + GER_R + 1.4);
       ger(g.x, g.z, o.gerColor ?? '#F3EDE2', GER_R);
-      return { x: dd.x, y, z: dd.z };
+      return { x: dd.x, y, z: dd.z, id: o.id, ger: true, chimney: { x: g.x, y, z: g.z }, windows: [{ x: dd.x, y, z: dd.z, nx: s, nz: c }] };
     }
     const base = BC.special[o.kind]?.base ?? o.kind, hf = houseFootprint(base), sl = houseSlot(lw, ld, hf.w, hf.d);
     const dw = toW(sl.x + hf.door.x, sl.z + hf.door.z), hc = toW(sl.x, sl.z);
     walk.boxes.push({ x: hc.x, z: hc.z, hw: (vertical ? hf.d : hf.w) / 2, hd: (vertical ? hf.w : hf.d) / 2 });
     solids.boxes.push({ x: hc.x, z: hc.z, hw: (vertical ? hf.d : hf.w) / 2, hd: (vertical ? hf.w : hf.d) / 2, rot: 0, y0: y - 2, y1: y + houseTop(o.kind) });
-    return { x: dw.x, y, z: dw.z };
+    const K = BC.house[base], ch = toW(sl.x + K.chimney.x, sl.z + K.chimney.z), wy = K.window.sill + K.window.h / 2;
+    const windows = (K.window.front as number[]).map((fx) => { const w = toW(sl.x + fx, sl.z + K.d / 2); return { x: w.x, y: y + wy, z: w.z, nx: s, nz: c }; });
+    for (const sx of [1, -1]) for (const sz of K.window.side as number[]) { const w = toW(sl.x + sx * K.w / 2, sl.z + sz); windows.push({ x: w.x, y: y + wy, z: w.z, nx: sx * c, nz: -sx * s }); }
+    return { x: dw.x, y, z: dw.z, id: o.id, chimney: { x: ch.x, y: y + houseTop(o.kind) - 0.4, z: ch.z }, windows };
   };
 
   // --- Барилга ---
@@ -770,7 +782,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     colliders.push({ id: `${sp.id}:plot`, x: sp.x, z: sp.z, w: sp.w, d: sp.d });
     const lab = TOWN.plots[sp.id]!;
     const kind = sp.role === 'relative' ? (lab.house === 'houseA' ? 'relative1' : 'relative2') : lab.house;   // хамаатны айл: айлын самбартай
-    const door = plotLab({ x: sp.x, z: sp.z, w: sp.w, d: sp.d, gate, kind, seed: 11 + homes.length * 7, roofColor: lab.roofColor, extras: sp.role === 'relative' ? ['woodshed'] : [], path: 'walk', trees: 'full',
+    const door = plotLab({ id: sp.id, x: sp.x, z: sp.z, w: sp.w, d: sp.d, gate, kind, seed: 11 + homes.length * 7, roofColor: lab.roofColor, extras: sp.role === 'relative' ? ['woodshed'] : [], path: 'walk', trees: 'full',
       fenceColor: sp.role === 'forSale' ? '#6B4F3A' : '#5E7A4A', gateColor: sp.role === 'forSale' ? '#2E5E9E' : '#5E7A4A' });
     homes.push(door);
     if (sp.ger) ger(sp.x + sp.w / 2 - 5, sp.z, '#F3EDE2', 2.8);
@@ -820,7 +832,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
         const roofColor = roofKeys[Math.floor(rand() * roofKeys.length)]!;
         const extras: string[] = [], rich = quality !== 'low';
         if (rich) { if (rand() < 0.5) extras.push('woodshed'); if (rand() < 0.22) extras.push('greenhouse'); if (rand() < 0.25) extras.push('animalShed'); }
-        const hd0 = plotLab({ x, z, w: pw, d: pd, gate, kind, seed: 1 + Math.floor(rand() * 997), roofColor, extras, path: rand() < 0.5 ? 'walk' : 'dirt',
+        const hd0 = plotLab({ id: `${zn.id}#${homes.length}`, x, z, w: pw, d: pd, gate, kind, seed: 1 + Math.floor(rand() * 997), roofColor, extras, path: rand() < 0.5 ? 'walk' : 'dirt',
           trees: rich ? (rand() < 0.5 ? 'full' : 'bush') : undefined, kennel: rich && rand() < 0.3, fenceColor: fc, gateColor: gatePalette[Math.floor(rand() * gatePalette.length)]!, gerColor: rand() < 0.15 ? '#E8DCC0' : '#F3EDE2' });
         homes.push(hd0);
       }

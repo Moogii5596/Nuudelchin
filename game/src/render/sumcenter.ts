@@ -9,7 +9,7 @@ import type { GameConfig } from '../sim/config';
 import type { VehicleId } from '../sim/state';
 import { allBuildings, facingOf, lotSlots, nearTradeDoor, sumDoors, TRADE_ROLES, type SumBuildingSpec } from '../sim/systems/sumtown';
 import { buildSumCenter, type SumCenterBuild } from './sumlayout';
-import { makeBuildingMaterials, type BuildingMaterials } from './building';
+import { BUILDING_CONFIG, makeBuildingMaterials, type BuildingMaterials } from './building';
 import { nearTownDoor, plotDoors } from '../sim/systems/town';
 import { nearTeahouse } from '../sim/systems/helpers';
 import type { GameState } from '../sim/state';
@@ -28,7 +28,8 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { characters, characterSpec } from './character/spec';
 import { animateCharacter } from './character/animate';
 import { buildCharacter, showOutfit, type CharacterRig } from './character/rig';
-import { EmotionQueue, postTalkEvent, talkBus, turnToward } from './character/talk';
+import { EmotionQueue, postTalkEvent, SpeedSmoother, talkBus, turnToward } from './character/talk';
+import { HomeLightsView, homeLights } from './homeLights';
 import { t } from '../i18n/i18n';
 import { NpcView } from './npcs';
 import type { WalkSolids } from '../sim/systems/sumwalk';
@@ -37,7 +38,7 @@ import type { WalkSolids } from '../sim/systems/sumwalk';
  * Оршин суугчид (хөдөлгөөнгүй): render/character-ийн `crowd` хэлбэр — төрх (data/characters.json crowd.looks: preset ×
  * бие × малгай) бүр хэсэг бүрээрээ нэг InstancedMesh, хүн бүр өөрийн байрлал, чиглэл, өндөртэй (docs/character-design.md §4).
  */
-interface Resident { x: number; y: number; z: number; heading: number; scale: number; look: number; slot: number }
+interface Resident { x: number; y: number; z: number; heading: number; scale: number; look: number; slot: number; /** [0,1) тогтмол — шөнийн нуугдах цагийн хазайлт */ u: number }
 /** Төрх бүрийн InstancedMesh-үүд: near — ойрын бүрэн дүр (хэсэг бүр, хүн солигдоно), far — холын хялбаршуулсан (1 mesh) */
 interface LookMeshes { members: Resident[]; near: THREE.InstancedMesh[]; far: THREE.InstancedMesh }
 const residentMatrix = (p: Resident, hidden = false): THREE.Matrix4 => {
@@ -64,6 +65,31 @@ function residents(g: THREE.Group, people: Resident[]): (LookMeshes | null)[] {
     g.add(far, ...near);
     return { members, near, far };
   });
+}
+
+/**
+ * Сумын төвийн барилгын материал: цонхны (atlas.window) шөнийн emissive-ийг арилгасан хувилбар — айлын цонхны гэрлийг
+ * айл бүрээр нь homeLights.ts асаана (атласын цонх бүх айлд нэг тул хамт гэрэлтэх байсан). Атлас бусад (дотор, лабораторийн)
+ * материалд нийтэд тул emissive зургийг хуулж, зөвхөн сумын төвийн материалд сольно. Дэлгүүрийн цонх, самбар, шон хэвээр.
+ */
+function darkWindowMaterials(): BuildingMaterials {
+  const m = makeBuildingMaterials(), src = m.mat.emissiveMap?.image as HTMLCanvasElement | undefined;
+  if (!src || typeof document === 'undefined') return m;
+  const cv = document.createElement('canvas');
+  cv.width = src.width; cv.height = src.height;
+  const g = cv.getContext('2d');
+  if (!g) return m;
+  g.drawImage(src, 0, 0);
+  const [x0, y0, x1, y1] = BUILDING_CONFIG.atlas.window as [number, number, number, number];
+  g.fillStyle = '#000';
+  g.fillRect(x0, y0, x1 - x0, y1 - y0);
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = m.mat.emissiveMap!.colorSpace;
+  tex.wrapS = m.mat.emissiveMap!.wrapS;
+  tex.anisotropy = m.mat.emissiveMap!.anisotropy;
+  m.mat.emissiveMap = tex;
+  m.mat.needsUpdate = true;
+  return m;
 }
 
 const SALE: LabelStyle = { text: 'ЗАРНА', bg: '#e0c23a', fg: '#2b2620' }, MINE: LabelStyle = { text: 'ТАНЫХ', bg: '#3f7a4a', fg: '#ffffff' };
@@ -97,8 +123,10 @@ export class SumCenterView {
   private liveRigs = new Map<number, CharacterRig>();
   private live: { idx: number; rig: CharacterRig; yaw: number; emo: EmotionQueue } | null = null;
   private talkClock = 0;
-  private talkPrev = { x: 0, z: 0 };
-  private talkSpeed = 0;   // тоглогчийн жигдрүүлсэн хурд (кадр бүрийн шуугианыг арилгана)
+  private talkSpeed = new SpeedSmoother();   // тоглогчийн жигдрүүлсэн хурд (барилга доторх ярианд ч нэг ижил — scene.ts)
+  private homeLit: HomeLightsView | null = null;
+  /** шөнө нуугдсан оршин суугчид (crowdKey-д орно) */
+  private hiddenPeople: boolean[] = [];
   private talkOn = false;
   private talkMoney = NaN;
 
@@ -186,7 +214,7 @@ export class SumCenterView {
         if (crowd.some((p) => Math.hypot(p.x - x, p.z - z) < 1)) continue;   // бие биендээ шигдэхгүй
         // ихэнх нь хаалга руу эсвэл бие бие рүүгээ хандсан — санамсаргүй ч гудамж руу нуруугаа харуулахгүй
         const heading = Math.PI + rng.range(-1.2, 1.2);
-        crowd.push({ x, y: H(x, z), z, heading, scale: rng.range(RS.stature[0], RS.stature[1]), look: Math.floor(rng.next() * characters.crowd.looks.length), slot: 0 });
+        crowd.push({ x, y: H(x, z), z, heading, scale: rng.range(RS.stature[0], RS.stature[1]), look: Math.floor(rng.next() * characters.crowd.looks.length), slot: 0, u: rng.next() });
       }
     }
     const people = new THREE.Group();
@@ -195,6 +223,8 @@ export class SumCenterView {
     this.people = crowd;
     this.syncCrowd(Infinity, Infinity);
     this.group.add(people);
+    this.homeLit = new HomeLightsView(cfg, this.built.homes);
+    this.group.add(this.homeLit.group);
     this.npcs = new NpcView(cfg);
     this.npcs.walk = this.built.walk;
     this.group.add(this.npcs.group);
@@ -301,7 +331,9 @@ export class SumCenterView {
     if (winter !== this.townWinter) this.buildTown(winter);
     const look = seasonLook(this.cfg, state);   // газар, зам, цөөрөм: бууцны terrain-тай ижил улирлын палитр
     this.built.setLook(look.season, look.straw, look.winter);
-    this.townMats?.setGlow(night * 1.6);   // шөнө цонх, хаягийн самбар, гэрлийн шон гэрэлтэнэ
+    this.townMats?.setGlow(night * homeLights.civicGlow * 1.6);   // шөнө барилгын цонх, хаягийн самбар, гэрлийн шон; айл бүрийн гэрэл homeLit-д
+    const p = state.player;
+    this.homeLit?.update(state, night, p.x, p.z);
     this.syncTalk(state);
     for (const s of this.houseSigns) {
       const own = !!state.town.houses[s.plot];
@@ -315,7 +347,7 @@ export class SumCenterView {
     for (const m of this.townObjs) { this.group.remove(m); if (m.userData.own) m.geometry.dispose(); }
     this.townObjs = [];
     const part = this.built.town.build(winter ? 'winter' : 'summer');
-    const mats = (this.townMats ??= makeBuildingMaterials());
+    const mats = (this.townMats ??= darkWindowMaterials());
     const geometry = part.geo.build();
     geometry.computeBoundingSphere();
     const body = new THREE.Mesh(geometry, mats.mat), outline = new THREE.Mesh(geometry, mats.outlineMat);
@@ -378,22 +410,20 @@ export class SumCenterView {
     const dt = this.talkClock ? Math.min(0.1, (now - this.talkClock) / 1000) : 0;
     this.talkClock = now;
     const p = state.player, T = characters.talk;
-    const raw = dt > 0 ? Math.hypot(p.x - this.talkPrev.x, p.z - this.talkPrev.z) / dt : 0;
-    this.talkSpeed += (raw - this.talkSpeed) * Math.min(1, dt * 10);
-    const speed = this.talkSpeed;
-    this.talkPrev = { x: p.x, z: p.z };
+    const speed = this.talkSpeed.step(p.x, p.z, dt);
+    this.syncNight(state);
     // V6.3: хуваарьтай NPC — хамгийн ойрын нь ярина (оршин суугчийн ярианаас түрүүлнэ)
     const npcP = p.place === 'sum' && !p.interior ? this.npcs.updateOutdoor(state, dt, this.built.heightAt, p.x, p.z, speed) : (this.npcs.hideOutdoor(), null);
     const trade = nearTradeDoor(this.cfg, state);
     const atDoor = p.place === 'sum' && !p.interior && (trade !== null || nearTownDoor(this.cfg, state) !== null || nearTeahouse(this.cfg, state));
-    const active = !npcP && atDoor && speed < T.stillSpeed * (this.talkOn ? T.exitScale : 1);
+    const active = !npcP && atDoor && this.talkSpeed.still(this.talkOn);
     this.talkOn = active;
     let idx = -1;
     if (active) {
       let bd = T.partnerR;
-      this.people.forEach((r, i) => { const d = Math.hypot(r.x - p.x, r.z - p.z); if (d < bd) { bd = d; idx = i; } });
+      this.people.forEach((r, i) => { const d = Math.hypot(r.x - p.x, r.z - p.z); if (d < bd && !this.hiddenPeople[i]) { bd = d; idx = i; } });
       const L0 = this.live ? this.people[this.live.idx] : null;   // одоогийн ярилцагч томорсон гарах босгоор хадгалагдана
-      if (L0 && Math.hypot(L0.x - p.x, L0.z - p.z) < T.partnerR * T.exitScale) idx = this.live!.idx;
+      if (L0 && !this.hiddenPeople[this.live!.idx] && Math.hypot(L0.x - p.x, L0.z - p.z) < T.partnerR * T.exitScale) idx = this.live!.idx;
     }
     if (!active || idx !== this.live?.idx) this.releaseLive();
     if (active && idx >= 0 && !this.live) this.takeLive(idx);
@@ -416,13 +446,26 @@ export class SumCenterView {
   }
 
   /**
+   * Оршин суугчид шөнө (characters.json crowd.night: from–to өдрийн минут) нуугдаж, өглөө дахин гарна; хүн бүр id-аас
+   * (Resident.u) jitterMin хүртэл хазайна. Өдөр дэлгүүрийн үүдэнд хэвээр. Өөрчлөгдсөн үед л syncCrowd-ийн түлхүүр солигдоно.
+   */
+  private syncNight(state: GameState): void {
+    const N = characters.crowd.night, m = ((state.time.minute % 1440) + 1440) % 1440;
+    this.people.forEach((r, i) => {
+      const a = (N.from + r.u * N.jitterMin) % 1440, b = (N.to + (1 - r.u) * N.jitterMin) % 1440;
+      this.hiddenPeople[i] = a <= b ? m >= a && m < b : m >= a || m < b;
+    });
+  }
+
+  /**
    * Оршин суугчдын LOD: тоглогчоос crowd.nearR дотор — бүрэн дүр (хэсэг бүр InstancedMesh, сүүдэртэй), цааш — хялбаршуулсан
    * (төрх бүр 1 draw call, сүүдэргүй); ярилцлагын амьд дүр болсон хүн хоёуланд нуугдана. Өөрчлөгдсөн үед л шинэчилнэ.
    */
   private syncCrowd(px: number, pz: number): void {
     const R = characters.crowd.nearR, liveIdx = this.live?.idx ?? -1;
-    const near = this.people.map((r, i) => i !== liveIdx && Math.hypot(r.x - px, r.z - pz) < R);
-    const key = liveIdx + ':' + near.map((b) => (b ? 1 : 0)).join('');
+    const hid = this.hiddenPeople;
+    const near = this.people.map((r, i) => i !== liveIdx && !hid[i] && Math.hypot(r.x - px, r.z - pz) < R);
+    const key = liveIdx + ':' + near.map((b, i) => (hid[i] ? 2 : b ? 1 : 0)).join('');
     if (key === this.crowdKey) return;
     this.crowdKey = key;
     for (const L of this.peopleMeshes) {
@@ -437,7 +480,7 @@ export class SumCenterView {
       }
       for (const r of L.members) {
         const i = this.people.indexOf(r);
-        L.far.setMatrixAt(r.slot, residentMatrix(r, near[i]! || i === liveIdx));
+        L.far.setMatrixAt(r.slot, residentMatrix(r, near[i]! || i === liveIdx || !!hid[i]));
       }
       L.far.instanceMatrix.needsUpdate = true;
       L.far.boundingSphere = null;
