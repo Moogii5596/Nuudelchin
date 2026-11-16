@@ -6,7 +6,7 @@ import { characters, characterSpec, helperSpec, validateCharacters, withColors }
 
 /** Canvas-гүй орчинд (node) дүрийг угсрахад хангалттай хуурамч 2D context: бүх дуудлага өөрийгөө буцаана */
 function stubCanvas(): void {
-  const ctx: unknown = new Proxy(function () {}, { get: () => ctx, apply: () => ctx, set: () => true });
+  const ctx: unknown = new Proxy(function () {}, { get: (_t, k) => (k === 'measureText' ? () => ({ width: 100 }) : ctx), apply: () => ctx, set: () => true });
   (globalThis as { document?: unknown }).document = { createElement: () => ({ width: 0, height: 0, getContext: () => ctx }) };
 }
 type Lab = typeof import('../src/render/character/rig') & typeof import('../src/render/character/animate') & typeof import('../src/render/character/crowd') & typeof import('../src/render/character/materials');

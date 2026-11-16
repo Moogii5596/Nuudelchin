@@ -22,6 +22,9 @@ SYM game/src/i18n/i18n.ts:9 fn initialLang
 SYM game/src/i18n/i18n.ts:24 fn setLang
 SYM game/src/i18n/i18n.ts:28 fn getLang
 SYM game/src/i18n/i18n.ts:33 fn t
+FILE game/src/i18n/msg.ts 0.9KB 20L exports: tm
+SYM game/src/i18n/msg.ts:8 fn param
+SYM game/src/i18n/msg.ts:14 fn tm
 FILE game/src/i18n/npcStrings.ts 0.8KB 16L exports: npcText,NPC_LINES,npcLine
 SYM game/src/i18n/npcStrings.ts:11 fn npcText
 SYM game/src/i18n/npcStrings.ts:14 const NPC_LINES
@@ -203,7 +206,7 @@ SYM game/src/render/animal/model.ts:21 fn mixHex
 SYM game/src/render/animal/model.ts:22 fn hash
 SYM game/src/render/animal/model.ts:24 fn createModel
 SYM game/src/render/animal/model.ts:44 const ageIdxOf
-FILE game/src/render/animal/pose.ts 9.0KB 132L exports: Action,LegNode,PoseState,Rig,PoseInput,newState,makeRig,poseAnimal,settle
+FILE game/src/render/animal/pose.ts 9.1KB 133L exports: Action,LegNode,PoseState,Rig,PoseInput,newState,makeRig,poseAnimal,settle
 SYM game/src/render/animal/pose.ts:12 type Action
 SYM game/src/render/animal/pose.ts:14 interface LegNode
 SYM game/src/render/animal/pose.ts:16 interface PoseState
@@ -214,17 +217,17 @@ SYM game/src/render/animal/pose.ts:42 const newState
 SYM game/src/render/animal/pose.ts:44 fn group
 SYM game/src/render/animal/pose.ts:46 fn makeRig
 SYM game/src/render/animal/pose.ts:58 fn poseAnimal
-SYM game/src/render/animal/pose.ts:127 fn settle
+SYM game/src/render/animal/pose.ts:128 fn settle
 FILE game/src/render/animal/sheep.ts 0.2KB 4L exports: sheepModel
 SYM game/src/render/animal/sheep.ts:4 const sheepModel
-FILE game/src/render/animal/view.ts 6.6KB 121L exports: MODEL_SPECIES,hasModel,Placed,ModelAnimals
+FILE game/src/render/animal/view.ts 6.7KB 122L exports: MODEL_SPECIES,hasModel,Placed,ModelAnimals
 SYM game/src/render/animal/view.ts:18 const MODEL_SPECIES
 SYM game/src/render/animal/view.ts:19 const hasModel
 SYM game/src/render/animal/view.ts:21 interface Placed
 SYM game/src/render/animal/view.ts:27 class ModelAnimals
 SYM game/src/render/animal/view.ts:49 method ModelAnimals.applyQuality
 SYM game/src/render/animal/view.ts:68 method ModelAnimals.flush
-SYM game/src/render/animal/view.ts:92 method ModelAnimals.place
+SYM game/src/render/animal/view.ts:93 method ModelAnimals.place
 FILE game/src/render/animals.ts 13.4KB 303L exports: AnimalsView
 SYM game/src/render/animals.ts:43 fn legGeo
 SYM game/src/render/animals.ts:47 fn helperMark
@@ -235,82 +238,94 @@ SYM game/src/render/animals.ts:161 method AnimalsView.setQuality
 SYM game/src/render/animals.ts:167 method AnimalsView.snapshot
 SYM game/src/render/animals.ts:181 method AnimalsView.update
 SYM game/src/render/animals.ts:299 method AnimalsView.reset
-FILE game/src/render/building/civic.ts 41.4KB 326L exports: hipRoof,buildPublic,bandQuad,flares,buildTemple,railRun,buildMarket,floodlight,buildStadium,buildWrestle
-SYM game/src/render/building/civic.ts:8 fn hipRoof
-SYM game/src/render/building/civic.ts:18 fn buildPublic
-SYM game/src/render/building/civic.ts:96 fn bandQuad
-SYM game/src/render/building/civic.ts:100 fn flares
-SYM game/src/render/building/civic.ts:103 fn buildTemple
-SYM game/src/render/building/civic.ts:202 fn railRun
-SYM game/src/render/building/civic.ts:210 fn buildMarket
-SYM game/src/render/building/civic.ts:236 fn floodlight
-SYM game/src/render/building/civic.ts:244 fn buildStadium
-SYM game/src/render/building/civic.ts:275 fn buildWrestle
-FILE game/src/render/building/config.ts 7.1KB 93L exports: BuildingConfig,TownEntry,TownConfig,buildingConfigErrors,validateBuildingData,BUILDING_CONFIG,TOWN
+FILE game/src/render/building/civic.ts 41.6KB 327L exports: hipRoof,buildPublic,bandQuad,flares,buildTemple,railRun,buildMarket,floodlight,buildStadium,buildWrestle
+SYM game/src/render/building/civic.ts:9 fn hipRoof
+SYM game/src/render/building/civic.ts:19 fn buildPublic
+SYM game/src/render/building/civic.ts:97 fn bandQuad
+SYM game/src/render/building/civic.ts:101 fn flares
+SYM game/src/render/building/civic.ts:104 fn buildTemple
+SYM game/src/render/building/civic.ts:203 fn railRun
+SYM game/src/render/building/civic.ts:211 fn buildMarket
+SYM game/src/render/building/civic.ts:237 fn floodlight
+SYM game/src/render/building/civic.ts:245 fn buildStadium
+SYM game/src/render/building/civic.ts:276 fn buildWrestle
+FILE game/src/render/building/config.ts 8.0KB 105L exports: BuildingConfig,TownEntry,TownConfig,buildingConfigErrors,validateBuildingData,BUILDING_CONFIG,TOWN
 SYM game/src/render/building/config.ts:9 fn isObj
 SYM game/src/render/building/config.ts:14 type BuildingConfig
 SYM game/src/render/building/config.ts:16 interface TownEntry
-SYM game/src/render/building/config.ts:29 interface TownConfig
-SYM game/src/render/building/config.ts:35 fn collectErrors
-SYM game/src/render/building/config.ts:84 fn buildingConfigErrors
-SYM game/src/render/building/config.ts:86 fn validateBuildingData
-SYM game/src/render/building/config.ts:92 const BUILDING_CONFIG
-SYM game/src/render/building/config.ts:93 const TOWN
-FILE game/src/render/building/core.ts 26.4KB 261L exports: sc,px2uv,rot,buildingAtlas,bandV,wallQuad,slab,panel,shadeDown,SIGN_KEYS,signDef,signRect,hCyl,groundQuad,+2
-SYM game/src/render/building/core.ts:8 const sc
-SYM game/src/render/building/core.ts:9 const px2uv
-SYM game/src/render/building/core.ts:10 const rot
-SYM game/src/render/building/core.ts:16 fn buildingAtlas
-SYM game/src/render/building/core.ts:221 const bandV
-SYM game/src/render/building/core.ts:223 fn wallQuad
-SYM game/src/render/building/core.ts:230 fn slab
-SYM game/src/render/building/core.ts:240 fn panel
-SYM game/src/render/building/core.ts:248 const shadeDown
-SYM game/src/render/building/core.ts:251 const SIGN_KEYS
-SYM game/src/render/building/core.ts:252 const signDef
-SYM game/src/render/building/core.ts:253 const signRect
-SYM game/src/render/building/core.ts:254 fn hCyl
-SYM game/src/render/building/core.ts:259 const groundQuad
-SYM game/src/render/building/core.ts:260 const pt3
-SYM game/src/render/building/core.ts:261 const dirRot
-FILE game/src/render/building/houses.ts 18.0KB 200L exports: buildHouse,buildToilet,leanTo,roofHex,buildWoodshed,buildAnimalShed,buildGreenhouse,buildKennel,plantGeo,pathSeg
-SYM game/src/render/building/houses.ts:8 fn buildHouse
-SYM game/src/render/building/houses.ts:86 fn buildToilet
-SYM game/src/render/building/houses.ts:104 fn leanTo
-SYM game/src/render/building/houses.ts:114 const roofHex
-SYM game/src/render/building/houses.ts:116 fn buildWoodshed
-SYM game/src/render/building/houses.ts:129 fn buildAnimalShed
-SYM game/src/render/building/houses.ts:145 fn buildGreenhouse
-SYM game/src/render/building/houses.ts:164 fn buildKennel
-SYM game/src/render/building/houses.ts:177 fn plantGeo
-SYM game/src/render/building/houses.ts:191 fn pathSeg
-FILE game/src/render/building/index.ts 5.8KB 97L exports: BuildingDoor,BuildingRoom,BuildingPoint,BuildingWheel,BuiltBuilding,BuildOpts,makeBuilding,Khashaa,makeKhashaa,appendAt,BuildingMaterials,makeBuildingMaterials,emptyGeo
-SYM game/src/render/building/index.ts:18 interface BuildingDoor
-SYM game/src/render/building/index.ts:19 interface BuildingRoom
-SYM game/src/render/building/index.ts:20 interface BuildingPoint
-SYM game/src/render/building/index.ts:21 interface BuildingWheel
-SYM game/src/render/building/index.ts:22 interface BuiltBuilding
-SYM game/src/render/building/index.ts:38 interface BuildOpts
-SYM game/src/render/building/index.ts:41 fn makeBuilding
-SYM game/src/render/building/index.ts:45 interface Khashaa
-SYM game/src/render/building/index.ts:47 fn makeKhashaa
-SYM game/src/render/building/index.ts:51 fn makeAny
-SYM game/src/render/building/index.ts:76 fn appendAt
-SYM game/src/render/building/index.ts:82 interface BuildingMaterials
-SYM game/src/render/building/index.ts:90 fn makeBuildingMaterials
-SYM game/src/render/building/index.ts:97 const emptyGeo
-FILE game/src/render/building/shops.ts 20.9KB 173L exports: buildShop,goods,buildMilkWool,makeMoto,buildCarDealer,buildFuel,buildWoolStore
-SYM game/src/render/building/shops.ts:8 fn buildShop
-SYM game/src/render/building/shops.ts:56 fn goods
-SYM game/src/render/building/shops.ts:80 fn buildMilkWool
-SYM game/src/render/building/shops.ts:102 fn makeMoto
-SYM game/src/render/building/shops.ts:111 fn buildCarDealer
-SYM game/src/render/building/shops.ts:134 fn buildFuel
-SYM game/src/render/building/shops.ts:160 fn buildWoolStore
-FILE game/src/render/building/yard.ts 14.4KB 146L exports: buildKhashaa,makePorter,makePlot
-SYM game/src/render/building/yard.ts:9 fn buildKhashaa
-SYM game/src/render/building/yard.ts:81 fn makePorter
-SYM game/src/render/building/yard.ts:105 fn makePlot
+SYM game/src/render/building/config.ts:31 interface TownConfig
+SYM game/src/render/building/config.ts:45 fn collectErrors
+SYM game/src/render/building/config.ts:96 fn buildingConfigErrors
+SYM game/src/render/building/config.ts:98 fn validateBuildingData
+SYM game/src/render/building/config.ts:104 const BUILDING_CONFIG
+SYM game/src/render/building/config.ts:105 const TOWN
+FILE game/src/render/building/core.ts 26.4KB 260L exports: sc,px2uv,rot,buildingAtlas,bandV,wallQuad,slab,panel,shadeDown,SIGN_KEYS,signDef,signRect,hCyl,groundQuad,+2
+SYM game/src/render/building/core.ts:7 const sc
+SYM game/src/render/building/core.ts:8 const px2uv
+SYM game/src/render/building/core.ts:9 const rot
+SYM game/src/render/building/core.ts:15 fn buildingAtlas
+SYM game/src/render/building/core.ts:220 const bandV
+SYM game/src/render/building/core.ts:222 fn wallQuad
+SYM game/src/render/building/core.ts:229 fn slab
+SYM game/src/render/building/core.ts:239 fn panel
+SYM game/src/render/building/core.ts:247 const shadeDown
+SYM game/src/render/building/core.ts:250 const SIGN_KEYS
+SYM game/src/render/building/core.ts:251 const signDef
+SYM game/src/render/building/core.ts:252 const signRect
+SYM game/src/render/building/core.ts:253 fn hCyl
+SYM game/src/render/building/core.ts:258 const groundQuad
+SYM game/src/render/building/core.ts:259 const pt3
+SYM game/src/render/building/core.ts:260 const dirRot
+FILE game/src/render/building/houses.ts 18.1KB 199L exports: buildHouse,buildToilet,leanTo,roofHex,buildWoodshed,buildAnimalShed,buildGreenhouse,buildKennel,plantGeo,pathSeg
+SYM game/src/render/building/houses.ts:7 fn buildHouse
+SYM game/src/render/building/houses.ts:85 fn buildToilet
+SYM game/src/render/building/houses.ts:103 fn leanTo
+SYM game/src/render/building/houses.ts:113 const roofHex
+SYM game/src/render/building/houses.ts:115 fn buildWoodshed
+SYM game/src/render/building/houses.ts:128 fn buildAnimalShed
+SYM game/src/render/building/houses.ts:144 fn buildGreenhouse
+SYM game/src/render/building/houses.ts:163 fn buildKennel
+SYM game/src/render/building/houses.ts:176 fn plantGeo
+SYM game/src/render/building/houses.ts:190 fn pathSeg
+FILE game/src/render/building/index.ts 7.5KB 130L exports: BuildingDoor,BuildingRoom,BuildingPoint,BuildingWheel,BuiltBuilding,BuildOpts,makeBuilding,Khashaa,makeKhashaa,appendAt,BuildingMaterials,makeBuildingMaterials,emptyGeo,PlotSpec,+2
+SYM game/src/render/building/index.ts:19 interface BuildingDoor
+SYM game/src/render/building/index.ts:20 interface BuildingRoom
+SYM game/src/render/building/index.ts:21 interface BuildingPoint
+SYM game/src/render/building/index.ts:22 interface BuildingWheel
+SYM game/src/render/building/index.ts:23 interface BuiltBuilding
+SYM game/src/render/building/index.ts:39 interface BuildOpts
+SYM game/src/render/building/index.ts:42 fn makeBuilding
+SYM game/src/render/building/index.ts:46 interface Khashaa
+SYM game/src/render/building/index.ts:48 fn makeKhashaa
+SYM game/src/render/building/index.ts:52 fn makeAny
+SYM game/src/render/building/index.ts:77 fn appendAt
+SYM game/src/render/building/index.ts:83 interface BuildingMaterials
+SYM game/src/render/building/index.ts:91 fn makeBuildingMaterials
+SYM game/src/render/building/index.ts:98 const emptyGeo
+SYM game/src/render/building/index.ts:100 interface PlotSpec
+SYM game/src/render/building/index.ts:108 interface Plot
+SYM game/src/render/building/index.ts:130 fn makePlot
+FILE game/src/render/building/shops.ts 21.1KB 175L exports: buildShop,goods,buildMilkWool,makeMoto,buildCarDealer,buildFuel,buildWoolStore
+SYM game/src/render/building/shops.ts:10 fn buildShop
+SYM game/src/render/building/shops.ts:58 fn goods
+SYM game/src/render/building/shops.ts:82 fn buildMilkWool
+SYM game/src/render/building/shops.ts:104 fn makeMoto
+SYM game/src/render/building/shops.ts:113 fn buildCarDealer
+SYM game/src/render/building/shops.ts:136 fn buildFuel
+SYM game/src/render/building/shops.ts:162 fn buildWoolStore
+FILE game/src/render/building/town.ts 2.1KB 39L exports: Season,TownWheel,TownPart,TownBuilder,LabModel,labModel,gerSlotLocal
+SYM game/src/render/building/town.ts:10 type Season
+SYM game/src/render/building/town.ts:11 interface TownWheel
+SYM game/src/render/building/town.ts:12 interface TownPart
+SYM game/src/render/building/town.ts:15 class TownBuilder
+SYM game/src/render/building/town.ts:19 method TownBuilder.build
+SYM game/src/render/building/town.ts:26 interface LabModel
+SYM game/src/render/building/town.ts:28 fn labModel
+SYM game/src/render/building/town.ts:36 fn gerSlotLocal
+FILE game/src/render/building/yard.ts 14.5KB 148L exports: buildKhashaa,makePorter,makePlot
+SYM game/src/render/building/yard.ts:11 fn buildKhashaa
+SYM game/src/render/building/yard.ts:83 fn makePorter
+SYM game/src/render/building/yard.ts:107 fn makePlot
 FILE game/src/render/camclip.ts 4.7KB 82L exports: CamBox,CamCyl,CamSolids,V3,CAM_MARGIN,clipThroughSolids
 SYM game/src/render/camclip.ts:9 interface CamBox
 SYM game/src/render/camclip.ts:11 interface CamCyl
@@ -628,7 +643,7 @@ SYM game/src/render/npcs.ts:198 method NpcView.hideEntry
 SYM game/src/render/npcs.ts:206 method NpcView.hideOutdoor
 SYM game/src/render/npcs.ts:239 method NpcView.leaveIndoor
 SYM game/src/render/npcs.ts:247 method NpcView.syncAwaySign
-FILE game/src/render/scene.ts 25.4KB 526L exports: GameView
+FILE game/src/render/scene.ts 25.5KB 526L exports: GameView
 SYM game/src/render/scene.ts:28 fn flakeTexture
 SYM game/src/render/scene.ts:41 class GameView
 SYM game/src/render/scene.ts:241 method GameView.applyQuality
@@ -694,25 +709,25 @@ SYM game/src/render/sumcenter.ts:317 method SumCenterView.syncCrowd
 SYM game/src/render/sumcenter.ts:342 method SumCenterView.takeLive
 SYM game/src/render/sumcenter.ts:359 method SumCenterView.releaseLive
 SYM game/src/render/sumcenter.ts:366 method SumCenterView.syncLot
-FILE game/src/render/sumlayout.ts 37.6KB 736L exports: Rect,VehicleSlotView,HomeDoor,SumPlotView,SumGer,SumCenterBuild,buildSumCenter
-SYM game/src/render/sumlayout.ts:14 interface Rect
-SYM game/src/render/sumlayout.ts:16 interface VehicleSlotView
-SYM game/src/render/sumlayout.ts:18 interface HomeDoor
-SYM game/src/render/sumlayout.ts:19 interface SumPlotView
-SYM game/src/render/sumlayout.ts:20 interface SumGer
-SYM game/src/render/sumlayout.ts:21 interface SumCenterBuild
-SYM game/src/render/sumlayout.ts:40 fn rng
-SYM game/src/render/sumlayout.ts:56 fn mat
-SYM game/src/render/sumlayout.ts:62 class Batch
-SYM game/src/render/sumlayout.ts:64 method Batch.add
-SYM game/src/render/sumlayout.ts:77 method Batch.box
-SYM game/src/render/sumlayout.ts:80 method Batch.cyl
-SYM game/src/render/sumlayout.ts:83 method Batch.mesh
-SYM game/src/render/sumlayout.ts:98 fn gableGeometry
-SYM game/src/render/sumlayout.ts:114 fn nearestOnPolyline
-SYM game/src/render/sumlayout.ts:127 fn rectsOverlap
-SYM game/src/render/sumlayout.ts:130 fn rectNearPolyline
-SYM game/src/render/sumlayout.ts:147 fn buildSumCenter
+FILE game/src/render/sumlayout.ts 42.8KB 803L exports: Rect,VehicleSlotView,HomeDoor,SumPlotView,SumGer,SumCenterBuild,buildSumCenter
+SYM game/src/render/sumlayout.ts:18 interface Rect
+SYM game/src/render/sumlayout.ts:20 interface VehicleSlotView
+SYM game/src/render/sumlayout.ts:22 interface HomeDoor
+SYM game/src/render/sumlayout.ts:23 interface SumPlotView
+SYM game/src/render/sumlayout.ts:24 interface SumGer
+SYM game/src/render/sumlayout.ts:25 interface SumCenterBuild
+SYM game/src/render/sumlayout.ts:46 fn rng
+SYM game/src/render/sumlayout.ts:62 fn mat
+SYM game/src/render/sumlayout.ts:68 class Batch
+SYM game/src/render/sumlayout.ts:70 method Batch.add
+SYM game/src/render/sumlayout.ts:83 method Batch.box
+SYM game/src/render/sumlayout.ts:86 method Batch.cyl
+SYM game/src/render/sumlayout.ts:89 method Batch.mesh
+SYM game/src/render/sumlayout.ts:104 fn gableGeometry
+SYM game/src/render/sumlayout.ts:120 fn nearestOnPolyline
+SYM game/src/render/sumlayout.ts:133 fn rectsOverlap
+SYM game/src/render/sumlayout.ts:136 fn rectNearPolyline
+SYM game/src/render/sumlayout.ts:153 fn buildSumCenter
 FILE game/src/render/terrain.ts 59.8KB 1360L exports: TerrainView
 SYM game/src/render/terrain.ts:31 fn typeLookup
 SYM game/src/render/terrain.ts:62 fn grassClumpGeometry
@@ -911,13 +926,13 @@ SYM game/src/sim/clock.ts:56 fn tick
 SYM game/src/sim/clock.ts:77 fn realSecondsPerMinute
 SYM game/src/sim/clock.ts:83 fn realSecondsPerDay
 SYM game/src/sim/clock.ts:89 fn formatTime
-FILE game/src/sim/commands.ts 20.6KB 399L exports: Command,CommandResult,nearHome,applyCommand
-SYM game/src/sim/commands.ts:28 type Command
-SYM game/src/sim/commands.ts:81 interface CommandResult
-SYM game/src/sim/commands.ts:87 fn nearHome
-SYM game/src/sim/commands.ts:99 fn ok
-SYM game/src/sim/commands.ts:100 fn fail
-SYM game/src/sim/commands.ts:102 fn applyCommand
+FILE game/src/sim/commands.ts 19.5KB 400L exports: Command,CommandResult,nearHome,applyCommand
+SYM game/src/sim/commands.ts:29 type Command
+SYM game/src/sim/commands.ts:82 interface CommandResult
+SYM game/src/sim/commands.ts:88 fn nearHome
+SYM game/src/sim/commands.ts:100 fn ok
+SYM game/src/sim/commands.ts:101 fn fail
+SYM game/src/sim/commands.ts:103 fn applyCommand
 FILE game/src/sim/config.ts 21.8KB 426L exports: Species,Sex,Season,SeasonsConfig,SPECIES,TimeConfig,SpeciesConfig,AnimalsConfig,PastureTypeConfig,GrazingConfig,HerdConfig,PastureConfig,WaterShape,TerrainConfig,+9
 SYM game/src/sim/config.ts:33 type Species
 SYM game/src/sim/config.ts:34 type Sex
@@ -942,6 +957,11 @@ SYM game/src/sim/config.ts:248 interface GameConfig
 SYM game/src/sim/config.ts:278 fn loadConfig
 SYM game/src/sim/config.ts:311 fn validateConfig
 SYM game/src/sim/config.ts:373 fn validateSumLayout
+FILE game/src/sim/msg.ts 0.9KB 18L exports: MsgParam,Msg,raw,m
+SYM game/src/sim/msg.ts:5 type MsgParam
+SYM game/src/sim/msg.ts:6 interface Msg
+SYM game/src/sim/msg.ts:12 fn raw
+SYM game/src/sim/msg.ts:16 fn m
 FILE game/src/sim/rng.ts 1.3KB 49L exports: Rng
 SYM game/src/sim/rng.ts:6 class Rng
 SYM game/src/sim/rng.ts:14 method Rng.state
@@ -1020,10 +1040,25 @@ FILE game/src/sim/systems/breeding.ts 3.3KB 75L exports: BreedingResult,dailyBre
 SYM game/src/sim/systems/breeding.ts:11 interface BreedingResult
 SYM game/src/sim/systems/breeding.ts:16 fn dailyBreeding
 SYM game/src/sim/systems/breeding.ts:23 fn breedGroup
-FILE game/src/sim/systems/camps.ts 4.3KB 96L exports: moveHours,startMove,moveStep
-SYM game/src/sim/systems/camps.ts:17 fn moveHours
-SYM game/src/sim/systems/camps.ts:27 fn startMove
-SYM game/src/sim/systems/camps.ts:47 fn moveStep
+FILE game/src/sim/systems/buildingSize.ts 6.8KB 103L exports: TownEntry,LabFootprint,townEntry,entryFootprint,rotLocal,worldSize,labOrigin,labDoorPoint,houseFootprint,houseSlot,PlotLab,townPlots,GATE_PHI,plotHouseLab
+SYM game/src/sim/systems/buildingSize.ts:11 interface TownEntry
+SYM game/src/sim/systems/buildingSize.ts:12 interface LabFootprint
+SYM game/src/sim/systems/buildingSize.ts:19 fn townEntry
+SYM game/src/sim/systems/buildingSize.ts:22 fn entryFootprint
+SYM game/src/sim/systems/buildingSize.ts:41 fn rotLocal
+SYM game/src/sim/systems/buildingSize.ts:47 fn worldSize
+SYM game/src/sim/systems/buildingSize.ts:53 fn labOrigin
+SYM game/src/sim/systems/buildingSize.ts:59 fn labDoorPoint
+SYM game/src/sim/systems/buildingSize.ts:68 fn houseFootprint
+SYM game/src/sim/systems/buildingSize.ts:80 fn houseSlot
+SYM game/src/sim/systems/buildingSize.ts:85 interface PlotLab
+SYM game/src/sim/systems/buildingSize.ts:86 const townPlots
+SYM game/src/sim/systems/buildingSize.ts:89 const GATE_PHI
+SYM game/src/sim/systems/buildingSize.ts:92 fn plotHouseLab
+FILE game/src/sim/systems/camps.ts 4.3KB 97L exports: moveHours,startMove,moveStep
+SYM game/src/sim/systems/camps.ts:18 fn moveHours
+SYM game/src/sim/systems/camps.ts:28 fn startMove
+SYM game/src/sim/systems/camps.ts:48 fn moveStep
 FILE game/src/sim/systems/cheats.ts 6.8KB 174L exports: CheatAction,applyCheat
 SYM game/src/sim/systems/cheats.ts:12 type CheatAction
 SYM game/src/sim/systems/cheats.ts:24 fn applyCheat
@@ -1037,22 +1072,22 @@ SYM game/src/sim/systems/difficulty.ts:34 fn snap
 SYM game/src/sim/systems/difficulty.ts:41 fn clampDifficulty
 SYM game/src/sim/systems/difficulty.ts:51 fn validateDifficultyConfig
 SYM game/src/sim/systems/difficulty.ts:64 fn difficultyProblems
-FILE game/src/sim/systems/dogs.ts 13.5KB 310L exports: DogOrderKind,DOG_ORDERS,Dog,newDog,DOG_ORDER_NAME,orderDog,dogGoal,dogsStep,dogsDaily,relocateDogs
-SYM game/src/sim/systems/dogs.ts:25 type DogOrderKind
-SYM game/src/sim/systems/dogs.ts:26 const DOG_ORDERS
-SYM game/src/sim/systems/dogs.ts:28 interface Dog
-SYM game/src/sim/systems/dogs.ts:50 fn newDog
-SYM game/src/sim/systems/dogs.ts:59 const DOG_ORDER_NAME
-SYM game/src/sim/systems/dogs.ts:68 fn orderDog
-SYM game/src/sim/systems/dogs.ts:90 fn nearestHerdKey
-SYM game/src/sim/systems/dogs.ts:104 fn speciesCenter
-SYM game/src/sim/systems/dogs.ts:127 fn dogGoal
-SYM game/src/sim/systems/dogs.ts:158 fn dogsStep
-SYM game/src/sim/systems/dogs.ts:260 fn dogsDaily
-SYM game/src/sim/systems/dogs.ts:265 fn hash01
-SYM game/src/sim/systems/dogs.ts:273 fn pickWander
-SYM game/src/sim/systems/dogs.ts:286 fn move
-SYM game/src/sim/systems/dogs.ts:297 fn relocateDogs
+FILE game/src/sim/systems/dogs.ts 13.5KB 311L exports: DogOrderKind,DOG_ORDERS,Dog,newDog,DOG_ORDER_NAME,orderDog,dogGoal,dogsStep,dogsDaily,relocateDogs
+SYM game/src/sim/systems/dogs.ts:26 type DogOrderKind
+SYM game/src/sim/systems/dogs.ts:27 const DOG_ORDERS
+SYM game/src/sim/systems/dogs.ts:29 interface Dog
+SYM game/src/sim/systems/dogs.ts:51 fn newDog
+SYM game/src/sim/systems/dogs.ts:60 const DOG_ORDER_NAME
+SYM game/src/sim/systems/dogs.ts:69 fn orderDog
+SYM game/src/sim/systems/dogs.ts:91 fn nearestHerdKey
+SYM game/src/sim/systems/dogs.ts:105 fn speciesCenter
+SYM game/src/sim/systems/dogs.ts:128 fn dogGoal
+SYM game/src/sim/systems/dogs.ts:159 fn dogsStep
+SYM game/src/sim/systems/dogs.ts:261 fn dogsDaily
+SYM game/src/sim/systems/dogs.ts:266 fn hash01
+SYM game/src/sim/systems/dogs.ts:274 fn pickWander
+SYM game/src/sim/systems/dogs.ts:287 fn move
+SYM game/src/sim/systems/dogs.ts:298 fn relocateDogs
 FILE game/src/sim/systems/gerLayout.ts 7.4KB 121L exports: LayoutBox,GerLayoutSource,GerSimConfig,gerWallRadius,gerDoorOffset,gerOuterRadius,gerInnerRadius,placeOnWall,boxFrom,gerBoxes,gerBlockers,pushOutOfBox
 SYM game/src/sim/systems/gerLayout.ts:7 interface LayoutBox
 SYM game/src/sim/systems/gerLayout.ts:10 interface GerLayoutSource
@@ -1075,62 +1110,62 @@ SYM game/src/sim/systems/grazing.ts:130 fn moveToward
 SYM game/src/sim/systems/grazing.ts:145 fn grazingStep
 SYM game/src/sim/systems/grazing.ts:223 fn eat
 SYM game/src/sim/systems/grazing.ts:243 fn driveFlock
-FILE game/src/sim/systems/helpers.ts 42.3KB 884L exports: HelperKind,HelperTask,HerdGroup,HelperTrip,Helper,CandidateMember,Candidate,OtorGroup,Dwelling,HelpersState,HelperEvent,newHelpersState,bedsTotal,bedsUsed,+21
-SYM game/src/sim/systems/helpers.ts:33 type HelperKind
-SYM game/src/sim/systems/helpers.ts:34 type HelperTask
-SYM game/src/sim/systems/helpers.ts:35 type HerdGroup
-SYM game/src/sim/systems/helpers.ts:37 interface HelperTrip
-SYM game/src/sim/systems/helpers.ts:44 interface Helper
-SYM game/src/sim/systems/helpers.ts:68 interface CandidateMember
-SYM game/src/sim/systems/helpers.ts:74 interface Candidate
-SYM game/src/sim/systems/helpers.ts:81 interface OtorGroup
-SYM game/src/sim/systems/helpers.ts:93 interface Dwelling
-SYM game/src/sim/systems/helpers.ts:102 interface HelpersState
-SYM game/src/sim/systems/helpers.ts:113 type HelperEvent
-SYM game/src/sim/systems/helpers.ts:118 fn newHelpersState
-SYM game/src/sim/systems/helpers.ts:125 fn freeSlot
-SYM game/src/sim/systems/helpers.ts:133 fn bedsTotal
-SYM game/src/sim/systems/helpers.ts:137 fn bedsUsed
-SYM game/src/sim/systems/helpers.ts:142 fn addDwelling
-SYM game/src/sim/systems/helpers.ts:148 fn spareTents
-SYM game/src/sim/systems/helpers.ts:154 fn homeOf
-SYM game/src/sim/systems/helpers.ts:164 fn refreshCandidates
-SYM game/src/sim/systems/helpers.ts:201 fn nearTeahouse
-SYM game/src/sim/systems/helpers.ts:207 fn hire
-SYM game/src/sim/systems/helpers.ts:255 fn familyOf
-SYM game/src/sim/systems/helpers.ts:260 fn leave
-SYM game/src/sim/systems/helpers.ts:270 fn fire
-SYM game/src/sim/systems/helpers.ts:281 fn setTask
-SYM game/src/sim/systems/helpers.ts:295 fn payWithAnimal
-SYM game/src/sim/systems/helpers.ts:307 fn playerOwned
-SYM game/src/sim/systems/helpers.ts:312 fn payWages
-SYM game/src/sim/systems/helpers.ts:337 fn moveToward
-SYM game/src/sim/systems/helpers.ts:351 fn groupOf
-SYM game/src/sim/systems/helpers.ts:357 fn flock
-SYM game/src/sim/systems/helpers.ts:367 fn driveAnimal
-SYM game/src/sim/systems/helpers.ts:375 fn bestPasture
-SYM game/src/sim/systems/helpers.ts:398 fn ensureHorseCamp
-SYM game/src/sim/systems/helpers.ts:425 fn helperGuardRadius
-SYM game/src/sim/systems/helpers.ts:430 fn areaScore
-SYM game/src/sim/systems/helpers.ts:437 fn herderPhase
-SYM game/src/sim/systems/helpers.ts:446 fn herderStep
-SYM game/src/sim/systems/helpers.ts:543 fn eveningSpot
-SYM game/src/sim/systems/helpers.ts:550 fn childStep
-SYM game/src/sim/systems/helpers.ts:602 fn driverStep
-SYM game/src/sim/systems/helpers.ts:673 fn helpersStep
-SYM game/src/sim/systems/helpers.ts:694 fn guardingHelpers
-SYM game/src/sim/systems/helpers.ts:701 fn sendOtor
-SYM game/src/sim/systems/helpers.ts:718 fn recallOtor
-SYM game/src/sim/systems/helpers.ts:741 fn setOtorCollector
-SYM game/src/sim/systems/helpers.ts:764 fn takeFromOtor
-SYM game/src/sim/systems/helpers.ts:795 fn dailyOtor
-SYM game/src/sim/systems/helpers.ts:877 fn relocateHelpers
-FILE game/src/sim/systems/herder.ts 4.9KB 126L exports: ridingHorse,herderStep,shout,toggleUurga,toggleMount
-SYM game/src/sim/systems/herder.ts:13 fn ridingHorse
-SYM game/src/sim/systems/herder.ts:18 fn herderStep
-SYM game/src/sim/systems/herder.ts:68 fn shout
-SYM game/src/sim/systems/herder.ts:102 fn toggleUurga
-SYM game/src/sim/systems/herder.ts:108 fn toggleMount
+FILE game/src/sim/systems/helpers.ts 41.7KB 885L exports: HelperKind,HelperTask,HerdGroup,HelperTrip,Helper,CandidateMember,Candidate,OtorGroup,Dwelling,HelpersState,HelperEvent,newHelpersState,bedsTotal,bedsUsed,+21
+SYM game/src/sim/systems/helpers.ts:34 type HelperKind
+SYM game/src/sim/systems/helpers.ts:35 type HelperTask
+SYM game/src/sim/systems/helpers.ts:36 type HerdGroup
+SYM game/src/sim/systems/helpers.ts:38 interface HelperTrip
+SYM game/src/sim/systems/helpers.ts:45 interface Helper
+SYM game/src/sim/systems/helpers.ts:69 interface CandidateMember
+SYM game/src/sim/systems/helpers.ts:75 interface Candidate
+SYM game/src/sim/systems/helpers.ts:82 interface OtorGroup
+SYM game/src/sim/systems/helpers.ts:94 interface Dwelling
+SYM game/src/sim/systems/helpers.ts:103 interface HelpersState
+SYM game/src/sim/systems/helpers.ts:114 type HelperEvent
+SYM game/src/sim/systems/helpers.ts:119 fn newHelpersState
+SYM game/src/sim/systems/helpers.ts:126 fn freeSlot
+SYM game/src/sim/systems/helpers.ts:134 fn bedsTotal
+SYM game/src/sim/systems/helpers.ts:138 fn bedsUsed
+SYM game/src/sim/systems/helpers.ts:143 fn addDwelling
+SYM game/src/sim/systems/helpers.ts:149 fn spareTents
+SYM game/src/sim/systems/helpers.ts:155 fn homeOf
+SYM game/src/sim/systems/helpers.ts:165 fn refreshCandidates
+SYM game/src/sim/systems/helpers.ts:202 fn nearTeahouse
+SYM game/src/sim/systems/helpers.ts:208 fn hire
+SYM game/src/sim/systems/helpers.ts:256 fn familyOf
+SYM game/src/sim/systems/helpers.ts:261 fn leave
+SYM game/src/sim/systems/helpers.ts:271 fn fire
+SYM game/src/sim/systems/helpers.ts:282 fn setTask
+SYM game/src/sim/systems/helpers.ts:296 fn payWithAnimal
+SYM game/src/sim/systems/helpers.ts:308 fn playerOwned
+SYM game/src/sim/systems/helpers.ts:313 fn payWages
+SYM game/src/sim/systems/helpers.ts:338 fn moveToward
+SYM game/src/sim/systems/helpers.ts:352 fn groupOf
+SYM game/src/sim/systems/helpers.ts:358 fn flock
+SYM game/src/sim/systems/helpers.ts:368 fn driveAnimal
+SYM game/src/sim/systems/helpers.ts:376 fn bestPasture
+SYM game/src/sim/systems/helpers.ts:399 fn ensureHorseCamp
+SYM game/src/sim/systems/helpers.ts:426 fn helperGuardRadius
+SYM game/src/sim/systems/helpers.ts:431 fn areaScore
+SYM game/src/sim/systems/helpers.ts:438 fn herderPhase
+SYM game/src/sim/systems/helpers.ts:447 fn herderStep
+SYM game/src/sim/systems/helpers.ts:544 fn eveningSpot
+SYM game/src/sim/systems/helpers.ts:551 fn childStep
+SYM game/src/sim/systems/helpers.ts:603 fn driverStep
+SYM game/src/sim/systems/helpers.ts:674 fn helpersStep
+SYM game/src/sim/systems/helpers.ts:695 fn guardingHelpers
+SYM game/src/sim/systems/helpers.ts:702 fn sendOtor
+SYM game/src/sim/systems/helpers.ts:719 fn recallOtor
+SYM game/src/sim/systems/helpers.ts:742 fn setOtorCollector
+SYM game/src/sim/systems/helpers.ts:765 fn takeFromOtor
+SYM game/src/sim/systems/helpers.ts:796 fn dailyOtor
+SYM game/src/sim/systems/helpers.ts:878 fn relocateHelpers
+FILE game/src/sim/systems/herder.ts 4.8KB 127L exports: ridingHorse,herderStep,shout,toggleUurga,toggleMount
+SYM game/src/sim/systems/herder.ts:14 fn ridingHorse
+SYM game/src/sim/systems/herder.ts:19 fn herderStep
+SYM game/src/sim/systems/herder.ts:69 fn shout
+SYM game/src/sim/systems/herder.ts:103 fn toggleUurga
+SYM game/src/sim/systems/herder.ts:109 fn toggleMount
 FILE game/src/sim/systems/herds.ts 10.8KB 246L exports: Herd,flockKey,findHerds,drinkPoint,cellScore,areaScore,FlockCenter,cohesionCenters,HerdDecision,herdDecide
 SYM game/src/sim/systems/herds.ts:20 interface Herd
 SYM game/src/sim/systems/herds.ts:29 const flockKey
@@ -1143,29 +1178,29 @@ SYM game/src/sim/systems/herds.ts:139 interface FlockCenter
 SYM game/src/sim/systems/herds.ts:149 fn cohesionCenters
 SYM game/src/sim/systems/herds.ts:172 interface HerdDecision
 SYM game/src/sim/systems/herds.ts:184 fn herdDecide
-FILE game/src/sim/systems/interior.ts 17.3KB 334L exports: InteriorSpot,RoomSpec,InteriorsConfig,InteriorService,EnterDoor,sumEnterDoors,campEnterDoors,enterDoors,nearEnterDoor,roomSpec,roomGerSize,currentRoom,clampToRoom,enterBuilding,+7
-SYM game/src/sim/systems/interior.ts:16 interface InteriorSpot
-SYM game/src/sim/systems/interior.ts:17 interface RoomSpec
-SYM game/src/sim/systems/interior.ts:49 interface InteriorsConfig
-SYM game/src/sim/systems/interior.ts:68 type InteriorService
-SYM game/src/sim/systems/interior.ts:70 interface EnterDoor
-SYM game/src/sim/systems/interior.ts:87 fn serviceOf
-SYM game/src/sim/systems/interior.ts:95 fn sumEnterDoors
-SYM game/src/sim/systems/interior.ts:116 fn campEnterDoors
-SYM game/src/sim/systems/interior.ts:135 fn enterDoors
-SYM game/src/sim/systems/interior.ts:146 fn nearEnterDoor
-SYM game/src/sim/systems/interior.ts:165 fn roomSpec
-SYM game/src/sim/systems/interior.ts:182 fn roomGerSize
-SYM game/src/sim/systems/interior.ts:187 fn currentRoom
-SYM game/src/sim/systems/interior.ts:193 fn clampToRoom
-SYM game/src/sim/systems/interior.ts:218 fn enterBuilding
-SYM game/src/sim/systems/interior.ts:236 fn atExit
-SYM game/src/sim/systems/interior.ts:242 fn exitBuilding
-SYM game/src/sim/systems/interior.ts:257 fn moveInterior
-SYM game/src/sim/systems/interior.ts:268 fn atCounter
-SYM game/src/sim/systems/interior.ts:274 fn interiorService
-SYM game/src/sim/systems/interior.ts:281 fn ensureInteriorValid
-SYM game/src/sim/systems/interior.ts:288 fn validateInteriors
+FILE game/src/sim/systems/interior.ts 17.2KB 335L exports: InteriorSpot,RoomSpec,InteriorsConfig,InteriorService,EnterDoor,sumEnterDoors,campEnterDoors,enterDoors,nearEnterDoor,roomSpec,roomGerSize,currentRoom,clampToRoom,enterBuilding,+7
+SYM game/src/sim/systems/interior.ts:17 interface InteriorSpot
+SYM game/src/sim/systems/interior.ts:18 interface RoomSpec
+SYM game/src/sim/systems/interior.ts:50 interface InteriorsConfig
+SYM game/src/sim/systems/interior.ts:69 type InteriorService
+SYM game/src/sim/systems/interior.ts:71 interface EnterDoor
+SYM game/src/sim/systems/interior.ts:88 fn serviceOf
+SYM game/src/sim/systems/interior.ts:96 fn sumEnterDoors
+SYM game/src/sim/systems/interior.ts:117 fn campEnterDoors
+SYM game/src/sim/systems/interior.ts:136 fn enterDoors
+SYM game/src/sim/systems/interior.ts:147 fn nearEnterDoor
+SYM game/src/sim/systems/interior.ts:166 fn roomSpec
+SYM game/src/sim/systems/interior.ts:183 fn roomGerSize
+SYM game/src/sim/systems/interior.ts:188 fn currentRoom
+SYM game/src/sim/systems/interior.ts:194 fn clampToRoom
+SYM game/src/sim/systems/interior.ts:219 fn enterBuilding
+SYM game/src/sim/systems/interior.ts:237 fn atExit
+SYM game/src/sim/systems/interior.ts:243 fn exitBuilding
+SYM game/src/sim/systems/interior.ts:258 fn moveInterior
+SYM game/src/sim/systems/interior.ts:269 fn atCounter
+SYM game/src/sim/systems/interior.ts:275 fn interiorService
+SYM game/src/sim/systems/interior.ts:282 fn ensureInteriorValid
+SYM game/src/sim/systems/interior.ts:289 fn validateInteriors
 FILE game/src/sim/systems/night.ts 5.6KB 112L exports: goesHome,homeSpot,atHome,eveningStep,sleepAll,intakeFactor,dailyMilkLiters,morning
 SYM game/src/sim/systems/night.ts:17 fn goesHome
 SYM game/src/sim/systems/night.ts:22 fn homeSpot
@@ -1256,111 +1291,111 @@ SYM game/src/sim/systems/storage.ts:20 fn count
 SYM game/src/sim/systems/storage.ts:25 fn add
 SYM game/src/sim/systems/storage.ts:35 fn take
 SYM game/src/sim/systems/storage.ts:52 fn dailyStorageAging
-FILE game/src/sim/systems/sumtown.ts 11.8KB 265L exports: SumXZ,SumRoofSpec,SumYardSpec,SumBuildingSpec,SumCompoundSpec,SumFieldSpec,SumSpecialPlotSpec,SumZoneSpec,SumRoadSpec,SumPropSpec,SumLayout,Facing,TRADE_ROLES,TradeRole,+17
-SYM game/src/sim/systems/sumtown.ts:12 type SumXZ
-SYM game/src/sim/systems/sumtown.ts:13 interface SumRoofSpec
-SYM game/src/sim/systems/sumtown.ts:14 interface SumYardSpec
-SYM game/src/sim/systems/sumtown.ts:15 interface SumBuildingSpec
-SYM game/src/sim/systems/sumtown.ts:27 interface SumCompoundSpec
-SYM game/src/sim/systems/sumtown.ts:33 interface SumFieldSpec
-SYM game/src/sim/systems/sumtown.ts:34 interface SumSpecialPlotSpec
-SYM game/src/sim/systems/sumtown.ts:38 interface SumZoneSpec
-SYM game/src/sim/systems/sumtown.ts:39 interface SumRoadSpec
-SYM game/src/sim/systems/sumtown.ts:40 interface SumPropSpec
-SYM game/src/sim/systems/sumtown.ts:41 interface SumLayout
-SYM game/src/sim/systems/sumtown.ts:61 type Facing
-SYM game/src/sim/systems/sumtown.ts:64 const TRADE_ROLES
-SYM game/src/sim/systems/sumtown.ts:65 type TradeRole
-SYM game/src/sim/systems/sumtown.ts:67 interface SumDoor
-SYM game/src/sim/systems/sumtown.ts:78 interface LotSlot
-SYM game/src/sim/systems/sumtown.ts:81 fn facingOf
-SYM game/src/sim/systems/sumtown.ts:86 fn doorPoint
-SYM game/src/sim/systems/sumtown.ts:100 fn allBuildings
-SYM game/src/sim/systems/sumtown.ts:105 fn sumDoors
-SYM game/src/sim/systems/sumtown.ts:124 fn lotSlots
-SYM game/src/sim/systems/sumtown.ts:129 fn worldLimit
-SYM game/src/sim/systems/sumtown.ts:134 fn nearTradeDoor
-SYM game/src/sim/systems/sumtown.ts:150 fn teahouseDoor
-SYM game/src/sim/systems/sumtown.ts:156 fn nearLotSlot
-SYM game/src/sim/systems/sumtown.ts:171 fn orderAllowed
-SYM game/src/sim/systems/sumtown.ts:193 fn canSellProducts
-SYM game/src/sim/systems/sumtown.ts:196 fn canSellAnimals
-SYM game/src/sim/systems/sumtown.ts:200 fn pointInPoly
-SYM game/src/sim/systems/sumtown.ts:208 fn distSeg
-SYM game/src/sim/systems/sumtown.ts:216 fn sumHeight
-SYM game/src/sim/systems/sumtown.ts:226 fn nearestOnPolyline
-SYM game/src/sim/systems/sumtown.ts:244 fn faceTowardRoad
-SYM game/src/sim/systems/sumtown.ts:259 fn plotHouse
-FILE game/src/sim/systems/town.ts 19.7KB 370L exports: HouseMode,ZdtgLoan,BankLoan,RelativeState,TownState,TownEvent,newTownState,plotDoors,TownRole,nearTownDoor,housePrice,buyHouse,setHouseMode,donate,+13
-SYM game/src/sim/systems/town.ts:19 type HouseMode
-SYM game/src/sim/systems/town.ts:20 interface ZdtgLoan
-SYM game/src/sim/systems/town.ts:21 interface BankLoan
-SYM game/src/sim/systems/town.ts:22 interface RelativeState
-SYM game/src/sim/systems/town.ts:23 interface TownState
-SYM game/src/sim/systems/town.ts:34 type TownEvent
-SYM game/src/sim/systems/town.ts:36 fn newTownState
-SYM game/src/sim/systems/town.ts:45 fn plotDoors
-SYM game/src/sim/systems/town.ts:52 type TownRole
-SYM game/src/sim/systems/town.ts:56 fn nearTownDoor
-SYM game/src/sim/systems/town.ts:76 fn near
-SYM game/src/sim/systems/town.ts:81 fn spend
-SYM game/src/sim/systems/town.ts:85 fn earn
-SYM game/src/sim/systems/town.ts:89 fn repUp
-SYM game/src/sim/systems/town.ts:95 fn housePrice
-SYM game/src/sim/systems/town.ts:99 fn buyHouse
-SYM game/src/sim/systems/town.ts:111 fn setHouseMode
-SYM game/src/sim/systems/town.ts:121 fn donate
-SYM game/src/sim/systems/town.ts:132 fn zdtgPackages
-SYM game/src/sim/systems/town.ts:137 fn takeZdtgLoan
-SYM game/src/sim/systems/town.ts:158 fn zdtgRepayable
-SYM game/src/sim/systems/town.ts:165 fn repayZdtgLoan
-SYM game/src/sim/systems/town.ts:187 fn bankCollateralHouses
-SYM game/src/sim/systems/town.ts:192 fn bankLimit
-SYM game/src/sim/systems/town.ts:199 fn takeBankLoan
-SYM game/src/sim/systems/town.ts:210 fn repayBankLoan
-SYM game/src/sim/systems/town.ts:228 interface GiftPlan
-SYM game/src/sim/systems/town.ts:231 fn giveGift
-SYM game/src/sim/systems/town.ts:276 fn townDaily
-SYM game/src/sim/systems/town.ts:330 fn townMonthly
-SYM game/src/sim/systems/town.ts:336 fn townSeason
-FILE game/src/sim/systems/travel.ts 25.8KB 572L exports: TravelEvent,fleetOf,initFleetVehicle,addVehicle,syncAway,cargoUnits,hayInOrders,hayRoom,cargoSlots,nearestVehicle,enterVehicle,exitVehicle,boardBest,takeFromStorage,+20
-SYM game/src/sim/systems/travel.ts:22 type TravelEvent
-SYM game/src/sim/systems/travel.ts:27 fn fleetOf
-SYM game/src/sim/systems/travel.ts:32 fn initFleetVehicle
-SYM game/src/sim/systems/travel.ts:43 fn addVehicle
-SYM game/src/sim/systems/travel.ts:49 fn syncAway
-SYM game/src/sim/systems/travel.ts:54 fn cargoUnits
-SYM game/src/sim/systems/travel.ts:59 fn hayInOrders
-SYM game/src/sim/systems/travel.ts:64 fn hayRoom
-SYM game/src/sim/systems/travel.ts:70 fn cargoSlots
-SYM game/src/sim/systems/travel.ts:75 fn nearestVehicle
-SYM game/src/sim/systems/travel.ts:89 fn enterVehicle
-SYM game/src/sim/systems/travel.ts:103 fn exitVehicle
-SYM game/src/sim/systems/travel.ts:121 fn boardBest
-SYM game/src/sim/systems/travel.ts:141 fn takeFromStorage
-SYM game/src/sim/systems/travel.ts:160 fn droveAnimals
-SYM game/src/sim/systems/travel.ts:171 fn canTravel
-SYM game/src/sim/systems/travel.ts:176 fn originKm
-SYM game/src/sim/systems/travel.ts:182 fn sumId
-SYM game/src/sim/systems/travel.ts:187 fn driveVehicle
-SYM game/src/sim/systems/travel.ts:205 fn leaveToMap
-SYM game/src/sim/systems/travel.ts:220 fn mapGo
-SYM game/src/sim/systems/travel.ts:233 fn mapSpeedKmPerMin
-SYM game/src/sim/systems/travel.ts:243 fn droveSlows
-SYM game/src/sim/systems/travel.ts:249 fn partySpeedKmPerMin
-SYM game/src/sim/systems/travel.ts:255 fn mapStep
-SYM game/src/sim/systems/travel.ts:274 fn spend
-SYM game/src/sim/systems/travel.ts:280 fn arrive
-SYM game/src/sim/systems/travel.ts:346 fn migrateHere
-SYM game/src/sim/systems/travel.ts:357 fn atLoadingSpot
-SYM game/src/sim/systems/travel.ts:363 fn loadCargo
-SYM game/src/sim/systems/travel.ts:391 fn unloadCargo
-SYM game/src/sim/systems/travel.ts:416 interface TradePlan
-SYM game/src/sim/systems/travel.ts:423 fn sellableAtShop
-SYM game/src/sim/systems/travel.ts:432 fn sellableAnimals
-SYM game/src/sim/systems/travel.ts:438 fn animalRoom
-SYM game/src/sim/systems/travel.ts:450 fn trade
-SYM game/src/sim/systems/travel.ts:538 fn buyLotVehicle
+FILE game/src/sim/systems/sumtown.ts 12.4KB 270L exports: SumXZ,SumRoofSpec,SumYardSpec,SumBuildingSpec,SumCompoundSpec,SumFieldSpec,SumSpecialPlotSpec,SumZoneSpec,SumRoadSpec,SumPropSpec,SumLayout,Facing,TRADE_ROLES,TradeRole,+17
+SYM game/src/sim/systems/sumtown.ts:13 type SumXZ
+SYM game/src/sim/systems/sumtown.ts:14 interface SumRoofSpec
+SYM game/src/sim/systems/sumtown.ts:15 interface SumYardSpec
+SYM game/src/sim/systems/sumtown.ts:16 interface SumBuildingSpec
+SYM game/src/sim/systems/sumtown.ts:28 interface SumCompoundSpec
+SYM game/src/sim/systems/sumtown.ts:34 interface SumFieldSpec
+SYM game/src/sim/systems/sumtown.ts:35 interface SumSpecialPlotSpec
+SYM game/src/sim/systems/sumtown.ts:39 interface SumZoneSpec
+SYM game/src/sim/systems/sumtown.ts:40 interface SumRoadSpec
+SYM game/src/sim/systems/sumtown.ts:41 interface SumPropSpec
+SYM game/src/sim/systems/sumtown.ts:42 interface SumLayout
+SYM game/src/sim/systems/sumtown.ts:62 type Facing
+SYM game/src/sim/systems/sumtown.ts:65 const TRADE_ROLES
+SYM game/src/sim/systems/sumtown.ts:66 type TradeRole
+SYM game/src/sim/systems/sumtown.ts:68 interface SumDoor
+SYM game/src/sim/systems/sumtown.ts:79 interface LotSlot
+SYM game/src/sim/systems/sumtown.ts:82 fn facingOf
+SYM game/src/sim/systems/sumtown.ts:87 fn doorPoint
+SYM game/src/sim/systems/sumtown.ts:103 fn allBuildings
+SYM game/src/sim/systems/sumtown.ts:108 fn sumDoors
+SYM game/src/sim/systems/sumtown.ts:127 fn lotSlots
+SYM game/src/sim/systems/sumtown.ts:132 fn worldLimit
+SYM game/src/sim/systems/sumtown.ts:137 fn nearTradeDoor
+SYM game/src/sim/systems/sumtown.ts:153 fn teahouseDoor
+SYM game/src/sim/systems/sumtown.ts:159 fn nearLotSlot
+SYM game/src/sim/systems/sumtown.ts:174 fn orderAllowed
+SYM game/src/sim/systems/sumtown.ts:196 fn canSellProducts
+SYM game/src/sim/systems/sumtown.ts:199 fn canSellAnimals
+SYM game/src/sim/systems/sumtown.ts:203 fn pointInPoly
+SYM game/src/sim/systems/sumtown.ts:211 fn distSeg
+SYM game/src/sim/systems/sumtown.ts:219 fn sumHeight
+SYM game/src/sim/systems/sumtown.ts:229 fn nearestOnPolyline
+SYM game/src/sim/systems/sumtown.ts:247 fn faceTowardRoad
+SYM game/src/sim/systems/sumtown.ts:262 fn plotHouse
+FILE game/src/sim/systems/town.ts 18.8KB 371L exports: HouseMode,ZdtgLoan,BankLoan,RelativeState,TownState,TownEvent,newTownState,plotDoors,TownRole,nearTownDoor,housePrice,buyHouse,setHouseMode,donate,+13
+SYM game/src/sim/systems/town.ts:20 type HouseMode
+SYM game/src/sim/systems/town.ts:21 interface ZdtgLoan
+SYM game/src/sim/systems/town.ts:22 interface BankLoan
+SYM game/src/sim/systems/town.ts:23 interface RelativeState
+SYM game/src/sim/systems/town.ts:24 interface TownState
+SYM game/src/sim/systems/town.ts:35 type TownEvent
+SYM game/src/sim/systems/town.ts:37 fn newTownState
+SYM game/src/sim/systems/town.ts:46 fn plotDoors
+SYM game/src/sim/systems/town.ts:53 type TownRole
+SYM game/src/sim/systems/town.ts:57 fn nearTownDoor
+SYM game/src/sim/systems/town.ts:77 fn near
+SYM game/src/sim/systems/town.ts:82 fn spend
+SYM game/src/sim/systems/town.ts:86 fn earn
+SYM game/src/sim/systems/town.ts:90 fn repUp
+SYM game/src/sim/systems/town.ts:96 fn housePrice
+SYM game/src/sim/systems/town.ts:100 fn buyHouse
+SYM game/src/sim/systems/town.ts:112 fn setHouseMode
+SYM game/src/sim/systems/town.ts:122 fn donate
+SYM game/src/sim/systems/town.ts:133 fn zdtgPackages
+SYM game/src/sim/systems/town.ts:138 fn takeZdtgLoan
+SYM game/src/sim/systems/town.ts:159 fn zdtgRepayable
+SYM game/src/sim/systems/town.ts:166 fn repayZdtgLoan
+SYM game/src/sim/systems/town.ts:188 fn bankCollateralHouses
+SYM game/src/sim/systems/town.ts:193 fn bankLimit
+SYM game/src/sim/systems/town.ts:200 fn takeBankLoan
+SYM game/src/sim/systems/town.ts:211 fn repayBankLoan
+SYM game/src/sim/systems/town.ts:229 interface GiftPlan
+SYM game/src/sim/systems/town.ts:232 fn giveGift
+SYM game/src/sim/systems/town.ts:277 fn townDaily
+SYM game/src/sim/systems/town.ts:331 fn townMonthly
+SYM game/src/sim/systems/town.ts:337 fn townSeason
+FILE game/src/sim/systems/travel.ts 25.1KB 573L exports: TravelEvent,fleetOf,initFleetVehicle,addVehicle,syncAway,cargoUnits,hayInOrders,hayRoom,cargoSlots,nearestVehicle,enterVehicle,exitVehicle,boardBest,takeFromStorage,+20
+SYM game/src/sim/systems/travel.ts:23 type TravelEvent
+SYM game/src/sim/systems/travel.ts:28 fn fleetOf
+SYM game/src/sim/systems/travel.ts:33 fn initFleetVehicle
+SYM game/src/sim/systems/travel.ts:44 fn addVehicle
+SYM game/src/sim/systems/travel.ts:50 fn syncAway
+SYM game/src/sim/systems/travel.ts:55 fn cargoUnits
+SYM game/src/sim/systems/travel.ts:60 fn hayInOrders
+SYM game/src/sim/systems/travel.ts:65 fn hayRoom
+SYM game/src/sim/systems/travel.ts:71 fn cargoSlots
+SYM game/src/sim/systems/travel.ts:76 fn nearestVehicle
+SYM game/src/sim/systems/travel.ts:90 fn enterVehicle
+SYM game/src/sim/systems/travel.ts:104 fn exitVehicle
+SYM game/src/sim/systems/travel.ts:122 fn boardBest
+SYM game/src/sim/systems/travel.ts:142 fn takeFromStorage
+SYM game/src/sim/systems/travel.ts:161 fn droveAnimals
+SYM game/src/sim/systems/travel.ts:172 fn canTravel
+SYM game/src/sim/systems/travel.ts:177 fn originKm
+SYM game/src/sim/systems/travel.ts:183 fn sumId
+SYM game/src/sim/systems/travel.ts:188 fn driveVehicle
+SYM game/src/sim/systems/travel.ts:206 fn leaveToMap
+SYM game/src/sim/systems/travel.ts:221 fn mapGo
+SYM game/src/sim/systems/travel.ts:234 fn mapSpeedKmPerMin
+SYM game/src/sim/systems/travel.ts:244 fn droveSlows
+SYM game/src/sim/systems/travel.ts:250 fn partySpeedKmPerMin
+SYM game/src/sim/systems/travel.ts:256 fn mapStep
+SYM game/src/sim/systems/travel.ts:275 fn spend
+SYM game/src/sim/systems/travel.ts:281 fn arrive
+SYM game/src/sim/systems/travel.ts:347 fn migrateHere
+SYM game/src/sim/systems/travel.ts:358 fn atLoadingSpot
+SYM game/src/sim/systems/travel.ts:364 fn loadCargo
+SYM game/src/sim/systems/travel.ts:392 fn unloadCargo
+SYM game/src/sim/systems/travel.ts:417 interface TradePlan
+SYM game/src/sim/systems/travel.ts:424 fn sellableAtShop
+SYM game/src/sim/systems/travel.ts:433 fn sellableAnimals
+SYM game/src/sim/systems/travel.ts:439 fn animalRoom
+SYM game/src/sim/systems/travel.ts:451 fn trade
+SYM game/src/sim/systems/travel.ts:539 fn buyLotVehicle
 FILE game/src/sim/systems/trip.ts 4.2KB 109L exports: VehicleSpec,vehicleCfg,bestTruck,parkingSpot,productPrice,orderPrice,animalSlots,deliver
 SYM game/src/sim/systems/trip.ts:14 type VehicleSpec
 SYM game/src/sim/systems/trip.ts:16 fn vehicleCfg
@@ -1437,12 +1472,12 @@ SYM tools/codemap.ts:127 fn shortLabel
 SYM tools/codemap.ts:132 fn indexLine
 SYM tools/codemap.ts:141 fn generate
 SYM tools/codemap.ts:195 fn main
-FILE game/tests/animalLook.test.ts 7.1KB 126L
+FILE game/tests/animalLook.test.ts 7.7KB 137L
 FILE game/tests/animals.test.ts 2.3KB 39L
 FILE game/tests/breeding.test.ts 1.4KB 33L
-FILE game/tests/buildings.test.ts 3.4KB 51L
+FILE game/tests/buildings.test.ts 6.5KB 109L
 FILE game/tests/camclip.test.ts 3.9KB 68L
-FILE game/tests/characters.test.ts 26.0KB 438L
+FILE game/tests/characters.test.ts 26.1KB 438L
 FILE game/tests/clock.test.ts 2.3KB 47L
 FILE game/tests/config.test.ts 1.4KB 29L
 FILE game/tests/difficulty.test.ts 4.9KB 99L
@@ -1473,7 +1508,7 @@ FILE game/tests/town.test.ts 6.1KB 127L
 FILE game/tests/transfer.test.ts 14.2KB 255L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 23.0KB 114L
+FILE docs/CONTEXT.md 23.1KB 114L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-29 ## 2. Стек ба командууд
 DOC docs/CONTEXT.md:30-88 ## 3. Файлын зураглал (`game/src/`)
@@ -1488,7 +1523,7 @@ DOC docs/INDEX.md:31-106 ## 2. Баримтууд
 DOC docs/INDEX.md:107-110 ## 3. Гол тоо
 DOC docs/INDEX.md:111-129 ## 4. Нэр томьёо
 DOC docs/INDEX.md:130-135 ## 5. Баримт засах дүрэм
-FILE docs/architecture.md 19.5KB 236L
+FILE docs/architecture.md 20.0KB 236L
 DOC docs/architecture.md:16-29 ## 1. Технологи
 DOC docs/architecture.md:30-68 ## 2. Хавтасны бүтэц
 DOC docs/architecture.md:69-138 ## 3. Гол зарчмууд
@@ -1668,15 +1703,16 @@ FILE docs/plan/M7.md 7.6KB 31L
 DOC docs/plan/M7.md:12-22 ## Блокууд
 DOC docs/plan/M7.md:23-27 ## Асуулга (10 асуулт)
 DOC docs/plan/M7.md:28-31 ## Эрсдэл
-FILE docs/plan/V.md 55.5KB 178L
+FILE docs/plan/V.md 57.0KB 184L
 DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
 DOC docs/plan/V.md:24-172 ## Блокууд ба чеклист (2026-11-15)
-DOC docs/plan/V.md:173-178 ## Зогссон цэг
-FILE docs/plan/playtest.md 13.4KB 81L
+DOC docs/plan/V.md:173-184 ## Зогссон цэг
+FILE docs/plan/playtest.md 13.7KB 85L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
 DOC docs/plan/playtest.md:19-39 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
-DOC docs/plan/playtest.md:40-81 ## C. Мэдрэмж, үе шат бүрээр
+DOC docs/plan/playtest.md:40-82 ## C. Мэдрэмж, үе шат бүрээр
+DOC docs/plan/playtest.md:83-85 ## V4.6 хонь, ямаа (🧑 мэдрэмж)
 FILE docs/seasons-camps.md 10.2KB 104L
 DOC docs/seasons-camps.md:17-40 ## 1. Хэрэглэгчийн шийдвэрүүд
 DOC docs/seasons-camps.md:41-54 ## 2. Улирал

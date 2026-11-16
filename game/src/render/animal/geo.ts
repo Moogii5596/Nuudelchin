@@ -109,7 +109,7 @@ export const patchK = (x0: number, y0: number, z0: number, sc = 1): number => {
 
 /** Туслахын тэмдэг: нурууны будаг — биеийн орой дээр хавтгай эллипс (aSlot 3) */
 export function markGeo(body: BodyLook, seg: number, rows: number): THREE.BufferGeometry {
-  return ellipsoid(body.R * 0.32, 0.03, body.L * 0.15, [0, body.R * 0.98, body.L * 0.05], seg, rows);
+  return ellipsoid(body.R * 0.34, 0.016, body.L * 0.16, [0, body.R - 0.006, body.L * 0.05], seg, rows);
 }
 
 /** Геометрт оройн өнгө ба aSlot тавина (uv-гүй) */
