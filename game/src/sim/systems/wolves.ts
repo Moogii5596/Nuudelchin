@@ -24,6 +24,7 @@
  * бэлчээрлэлт, төллөлтийн санамсаргүй дарааллыг өөрчлөхгүй.
  */
 import { seasonOf } from './seasons';
+import { safeFleeTarget } from './safety';
 import { gerRadiusFor } from './gerLayout';
 import type { GameConfig, Species } from '../config';
 import { Rng } from '../rng';
@@ -214,8 +215,9 @@ export function spookAnimals(cfg: GameConfig, state: GameState, zones: Zone[], r
     ang += rng.range(-1, 1) * (f.spread + extraSpread);
     const d = rng.range(f.fleeDistance[0]!, f.fleeDistance[1]!);
     a.mode = 'flee';
-    a.tx = a.x + Math.sin(ang) * d;
-    a.tz = a.z + Math.cos(ang) * d;
+    const t = safeFleeTarget(cfg, state, a.x, a.z, ang, d);   // M6.8: чонын үүр, гүн ус руу гүйхгүй (RNG-д хүрэхгүй)
+    a.tx = t.tx;
+    a.tz = t.tz;
     fled.push(a);
   };
   const brave = (a: Animal): boolean => a.riding || (a.species === 'horse' && a.sex === 'm' && a.age >= adultHorse);

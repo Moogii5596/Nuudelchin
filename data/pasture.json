@@ -146,7 +146,7 @@
       }
     },
     "meadow": {
-      "maxBiomass": 1.0,
+      "maxBiomass": 1,
       "heightCm": 25,
       "wolfRisk": 0.1,
       "mix": {
@@ -177,7 +177,7 @@
       }
     },
     "northSlope": {
-      "maxBiomass": 1.0,
+      "maxBiomass": 1,
       "heightCm": 30,
       "wolfRisk": 0.7,
       "mix": {
@@ -200,7 +200,7 @@
       "horse": 8
     },
     "grazeSpeed": 0.5,
-    "travelSpeed": 1.0,
+    "travelSpeed": 1,
     "cohesion": {
       "sheep": 0.08,
       "goat": 0.06,
@@ -250,6 +250,27 @@
         "cow": 85,
         "horse": 150
       }
+    },
+    "stuck": {
+      "_doc": "M6.8 (A1): мал гацахгүй, аюул руу гүйхгүй. steps алхам < minMove м хөдлөөгүй, зорилго minGoal м-ээс хол мал → ойрын чөлөөтэй цэг рүү шилжинэ (state.stuckEvents). deepWater — үүнээс гүн усанд мал ордоггүй. fleeTurns — үргэсэн мал аюултай (гүн ус, чонын үүр) чиглэлээс эргэх радиан; denMargin — үүрний нутгаас зугтахгүй зай. drinkDepth — мал энэ гүнд (эрэг, шагай) хүрмэгц уугаад цангаа тайлна: голын төв (гүн) рүү шумбахгүй",
+      "steps": 20,
+      "minMove": 0.3,
+      "minGoal": 1.5,
+      "deepWater": 0.4,
+      "searchStep": 3,
+      "searchMax": 45,
+      "fleeTurns": [
+        0,
+        0.6,
+        -0.6,
+        1.2,
+        -1.2,
+        1.9,
+        -1.9,
+        3.14
+      ],
+      "denMargin": 12,
+      "drinkDepth": 0.15
     }
   }
 }

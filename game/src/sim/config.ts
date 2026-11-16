@@ -27,6 +27,7 @@ import gerJson from '../../../data/ger.json';
 import difficultyJson from '../../../data/difficulty.json';
 import milestonesJson from '../../../data/milestones.json';
 import { validateMilestones, type MilestonesConfig } from './systems/milestones';
+import type { StuckConfig } from './systems/safety';
 import { validateDifficultyConfig, type DifficultyConfig } from './systems/difficulty';
 import { validateInteriors, type InteriorsConfig } from './systems/interior';
 import type { GerSimConfig } from './systems/gerLayout';
@@ -113,6 +114,8 @@ export interface PastureTypeConfig {
 }
 
 export interface GrazingConfig {
+  /** M6.8: гацалт илрүүлэгч, аюулгүй зугтах — systems/safety.ts */
+  stuck: StuckConfig;
   imaxPerMinute: number;
   biomassPerGut: number;
   /** Сүргийн мал бүрт ногдох бэлчээрийн талбай м² (B11): сүргийн өргөн малын тоогоор */
@@ -336,6 +339,8 @@ export function validateConfig(cfg: GameConfig): string[] {
   const g = cfg.pasture.grazing;
   if (!(g.imaxPerMinute > 0 && g.biomassPerGut > 0 && g.decisionEverySteps >= 1)) e.push('pasture.grazing: эерэг утга');
   for (const sp of SPECIES) if (!(g.sampleRadius[sp] > 0)) e.push(`pasture.grazing.sampleRadius.${sp} алга`);
+  const sk = g.stuck;
+  if (!sk || !(sk.steps >= 1 && sk.minMove > 0 && sk.minGoal > 0 && sk.deepWater >= 0 && sk.drinkDepth > 0 && sk.searchStep > 0 && sk.searchMax >= sk.searchStep && sk.denMargin >= 0 && Array.isArray(sk.fleeTurns) && sk.fleeTurns.length > 0)) e.push('pasture.grazing.stuck: steps, minMove, minGoal, deepWater, searchStep, searchMax, fleeTurns[], denMargin');
 
   const p = cfg.pasture;
   for (const [id, type] of Object.entries(p.types)) {

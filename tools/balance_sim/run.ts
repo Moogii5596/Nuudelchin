@@ -299,7 +299,7 @@ const manager: Strategy = {
       const wantAdults = state.fleet.length ? 2 : 1;
       const monthly = (hs.list.reduce((a, h) => a + h.wage, 0) + 40_000) * cfg.helpers.payEveryDays;
       if (adults < wantAdults && state.money > monthly * 2) {
-        const fam = hs.candidates.find((c) => c.family) ?? (bedsUsed(state) < bedsTotal(cfg, state) ? hs.candidates[0] : undefined);
+        const fam = hs.candidates.find((c) => c.family) ?? (bedsUsed(state) < bedsTotal(cfg, state) && state.money > monthly * 6 ? hs.candidates[0] : undefined);   // M6.13: гол гэр 1 ор өгдөг — ганц бие туслахыг мөнгөний нөөцтэй үед л
         if (fam) sim.command({ type: 'hire', candidate: fam.id }, false);
       }
       // Сүрэг тус бүрд малчин, үлдсэнийг жолооч

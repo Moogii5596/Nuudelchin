@@ -111,6 +111,7 @@ export function validateState(cfg: GameConfig, s: GameState): string[] {
   need(s.home === 'tent' || s.home === 'ger', `home: "tent"|"ger" (${String(s.home)})`);
   need(typeof s.homeSize === 'string' && s.homeSize in cfg.ger.sizes, `homeSize: data/ger.json sizes-ийн түлхүүр (${String(s.homeSize)})`);
   need(Array.isArray(s.extraGers) && s.extraGers.every((g) => isObj(g) && typeof g.size === 'string' && g.size in cfg.ger.sizes && fin(g.x) && fin(g.z)), 'extraGers: [{size, x, z}]');
+  need(Number.isInteger(s.stuckEvents) && s.stuckEvents >= 0, 'stuckEvents: сөрөггүй бүхэл тоо');
   need(fin(s.dayStartMoney ?? 0), 'dayStartMoney: тоо эсвэл null');
   need(Array.isArray(s.flockCenters) && s.flockCenters.every((c) => Array.isArray(c) && fin(c[0]) && isObj(c[1]) && fin(c[1].x) && fin(c[1].z) && fin(c[1].n)), 'flockCenters: [id, {x,z,n}][]');
 
@@ -155,6 +156,7 @@ export function validateState(cfg: GameConfig, s: GameState): string[] {
       need((SPECIES as readonly string[]).includes(a.species), `${tag}: species "${String(a.species)}"`);
       need(a.sex === 'm' || a.sex === 'f', `${tag}: sex`);
       need(MODES.includes(a.mode), `${tag}: mode "${String(a.mode)}"`);
+      for (const k of ['sn', 'sx', 'sz'] as const) need(a[k] === undefined || fin(a[k]), `${tag}.${k}: тоо`);
       for (const k of ['age', 'condition', 'health', 'gutFill', 'lastGut', 'dietSum', 'thirst', 'cycleOffset', 'milkTimer', 'fiberDays', 'drivenAt', 'x', 'z', 'tx', 'tz', 'heading'] as const) need(fin(a[k]), `${tag}.${k}: тоо`);
     }
   }

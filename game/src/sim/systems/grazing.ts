@@ -10,6 +10,7 @@
  *   Энд зөвхөн уснаас ойр байгаа мал ганцаараа очиж ууна.
  */
 import type { GameConfig, Species } from '../config';
+import { inBounds, isWalkable, nearestWalkable, waterDepthAt } from './safety';
 import type { Rng } from '../rng';
 import type { Animal, GameState } from '../state';
 import { absBiomass, cellIndex, grassHeightCm, typeIdOf } from './pasture';
@@ -127,7 +128,8 @@ function scoreAt(
   return s;
 }
 
-function moveToward(a: Animal, speed: number): boolean {
+/** Алхмын чиглэлийг гүн ус, хилээс (ok) зайлуулж тойруулна (±0.7, ±1.4 рад); бүх чиглэл хаалттай бол байрандаа (гацалт илрүүлэгч шийднэ) */
+function moveToward(a: Animal, speed: number, ok?: (x: number, z: number) => boolean): boolean {
   const dx = a.tx - a.x, dz = a.tz - a.z;
   const d = Math.hypot(dx, dz);
   if (d <= speed) {
@@ -135,9 +137,17 @@ function moveToward(a: Animal, speed: number): boolean {
     a.z = a.tz;
     return true;
   }
-  a.x += (dx / d) * speed;
-  a.z += (dz / d) * speed;
-  a.heading = Math.atan2(dx, dz);
+  let ang = Math.atan2(dx, dz);
+  if (ok && !ok(a.x + Math.sin(ang) * speed, a.z + Math.cos(ang) * speed)) {
+    let found = false;
+    for (const t of [0.7, -0.7, 1.4, -1.4]) {
+      if (ok(a.x + Math.sin(ang + t) * speed, a.z + Math.cos(ang + t) * speed)) { ang += t; found = true; break; }
+    }
+    if (!found) return false;
+  }
+  a.x += Math.sin(ang) * speed;
+  a.z += Math.cos(ang) * speed;
+  a.heading = ang;
   return false;
 }
 
@@ -154,6 +164,8 @@ export function grazingStep(
   const minutesPerDay = activeDayMinutes(cfg.time);
   const grid = state.grass;
   const night = isNight(state.time, cfg.time);
+  const ok = (x: number, z: number): boolean => inBounds(cfg, x, z);   // M6.8: хилээс гарахгүй (голыг гатлан алхаж болно)
+  const okFlee = (x: number, z: number): boolean => isWalkable(cfg, state, x, z);   // айсан мал гүн усыг тойрно
 
   for (const a of state.animals) {
     if (a.riding) continue; // унаа морь уяан дээр (тэжээгдсэн гэж үзнэ)
@@ -162,7 +174,7 @@ export function grazingStep(
       // Шөнө (M4.5): идэхгүй, цангахгүй. Туугдаж, зугтаж дууссан мал хүрсэн газраа унтана
       if (a.mode === 'driven' || a.mode === 'flee') {
         a.drivenAt = state.step;
-        if (moveToward(a, a.mode === 'flee' ? cfg.wolves.fear.speed : g.travelSpeed)) a.mode = 'sleep';
+        if (moveToward(a, a.mode === 'flee' ? cfg.wolves.fear.speed : g.travelSpeed, a.mode === 'flee' ? okFlee : ok)) a.mode = 'sleep';
       } else if (a.mode !== 'sleep') {
         a.mode = 'sleep';
         a.tx = a.x;
@@ -181,22 +193,34 @@ export function grazingStep(
     switch (a.mode) {
       case 'driven': {
         a.drivenAt = state.step;
-        if (moveToward(a, g.travelSpeed)) a.mode = 'graze';
+        if (moveToward(a, g.travelSpeed, ok)) a.mode = 'graze';
         break;
       }
       case 'flee': {
         // Чоноос айж гүйнэ (туугдсантай адил: зугтсан газраа хэсэг үлдэнэ)
         a.drivenAt = state.step;
-        if (moveToward(a, cfg.wolves.fear.speed)) a.mode = 'graze';
+        const fx = a.x, fz = a.z;
+        if (moveToward(a, cfg.wolves.fear.speed, okFlee)) a.mode = 'graze';
+        else if (a.x === fx && a.z === fz) {   // M6.8: зам хаагдсан (гүн ус) — зугтахаа зогсооно; гүн усанд байвал ойрын эрэгт гаргана
+          if (!okFlee(a.x, a.z)) {
+            const p = nearestWalkable(cfg, state, a.x, a.z);
+            a.x = p.x;
+            a.z = p.z;
+            state.stuckEvents++;
+          }
+          a.mode = 'graze';
+          a.tx = a.x;
+          a.tz = a.z;
+        }
         break;
       }
       case 'trek': {
-        if (moveToward(a, g.herd.trekSpeed)) a.mode = 'graze';
+        if (moveToward(a, g.herd.trekSpeed, ok)) a.mode = 'graze';
         break;
       }
       case 'drink': {
-        moveToward(a, g.travelSpeed);
-        if (Math.hypot(a.x - a.tx, a.z - a.tz) <= g.drinkRadius) {
+        moveToward(a, g.travelSpeed, ok);
+        if (Math.hypot(a.x - a.tx, a.z - a.tz) <= g.drinkRadius || waterDepthAt(cfg, state.campId, a.x, a.z) >= g.stuck.drinkDepth) {   // M6.8: эрэгт хүрмэгц ууна, гүн рүү орохгүй
           a.thirst = 0;
           a.mode = 'graze';
         }
@@ -204,7 +228,7 @@ export function grazingStep(
       }
       case 'home': {
         // Орой хотондоо харьж байна (night.ts) — хүрээд хэвтэнэ
-        if (moveToward(a, g.travelSpeed)) a.mode = 'sleep';
+        if (moveToward(a, g.travelSpeed, ok)) a.mode = 'sleep';
         break;
       }
       case 'rest':
@@ -212,7 +236,7 @@ export function grazingStep(
         break;
       case 'graze': {
         const dist = Math.hypot(a.tx - a.x, a.tz - a.z);
-        moveToward(a, dist > g.sampleRadius[a.species] ? g.roamSpeed : g.grazeSpeed);
+        moveToward(a, dist > g.sampleRadius[a.species] ? g.roamSpeed : g.grazeSpeed, ok);
         eat(cfg, grid, a, quality, th);
         break;
       }
