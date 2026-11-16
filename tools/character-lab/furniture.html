@@ -73,10 +73,10 @@ td.new{color:#B0601E;font-weight:600}
 <aside>
   <div>
     <h1>Нийтийн барилгын дотор тал · V6.2</h1>
-    <p class="sub">buildings/index.html-ийн Geo, атлас, makeInterior-ийг ашиглана (нэг эх сурвалж). Хэмжээ, цэг — data/interiors.json. Сургууль ✓ · 2-р алхам: дуган.</p>
+    <p class="sub">buildings/index.html-ийн Geo, атлас, makeInterior-ийг ашиглана (нэг эх сурвалж). Хэмжээ, цэг — data/interiors.json. Сургууль ✓ · дуган ✓ · 3-р алхам: ЗДТГ, банк.</p>
   </div>
   <fieldset><legend>Өрөө</legend><div class="seg" id="g-room"></div>
-    <p class="note">Сургууль батлагдсан. ЗДТГ, банк, сүү/ноос — дуган батлагдсаны дараа.</p></fieldset>
+    <p class="note">Сургууль, дуган батлагдсан. Сүү/ноос — ЗДТГ, банк батлагдсаны дараа.</p></fieldset>
   <fieldset><legend>Цаг</legend><div class="seg" id="g-time"></div></fieldset>
   <fieldset><legend>Тааз</legend><div class="seg" id="g-roof"></div></fieldset>
   <fieldset><legend>Харуулах</legend><div class="seg" id="g-show"></div></fieldset>
@@ -143,6 +143,161 @@ const PUBLIC_INTERIOR = {
     views: { door: [0.0, 1.15, 6.6, [0, 1.3, -1.0]], top: [0.0, 0.1, 12.5, [0, 0, 0]], work: [-1.3, 1.3, 2.4, [-2.2, 1.0, -2.3]], side: [1.5, 1.05, 10, [0, 1.0, 0]], focus: [0.0, 1.42, 3.4, [0, 1.35, -3.8]] },
   },
 };
+/* ЗДТГ: засаг даргын ширээ (туг, сүлд), зээлийн лангуу (ард нь шүүгээ), цагдаагийн жижиг ширээ, хүлээлгийн сандал, зарын самбар.
+ * Банк: шилэн кассын лангуу (2 ажилтан, шил — тусдаа тунгалаг mesh), сейф, хүлээлгийн сандал, дараалал, маягт бөглөх ширээ */
+Object.assign(PUBLIC_INTERIOR, {
+  admin: {
+    door: { x: 0, w: 1.2, h: 2.2, atlas: 'pubDoor' }, windows: { sides: [1, -1], z: [-2.0, 1.6], w: 1.5, h: 1.4, sill: 0.9 },
+    lamps: [[-3, -1.5], [3, -1.5], [-3, 1.6], [3, 1.6]],
+    govDesk: { w: 1.8, d: 0.85, h: 0.78, color: '#5A3420' }, counter: { w: 3.0, d: 0.6, h: 1.05, front: '#2F5D8A', top: '#C9A27A' },
+    policeDesk: { w: 1.1, d: 0.6, h: 0.75, color: '#8A9096' }, cabinets: [-1.0, 1.0], cabinet: { w: 0.9, d: 0.42, h: 1.9, color: '#9A6A42' },
+    work: [{ id: 'governor', label: 'Засаг дарга', x: -4, z: -3.25, rot: 0 }, { id: 'clerk', label: 'Зээлийн ажилтан (лангуу)', x: 0, z: -3.2, rot: 0 },
+      { id: 'police', label: 'Цагдаа', x: 4, z: -3.15, rot: 0 }, { id: 'visitor', label: 'Иргэн (зээл · E)', x: 0, z: -1.8, rot: Math.PI }],
+    figures: [{ x: -4, z: -3.25, rot: 0, h: 1.7 }, { x: 0, z: -3.2, rot: 0, h: 1.7 }, { x: 4, z: -3.15, rot: 0, h: 1.7 }, { x: 0, z: -1.8, rot: Math.PI, h: 1.7 }],
+    views: { door: [0.0, 1.15, 8.2, [0, 1.1, -1.2]], top: [0.0, 0.1, 14, [0, 0, 0]], work: [Math.PI, 1.3, 2.4, [0, 1.3, -0.8]], side: [1.5, 1.05, 12, [0, 0.9, 0]], focus: [0.5, 1.3, 3.6, [-4.3, 1.1, -3.1]] },
+  },
+  bank: {
+    door: { x: 0, w: 1.2, h: 2.2, atlas: 'pubDoor' }, windows: { sides: [1, -1], z: [0.9], w: 1.5, h: 1.4, sill: 0.9 },
+    lamps: [[-2.2, -1.2], [2.2, -1.2], [-2.2, 1.4], [2.2, 1.4]],
+    counter: { w: 4.2, d: 0.6, h: 1.05, front: '#2A6A4A', top: '#D8D4CA', glassTop: 2.05, slot: 0.28, windows: [-1.0, 1.0] },
+    safe: { w: 0.9, d: 0.75, h: 1.35, color: '#6E747A' },
+    work: [{ id: 'teller_1', label: 'Кассчин 1', x: -1.0, z: -2.95, rot: 0 }, { id: 'teller_2', label: 'Кассчин 2', x: 1.0, z: -2.95, rot: 0 },
+      { id: 'customer', label: 'Харилцагч (E)', x: 0, z: -1.5, rot: Math.PI }],
+    figures: [{ x: -1.0, z: -2.95, rot: 0, h: 1.7 }, { x: 1.0, z: -2.95, rot: 0, h: 1.7 }, { x: -1.0, z: -1.55, rot: Math.PI, h: 1.7 }],
+    views: { door: [0.0, 1.15, 7.0, [0, 1.1, -1.0]], top: [0.0, 0.1, 12, [0, 0, 0]], work: [Math.PI, 1.3, 2.2, [0, 1.3, -0.9]], side: [1.5, 1.05, 10, [0, 0.9, 0]], focus: [0.0, 1.35, 3.4, [0, 1.3, -2.3]] },
+  },
+});
+const OF = { metal: '#8A9096', metalD: '#3E4247', screen: '#1E3448', paper: '#F4F1EA', seat: '#2F4A6A', leather: '#3A2418', red: '#C0392B', blue: '#2E5E9E', gold: '#D9A93A' };
+const wuv = () => px2uv(...BC.atlas.white);
+/** Эргэдэг сандал (таван хөл, суудал, түшлэг); rot = 0 → суугч +Z руу харна (түшлэг −Z талд) */
+function swivel(g, x, z, rot, seatHex, high = false) {
+  const q = new Geo(wuv()), m = rgb(OF.metalD), c = rgb(seatHex);
+  q.box(0, 0.04, 0, 0.56, 0.04, 0.07, m); q.box(0, 0.04, 0, 0.07, 0.04, 0.56, m); q.box(0, 0.27, 0, 0.05, 0.42, 0.05, m);
+  q.box(0, 0.5, 0, 0.48, 0.08, 0.46, c); q.box(0, high ? 0.98 : 0.8, -0.21, 0.44, high ? 0.9 : 0.5, 0.07, c);
+  for (const sx of [-1, 1]) q.box(sx * 0.25, 0.66, 0, 0.04, 0.04, 0.36, m);
+  appendY(g, q, rot, x, z);
+}
+/** Монитор + гар (локал: дэлгэц −Z тал руу харна, ажилтан −Z талд) */
+function monitor(q, x, y, z) { const m = rgb(OF.metalD); q.box(x, y + 0.01, z, 0.22, 0.02, 0.16, m); q.box(x, y + 0.12, z, 0.04, 0.2, 0.04, m); q.box(x, y + 0.32, z, 0.52, 0.32, 0.03, m); q.box(x, y + 0.32, z - 0.017, 0.48, 0.28, 0.005, rgb(OF.screen)); q.box(x, y + 0.012, z - 0.25, 0.42, 0.02, 0.14, rgb('#D8D4CA')); }
+/** Ширээ (локал: ажилтан −Z талд суугаад +Z руу харна): тавцан, шургуулгатай тавиур, хажуу, урд хаалт */
+function officeDesk(g, x, z, rot, K, items = []) {
+  const q = new Geo(wuv()), w = rgb(K.color), dk = sc(w, 0.72), W = K.w, D = K.d, H = K.h;
+  q.box(0, H - 0.02, 0, W, 0.04, D, w);
+  q.box(W / 2 - 0.22, (H - 0.04) / 2, 0, 0.4, H - 0.04, D - 0.04, dk); for (let k = 0; k < 3; k++) q.box(W / 2 - 0.22, 0.12 + k * 0.22, -D / 2 + 0.015, 0.36, 0.18, 0.01, sc(w, 0.9));
+  q.box(-W / 2 + 0.03, (H - 0.04) / 2, 0, 0.04, H - 0.04, D - 0.04, dk); q.box(0, 0.45, D / 2 - 0.03, W - 0.06, 0.55, 0.02, dk);
+  for (const it of items) it(q, H);
+  appendY(g, q, rot, x, z);
+}
+/** Шүүгээ (нүүр +Z): их бие, шургуулга/хаалганы хавтан, бариул */
+function cabinet(g, x, z, rot, K) {
+  const q = new Geo(wuv()), c = rgb(K.color), h = rgb(OF.metal);
+  q.box(0, K.h / 2, 0, K.w, K.h, K.d, sc(c, 0.85));
+  for (let k = 0; k < 4; k++) { const y = 0.1 + k * (K.h - 0.15) / 4, hh = (K.h - 0.15) / 4 - 0.03; q.box(0, y + hh / 2, K.d / 2 + 0.005, K.w - 0.06, hh, 0.012, c); q.box(0, y + hh * 0.7, K.d / 2 + 0.02, 0.16, 0.025, 0.02, h); }
+  appendY(g, q, rot, x, z);
+}
+/** Хүлээлгийн сандлын эгнээ: төмөр хөндлөвч, n суудал (нүүр −Z, тоолуур/лангуу руу) */
+function waitRow(g, x, z, n, rot = 0) {
+  const q = new Geo(wuv()), m = rgb(OF.metalD), s = rgb(OF.seat), L2 = n * 0.52;
+  q.box(0, 0.36, 0, L2, 0.05, 0.06, m);
+  for (const e of [-1, 1]) { q.box(e * (L2 / 2 - 0.05), 0.18, 0, 0.05, 0.36, 0.05, m); q.box(e * (L2 / 2 - 0.05), 0.02, 0, 0.06, 0.04, 0.5, m); }
+  for (let i = 0; i < n; i++) { const sx = -L2 / 2 + 0.26 + i * 0.52; q.box(sx, 0.43, -0.02, 0.46, 0.06, 0.44, s); q.box(sx, 0.7, 0.2, 0.44, 0.44, 0.05, s); q.box(sx, 0.43, 0.18, 0.04, 0.1, 0.06, m); }
+  appendY(g, q, rot, x, z);
+}
+/** Монгол улсын төрийн далбаа индэр дээр (туг): суурь, шон, жад, гурван зурвас, соёмбо */
+function flagMN(g, x, z, rot = 0) {
+  const q = new Geo(wuv()), gold = rgb(OF.gold);
+  lth(q, { segs: 10, profile: [[0.2, 0], [0.2, 0.05], [0.06, 0.08], [0, 0.08]], color: rgb(OF.metalD) });
+  q.box(0, 1.2, 0, 0.035, 2.3, 0.035, rgb('#C9C4B8')); lth(q, { segs: 6, cy: 2.35, profile: [[0.04, 0], [0.025, 0.08], [0, 0.18]], color: gold });
+  const fw = 0.3, fy = 1.9, fh = 0.62;
+  [[OF.red, 0], [OF.blue, 1], [OF.red, 2]].forEach(([c, k]) => q.box(0.04 + fw / 2 + k * fw, fy, 0, fw, fh, 0.012, rgb(c)));
+  for (const [dy, w2, h2] of [[0.2, 0.05, 0.05], [0.12, 0.09, 0.025], [0.03, 0.06, 0.06], [-0.07, 0.09, 0.025], [-0.15, 0.09, 0.025]]) q.box(0.04 + fw / 2, fy + dy, 0.008, w2, h2, 0.006, gold);   // соёмбо (хялбаршуулсан)
+  for (const e of [-1, 1]) q.box(0.04 + fw / 2 + e * 0.07, fy + 0.0, 0.008, 0.02, 0.32, 0.006, gold);
+  appendY(g, q, rot, x, z);
+}
+/** Төрийн сүлд (хананд, нүүр +Z): алтан хүрээтэй хөх дугуй, цагаан дотор, алтан соёмбо */
+function emblem(g, x, y, z) {
+  discZ(g, x, y, z, [[0.36, 0], [0.36, 0.03], [0.3, 0.03], [0.2, 0.03], [0, 0.03]], i => [rgb(OF.gold), rgb(OF.gold), rgb(OF.blue), rgb('#F4F1EA')][i], 20);
+  const gold = rgb(OF.gold); for (const [dy, w2, h2] of [[0.1, 0.04, 0.04], [0.04, 0.08, 0.02], [-0.03, 0.05, 0.05], [-0.1, 0.08, 0.02]]) g.box(x, y + dy, z + 0.035, w2, h2, 0.008, gold);
+}
+/** Атласын хаягийн самбар (buildings: signRect) хананд, нүүр +Z */
+function signBoard(g, key, x, y, z, w) { const r = L.signRect(key), h = w * (r[3] - r[1]) / (r[2] - r[0]); panel(g, [x, y, z], [0, 0, 1], w / 2, h / 2, 0.03, r, rgb('#3A3A3A')); }
+/** Савтай мод (булан) */
+function plant(g, x, z) { lth(g, { segs: 8, cx: x, cz: z, profile: [[0.16, 0], [0.2, 0.36], [0.17, 0.36], [0, 0.34]], color: rgb('#B5633F') });
+  lth(g, { segs: 8, cx: x, cz: z, profile: [[0.02, 0.34], [0.03, 0.6], [0.24, 0.75], [0.3, 1.0], [0.2, 1.25], [0, 1.32]], color: rgb('#4E7A3A') }); }
+
+/* ---------- ЗДТГ ---------- */
+function furnishAdmin(g, T, room, B) {
+  const hw = room.w / 2, hd = room.d / 2, spot = id => room.spots.find(s => s.id === id), placed = [], C = rgb;
+  // засаг даргын ширээ: том бараан ширээ, арьсан өндөр сандал, ширээн дээр монитор, утас, бичиг, жижиг туг; ард нь туг, ханан дээр сүлд
+  { const s = spot('desk_w'), K = T.govDesk;
+    officeDesk(g, s.x, s.z, 0, K, [(q, H) => monitor(q, -0.35, H, 0.05), (q, H) => { q.box(0.1, H + 0.01, -0.1, 0.42, 0.02, 0.3, C(OF.paper)); q.box(0.45, H + 0.03, 0.05, 0.18, 0.06, 0.2, C('#2A2622')); q.box(0.2, H + 0.05, 0.3, 0.32, 0.1, 0.03, C('#C9A24E')); }]);
+    swivel(g, s.x, s.z - 0.62, 0, OF.leather, true);
+    flagMN(g, s.x - 1.35, -hd + 0.45, 0); emblem(g, s.x, 2.1, -hd + 0.01);
+    placed.push({ ...s, note: 'засаг даргын ширээ' }); }
+  // зээлийн лангуу: хөх нүүр, цайвар тавцан, монитор, тамга, бичиг; ард нь шүүгээ; дээр нь хаяг (ЗДТГ)
+  { const s = spot('counter'), K = T.counter, x = s.x, z = s.z, fr = C(K.front), tp = C(K.top);
+    B(x - K.w / 2, 0, z - K.d / 2, x + K.w / 2, K.h - 0.04, z + K.d / 2, fr); B(x - K.w / 2 - 0.03, K.h - 0.04, z - K.d / 2 - 0.02, x + K.w / 2 + 0.03, K.h, z + K.d / 2 + 0.05, tp);
+    B(x - K.w / 2 + 0.1, 0.1, z + K.d / 2, x + K.w / 2 - 0.1, 0.14, z + K.d / 2 + 0.01, C(OF.gold)); B(x - K.w / 2, 0, z + K.d / 2 - 0.01, x + K.w / 2, 0.08, z + K.d / 2 + 0.01, sc(fr, 0.7));
+    B(x - K.w / 2, 0.72, z - K.d / 2 - 0.25, x + K.w / 2, 0.75, z - K.d / 2, tp);                                       // ажилтны доод тавцан
+    const q = new Geo(wuv()); monitor(q, -0.5, 0.75, 0.0); appendY(g, q, 0, x, z - K.d / 2 - 0.12);
+    B(x + 0.4, K.h, z - 0.1, x + 0.8, K.h + 0.01, z + 0.15, C(OF.paper)); g.box(x + 0.95, K.h + 0.05, z, 0.05, 0.1, 0.05, C('#2A2622')); g.box(x + 0.95, K.h + 0.015, z, 0.08, 0.03, 0.08, C(OF.red));   // бичиг, тамга
+    swivel(g, x - 0.5, z - 0.62, 0, OF.seat);
+    for (const cx of T.cabinets) cabinet(g, x + cx, -hd + T.cabinet.d / 2 + 0.02, 0, T.cabinet);
+    signBoard(g, 'zdtg', x, 2.45, -hd + 0.01, 2.8);
+    placed.push(s); }
+  // цагдаагийн жижиг ширээ: саарал төмөр, урд нь «ЦАГДАА» хаяг, дээр нь малгай, рац
+  { const s = spot('desk_e'), K = T.policeDesk;
+    officeDesk(g, s.x, s.z, 0, K, [(q, H) => { lth(q, { segs: 10, cx: -0.25, cz: 0.05, cy: H, profile: [[0.14, 0], [0.15, 0.02], [0.11, 0.05], [0.12, 0.11], [0, 0.12]], colorAt: i => (i >= 2 ? rgb('#2A3A5A') : rgb('#1A1A1A')) });
+      q.box(0.25, H + 0.06, 0.05, 0.07, 0.12, 0.04, rgb('#2A2622')); q.box(0.05, H + 0.01, -0.1, 0.3, 0.02, 0.22, rgb(OF.paper)); }]);
+    signBoard(g, 'police', s.x, 0.5, s.z + K.d / 2 + 0.002, 0.9);
+    swivel(g, s.x, s.z - 0.55, 0, '#2A3A5A'); placed.push({ ...s, note: 'цагдаагийн ширээ' }); }
+  // хүлээлгийн сандал (4 суудал), булангийн мод, зарын самбар (урд хананд)
+  for (const id of ['bench_w', 'bench_e']) { const s = spot(id); waitRow(g, s.x, s.z, 4, 0); placed.push(s); }
+  plant(g, -hw + 0.4, hd - 0.4); plant(g, hw - 0.4, hd - 0.4);
+  { const x = 3.2, z = hd - 0.02; B(x - 0.7, 1.05, z - 0.03, x + 0.7, 1.95, z, C('#B08A5E')); B(x - 0.64, 1.11, z - 0.035, x + 0.64, 1.89, z - 0.03, C('#C9A27A'));
+    [[-0.4, 1.7, '#F4F1EA'], [0.05, 1.65, '#E8D890'], [0.42, 1.72, '#F4F1EA'], [-0.25, 1.3, '#D8E8F0'], [0.3, 1.28, '#F4F1EA']].forEach(([dx, y, c]) => B(x + dx - 0.14, y - 0.17, z - 0.04, x + dx + 0.14, y + 0.17, z - 0.035, C(c)));
+    placed.push({ id: 'notice', kind: 'board', x, z, rot: Math.PI, proposed: true }); }
+  placed.push({ id: 'flag', kind: 'flag', x: spot('desk_w').x - 1.35, z: -hd + 0.45, rot: 0, proposed: true });
+  return placed;
+}
+/* ---------- Банк ---------- */
+function furnishBank(g, T, room, B, glass) {
+  const hw = room.w / 2, hd = room.d / 2, spot = id => room.spots.find(s => s.id === id), placed = [], C = rgb;
+  // шилэн кассын лангуу: ногоон нүүр, тавцан, хүрээ (шон, дээд хөндлөвч), шил (тунгалаг тусдаа mesh), мөнгө дамжуулах цонх, дугаар
+  { const s = spot('counter'), K = T.counter, x = s.x, z = s.z, fr = C(K.front), tp = C(K.top), m = C(OF.metal);
+    B(x - K.w / 2, 0, z - K.d / 2, x + K.w / 2, K.h - 0.04, z + K.d / 2, fr); B(x - K.w / 2 - 0.03, K.h - 0.04, z - K.d / 2 - 0.02, x + K.w / 2 + 0.03, K.h, z + K.d / 2 + 0.06, tp);
+    B(x - K.w / 2, 0, z + K.d / 2 - 0.01, x + K.w / 2, 0.08, z + K.d / 2 + 0.01, sc(fr, 0.7)); B(x - K.w / 2, 0.72, z - K.d / 2 - 0.25, x + K.w / 2, 0.75, z - K.d / 2, tp);
+    const gy0 = K.h + K.slot, gz = z;
+    for (const px of [-K.w / 2, ...K.windows.map(w => w - 0.62), ...K.windows.map(w => w + 0.62), K.w / 2]) B(x + px - 0.025, K.h, gz - 0.025, x + px + 0.025, K.glassTop, gz + 0.025, m);
+    B(x - K.w / 2, K.glassTop, gz - 0.04, x + K.w / 2, K.glassTop + 0.12, gz + 0.04, m); B(x - K.w / 2, gy0 - 0.03, gz - 0.02, x + K.w / 2, gy0, gz + 0.02, m);
+    glass.box(x, (gy0 + K.glassTop) / 2, gz, K.w - 0.02, K.glassTop - gy0, 0.012, C('#CFE6F0'));                   // шил
+    for (const [i, wx] of K.windows.entries()) { B(x + wx - 0.18, K.h, gz - 0.12, x + wx + 0.18, K.h + 0.015, gz + 0.12, sc(m, 0.7));   // мөнгөний тавиур
+      B(x + wx - 0.11, K.glassTop + 0.02, gz + 0.04, x + wx + 0.11, K.glassTop + 0.1, gz + 0.05, C('#16302A'));                       // дугаарын самбар
+      for (let k = 0; k <= i; k++) B(x + wx - 0.015 + (k - i / 2) * 0.04, K.glassTop + 0.035, gz + 0.051, x + wx + 0.015 + (k - i / 2) * 0.04, K.glassTop + 0.085, gz + 0.055, C('#7CF2A0'));   // «1», «2»
+      const q = new Geo(wuv()); monitor(q, 0, 0.75, 0); appendY(g, q, 0, x + wx + 0.3, z - K.d / 2 - 0.12);
+      swivel(g, x + wx, z - 0.65, 0, OF.seat); }
+    signBoard(g, 'bank', x, 2.45, -hd + 0.01, 2.4);
+    placed.push(s); }
+  // сейф: арын ба зүүн хананд тулсан ган хайрцаг, хаалга, бариул, дугуй цоож, нугас
+  { const s = spot('safe'), K = T.safe, x = Math.min(s.x, hw - K.w / 2 - 0.05), z = -hd + K.d / 2 + 0.02, st = C(K.color), dk = sc(st, 0.7);
+    B(x - K.w / 2, 0.06, z - K.d / 2, x + K.w / 2, K.h, z + K.d / 2, st); for (const [lx, lz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) B(x + lx * (K.w / 2 - 0.06) - 0.04, 0, z + lz * (K.d / 2 - 0.06) - 0.04, x + lx * (K.w / 2 - 0.06) + 0.04, 0.06, z + lz * (K.d / 2 - 0.06) + 0.04, dk);
+    B(x - K.w / 2 + 0.06, 0.14, z + K.d / 2, x + K.w / 2 - 0.06, K.h - 0.08, z + K.d / 2 + 0.03, sc(st, 1.1));
+    discZ(g, x, K.h * 0.62, z + K.d / 2 + 0.03, [[0.1, 0], [0.1, 0.03], [0.07, 0.03], [0, 0.04]], i => [C('#C9C4B8'), C('#C9C4B8'), C('#2A2622')][i], 14);
+    for (const a of [0, 1.57, 3.14, 4.71]) g.beam([x + 0.2, K.h * 0.45, z + K.d / 2 + 0.04], [x + 0.2 + Math.cos(a) * 0.1, K.h * 0.45 + Math.sin(a) * 0.1, z + K.d / 2 + 0.06], 0.02, 0.02, C('#C9C4B8'));
+    for (const y of [0.35, K.h - 0.3]) B(x - K.w / 2 + 0.02, y, z + K.d / 2, x - K.w / 2 + 0.06, y + 0.14, z + K.d / 2 + 0.05, dk);
+    placed.push({ ...s, note: `${x.toFixed(2)}, ${z.toFixed(2)} (хананд)` }); }
+  // хүлээлгийн сандал (3), дараалал (зогсоолын шон, улаан туузан хашлага), маягт бөглөх ширээ, мод
+  for (const id of ['bench_w', 'bench_e']) { const s = spot(id); waitRow(g, s.x, s.z, 3, 0); placed.push(s); }
+  { const posts = [[-0.9, -1.0], [-0.9, 0.2], [0.9, 0.2], [0.9, -1.0]].map(([px, pz]) => [px, pz + 0.0]);
+    for (const [px, pz] of posts) lth(g, { segs: 8, cx: px, cz: pz, profile: [[0.14, 0], [0.14, 0.03], [0.025, 0.05], [0.025, 0.95], [0.04, 0.98], [0, 1.0]], color: C('#B9BBB7') });
+    for (let i = 0; i < posts.length - 1; i++) { const a = posts[i], b = posts[i + 1]; g.beam([a[0], 0.9, a[1]], [b[0], 0.86, b[1]], 0.03, 0.03, C('#B5402A')); }
+    placed.push({ id: 'queue', kind: 'queue', x: 0, z: -0.4, rot: 0, proposed: true }); }
+  { const x = -hw + 0.35, z = -1.6; B(x - 0.3, 1.02, z - 0.6, x + 0.3, 1.06, z + 0.6, C('#C9A27A')); B(x - 0.04, 0, z - 0.04, x + 0.04, 1.02, z + 0.04, C(OF.metalD)); B(x - 0.25, 0, z - 0.25, x + 0.25, 0.03, z + 0.25, C(OF.metalD));
+    for (const dz of [-0.3, 0.05, 0.35]) B(x - 0.12, 1.06, z + dz - 0.1, x + 0.12, 1.065, z + dz + 0.1, C(OF.paper));
+    placed.push({ id: 'form_desk', kind: 'desk', x, z, rot: Math.PI / 2, proposed: true }); }
+  plant(g, hw - 0.4, hd - 0.4); plant(g, -hw + 0.4, hd - 0.4);
+  return placed;
+}
 /** buildings Geo-д lathe cy, append ty байхгүй: профайл/оройг y-ээр шилжүүлнэ */
 const lth = (G, o) => G.lathe({ ...o, profile: o.profile.map(([r, y]) => [r, y + (o.cy || 0)]) });
 const appendY = (G, q, phi, x, z, y = 0) => { if (y) for (let i = 1; i < q.p.length; i += 3) q.p[i] += y; G.append(q, phi, x, z); };
@@ -190,8 +345,9 @@ function makeInteriorEx(kind, room) {
     ceil.box(lx, H - 0.09, lz, 1.18, 0.02, 0.12, [1, 1, 1]); for (let i = ceil.u.length - 72; i < ceil.u.length; i += 2) { ceil.u[i] = lu[0]; ceil.u[i + 1] = lu[1]; }   // гэрэлтэх хэсэг: атласын чийдэн (шөнө гэрэлтэнэ)
     lights.push(new THREE.Vector3(lx, H - 0.3, lz)); }
   const work = T.work.map(w => ({ ...w }));
-  const placed = { school: furnishSchool, temple: furnishTemple }[kind](g, T, room, B);
-  return { shell, ceil, furn: g, lights, work, placed, floorY: 0, ceilY: H };
+  const glass = new Geo(white);   // шил (банкны касс): тунгалаг тусдаа mesh
+  const placed = { school: furnishSchool, temple: furnishTemple, admin: furnishAdmin, bank: furnishBank }[kind](g, T, room, B, glass);
+  return { shell, ceil, furn: g, glass, lights, work, placed, floorY: 0, ceilY: H };
 }
 
 /* ---------- Сургуулийн анги ---------- */
@@ -432,8 +588,11 @@ function rebuild() {
   if (state.outline) { const f = new Geo(); f.append(it.furn); fg = f.build(); om = new THREE.MeshBasicMaterial({ color: BC.palette.outline, side: THREE.BackSide });
     om.onBeforeCompile = s => { s.vertexShader = s.vertexShader.replace('#include <begin_vertex>', `vec3 transformed = position + normal * ${S.outlineW.toFixed(4)};`); };
     group.add(new THREE.Mesh(fg, om)); }
+  let gg = null, gm = null;
+  if (it.glass.triangles) { gg = it.glass.build(); gm = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, opacity: 0.28, depthWrite: false });   // шил: 3 дахь draw call
+    const gl = new THREE.Mesh(gg, gm); gl.renderOrder = 2; group.add(gl); }
   scene.add(group);
-  built = { group, it, room, tri: all.triangles, furnTri: it.furn.triangles, calls: group.children.length, dispose() { geo.dispose(); mat.dispose(); if (fg) fg.dispose(); if (om) om.dispose(); } };
+  built = { group, it, room, tri: all.triangles + it.glass.triangles, furnTri: it.furn.triangles, calls: group.children.length, dispose() { geo.dispose(); mat.dispose(); if (fg) fg.dispose(); if (om) om.dispose(); if (gg) { gg.dispose(); gm.dispose(); } } };
   // гэрэл, хүн, цэг
   it.lights.forEach((p, i) => { if (lamps[i]) { lamps[i].position.copy(p); lamps[i].color.set(room.light.color); } });
   key.position.set(4, room.h + 7, 6);
@@ -469,7 +628,7 @@ function seg(id, items, get, set) {
   paint(); return paint;
 }
 const paints = [
-  seg('g-room', [{ v: 'school', label: 'Сургуулийн анги' }, { v: 'temple', label: 'Дуган' }, { v: 'admin', label: 'ЗДТГ', disabled: true }, { v: 'bank', label: 'Банк', disabled: true }, { v: 'milk', label: 'Сүү, ноос', disabled: true }], v => state.room === v, v => { state.room = v; setView('door'); }),
+  seg('g-room', [{ v: 'school', label: 'Сургуулийн анги' }, { v: 'temple', label: 'Дуган' }, { v: 'admin', label: 'ЗДТГ' }, { v: 'bank', label: 'Банк' }, { v: 'milk', label: 'Сүү, ноос', disabled: true }], v => state.room === v, v => { state.room = v; setView('door'); }),
   seg('g-time', [{ v: false, label: 'Өдөр' }, { v: true, label: 'Шөнө' }], v => state.night === v, v => { state.night = v; }),
   seg('g-roof', [{ v: false, label: 'Дээвэргүй' }, { v: true, label: 'Таазтай' }], v => state.roof === v, v => { state.roof = v; }),
   seg('g-show', [{ v: 'figure', label: 'Хүн 1.7 м' }, { v: 'outline', label: 'Бэхэн хүрээ' }, { v: 'spots', label: 'Ажлын цэг' }], v => state[v], v => { state[v] = !state[v]; }),
