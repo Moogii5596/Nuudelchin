@@ -127,7 +127,7 @@ export function animateCharacter(H: CharacterRig, p: CharacterPose): number {
   if (p.mode === 'mounted') {
     if (p.seat) {   // хөл дөрөөнд: (x ташаа −0.15 / +0.15) → дөрөө (∓side)
       for (const [leg, knee, sg] of [[leg0, knee0, -1], [leg1, knee1, 1]] as const) {
-        const [ax, bz, k] = solveLeg(sg * (p.seat.side - HIP_X), -p.seat.drop, 0.03, [-0.8, sg * 0.4, 1.3]);
+        const [ax, bz, k] = solveLeg(sg * (p.seat.side / H.k - HIP_X), -p.seat.drop / H.k, 0.03, [-0.8, sg * 0.4, 1.3]);
         leg.rotation.set(ax, 0, bz); knee.rotation.x = k;
       }
     } else {
@@ -170,5 +170,5 @@ export function animateCharacter(H: CharacterRig, p: CharacterPose): number {
   for (const k of Object.keys(a.emo) as Array<keyof Emotion>) a.emo[k] += (target[k] - a.emo[k]) * Math.min(1, dt * 8);
   H.face.paint({ blink, gaze, mouth, emo: a.emo });
 
-  return moving ? Math.abs(Math.sin(phase)) * mix(0.02, 0.1, run) : 0;
+  return moving ? Math.abs(Math.sin(phase)) * mix(0.02, 0.1, run) * H.k : 0;
 }

@@ -266,6 +266,25 @@ describe('Ялгаатай төрх (V4.5 R4)', () => {
     expect(kid.waist.scale.x).toBeCloseTo(characterSpec('boy_shorthair').figure.stature, 5);
   });
 
+  it('хүний өндөр 1.65–1.75 м (толгойн төв ≈ 1.47), тоглогч, туслах, NPC бүгд нэг стандарт', () => {
+    // өндөр = малгайгүй биеийн орой (малгай 0.1–0.25 м нэмнэ)
+    const top = (rig: ReturnType<typeof lab.buildCharacter>): number => {
+      rig.root.updateMatrixWorld(true);
+      let y = 0;
+      rig.root.traverse((o) => {
+        if (!(o as THREE.Mesh).isMesh) return;
+        for (let q: THREE.Object3D | null = o; q; q = q.parent) if (q.name.startsWith('hat:') || !q.visible) return;
+        y = Math.max(y, new THREE.Box3().setFromObject(o).max.y);
+      });
+      return y;
+    };
+    for (const rig of [lab.buildCharacter(characterSpec('player')), lab.buildCharacter(helperSpec('horse', 'm', false), { detail: 'npc' }), lab.buildCharacter(characterSpec('man'), { detail: 'npc' })]) {
+      const h = top(rig);
+      expect(h).toBeGreaterThanOrEqual(1.65); expect(h).toBeLessThanOrEqual(1.75);
+    }
+    expect(characters.scale).toBeCloseTo(0.7, 2);
+  });
+
   it('үсний загвар: гэзэг, боодол нэмэлт геометртэй, халзан оройгүй', () => {
     const base = characterSpec('woman_braids');
     const v = (style: 'short' | 'bald' | 'bun' | 'braids' | 'braid'): number => vertices(lab.buildCharacter({ ...base, hair: { ...base.hair, style } }, { detail: 'npc' }).root);

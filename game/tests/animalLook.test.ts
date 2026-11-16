@@ -127,12 +127,12 @@ describe('render/animal — унаа морь', () => {
   it('морины сэрвээ 1.30–1.40 м, эмээлийн суудал ≈ 1.36 м (лабораторийн H2)', () => {
     const w = horseWithers();
     expect(w).toBeGreaterThanOrEqual(1.3); expect(w).toBeLessThanOrEqual(1.4);   // лабораторийн м
-    expect(animalLook.species.horse.scale).toBeCloseTo(1.45, 2);              // малчин лабораториноосоо ~1.45 дахин өндөр: морь түүнтэй пропорцтой
-    expect(horseWithers(0.6, 1, true)).toBeCloseTo(w * 1.45, 5);
+    expect(animalLook.species.horse.scale).toBe(1);                            // хүн 1.7 м-д жижигрүүлэгдсэн тул морь лабораторийн хэмжээгээрээ
+    expect(horseWithers(0.6, 1, true)).toBeCloseTo(w, 5);
     const rig = makeRig('horse');
     settle(rig, 'stand', { speed: 0, fast: false, sc: 1, old: false, fat: 0.6, saddled: true });
     const seat = rig.saddle.localToWorld(new THREE.Vector3(0, 0.085, 0)).y;
-    expect(seat).toBeGreaterThan(1.32 * 1.45); expect(seat).toBeLessThan(1.4 * 1.45);   // тоглоомын м
+    expect(seat).toBeGreaterThan(1.32); expect(seat).toBeLessThan(1.4);   // морь 1:1 (хүн жижигрүүлэгдсэн)
   });
 });
 

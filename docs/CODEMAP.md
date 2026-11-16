@@ -1590,7 +1590,7 @@ SYM game/src/sim/terrain.ts:22 fn waterDistance
 SYM game/src/sim/terrain.ts:28 fn baseHeightAt
 SYM game/src/sim/terrain.ts:54 fn heightAt
 SYM game/src/sim/terrain.ts:77 fn waterLevel
-FILE tools/balance_sim/run.ts 27.3KB 463L
+FILE tools/balance_sim/run.ts 27.5KB 463L
 SYM tools/balance_sim/run.ts:34 fn nextGerOrder
 SYM tools/balance_sim/run.ts:56 fn applyOverrides
 SYM tools/balance_sim/run.ts:77 fn escort

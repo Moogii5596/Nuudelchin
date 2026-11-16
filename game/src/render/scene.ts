@@ -350,7 +350,7 @@ export class GameView {
     if (p.driving) this.cam.yaw += angDiff(p.heading + Math.PI, this.cam.yaw) * Math.min(1, dt * 1.5);
     // Малчныг (жолоодож байвал тээврийг) дагана — байрлал кадр бүр бодит цагаар шинэчлэгддэг тул жигд
     const cx = p.x, cz = p.z;
-    const ty = this.heightAt(cx, cz) + (p.mounted || p.driving ? 2.4 : 1.6);
+    const ty = this.heightAt(cx, cz) + (p.mounted || p.driving ? 1.75 : 1.1);
     this.cam.solids = camp ? this.campSolids(state) : p.place === 'sum' ? this.sum.solids : null;   // V4.5 R7: камер барилга, гэрт орохгүй
     this.cam.update(cx, cz, ty, this.heightAt, dt);
     this.sum.npcs.camera = this.cam.camera.position;
@@ -423,7 +423,7 @@ export class GameView {
     const proxy = { ...state, player: { ...p, x: ip.x, z: ip.z, heading: ip.heading, mounted: false, driving: null, place: 'sum' as const } } as GameState;
     this.characters.update(proxy, this.heightAt, dt);
     this.cam.solids = null;   // дотор тал: нэг талт ханатай хайрцаг — камер ханын гадна байх нь зориуд
-    this.cam.update(ip.x, ip.z, 1.0, this.heightAt, dt);
+    this.cam.update(ip.x, ip.z, 0.7, this.heightAt, dt);
     this.renderer.render(this.interior.scene, this.cam.camera);
   }
 

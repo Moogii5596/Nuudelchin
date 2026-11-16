@@ -350,7 +350,7 @@ export class WorldMapView {
         // тоглогч (npc нарийвчлал), морь унасан тогтмол поз
         const r = buildCharacter(characterSpec('player'), { detail: 'npc' });
         animateCharacter(r, { dt: 0, speed: 0, mode: 'mounted', raise: false, uurga: false, talk: false, emotion: 'neutral', seat: riderSeat() });
-        r.root.position.set(h.seat.x, h.seat.y - 0.85, h.seat.z);   // эмээлийн суудалд, хөл дөрөөнд
+        r.root.position.set(h.seat.x, h.seat.y - 0.85 * r.k, h.seat.z);   // эмээлийн суудалд, хөл дөрөөнд
         g.add(h.mesh, r.root);
         m = g;
       } else m = makeVehicleModel(key);

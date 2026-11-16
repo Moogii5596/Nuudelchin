@@ -153,7 +153,7 @@ export class StaffView {
     for (const v of this.views.values()) {   // морьтой малчин: эмээлийн суудалд, хөл дөрөөнд
       if (!v.horse || !v.root.visible) continue;
       animateCharacter(v.rig, { dt, speed: 0, mode: 'mounted', raise: false, uurga: false, talk: false, emotion: v.emo.step(dt), seat: riderSeat() });
-      if (v.seat) v.rig.root.position.set(v.seat.x, v.seat.y - 0.85, v.seat.z);
+      if (v.seat) v.rig.root.position.set(v.seat.x, v.seat.y - 0.85 * v.rig.k, v.seat.z);
       v.rig.root.rotation.y = v.h;
     }
     for (const [id, v] of this.views) if (!alive.has(id)) {

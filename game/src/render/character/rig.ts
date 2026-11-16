@@ -20,7 +20,10 @@ import { characters, CHARACTER_HATS, type CharacterHat, type CharacterSpec, type
 export type Pair<T> = [T, T];
 
 export interface CharacterRig {
+  /** гаднах бүлэг: дуудагч position/rotation/scale тавина; дотор нь биеийг characters.scale-ээр жижигрүүлсэн */
   root: THREE.Group;
+  /** нэгдсэн масштаб (rig-ийн дотоод м → тоглоомын м): seat, bob, өндрийг үржүүлнэ */
+  k: number;
   legs: Pair<THREE.Group>;
   arms: Pair<THREE.Group>;
   knees: Pair<THREE.Group>;
@@ -115,9 +118,13 @@ export function buildCharacter(spec: CharacterSpec, opts: BuildOptions = {}): Ch
 
   bakeSkinned(g, detail === 'npc' ? { liveMats: [sleeveMat], mergeByName: true, doubleSided: true, shadowParts: npc.shadowParts } : { liveMats: [sleeveMat] });
   addOutline(g);
+  const outer = new THREE.Group();
+  outer.name = 'character';
+  g.scale.setScalar(characters.scale);
+  outer.add(g);
   const terleg = lighten(deel, spec.deel.terlegLighten);
   const rig: CharacterRig = {
-    root: g, legs: [legL.hip, legR.hip], arms, knees: [legL.knee, legR.knee], neck, bodies, waist, armY: arms[0].position.y, neckY: neck.position.y,
+    root: outer, k: characters.scale, legs: [legL.hip, legR.hip], arms, knees: [legL.knee, legR.knee], neck, bodies, waist, armY: arms[0].position.y, neckY: neck.position.y,
     sleeveMat, sleeveColors: { terleg, deel, winter: deel },
     elbows: [armL.elbow, armR.elbow], elbowRest: [rest0, rest1], wrists: [armL.wrist, armR.wrist], curls: [armL.curl, armR.curl],
     face, build: spec.figure.build, wear,

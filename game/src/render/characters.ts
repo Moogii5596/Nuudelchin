@@ -56,7 +56,7 @@ function makeBubble(text: string): THREE.Sprite {
 
 const SADDLE = saddleDims(animalLook.species.horse.d);
 /** Малчны ташааны өндөр үндэснээс (render/character/parts/leg.ts hip.y) */
-const HERDER_HIP = 0.85;
+const HERDER_HIP = 0.85;   // rig-ийн дотоод м; H.k-аар үржүүлнэ
 
 export class CharactersView {
   readonly group = new THREE.Group();
@@ -138,7 +138,7 @@ export class CharactersView {
       return;
     }
     H.root.visible = true;
-    H.root.position.set(seat.x, seat.y - 0.75, seat.z);
+    H.root.position.set(seat.x, seat.y - 0.75 * H.k, seat.z);
     H.root.rotation.y = seat.h;   // суусан поз → update() (mode 'seated')
   }
 
@@ -170,7 +170,7 @@ export class CharactersView {
     const H = this.herder;
     if (p.mounted) {
       const s = this.seat;   // эмээлийн суудал (ташааны эх цэг = суудлын орой); ташаа үндэснээс HIP м дээр
-      if (s) H.root.position.set(s.x, s.y - HERDER_HIP, s.z);
+      if (s) H.root.position.set(s.x, s.y - HERDER_HIP * H.k, s.z);
       else H.root.position.set(p.x, y + 0.5, p.z);
     } else {
       H.root.position.set(p.x, y, p.z);
@@ -214,7 +214,7 @@ export class CharactersView {
     for (const b of Object.values(this.bubbles)) {
       b.t = Math.max(0, b.t - dt);
       b.sprite.visible = b.t > 0 && p.place !== 'map';
-      b.sprite.position.set(p.x, y + (p.mounted ? 4.7 : 3.1) + (1.2 - b.t) * 0.3, p.z);
+      b.sprite.position.set(p.x, y + (p.mounted ? 3.3 : 2.2) + (1.2 - b.t) * 0.3, p.z);
     }
 
   }

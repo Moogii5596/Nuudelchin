@@ -124,7 +124,7 @@ export class NpcView {
     rig.root.rotation.y = e.yaw;
     const bob = animateCharacter(rig, { dt, speed: talking ? 0 : e.speed, mode: 'foot', raise: false, uurga: false, talk: talking, emotion: 'neutral' });
     rig.root.position.y = y + bob * e.scale;
-    if (this.camera && Math.hypot(this.camera.x - x, this.camera.y - (rig.root.position.y + 0.9 * e.scale), this.camera.z - z) < 1.5 * e.scale) rig.root.visible = false;   // камер биед орвол нууна
+    if (this.camera && Math.hypot(this.camera.x - x, this.camera.y - (rig.root.position.y + 0.62 * e.scale), this.camera.z - z) < 1.5 * e.scale) rig.root.visible = false;   // камер биед орвол нууна
   }
 
   /** Ярилцлага: хамгийн ойр, зогсож буй NPC (амьд дүр) руу; тоглогч бас зогсож байх ёстой */

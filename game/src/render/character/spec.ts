@@ -99,6 +99,8 @@ export interface TalkConfig { partnerR: number; turnRate: number; stillSpeed: nu
 const EMOTION_NAMES: readonly HerderEmotion[] = ['neutral', 'happy', 'angry', 'sad', 'surprised'];
 
 export interface CharactersData {
+  /** хүн бүрийн нэгдсэн масштаб (rig.ts wrapper); 1.7 м стандарт */
+  scale: number;
   detail: { npc: NpcDetail };
   presets: Record<string, CharacterSpec>;
   /** бэлэн дүрүүд — өөр preset-ийн base болдоггүй (лабораторийн эгнээ, тест) */
@@ -247,7 +249,7 @@ function merge(a: Obj, b: Obj): Obj {
 
 /** characters.json-ийг шалгаж, preset бүрийг base-тэй нь нийлүүлнэ. Алдаатай бол зам заасан Error шиднэ */
 export function validateCharacters(json: unknown): CharactersData {
-  const root = group(json, '(root)', ['detail', 'skins', 'presets', 'player', 'roles', 'crowd', 'talk']);
+  const root = group(json, '(root)', ['scale', 'detail', 'skins', 'presets', 'player', 'roles', 'crowd', 'talk']);
   const skins: Skins = {};
   for (const [k, v] of Object.entries(group(root.skins, 'skins', Object.keys(isObj(root.skins) ? root.skins : {})))) if (!k.startsWith('_')) skins[k] = colors(v, `skins.${k}`, ['base', 'shade', 'nail']);
   const npc = group(group(root.detail, 'detail', ['npc']).npc, 'detail.npc', ['lod', 'shadowParts']);
@@ -314,7 +316,7 @@ export function validateCharacters(json: unknown): CharactersData {
     partnerR: num(t.partnerR, 'talk.partnerR', 1, 30), turnRate: num(t.turnRate, 'talk.turnRate', 0.5, 30),
     stillSpeed: num(t.stillSpeed, 'talk.stillSpeed', 0, 3), wolfSeeR: num(t.wolfSeeR, 'talk.wolfSeeR', 1, 200), events,
   };
-  return { detail, presets, player, ready, roles, crowd, talk };
+  return { scale: num(root.scale, 'scale', 0.3, 1.5), detail, presets, player, ready, roles, crowd, talk };
 }
 
 export const characters: CharactersData = validateCharacters(charactersJson);

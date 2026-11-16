@@ -48,7 +48,7 @@ export interface SpeciesLook {
   light: { bodySeg: number; bodyRows: number; tail: Pair; neck: Pair; skirt?: Pair; mane?: Pair };
   detail: { bodySeg: number; bodyRows: number; tail: Pair; neck: Pair; skirt?: Pair; mane?: Pair };
   patchMask?: boolean; variants: VariantLook[];
-  /** дэлхийн масштаб (лабораторийн м → тоглоомын м): морь = малчин/лабораторийн малчин ≈ 1.45 */
+  /** дэлхийн масштаб (лабораторийн м → тоглоомын м): 1 = лабораторийн хэмжээ; хүн 1.7 м-д жижигрүүлэгдсэн (characters.json scale) */
   scale?: number;
   sexBody?: boolean; polledOption?: boolean; patchMap?: [number, number, number, number][]; actions?: string[];
 }
