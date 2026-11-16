@@ -31,7 +31,7 @@ import { buildCharacter, showOutfit, type CharacterRig } from './character/rig';
 import { EmotionQueue, postTalkEvent, talkBus, turnToward } from './character/talk';
 import { t } from '../i18n/i18n';
 import { NpcView } from './npcs';
-import type { WalkSolids } from '../sim/systems/sumwalk';
+import { gateOpenStep, playerSolids, type WalkSolids } from '../sim/systems/sumwalk';
 
 /**
  * Оршин суугчид (хөдөлгөөнгүй): render/character-ийн `crowd` хэлбэр — төрх (data/characters.json crowd.looks: preset ×
@@ -73,6 +73,10 @@ export class SumCenterView {
   readonly group = new THREE.Group();
   readonly ground: THREE.Mesh;
   private built: SumCenterBuild;
+  /** Орж болох айлын нээгддэг хаалганы навчнууд: open 0..1, pivot зүүн/баруун нугас */
+  private gateAnims: { cx: number; cz: number; open: number; l: THREE.Object3D; r: THREE.Object3D; phi: number }[] = [];
+  private gateClock = 0;
+  private playerWalkCache: WalkSolids | null = null;
   private lotVehicles: { id: VehicleId; mesh: THREE.Object3D }[] = [];
   /** Зарах байшингийн «ЗАРНА» / «ТАНЫХ» шошго */
   private houseSigns: { plot: string; quad: number; own: boolean }[] = [];
@@ -197,6 +201,7 @@ export class SumCenterView {
     this.group.add(people);
     this.npcs = new NpcView(cfg);
     this.npcs.walk = this.built.walk;
+    this.buildGates();
     this.group.add(this.npcs.group);
 
     // V3.2: айлын үүдэнд хэвтэх нохой (байрлалын хэш) — хөдөлгөөнгүй тул бүгдийг материалаар нь нэгтгэнэ (bakeStatic)
@@ -293,6 +298,41 @@ export class SumCenterView {
   get solids(): CamSolids { return this.built.solids; }
   /** Алхалтын саад (барилга, хашаа, гэр) — тоглогч ба NPC-ийн мөргөлдөөн */
   get walk(): WalkSolids { return this.built.walk; }
+  /** Тоглогч/тээврийн саад: walk + орж болдоггүй айлын хаалттай хаалгууд (NPC-д нөлөөлөхгүй) */
+  get playerWalk(): WalkSolids { return (this.playerWalkCache ??= playerSolids(this.built.walk)); }
+
+  /** Орж болох айлын хаалганы 2 навч (нугас дээр эргэнэ). Навчийг building/yard.ts noLeaves-ээр хашаанаас салгасан */
+  private buildGates(): void {
+    for (const g of this.built.gates) {
+      const h = g.h - g.lift, geo = new THREE.BoxGeometry(g.leafW, h, 0.05);
+      const material = new THREE.MeshLambertMaterial({ color: g.color, flatShading: true });
+      const mk = (hinge: { x: number; y: number; z: number }, dir: 1 | -1): THREE.Object3D => {
+        const pivot = new THREE.Group(), leaf = new THREE.Mesh(geo, material);
+        leaf.position.set(dir * g.leafW / 2, g.lift + h / 2, 0);
+        pivot.add(leaf);
+        pivot.position.set(hinge.x, hinge.y, hinge.z);
+        pivot.rotation.y = g.phi;
+        this.group.add(pivot);
+        return pivot;
+      };
+      this.gateAnims.push({ cx: g.x, cz: g.z, open: 0, phi: g.phi, l: mk(g.hingeL, 1), r: mk(g.hingeR, -1) });
+    }
+  }
+
+  /** Хаалга: тоглогч ойртвол нээгдэж, холдвол хаагдана (data sum3d.walk.gateOpenR/gateOpenSec) */
+  private syncGates(state: GameState): void {
+    const now = performance.now(), dt = this.gateClock ? Math.min(0.1, (now - this.gateClock) / 1000) : 0;
+    this.gateClock = now;
+    const W = this.cfg.worldmap.sum3d.walk, p = state.player, inSum = p.place === 'sum' && !p.interior;
+    for (const a of this.gateAnims) {
+      const o = gateOpenStep(a.open, inSum && Math.hypot(p.x - a.cx, p.z - a.cz) < W.gateOpenR, dt, W.gateOpenSec);
+      if (o === a.open) continue;
+      a.open = o;
+      const ang = o * o * (3 - 2 * o) * (Math.PI / 2) * 0.96;   // smoothstep; локал −Z (дотогш) нээгдэнэ
+      a.l.rotation.y = a.phi + ang;
+      a.r.rotation.y = a.phi - ang;
+    }
+  }
 
   /** V3.4: худалдаж авсан байшингийн шошго (R7: сумын төвд кадр бүр дуудагддаг тул ярилцлагыг ч эндээс) */
   syncTown(state: GameState, night = 0): void {
@@ -303,6 +343,7 @@ export class SumCenterView {
     this.built.setLook(look.season, look.straw, look.winter);
     this.townMats?.setGlow(night * 1.6);   // шөнө цонх, хаягийн самбар, гэрлийн шон гэрэлтэнэ
     this.syncTalk(state);
+    this.syncGates(state);
     for (const s of this.houseSigns) {
       const own = !!state.town.houses[s.plot];
       if (own !== s.own) { this.labels.setText(s.quad, own ? MINE : SALE); s.own = own; }

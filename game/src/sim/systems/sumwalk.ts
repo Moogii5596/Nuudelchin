@@ -7,7 +7,8 @@ export interface WalkBox { x: number; z: number; hw: number; hd: number }
 export interface WalkCyl { x: number; z: number; r: number }
 /** Хаалгатай хашаа (wallRing-ийн бүртгэл): NPC хаалгаар орж гарахад зам заана. off — хаалганы нүхийн төвөөс зөөлт, gw — нүхний өргөн */
 export interface WalkYard { x: number; z: number; w: number; d: number; gate: 'n' | 's' | 'e' | 'w'; off: number; gw: number }
-export interface WalkSolids { boxes: WalkBox[]; cyls: WalkCyl[]; yards?: WalkYard[] }
+/** boxes/cyls — тоглогч ба NPC-д нийтлэг. playerBoxes — зөвхөн тоглогч/тээвэрт: орж болдоггүй айлын хаалттай хаалга (NPC-д нөлөөлөхгүй) */
+export interface WalkSolids { boxes: WalkBox[]; cyls: WalkCyl[]; yards?: WalkYard[]; playerBoxes?: WalkBox[] }
 
 export interface WalkConfig {
   /** Явган хүний биеийн радиус (м) */ bodyR: number;
@@ -16,6 +17,9 @@ export interface WalkConfig {
   /** Гаднах NPC-ийн радиус (м) */ npcR: number;
   /** Айлын хашааны хаалганы нүхний өргөн (м) */ plotGateW: number;
   /** Хашааны хананы зузаан (м) */ fenceT: number;
+  /** Тоглогч орж болох айлын үүрэг (specialPlots.role): хаалга нь нээгддэг, бусад айлын хаалга тоглогчид хаалттай */ enterablePlotRoles: string[];
+  /** Хаалга нээгдэж эхлэх зай — тоглогчоос хаалга хүртэл (м) */ gateOpenR: number;
+  /** Хаалга бүрэн нээгдэх/хаагдах хугацаа (сек) */ gateOpenSec: number;
   /** Хөдөлгөөн хүссэн мөртлөө N сек нүүхгүй бол гацсан гэж үзнэ */ stuckSec: number;
   /** Нэг кадрт энэ зайгаас бага шилжвэл «хөдлөөгүй» (м/с) */ stuckSpeed: number;
   /** Гацсан үед түлхэх зай (м) */ unstickStep: number;
@@ -166,4 +170,27 @@ export function yardDetour(yards: WalkYard[] | undefined, from: { x: number; z: 
     if (best) return best;
   }
   return null;
+}
+
+// ======================= Хашааны хаалганы дүрэм (тоглогч) =======================
+/** Тоглогч энэ үүрэгтэй айлын хашаанд орж болох уу (data/worldmap.json sum3d.walk.enterablePlotRoles). Унтах/айлд орох системүүд үүгээр шалгана */
+export function isEnterablePlot(cfg: Pick<WalkConfig, 'enterablePlotRoles'>, role: string): boolean {
+  return cfg.enterablePlotRoles.includes(role);
+}
+
+/** Хашааны хаалганы нүхийг хаах хайрцаг (хаалттай хаалга) */
+export function gateBox(y: WalkYard, t: number): WalkBox {
+  const n = GATE_N[y.gate], horiz = y.gate === 'n' || y.gate === 's', half = horiz ? y.d / 2 : y.w / 2;
+  return { x: y.x + (horiz ? y.off : 0) + n.x * half, z: y.z + (horiz ? 0 : y.off) + n.z * half, hw: horiz ? y.gw / 2 : t / 2, hd: horiz ? t / 2 : y.gw / 2 };
+}
+
+/** Тоглогч/тээврийн саад: нийтлэг саад + хаалттай хаалгууд. NPC-д `s` өөрийг нь ашиглана */
+export function playerSolids(s: WalkSolids): WalkSolids {
+  return s.playerBoxes?.length ? { boxes: s.boxes.concat(s.playerBoxes), cyls: s.cyls, yards: s.yards } : s;
+}
+
+/** Хаалганы нээлтийн түвшин (0..1): тоглогч ойр бол нэмэгдэж, холдвол буурна; бүрэн шилжилт `sec` секунд */
+export function gateOpenStep(open: number, near: boolean, dt: number, sec: number): number {
+  const k = dt / Math.max(sec, 1e-3);
+  return near ? Math.min(1, open + k) : Math.max(0, open - k);
 }

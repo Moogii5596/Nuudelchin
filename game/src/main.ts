@@ -223,7 +223,7 @@ function start(boot?: Boot): void {
     else if (e.type === 'hour' && e.hour === Math.ceil(Math.min(...Object.values(cfg.time.homeMinute)) / 60)) toast(t('ui.evening_the_animals_are'), '');
   });
 
-  const controllerWalk = view.sum.walk;   // сумын төвийн саад (барилга, хашаа) — тоглогч нэвтлэхгүй
+  const controllerWalk = view.sum.playerWalk;   // сумын төвийн саад (барилга, хашаа) — тоглогч нэвтлэхгүй
   let speedIdx = Math.max(0, Math.min(cfg.time.speeds.length - 1, (Number(qs.get('speed')) || 1) - 1));
   const controller = new PlayerController(cfg, {
     dispatch: (cmd) => sim.command(cmd),

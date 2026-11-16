@@ -54,7 +54,8 @@ export function buildKhashaa(opts) {
     for (const [z, nz] of [[zg + 0.022, 1], [zg - 0.022, -1]]) geo.quad([[xl, y0, z], [xr, y0, z], [xr, y1, z], [xl, y1, z]], [0, 0, nz], [gateLo, gateLo, gateCol, gateCol],
       [px2uv(ua, r[3] - 1), px2uv(ub, r[3] - 1), px2uv(ub, r[1] + 1), px2uv(ua, r[1] + 1)]);
     geo.quad([[xl, y1, zg + 0.022], [xr, y1, zg + 0.022], [xr, y1, zg - 0.022], [xl, y1, zg - 0.022]], [0, 1, 0], winter ? rgb(P.snow) : sc(gateCol, 0.6)); };
-  leaf(xLeaf, xLeaf + K.leafW, A.gateLeaf, false); leaf(xLeaf + K.leafW, xMid, A.gateLeaf, true); leaf(xWk, xEnd, A.wicket, false);
+  if (!opts.noLeaves) { leaf(xLeaf, xLeaf + K.leafW, A.gateLeaf, false); leaf(xLeaf + K.leafW, xMid, A.gateLeaf, true); }   // noLeaves: том хаалганы навчийг sumcenter тусад нь анимаци хийнэ
+  leaf(xWk, xEnd, A.wicket, false);
   if (AG) { for (const sx of [1, -1]) geo.box(AG.x + sx * (AG.w / 2 + gp / 2), g + K.gatePostH / 2 - K.sink / 2, -hd, gp, K.gatePostH + K.sink, gp, postCol);
     leaf(AG.x - AG.w / 2, AG.x, A.gateLeaf, false, -hd); leaf(AG.x, AG.x + AG.w / 2, A.gateLeaf, true, -hd); }
 
@@ -107,7 +108,7 @@ export function makePorter(season, col = {}) {
 export function makePlot(spec) {
   const C = BUILDING_CONFIG, out = new Geo(px2uv(...C.atlas.white)), season = spec.season;
   const sp = C.special[spec.kind]; if (sp) spec = { ...spec, kind: sp.base, gerSize: sp.gerSize, roofColor: spec.roofColor || sp.roofColor };
-  const yard = makeBuilding('khashaa', { season, seed: spec.seed, w: spec.w, d: spec.d, fenceColor: spec.fenceColor, gateColor: spec.gateColor, animalGate: (spec.extras || []).includes('animalShed') });
+  const yard = makeBuilding('khashaa', { season, seed: spec.seed, w: spec.w, d: spec.d, fenceColor: spec.fenceColor, gateColor: spec.gateColor, animalGate: (spec.extras || []).includes('animalShed'), noLeaves: spec.noLeaves });
   if (spec.yard !== false) out.append(yard.geo);
   const toilet = makeBuilding('toilet', { season }), ts = yard.toiletSlot(); out.append(toilet.geo, ts.phi, ts.pos.x, ts.pos.z);
   const td = rot(toilet.door.position.x, toilet.door.position.z, ts.phi, ts.pos.x, ts.pos.z), ti = rot(toilet.door.inward.x, toilet.door.inward.z, ts.phi);

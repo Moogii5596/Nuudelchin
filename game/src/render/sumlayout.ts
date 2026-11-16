@@ -8,7 +8,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { doorPoint, plotHouse, sumHeight, type SumLayout, type SumBuildingSpec, type SumSpecialPlotSpec, type SumXZ } from '../sim/systems/sumtown';
 
 import type { CamSolids } from './camclip';
-import { wallRing, type WalkConfig, type WalkSolids } from '../sim/systems/sumwalk';
+import { gateBox, isEnterablePlot, wallRing, type WalkConfig, type WalkSolids } from '../sim/systems/sumwalk';
 import { TOWN, BUILDING_CONFIG as BC, appendAt, makePlot } from './building';
 import { TownBuilder, labModel, gerSlotLocal } from './building/town';
 import { GER } from './ger/config';
@@ -24,6 +24,10 @@ export interface VehicleSlotView { id: string; vehicle: string; x: number; y: nu
 export interface HomeDoor { x: number; y: number; z: number }
 export interface SumPlotView { id: string; role: SumSpecialPlotSpec['role']; x: number; z: number; door: HomeDoor }
 export interface SumGer { x: number; y: number; z: number; color: string; r: number }
+/** Орж болох айлын нээгддэг хаалга (2 навч): sumcenter.ts анимаци хийнэ. hinge — нугасны дэлхийн цэг, phi — хашааны эргэлт (rotation.y), хаалга локал −Z руу (дотогш) нээгдэнэ */
+export interface GateView { plotId: string; x: number; z: number; phi: number; hingeL: { x: number; y: number; z: number }; hingeR: { x: number; y: number; z: number }; leafW: number; h: number; lift: number; color: string }
+/** Орж болох айлын нээгддэг хаалга (2 навч): sumcenter.ts анимаци хийнэ. hinge — нугасны дэлхийн цэг, phi — хашааны эргэлт (rotation.y), хаалга локал −Z руу (дотогш) нээгдэнэ */
+export interface GateView { plotId: string; x: number; z: number; phi: number; hingeL: { x: number; y: number; z: number }; hingeR: { x: number; y: number; z: number }; leafW: number; h: number; lift: number; color: string }
 export interface SumCenterBuild {
   group: THREE.Group;
   /** Газар (raycast) */
@@ -32,6 +36,8 @@ export interface SumCenterBuild {
   vehicles: Map<string, THREE.Object3D>;
   vehicleSlots: VehicleSlotView[];
   plots: SumPlotView[];
+  /** Орж болох айлын нээгддэг хаалганууд (worldmap sum3d.walk.enterablePlotRoles) */
+  gates: GateView[];
   homes: HomeDoor[];
   /** Айлын гэрийн байрлал (V3.5: render/ger-ээр sumcenter.ts зурна) — y газрын өндөр, r хананы радиус */
   gers: SumGer[];
@@ -158,7 +164,7 @@ function rectNearPolyline(r: Rect, pts: XZ[], clearance: number) {
 }
 
 // ---------- Үндсэн бүтээгч ----------
-export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'low' | 'mid' | 'high'; walk: Pick<WalkConfig, 'fenceT' | 'plotGateW'> }): SumCenterBuild {
+export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'low' | 'mid' | 'high'; walk: Pick<WalkConfig, 'fenceT' | 'plotGateW' | 'enterablePlotRoles'> }): SumCenterBuild {
   const rand = rng(opts.seed ?? 1);
   const quality = opts.quality ?? 'high';
   const group = new THREE.Group();
@@ -166,7 +172,8 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
   const homes: HomeDoor[] = [];
   const colliders: Rect[] = [];
   const solids: CamSolids = { boxes: [], cyls: [] };
-  const walk: WalkSolids = { boxes: [], cyls: [], yards: [] };
+  const walk: WalkSolids = { boxes: [], cyls: [], yards: [], playerBoxes: [] };
+  const gates: GateView[] = [];
   const WK = opts.walk;   // data/worldmap.json sum3d.walk
   const disposables: { dispose(): void }[] = [];
   const FH = L.floorHeight;
@@ -356,16 +363,25 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
   };
   /** Нэг айлын хашаа (лабораторийн makePlot): хашааны төв (x, z), хаалганы чиглэл gate. Орчуулга: хашааны локал нүүр +Z */
   const plotLab = (o: { x: number; z: number; w: number; d: number; gate: 'n' | 's' | 'e' | 'w'; kind: string; seed: number; roofColor?: string; extras?: string[];
-    path?: 'walk' | 'dirt'; trees?: 'full' | 'bush'; kennel?: boolean; fenceColor: string; gateColor: string; gerColor?: string }): HomeDoor => {
+    path?: 'walk' | 'dirt'; trees?: 'full' | 'bush'; kennel?: boolean; fenceColor: string; gateColor: string; gerColor?: string;
+    /** Тоглогч орж болох айл (нээгддэг хаалга). Үгүй бол хаалга тоглогч/тээвэрт хаалттай (NPC чөлөөтэй) */ enter?: string }): HomeDoor => {
     wallRing(walk.boxes, o.x, o.z, o.w, o.d, o.gate, WK.plotGateW, 0, WK.fenceT);   // айлын хашаа: хаалга төвд (building/yard.ts gateX = 0)
-    walk.yards!.push({ x: o.x, z: o.z, w: o.w, d: o.d, gate: o.gate, off: 0, gw: WK.plotGateW });
+    const yard = { x: o.x, z: o.z, w: o.w, d: o.d, gate: o.gate, off: 0, gw: WK.plotGateW };
+    walk.yards!.push(yard);
+    if (!o.enter) walk.playerBoxes!.push(gateBox(yard, WK.fenceT));   // хаалттай хаалга: зөвхөн тоглогчид
     const vertical = o.gate === 'e' || o.gate === 'w', lw = vertical ? o.d : o.w, ld = vertical ? o.w : o.d, phi = GATE_PHI[o.gate], y = heightAt(o.x, o.z);
     const c = Math.cos(phi), s = Math.sin(phi), toW = (lx: number, lz: number) => ({ x: o.x + lx * c + lz * s, z: o.z - lx * s + lz * c });
     town.add((season, out) => {
-      const p = makePlot({ kind: o.kind, season, roofColor: o.roofColor, seed: o.seed, w: lw, d: ld, fenceColor: o.fenceColor, gateColor: o.gateColor, extras: o.extras, path: o.path, trees: o.trees, kennel: o.kennel, yard: true });
+      const p = makePlot({ kind: o.kind, season, roofColor: o.roofColor, seed: o.seed, w: lw, d: ld, fenceColor: o.fenceColor, gateColor: o.gateColor, extras: o.extras, path: o.path, trees: o.trees, kennel: o.kennel, yard: true, noLeaves: !!o.enter });
       appendAt(out, p.geo, phi, o.x, y, o.z);
       for (const g of p.gers) g.ger.dispose();   // гэр нь айлын гэрийн нэгдсэн mesh-ээр (sumcenter.ts buildGers)
     });
+    if (o.enter) {   // нээгддэг хаалга: навчийг тусад нь (sumcenter.ts) анимаци хийнэ
+      const K = BC.khashaa, tot = K.leafW * 2 + K.wicketW + K.gatePost * 3, cx = K.gateX - tot / 2 + K.gatePost + K.leafW, lz = ld / 2;
+      const hl = toW(cx - K.leafW, lz), hr = toW(cx + K.leafW, lz), gc = toW(cx, lz);
+      gates.push({ plotId: o.enter, x: gc.x, z: gc.z, phi, hingeL: { x: hl.x, y: heightAt(hl.x, hl.z), z: hl.z }, hingeR: { x: hr.x, y: heightAt(hr.x, hr.z), z: hr.z },
+        leafW: K.leafW, h: K.gateH, lift: K.gateLift, color: o.gateColor });
+    }
     if (o.kind === 'gerYard') {
       const gs = gerSlotLocal(lw, ld, GER_R), g = toW(gs.x, gs.z), dd = toW(gs.x, gs.z + GER_R + 1.4);
       ger(g.x, g.z, o.gerColor ?? '#F3EDE2', GER_R);
@@ -771,7 +787,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     const lab = TOWN.plots[sp.id]!;
     const kind = sp.role === 'relative' ? (lab.house === 'houseA' ? 'relative1' : 'relative2') : lab.house;   // хамаатны айл: айлын самбартай
     const door = plotLab({ x: sp.x, z: sp.z, w: sp.w, d: sp.d, gate, kind, seed: 11 + homes.length * 7, roofColor: lab.roofColor, extras: sp.role === 'relative' ? ['woodshed'] : [], path: 'walk', trees: 'full',
-      fenceColor: sp.role === 'forSale' ? '#6B4F3A' : '#5E7A4A', gateColor: sp.role === 'forSale' ? '#2E5E9E' : '#5E7A4A' });
+      fenceColor: sp.role === 'forSale' ? '#6B4F3A' : '#5E7A4A', gateColor: sp.role === 'forSale' ? '#2E5E9E' : '#5E7A4A', enter: isEnterablePlot(WK, sp.role) ? sp.id : undefined });
     homes.push(door);
     if (sp.ger) ger(sp.x + sp.w / 2 - 5, sp.z, '#F3EDE2', 2.8);
     const go: XZ = { n: [0, -sp.d / 2] as XZ, s: [0, sp.d / 2] as XZ, e: [sp.w / 2, 0] as XZ, w: [-sp.w / 2, 0] as XZ }[gate];
@@ -844,6 +860,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     vehicles,
     vehicleSlots,
     plots,
+    gates,
     homes,
     gers,
     lamps,
