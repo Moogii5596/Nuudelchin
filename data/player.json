@@ -21,5 +21,20 @@
     "bunch": 0.35,
     "cooldownSec": 1.4
   },
-  "scareCooldownSec": 5
+  "scareCooldownSec": 5,
+  "follow": {
+    "_doc": "M6.9 татах (HA1): уураггүй алхахад radius м доторх мал малчныг дагана (behind м ард, spread — бөөгнөрөл); сүргийн удирдагчийн зорилтыг дагагчид leaderSpread офсетоор дагана (leaderRange м дотор)",
+    "radius": 6,
+    "behind": 1,
+    "spread": 0.3,
+    "minMove": 0.4,
+    "leaderSpread": 0.25,
+    "leaderRange": 40
+  },
+  "horseGraze": {
+    "_doc": "M6.9 унаа морь: буухад уяагүй бол буусан газраасаа radius м дотор бэлчинэ (speed м/алхам, every алхам тутам шинэ цэг); H-аар дуудахад ирнэ",
+    "radius": 15,
+    "speed": 0.3,
+    "every": 10
+  }
 }

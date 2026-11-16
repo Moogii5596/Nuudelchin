@@ -26,6 +26,7 @@ import { ensureInteriorValid } from './systems/interior';
 import { goalGerReached } from './systems/gerLayout';
 import { checkMilestones, recordDay } from './systems/milestones';
 import { detectStuck } from './systems/safety';
+import { refreshLeaders } from './systems/herding';
 import { townDaily, townMonthly, townSeason, type TownEvent } from './systems/town';
 import { wolvesDaily, wolvesStep, nightRaid, endRaid, type WolfEvent } from './systems/wolves';
 
@@ -112,6 +113,7 @@ export class Sim {
       state.flockCenters = [...this.centers];
       this.herdDecisions = herdDecide(cfg, state, rng, this.quality, herds);
     }
+    if (state.step % 10 === 0) refreshLeaders(cfg, state);   // M6.9 удирдагч
     herderStep(cfg, state);
     eveningStep(cfg, state, rng);
     for (const ev of helpersStep(cfg, state, rng, this.quality)) this.emit(ev);

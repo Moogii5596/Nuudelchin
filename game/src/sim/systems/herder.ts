@@ -10,6 +10,7 @@ import { m, type Msg } from '../msg';
 import type { GameConfig } from '../config';
 import type { Rng } from '../rng';
 import type { Animal, GameState } from '../state';
+import { followHerder, followLeaders, horseGrazeStep } from './herding';
 
 export function ridingHorse(state: GameState): Animal | undefined {
   return state.animals.find((a) => a.riding);
@@ -18,6 +19,9 @@ export function ridingHorse(state: GameState): Animal | undefined {
 /** Нэг тоглоомын минут: морь дагах/ирэх, мал малчнаас айх */
 export function herderStep(cfg: GameConfig, state: GameState): void {
   const p = state.player;
+  const moved = p.px === undefined || p.pz === undefined ? 0 : Math.hypot(p.x - p.px, p.z - p.pz);
+  p.px = p.x;
+  p.pz = p.z;
   const horse = ridingHorse(state);
   if (horse) {
     if (p.mounted) {
@@ -31,6 +35,8 @@ export function herderStep(cfg: GameConfig, state: GameState): void {
       const stop = cfg.player.mountRange * 0.6;
       if (d <= stop) p.horseCalled = false;
       else {
+        horse.hx = undefined;   // дуудсан — буусан газраа орхино
+        horse.hz = undefined;
         const s = Math.min(cfg.player.callHorseSpeed, d - stop);
         horse.x += (dx / d) * s;
         horse.z += (dz / d) * s;
@@ -38,11 +44,16 @@ export function herderStep(cfg: GameConfig, state: GameState): void {
         horse.tz = horse.z;
         horse.heading = Math.atan2(dx, dz);
       }
+    } else if (!p.away && Math.hypot(horse.x - p.x, horse.z - p.z) > cfg.player.mountRange * 2) {
+      horseGrazeStep(cfg, state, horse);   // M6.9: малчин холдвол уяагүй морь буусан газраасаа 15 м дотор бэлчинэ (малчны дэргэд зогсоно)
     }
   } else {
     p.mounted = false;
   }
   if (p.away) return;
+
+  followHerder(cfg, state, moved);   // M6.9: уураггүй алхахад ойрын мал дагана
+  followLeaders(cfg, state);         // M6.9: туугдсан сүргийн дагагчид удирдагчийг дагана
 
   // Мал малчнаас айж холдоно — зөвхөн шилбүүр/уурга барьсан үед
   if (!p.holdingUurga) return;
@@ -116,6 +127,8 @@ export function toggleMount(cfg: GameConfig, state: GameState): Msg | null {
     const ox = Math.cos(p.heading) * 1.2, oz = -Math.sin(p.heading) * 1.2;
     horse.x = horse.tx = p.x + ox;
     horse.z = horse.tz = p.z + oz;
+    horse.hx = horse.x;   // M6.9: бэлчээрийн төв
+    horse.hz = horse.z;
     return null;
   }
   if (Math.hypot(horse.x - p.x, horse.z - p.z) > cfg.player.mountRange) return m('sim.the_horse_is_far');
