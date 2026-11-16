@@ -16,6 +16,8 @@ import { SLOTS, type SaveStore, type SlotInfo } from '../../persist/idb';
 import type { Autosave } from '../../persist/autosave';
 import { downloadFile, readFile } from '../../persist/file';
 import { saveMeta, serialize } from '../../sim/save';
+import { TransferError, createTransfer, redeemTransfer } from '../../persist/transfer';
+import { normalizeCode } from '../../persist/transferCode';
 import { pwa } from '../../pwa';
 import { QUALITIES, QUALITY_NAME, type Quality } from '../../device';
 import { SEASON_EMOJI, SEASON_NAME, fmtMoney } from './names';
@@ -71,7 +73,7 @@ export interface MenuDeps {
   onFirstTap?: () => void;
 }
 
-type Screen = 'start' | 'slots' | 'new' | 'file' | 'settings' | 'game' | 'intro';
+type Screen = 'start' | 'slots' | 'new' | 'file' | 'settings' | 'game' | 'intro' | 'transfer' | 'code';
 
 const esc = (s: string): string => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 
@@ -89,6 +91,13 @@ export class MenuUI {
   private busy = false;
   private open_ = false;
   private tapped = false;
+  /** Шилжүүлэх код (M6.4): үүсгэсэн код ба явц */
+  private xfer: { phase: 'idle' | 'busy' | 'done'; display?: string; msg?: string } = { phase: 'idle' };
+  private codeText = '';
+  private codeSlot = 1;
+  private confirmCode = false;
+  private codeMsg = '';
+  private online = typeof navigator === 'undefined' || navigator.onLine !== false;
 
   constructor(private readonly d: MenuDeps) {
     this.el = document.createElement('div');
@@ -99,6 +108,10 @@ export class MenuUI {
     this.el.addEventListener('change', (e) => void this.onChange(e));
     window.addEventListener('keydown', (e) => this.onKey(e), true);
     pwa.onChange(() => { if (this.open_ && this.screen === 'start') this.render(); });
+    // Интернет тасрах/сэргэхэд «Интернет хэрэгтэй» товчнууд шинэчлэгдэнэ
+    const net = (on: boolean) => () => { this.online = on; if (this.open_) this.render(); };
+    window.addEventListener('online', net(true));
+    window.addEventListener('offline', net(false));
   }
 
   get isOpen(): boolean { return this.open_; }
@@ -142,7 +155,9 @@ export class MenuUI {
     this.el.classList.toggle('game', this.root === 'game' && screen !== 'intro');
     this.el.classList.toggle('intro', screen === 'intro');
     this.render();
-    if (screen === 'slots' || screen === 'new' || screen === 'file') void this.refreshSlots();
+    if (screen === 'transfer') this.xfer = { phase: 'idle' };
+    if (screen === 'code') { this.codeMsg = ''; this.confirmCode = false; this.codeSlot = this.d.getSlot(); }
+    if (screen === 'slots' || screen === 'new' || screen === 'file' || screen === 'code') void this.refreshSlots();
   }
 
   private async refreshSlots(): Promise<void> {
@@ -168,7 +183,8 @@ export class MenuUI {
 
   private render(): void {
     const h = this.screen === 'start' ? this.rStart() : this.screen === 'game' ? this.rGame() : this.screen === 'slots' ? this.rSlots()
-      : this.screen === 'new' ? this.rNew() : this.screen === 'file' ? this.rFile() : this.screen === 'settings' ? this.rSettings() : this.rIntro();
+      : this.screen === 'new' ? this.rNew() : this.screen === 'file' ? this.rFile() : this.screen === 'settings' ? this.rSettings()
+        : this.screen === 'transfer' ? this.rTransfer() : this.screen === 'code' ? this.rCode() : this.rIntro();
     this.el.innerHTML = `<div class="mbox ${this.screen === 'new' ? 'wide' : ''}">${h}</div>`;
   }
 
@@ -191,9 +207,52 @@ export class MenuUI {
         <button class="mb" data-a="file">📄 ${t('menu.file')}</button>
         <button class="mb" data-a="settings">⚙ ${t('menu.settings')}</button>
         ${canInstall ? `<button class="mb" data-a="install">📲 ${t('menu.install')}</button>` : ''}
-        <button class="mb" data-a="code" disabled title="${t('menu.codeSoon')}">📥 ${t('menu.code')}</button>
+        ${this.netBtn('transfer', '📤', t('menu.transfer'), !this.d.hasGame)}
+        ${this.netBtn('code', '📥', t('menu.enterCode'), !persist)}
       </div>
       ${persist ? '' : `<div class="note">${t('menu.noStorage')}</div>`}${this.ver()}`;
+  }
+
+  /** Интернет шаардсан товч: офлайн үед идэвхгүй, «Интернет хэрэгтэй» гэж бичнэ */
+  private netBtn(action: string, icon: string, label: string, disabled: boolean): string {
+    const off = !this.online;
+    return `<button class="mb" data-a="${action}" ${disabled || off ? 'disabled' : ''} ${off ? `title="${t('menu.needNet')}"` : ''}>${icon} ${label}${off ? `<br><small>${t('menu.needNet')}</small>` : ''}</button>`;
+  }
+
+  private rTransfer(): string {
+    const x = this.xfer;
+    let h = this.back('📤 ' + t('menu.transfer'));
+    h += `<div class="hint">${t('menu.transfer.hint')}</div>`;
+    if (x.phase === 'done' && x.display) {
+      h += `<div class="codebox"><div class="code">${esc(x.display)}</div><div class="hint">${t('menu.transfer.done')}</div></div>
+        <div class="macts"><button class="mb sm" data-a="copyCode">📋 ${t('menu.copy')}</button><button class="mb sm" data-a="newCode">${t('menu.transfer.again')}</button></div>`;
+    } else {
+      h += `<div class="macts"><button class="mb gold" data-a="makeCode" ${x.phase === 'busy' || !this.online ? 'disabled' : ''}>${x.phase === 'busy' ? '…' : '📤 ' + t('menu.transfer.make')}</button></div>`;
+    }
+    if (x.msg) h += `<div class="note">${esc(x.msg)}</div>`;
+    return h;
+  }
+
+  private rCode(): string {
+    let h = this.back('📥 ' + t('menu.enterCode'));
+    h += `<div class="hint">${t('menu.code.hint')}</div>
+      <div class="row"><input id="menuCode" class="codein" type="text" inputmode="text" autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="12" placeholder="K7M2-9QXA" value="${esc(this.codeText)}"></div>
+      <div class="hint">${t('menu.import.into')}</div>`;
+    for (let n = 1; n <= SLOTS; n++) {
+      const i = this.slots.find((x) => x.slot === n);
+      h += `<div class="slot ${n === this.codeSlot ? 'sel' : ''}"><div class="si">${this.slotInfoHtml(i, n)}${i && !i.empty && n === this.codeSlot ? `<br><small>⚠ ${t('menu.overwrite')}</small>` : ''}</div>
+        <div class="sb"><button class="mb sm ${n === this.codeSlot ? 'gold' : ''}" data-a="codeSlot" data-n="${n}">${n === this.codeSlot ? '✓' : t('menu.choose')}</button></div></div>`;
+    }
+    const target = this.slots.find((x) => x.slot === this.codeSlot);
+    const occupied = !!target && !target.empty;
+    h += `<div class="macts"><button class="mb gold" data-a="redeem" ${this.online ? '' : 'disabled'}>${this.confirmCode && occupied ? '⚠ ' + t('menu.code.confirm') : '📥 ' + t('menu.code.get')}</button></div>`;
+    if (this.codeMsg) h += `<div class="note">${esc(this.codeMsg)}</div>`;
+    return h;
+  }
+
+  private xferError(e: unknown): string {
+    if (e instanceof TransferError) return t('menu.err.' + e.kind);
+    return String((e as Error).message ?? e);
   }
 
   private rGame(): string {
@@ -203,6 +262,8 @@ export class MenuUI {
         <button class="mb" data-a="save" ${this.d.store ? '' : 'disabled'}>💾 ${t('menu.save')}</button>
         <button class="mb" data-a="slots" ${this.d.store ? '' : 'disabled'}>📂 ${t('menu.slots')}</button>
         <button class="mb" data-a="file">📄 ${t('menu.file')}</button>
+        ${this.netBtn('transfer', '📤', t('menu.transfer'), false)}
+        ${this.netBtn('code', '📥', t('menu.enterCode'), !this.d.store)}
         <button class="mb" data-a="settings">⚙ ${t('menu.settings')}</button>
         <button class="mb" data-a="help">❓ ${t('menu.help')}</button>
         <button class="mb" data-a="main">🏠 ${t('menu.mainMenu')}</button>
@@ -303,6 +364,7 @@ export class MenuUI {
 
   private onInput(e: Event): void {
     const el = e.target as HTMLInputElement;
+    if (el.id === 'menuCode') { this.codeText = el.value.toUpperCase(); this.confirmCode = false; return; }
     const k = el.dataset.k as (typeof DIFFICULTY_KEYS)[number] | undefined;
     if (!k) return;
     const v = Number(el.value);
@@ -338,6 +400,42 @@ export class MenuUI {
     switch (a) {
       case 'continue': case 'resume': this.close(); return;
       case 'back': this.go(this.root); return;
+      case 'transfer': case 'code': this.go(a); return;
+      case 'makeCode':
+        this.xfer = { phase: 'busy' };
+        this.render();
+        try {
+          const r = await createTransfer(this.d.state);
+          this.xfer = { phase: 'done', display: r.display };
+        } catch (err) {
+          this.xfer = { phase: 'idle', msg: this.xferError(err) };
+        }
+        this.render();
+        return;
+      case 'newCode': this.xfer = { phase: 'idle' }; this.render(); return;
+      case 'copyCode':
+        try { await navigator.clipboard.writeText(this.xfer.display ?? ''); this.d.toast(t('menu.copied'), 'good'); } catch { this.d.toast(this.xfer.display ?? '', ''); }
+        return;
+      case 'codeSlot': this.codeSlot = n; this.confirmCode = false; this.render(); return;
+      case 'redeem': {
+        const code = normalizeCode(this.codeText);
+        if (!code) { this.codeMsg = t('menu.err.bad_code'); this.render(); return; }
+        const target = this.slots.find((x) => x.slot === this.codeSlot);
+        if (target && !target.empty && !this.confirmCode) { this.confirmCode = true; this.codeMsg = ''; this.render(); return; }   // слотын зөрчил: дахин товшиж баталгаажуулна
+        await this.busyDo(async () => {
+          try {
+            const st = await redeemTransfer(this.d.cfg, code);
+            await this.d.store!.write(this.codeSlot, serialize(st), saveMeta(st));
+            putIntent({ kind: 'slot', slot: this.codeSlot });
+            this.d.reload();
+          } catch (err) {
+            this.codeMsg = this.xferError(err);
+            this.confirmCode = false;
+            this.render();
+          }
+        });
+        return;
+      }
       case 'new': this.draft = null; this.go('new'); return;
       case 'slots': case 'file': case 'settings': this.go(a); return;
       case 'help': this.close(); this.d.openHelp(); return;

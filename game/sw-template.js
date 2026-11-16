@@ -35,6 +35,8 @@ const cachedPage = () => caches.match('./', { cacheName: CACHE }).then((r) => r 
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
+  // Шилжүүлэх код (M6.4): /api/* бүрийг кэшлэхгүй, service worker дамжуулахгүй — нэг удаагийн код кэшээс давхар уншигдах ёсгүй
+  if (new URL(req.url).pathname.startsWith('/api/')) return;
 
   if (req.mode === 'navigate') {
     // Хуудас: интернет байвал шинийг авч хадгална. Интернетгүй эсвэл хэт удаан бол хадгалсныг.
