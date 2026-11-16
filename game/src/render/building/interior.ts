@@ -129,6 +129,8 @@ export function makeInterior(key) {
   const C = BUILDING_CONFIG, V = C.interior[key]; if (!V || typeof V !== 'object') return null;
   const base = V.base || key, K0 = C.house[base], T = V.layout ? C.interior[V.layout] : V; if (!K0 || !T) return null;
   const mirror = !!V.mirror, r = buildInterior(mirror ? mirroredHouse(K0) : K0, T);
+  r.zi = K0.d / 2 - C.interior.inset; r.xi = K0.w / 2 - C.interior.inset;   // урд (+z), зүүн (+x) дотоод хананы хавтгай
+  { const Q = K0.porch, qd = Q.d - 0.05, hw = K0.w / 2, hd = K0.d / 2; r.porchFar = Q.side === 'front' ? { ax: 2, v: hd + qd } : { ax: 0, v: (Q.side === 'east' ? hw : -hw) + (Q.side === 'east' ? qd : -qd) }; }   // амбаарын гадна хана
   if (mirror) {   // геометр, гэрэл, саад, цэгүүд x-ээр толин тусгал
     const fv = v => new THREE.Vector3(-v.x, v.y, v.z);
     mirrorGeoX(r.geo); r.lights = r.lights.map(fv); r.view = fv(r.view);
@@ -138,4 +140,24 @@ export function makeInterior(key) {
     r.doorGap = { ...r.doorGap, x: -r.doorGap.x, n: fv(r.doorGap.n) };
   }
   return r;
+}
+
+/**
+ * Камерын талын хана (урд +z, зүүн +x) нэг талт тул зурагдахгүй, харин түүн дээрх цонх, хаалганы хүрээний хажуугийн хавтан
+ * (panel() side, P.trim × 0.7 цэнхэр) ба цонхны тавцан (#F4F1EA) агаарт өлгөөтэй цэнхэр шугам, цагаан зурвас болж үлддэг.
+ * Тэр ханын хавтгай (z ≈ zi, x ≈ xi) ба амбаарын гадна хананы ойр дахь ийм өнгийн жижиг гурвалжныг хасна. Лабораторид: хүрээ, тавцанг
+ * гадна талд зурахгүй (эсвэл тусдаа mesh) болгох нь зөв.
+ */
+export function trimFrontStrip(geo, zi, xi, extra = []) {
+  const BC = BUILDING_CONFIG, tr = rgb(BC.palette.trim, 0.7), sill = rgb('#F4F1EA'), near = (a, b) => Math.abs(a - b) < 0.004;
+  const isCol = (i, c) => near(geo.c[i], c[0]) && near(geo.c[i + 1], c[1]) && near(geo.c[i + 2], c[2]);
+  const planes = [{ ax: 2, v: zi }, { ax: 0, v: xi }, ...extra];
+  const drop = (i) => { let lo = Infinity, hi = -Infinity, ymin = Infinity;
+    const isTr = isCol(i, tr), isSill = isCol(i, sill); if (!isTr && !isSill) return false;
+    for (const p of planes) { lo = Infinity; hi = -Infinity; for (let k = 0; k < 3; k++) { const a = geo.p[i + k * 3 + p.ax]; lo = Math.min(lo, a); hi = Math.max(hi, a); ymin = Math.min(ymin, geo.p[i + k * 3 + 1]); }
+      if (lo >= p.v - 0.2 && hi <= p.v + 0.12) return isTr || ymin >= 0.8; }
+    return false; };
+  const P = [], N = [], Cc = [], U = [];
+  for (let i = 0; i < geo.p.length; i += 9) if (!drop(i)) { for (let k = 0; k < 9; k++) { P.push(geo.p[i + k]); N.push(geo.n[i + k]); Cc.push(geo.c[i + k]); } const u = i / 9 * 6; for (let k = 0; k < 6; k++) U.push(geo.u[u + k]); }
+  geo.p = P; geo.n = N; geo.c = Cc; geo.u = U;
 }

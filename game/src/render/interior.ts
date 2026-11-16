@@ -14,6 +14,7 @@ import { GER } from './ger/config';
 import { makeGer } from './ger/ger';
 import { makeGerInterior } from './ger/gerInterior';
 import { makeBuildingMaterials, makeInterior } from './building';
+import { trimFrontStrip } from './building/interior';
 
 const GOLD = 0xf2c14e;
 
@@ -146,6 +147,7 @@ export class InteriorView {
     if (!it) throw new Error(`house interior "${room.house}" алга`);
     const mats = makeBuildingMaterials();
     mats.setGlow(0);
+    { const m = it as unknown as { zi: number; xi: number; porchFar: { ax: number; v: number } }; trimFrontStrip(it.geo, m.zi, m.xi, [m.porchFar] as never); }   // камерын талын (хаагдсан) хананд өлгөөтэй үлдэх цонхны хүрээ
     const geometry = it.geo.build();
     this.disposers.push(() => { geometry.dispose(); mats.dispose(); });
     const body = new THREE.Mesh(geometry, mats.mat);
