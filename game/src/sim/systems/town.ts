@@ -273,7 +273,14 @@ export function giveGift(cfg: GameConfig, state: GameState, relId: string, plan:
 
 // ======================= Өдөр, сар, улирал =======================
 
-/** 20:00 — түрээс, зээлийн хугацаа, харилцаа суларч, хамаатан айлчлах */
+/** Банкны зээлийн өдрийн төлбөр: үлдэгдэл / үлдсэн хоног (өнөөдрийг оруулаад), бүхэл ₮ дээш */
+export function bankDailyPayment(state: GameState): number {
+  const B = state.town.bankLoan;
+  if (!B) return 0;
+  return Math.min(B.owed, Math.ceil(B.owed / Math.max(1, B.dueDay - state.time.day + 1)));
+}
+
+/** 20:00 — түрээс, зээлийн өдрийн төлбөр ба хугацаа, харилцаа суларч, хамаатан айлчлах */
 export function townDaily(cfg: GameConfig, state: GameState): { events: TownEvent[]; livingCovered: boolean } {
   const T = state.town, events: TownEvent[] = [];
   const day = state.time.day;
@@ -284,6 +291,19 @@ export function townDaily(cfg: GameConfig, state: GameState): { events: TownEven
     Z.overdue = true;
     repUp(cfg, state, -cfg.town.zdtgLoan.lateReputation);
     events.push({ type: 'town', msg: m('sim.the_livestock_loan_is'), good: false });
+  }
+  // Банкны зээл: өдөр бүр үлдэгдлийг үлдсэн хоногт хуваасан дүнгээр төлнө (мөнгө дутвал байгаагаараа)
+  if (T.bankLoan && day <= T.bankLoan.dueDay) {
+    const pay = Math.min(bankDailyPayment(state), Math.max(0, Math.floor(state.money)));
+    if (pay > 0) {
+      spend(state, 'bankLoan', pay);
+      T.bankLoan.owed -= pay;
+    }
+    if (T.bankLoan.owed <= 0.5) {
+      T.bankLoan = null;
+      repUp(cfg, state, cfg.town.bankLoan.onTimeReputation);
+      events.push({ type: 'town', msg: m('sim.loan_repaid'), good: true });
+    }
   }
   // Банкны зээл хугацаа хэтэрсэн → барьцаа хураана
   const B = T.bankLoan;

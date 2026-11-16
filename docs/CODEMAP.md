@@ -959,48 +959,48 @@ SYM game/src/render/ui/names.ts:101 const SEASON_EMOJI
 SYM game/src/render/ui/names.ts:103 const CAMP_HINT
 SYM game/src/render/ui/names.ts:110 const WATER_NAME
 SYM game/src/render/ui/names.ts:111 const WOLF_LEVEL_NAME
-FILE game/src/render/ui/panels.ts 80.8KB 1266L exports: UiHooks,Panels
+FILE game/src/render/ui/panels.ts 82.1KB 1281L exports: UiHooks,Panels
 SYM game/src/render/ui/panels.ts:98 fn esc
 SYM game/src/render/ui/panels.ts:100 interface UiHooks
 SYM game/src/render/ui/panels.ts:109 class Panels
-SYM game/src/render/ui/panels.ts:156 method Panels.current
-SYM game/src/render/ui/panels.ts:160 method Panels.isOpen
-SYM game/src/render/ui/panels.ts:164 method Panels.open
-SYM game/src/render/ui/panels.ts:196 method Panels.closedShop
-SYM game/src/render/ui/panels.ts:203 method Panels.close
-SYM game/src/render/ui/panels.ts:218 method Panels.showReport
-SYM game/src/render/ui/panels.ts:230 method Panels.refresh
-SYM game/src/render/ui/panels.ts:236 method Panels.showArrive
-SYM game/src/render/ui/panels.ts:242 method Panels.render
-SYM game/src/render/ui/panels.ts:266 method Panels.milestonesHtml
-SYM game/src/render/ui/panels.ts:277 method Panels.spark
-SYM game/src/render/ui/panels.ts:285 method Panels.ceremonyHtml
-SYM game/src/render/ui/panels.ts:296 method Panels.storageHtml
-SYM game/src/render/ui/panels.ts:350 method Panels.buyItems
-SYM game/src/render/ui/panels.ts:374 method Panels.vehicleButtons
-SYM game/src/render/ui/panels.ts:382 method Panels.cargoList
-SYM game/src/render/ui/panels.ts:396 method Panels.cargoHtml
-SYM game/src/render/ui/panels.ts:458 method Panels.selectedAnimals
-SYM game/src/render/ui/panels.ts:466 method Panels.shopHtml
-SYM game/src/render/ui/panels.ts:526 method Panels.traderHtml
-SYM game/src/render/ui/panels.ts:549 method Panels.gerSellHtml
-SYM game/src/render/ui/panels.ts:556 method Panels.townCommand
-SYM game/src/render/ui/panels.ts:586 method Panels.townHtml
-SYM game/src/render/ui/panels.ts:648 method Panels.lotHtml
-SYM game/src/render/ui/panels.ts:676 method Panels.arriveHtml
-SYM game/src/render/ui/panels.ts:703 method Panels.openLog
-SYM game/src/render/ui/panels.ts:709 method Panels.logHtml
-SYM game/src/render/ui/panels.ts:727 method Panels.reportHtml
-SYM game/src/render/ui/panels.ts:750 method Panels.reportDetailHtml
-SYM game/src/render/ui/panels.ts:794 method Panels.wolfKillsHtml
-SYM game/src/render/ui/panels.ts:801 method Panels.dogsHtml
-SYM game/src/render/ui/panels.ts:824 method Panels.campsHtml
-SYM game/src/render/ui/panels.ts:855 method Panels.cheatHtml
-SYM game/src/render/ui/panels.ts:865 method Panels.teahouseHtml
-SYM game/src/render/ui/panels.ts:882 method Panels.helpersHtml
-SYM game/src/render/ui/panels.ts:927 method Panels.otorHtml
-SYM game/src/render/ui/panels.ts:947 method Panels.payHtml
-SYM game/src/render/ui/panels.ts:962 method Panels.act
+SYM game/src/render/ui/panels.ts:158 method Panels.current
+SYM game/src/render/ui/panels.ts:162 method Panels.isOpen
+SYM game/src/render/ui/panels.ts:166 method Panels.open
+SYM game/src/render/ui/panels.ts:198 method Panels.closedShop
+SYM game/src/render/ui/panels.ts:205 method Panels.close
+SYM game/src/render/ui/panels.ts:220 method Panels.showReport
+SYM game/src/render/ui/panels.ts:232 method Panels.refresh
+SYM game/src/render/ui/panels.ts:238 method Panels.showArrive
+SYM game/src/render/ui/panels.ts:244 method Panels.render
+SYM game/src/render/ui/panels.ts:268 method Panels.milestonesHtml
+SYM game/src/render/ui/panels.ts:279 method Panels.spark
+SYM game/src/render/ui/panels.ts:287 method Panels.ceremonyHtml
+SYM game/src/render/ui/panels.ts:298 method Panels.storageHtml
+SYM game/src/render/ui/panels.ts:352 method Panels.buyItems
+SYM game/src/render/ui/panels.ts:376 method Panels.vehicleButtons
+SYM game/src/render/ui/panels.ts:384 method Panels.cargoList
+SYM game/src/render/ui/panels.ts:398 method Panels.cargoHtml
+SYM game/src/render/ui/panels.ts:460 method Panels.selectedAnimals
+SYM game/src/render/ui/panels.ts:468 method Panels.shopHtml
+SYM game/src/render/ui/panels.ts:528 method Panels.traderHtml
+SYM game/src/render/ui/panels.ts:551 method Panels.gerSellHtml
+SYM game/src/render/ui/panels.ts:558 method Panels.townCommand
+SYM game/src/render/ui/panels.ts:588 method Panels.townHtml
+SYM game/src/render/ui/panels.ts:657 method Panels.lotHtml
+SYM game/src/render/ui/panels.ts:685 method Panels.arriveHtml
+SYM game/src/render/ui/panels.ts:712 method Panels.openLog
+SYM game/src/render/ui/panels.ts:718 method Panels.logHtml
+SYM game/src/render/ui/panels.ts:736 method Panels.reportHtml
+SYM game/src/render/ui/panels.ts:759 method Panels.reportDetailHtml
+SYM game/src/render/ui/panels.ts:803 method Panels.wolfKillsHtml
+SYM game/src/render/ui/panels.ts:810 method Panels.dogsHtml
+SYM game/src/render/ui/panels.ts:833 method Panels.campsHtml
+SYM game/src/render/ui/panels.ts:864 method Panels.cheatHtml
+SYM game/src/render/ui/panels.ts:874 method Panels.teahouseHtml
+SYM game/src/render/ui/panels.ts:891 method Panels.helpersHtml
+SYM game/src/render/ui/panels.ts:936 method Panels.otorHtml
+SYM game/src/render/ui/panels.ts:956 method Panels.payHtml
+SYM game/src/render/ui/panels.ts:971 method Panels.act
 FILE game/src/render/ui/sleepPanel.ts 2.4KB 49L exports: SleepCtx,SleepPanel
 SYM game/src/render/ui/sleepPanel.ts:12 interface SleepCtx
 SYM game/src/render/ui/sleepPanel.ts:19 fn hhmm
@@ -1282,15 +1282,15 @@ SYM game/src/sim/systems/gerLayout.ts:86 fn boxFrom
 SYM game/src/sim/systems/gerLayout.ts:92 fn gerBoxes
 SYM game/src/sim/systems/gerLayout.ts:122 fn gerBlockers
 SYM game/src/sim/systems/gerLayout.ts:132 fn pushOutOfBox
-FILE game/src/sim/systems/grazing.ts 11.6KB 278L exports: flockCenters,grazingStep,driveFlock
+FILE game/src/sim/systems/grazing.ts 12.0KB 281L exports: flockCenters,grazingStep,driveFlock
 SYM game/src/sim/systems/grazing.ts:24 fn flockCenters
 SYM game/src/sim/systems/grazing.ts:44 fn flockKey
 SYM game/src/sim/systems/grazing.ts:49 fn decide
 SYM game/src/sim/systems/grazing.ts:98 fn scoreAt
 SYM game/src/sim/systems/grazing.ts:132 fn moveToward
 SYM game/src/sim/systems/grazing.ts:155 fn grazingStep
-SYM game/src/sim/systems/grazing.ts:247 fn eat
-SYM game/src/sim/systems/grazing.ts:267 fn driveFlock
+SYM game/src/sim/systems/grazing.ts:250 fn eat
+SYM game/src/sim/systems/grazing.ts:270 fn driveFlock
 FILE game/src/sim/systems/helpers.ts 48.0KB 976L exports: HelperKind,HelperTask,HerdGroup,HelperTrip,Helper,CandidateMember,Candidate,OtorGroup,Dwelling,HelpersState,HelperEvent,newHelpersState,bedsTotal,bedsUsed,+26
 SYM game/src/sim/systems/helpers.ts:36 type HelperKind
 SYM game/src/sim/systems/helpers.ts:37 type HelperTask
@@ -1639,7 +1639,7 @@ SYM game/src/sim/systems/sumwalk.ts:374 fn isEnterablePlot
 SYM game/src/sim/systems/sumwalk.ts:381 fn gateBox
 SYM game/src/sim/systems/sumwalk.ts:387 fn playerSolids
 SYM game/src/sim/systems/sumwalk.ts:396 fn gatePush
-FILE game/src/sim/systems/town.ts 18.8KB 371L exports: HouseMode,ZdtgLoan,BankLoan,RelativeState,TownState,TownEvent,newTownState,plotDoors,TownRole,nearTownDoor,housePrice,buyHouse,setHouseMode,donate,+13
+FILE game/src/sim/systems/town.ts 19.8KB 391L exports: HouseMode,ZdtgLoan,BankLoan,RelativeState,TownState,TownEvent,newTownState,plotDoors,TownRole,nearTownDoor,housePrice,buyHouse,setHouseMode,donate,+14
 SYM game/src/sim/systems/town.ts:20 type HouseMode
 SYM game/src/sim/systems/town.ts:21 interface ZdtgLoan
 SYM game/src/sim/systems/town.ts:22 interface BankLoan
@@ -1668,9 +1668,10 @@ SYM game/src/sim/systems/town.ts:200 fn takeBankLoan
 SYM game/src/sim/systems/town.ts:211 fn repayBankLoan
 SYM game/src/sim/systems/town.ts:229 interface GiftPlan
 SYM game/src/sim/systems/town.ts:232 fn giveGift
-SYM game/src/sim/systems/town.ts:277 fn townDaily
-SYM game/src/sim/systems/town.ts:331 fn townMonthly
-SYM game/src/sim/systems/town.ts:337 fn townSeason
+SYM game/src/sim/systems/town.ts:277 fn bankDailyPayment
+SYM game/src/sim/systems/town.ts:284 fn townDaily
+SYM game/src/sim/systems/town.ts:351 fn townMonthly
+SYM game/src/sim/systems/town.ts:357 fn townSeason
 FILE game/src/sim/systems/trader.ts 7.4KB 166L exports: TraderKindCfg,TraderConfig,TraderVisit,TraderState,TraderEvent,newTraderState,validateTrader,traderDaily,traderPresent,traderHour,nearTrader,TraderPlan,traderBuyPrice,traderHayPrice,+1
 SYM game/src/sim/systems/trader.ts:14 interface TraderKindCfg
 SYM game/src/sim/systems/trader.ts:22 interface TraderConfig
@@ -1851,7 +1852,7 @@ FILE game/tests/stuck.test.ts 4.4KB 80L
 FILE game/tests/style.test.ts 8.9KB 165L
 FILE game/tests/sumtown.test.ts 4.6KB 91L
 FILE game/tests/sumwalk.test.ts 20.5KB 320L
-FILE game/tests/town.test.ts 6.1KB 127L
+FILE game/tests/town.test.ts 6.8KB 138L
 FILE game/tests/trader.test.ts 8.4KB 164L
 FILE game/tests/transfer.test.ts 14.2KB 255L
 FILE game/tests/trip.test.ts 9.2KB 173L
@@ -2059,11 +2060,11 @@ FILE docs/plan/M7.md 7.6KB 31L
 DOC docs/plan/M7.md:12-22 ## Блокууд
 DOC docs/plan/M7.md:23-27 ## Асуулга (10 асуулт)
 DOC docs/plan/M7.md:28-31 ## Эрсдэл
-FILE docs/plan/V.md 83.1KB 295L
+FILE docs/plan/V.md 84.3KB 297L
 DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
 DOC docs/plan/V.md:24-265 ## Блокууд ба чеклист (2026-11-15)
-DOC docs/plan/V.md:266-295 ## Зогссон цэг
+DOC docs/plan/V.md:266-297 ## Зогссон цэг
 FILE docs/plan/playtest.md 23.5KB 143L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
 DOC docs/plan/playtest.md:19-39 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])

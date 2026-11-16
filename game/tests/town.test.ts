@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { cfg, newSim, steps, DAY } from './helpers';
 import { sumId } from '../src/sim/systems/travel';
-import { bankLimit, plotDoors, townSeason, zdtgRepayable } from '../src/sim/systems/town';
+import { bankLimit, plotDoors, townSeason, zdtgRepayable, bankDailyPayment } from '../src/sim/systems/town';
 import { sumDoors } from '../src/sim/systems/sumtown';
 import type { Sim } from '../src/sim/sim';
 
@@ -64,7 +64,7 @@ describe('Сумын төвийн амьдрал (V3.4)', () => {
     expect(st.town.zdtgLoan).toBeNull();
   });
 
-  it('банк: барьцааны хэмжээгээр зээлнэ, сар бүр хүү нэмэгдэнэ, хугацаа хэтэрвэл мал хураана', () => {
+  it('банк: лимит хүртэл сонгосон дүнгээр зээлнэ, өдөр бүр үлдэгдэл / үлдсэн хоногоор төлөгдөнө, хугацаа хэтэрвэл мал хураана', () => {
     const sim = newSim(13);
     toSum(sim);
     const st = sim.state;
@@ -76,8 +76,19 @@ describe('Сумын төвийн амьдрал (V3.4)', () => {
     const m0 = st.money;
     expect(sim.command({ type: 'bankLoan', amount: amt }).ok).toBe(true);
     expect(st.money).toBe(m0 + amt);
-    steps(sim, DAY * cfg.time.monthDays);
-    expect(st.town.bankLoan!.owed).toBeGreaterThan(amt);
+    // Өдөр бүр: үлдэгдэл / үлдсэн хоног (бүхэл ₮) мөнгөнөөс хасагдаж, өдрийн зарлагад орно
+    const due1 = bankDailyPayment(st);
+    expect(due1).toBe(Math.ceil(amt / (cfg.town.bankLoan.termDays + 1)));
+    const m1 = st.money;
+    while (st.time.minute < cfg.time.dayEndMinute) sim.step();
+    expect(st.town.bankLoan!.owed).toBe(amt - due1);
+    expect(st.journal.reports.at(-1)!.expenses.bankLoan).toBe(due1);
+    expect(st.money).toBeLessThanOrEqual(m1 - due1);
+    // Мөнгөгүй бол төлөгдөхгүй, үлдэгдэл хэвээр
+    st.money = 0;
+    const owed1 = st.town.bankLoan!.owed;
+    steps(sim, DAY);
+    expect(st.town.bankLoan!.owed).toBeGreaterThanOrEqual(owed1);
     const herd0 = st.animals.length;
     st.town.bankLoan!.dueDay = st.time.day - 1;
     steps(sim, DAY);

@@ -30,7 +30,7 @@ import { campAccess, seasonProgress, yearOf } from '../../sim/systems/seasons';
 import { hayRoom } from '../../sim/systems/travel';
 import { closedMsg, isOpen } from '../../sim/systems/shops';
 import { canSellAnimals, canSellProducts, nearLotSlot, nearTradeDoor, orderAllowed } from '../../sim/systems/sumtown';
-import { bankLimit, housePrice, nearTownDoor, zdtgPackages, zdtgRepayable } from '../../sim/systems/town';
+import { bankDailyPayment, bankLimit, housePrice, nearTownDoor, zdtgPackages, zdtgRepayable } from '../../sim/systems/town';
 import {
   CAMP_HINT, SEASON_EMOJI, SEASON_NAME, PASTURE_NAME, PRODUCT_EMOJI, PROCESSOR_NAME, WATER_NAME, WOLF_LEVEL_NAME, expenseName, fmtMinutes, fmtMoney, fmtNum, productName, speciesEmoji, stageName, unitOf,
 } from './names';
@@ -116,6 +116,8 @@ export class Panels {
   /** 📜 Тэмдэглэл: идэвхтэй таб, харж буй тайлангийн дугаар (journal.reports дотор) */
   private logTab: 'notes' | 'report' = 'notes';
   private logIdx = 0;
+  /** Банк: тоглогчийн сонгосон зээлийн дүн (лимит хүртэл) */
+  private bankAmt = 0;
   private arriveCamp = '';
   private muteReports = false;
   private pressing = false;
@@ -617,10 +619,17 @@ export class Panels {
         const lim = bankLimit(cfg, state);
         let body = '';
         if (L) {
-          body = t('ui.loan_balance_principal_per', { x: fmtMoney(L.owed), x2: fmtMoney(L.principal), x3: Math.round(B.interestPerMonth * 100), dueDay: L.dueDay, x4: [L.owed, Math.round(L.owed / 2)].map((a) => t('ui.pay', { x: state.money >= a ? 'gold' : '', a, x2: state.money >= a ? '' : 'disabled', x3: fmtMoney(a) })).join(' ') });
+          body = t('ui.bank_daily_now', { x: fmtMoney(bankDailyPayment(state)) }) + t('ui.loan_balance_principal_per', { x: fmtMoney(L.owed), x2: fmtMoney(L.principal), x3: Math.round(B.interestPerMonth * 100), dueDay: L.dueDay, x4: [L.owed, Math.round(L.owed / 2)].map((a) => t('ui.pay', { x: state.money >= a ? 'gold' : '', a, x2: state.money >= a ? '' : 'disabled', x3: fmtMoney(a) })).join(' ') });
         } else {
-          const opts = [0.25, 0.5, 1].map((k) => Math.floor((lim * k) / 10000) * 10000).filter((a) => a >= B.minAmount);
-          body = t('ui.borrow_against_animals_of', { x: Math.round(B.animalLtv * 100), x2: Math.round(B.houseLtv * 100), x3: fmtMoney(lim), termDays: B.termDays, x4: Math.round(B.interestPerMonth * 100), x5: opts.length ? opts.map((a) => t('ui.borrow', { a, x: fmtMoney(a) })).join(' ') : t('ui.not_enough_collateral') });
+          // Дүнг тоглогч сонгоно: minAmount … лимит, amountStep алхмаар
+          const can = lim >= B.minAmount;
+          const amt = (this.bankAmt = can ? Math.min(lim, Math.max(B.minAmount, this.bankAmt || B.minAmount)) : 0);
+          const stepBtn = (d: number | 'min' | 'max', label: string, off: boolean): string => `<button class="btn" data-act="bankAmt:${d}" ${off ? 'disabled' : ''}>${label}</button>`;
+          const pick = can
+            ? `<span class="bankpick">${stepBtn('min', t('ui.bank_min'), amt <= B.minAmount)} ${stepBtn(-B.amountStep * 5, '−−', amt <= B.minAmount)} ${stepBtn(-B.amountStep, '−', amt <= B.minAmount)} <b>${fmtMoney(amt)}</b> ${stepBtn(B.amountStep, '+', amt >= lim)} ${stepBtn(B.amountStep * 5, '++', amt >= lim)} ${stepBtn('max', t('ui.bank_max'), amt >= lim)}</span><br>` +
+              t('ui.bank_daily', { x: fmtMoney(Math.ceil(amt / B.termDays)) }) + '<br>' + t('ui.borrow', { a: amt, x: fmtMoney(amt) })
+            : t('ui.not_enough_collateral');
+          body = t('ui.borrow_against_animals_of', { x: Math.round(B.animalLtv * 100), x2: Math.round(B.houseLtv * 100), x3: fmtMoney(lim), termDays: B.termDays, x4: Math.round(B.interestPerMonth * 100), x5: pick });
         }
         return `<h2>🏦 ${t('sum3d.' + door.id)} ${close}</h2><p>${money} · ${rep}</p>${body}`;
       }
@@ -1055,6 +1064,12 @@ export class Panels {
       case 'gift': {
         const r = this.hooks.dispatch(this.townCommand(cmd, arg));
         this.hooks.toast(r.msg ?? '', r.ok ? 'good' : 'bad');
+        break;
+      }
+      case 'bankAmt': {
+        const B = cfg.town.bankLoan, lim = bankLimit(cfg, state);
+        const next = arg === 'min' ? B.minAmount : arg === 'max' ? lim : this.bankAmt + Number(arg);
+        this.bankAmt = Math.min(lim, Math.max(B.minAmount, next));
         break;
       }
       case 'buyLot': {

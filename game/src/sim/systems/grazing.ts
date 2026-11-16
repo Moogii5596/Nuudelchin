@@ -200,7 +200,10 @@ export function grazingStep(
         // Чоноос айж гүйнэ (туугдсантай адил: зугтсан газраа хэсэг үлдэнэ)
         a.drivenAt = state.step;
         const fx = a.x, fz = a.z;
-        if (moveToward(a, cfg.wolves.fear.speed, okFlee)) a.mode = 'graze';
+        // Ус ууж байгаад гүн усанд айсан мал: гүехэн тал руугаа гатлан гарна (гүн рүү орохгүй) — эс бөгөөс зам хаагдаж гацна
+        const d0 = okFlee(fx, fz) ? -1 : waterDepthAt(cfg, state.campId, fx, fz);
+        const okWade = d0 < 0 ? okFlee : (x: number, z: number): boolean => okFlee(x, z) || (inBounds(cfg, x, z) && waterDepthAt(cfg, state.campId, x, z) < d0);
+        if (moveToward(a, cfg.wolves.fear.speed, okWade)) a.mode = 'graze';
         else if (a.x === fx && a.z === fz) {   // M6.8: зам хаагдсан (гүн ус) — зугтахаа зогсооно; гүн усанд байвал ойрын эрэгт гаргана
           if (!okFlee(a.x, a.z)) {
             const p = nearestWalkable(cfg, state, a.x, a.z);

@@ -15,13 +15,13 @@
     "wool": {
       "from": "sheep",
       "amount": 0.5,
-      "everyDays": 4,
+      "everyDays": 2,
       "minCondition": 0.2
     },
     "cashmere": {
       "from": "goat",
       "amount": 0.1,
-      "everyDays": 6,
+      "everyDays": 3,
       "minCondition": 0.4
     }
   },

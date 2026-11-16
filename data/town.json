@@ -18,7 +18,7 @@
       { "id": "cow2", "species": "cow", "sex": "f", "age": 4, "n": 2 }
     ]
   },
-  "bankLoan": { "animalLtv": 0.5, "houseLtv": 0.6, "termDays": 50, "interestPerMonth": 0.02, "minAmount": 500000, "onTimeReputation": 3, "lateReputation": 15 },
+  "bankLoan": { "_doc": "Зээлийн дүнг тоглогч minAmount-аас лимит хүртэл amountStep алхмаар сонгоно. Өдөр бүр (20:00) үлдэгдэл / үлдсэн хоног (бүхэл ₮, дээш) автоматаар төлөгдөнө; мөнгө дутвал байгаагаараа. Хугацаа хэтэрсэн үлдэгдэлд барьцаа хураагдана.", "amountStep": 100000, "animalLtv": 0.5, "houseLtv": 0.6, "termDays": 50, "interestPerMonth": 0.02, "minAmount": 500000, "onTimeReputation": 3, "lateReputation": 15 },
   "relatives": {
     "startRelation": 30,
     "relationPer10k": 1.5,
