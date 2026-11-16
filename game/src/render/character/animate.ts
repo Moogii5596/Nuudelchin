@@ -60,15 +60,23 @@ export function animateCharacter(H: CharacterRig, p: CharacterPose): number {
   const a = H.anim, dt = p.dt;
   const [leg0, leg1] = H.legs, [knee0, knee1] = H.knees, [arm0, arm1] = H.arms, [elb0, elb1] = H.elbows, [wr0, wr1] = H.wrists;
   const onFoot = p.mode === 'foot';
-  const moving = onFoot && p.speed > cfg.moveMin;
-  a.run += ((moving ? sstep(cfg.runFrom, cfg.runFull, p.speed) : 0) - a.run) * Math.min(1, dt * 5);
+  // Кадр бүрийн шуугиантай хурдыг EMA-аар зөөлрүүлж, hysteresis-ээр алхаа/зогсолтыг шийдэж, gait жинг зөөлөн (damping) өөрчилнэ
+  a.speed += ((onFoot ? p.speed : 0) - a.speed) * Math.min(1, dt * cfg.speedSmooth);
+  if (a.speed < cfg.deadzone) a.speed = 0;
+  if (!onFoot) { a.moving = false; a.gait = 0; a.speed = 0; }
+  else if (!a.moving && a.speed > cfg.moveMin) a.moving = true;
+  else if (a.moving && a.speed < cfg.moveStop) a.moving = false;
+  const moving = a.moving;
+  a.gait += ((moving ? 1 : 0) - a.gait) * Math.min(1, dt * cfg.gaitRate);
+  if (a.gait < 0.01 && !moving) a.gait = 0;
+  const mv = a.gait;
+  a.run += ((moving ? sstep(cfg.runFrom, cfg.runFull, a.speed) : 0) - a.run) * Math.min(1, dt * 5);
   const run = a.run;
   a.time += dt;
-  if (moving) a.phase += dt * p.speed * mix(cfg.strideWalk, cfg.strideRun, run);
+  if (mv > 0) a.phase += dt * a.speed * mix(cfg.strideWalk, cfg.strideRun, run);
   const t = a.time, phase = a.phase;
-  const sw = moving ? Math.sin(phase) * mix(0.7, 1.1, run) : 0;
-  const f = moving ? Math.sin(phase) : 0;
-  const mv = moving ? 1 : 0;
+  const sw = Math.sin(phase) * mix(0.7, 1.1, run) * mv;
+  const f = Math.sin(phase);
 
   // --- Хөл: 0..π тулах үе, π..2π савлах үе ---
   const legPose = (u0: number): { thigh: number; knee: number } => {
@@ -92,28 +100,28 @@ export function animateCharacter(H: CharacterRig, p: CharacterPose): number {
     elbowRun: -1.5 - 0.42 * Math.max(0, fwdLag) + 0.32 * Math.max(0, -fwdLag),
     inward: 0.38 * Math.max(0, fwd) * run,
   });
-  const lag = moving ? Math.sin(phase - 0.45) : 0;
+  const lag = Math.sin(phase - 0.45);
   const A0 = armPose(f, lag), A1 = armPose(-f, -lag);
   arm0.rotation.x = A0.shoulder * mv;
   arm1.rotation.x = A1.shoulder * mv;
   arm0.rotation.y = A0.inward * mv;
   arm1.rotation.y = -A1.inward * mv;
-  const idleEl = !moving ? Math.sin(t * 1.1) * 0.06 : 0;
+  const idleEl = (1 - mv) * Math.sin(t * 1.1) * 0.06;
   const walkEl = (rest: number, fwd: number): number => rest * (1 - 0.6 * Math.max(0, -fwd)) - Math.max(0, fwd) * 0.8;
   elb0.rotation.x = mix(walkEl(H.elbowRest[0], f), A0.elbowRun, run) + idleEl;
   elb1.rotation.x = mix(walkEl(H.elbowRest[1], -f), A1.elbowRun, run) - idleEl;
 
   // --- Хүзүү, амьсгал, бэлхүүс ---
-  const lean = moving ? mix(0.07, 0.3, run) : 0;
+  const lean = mv * mix(0.07, 0.3, run);
   H.neck.rotation.y = Math.sin(t * 0.45) * 0.3 * (1 - run);
   H.neck.rotation.x = Math.sin(t * 0.3 + 1) * 0.07 * (1 - run) - lean * 0.55 * run;
   const b = Math.sin(t * mix(1.6, 5, run)) * mix(1, 1.6, run);
   for (const body of H.bodies) body.scale.set((1 + b * 0.015) * H.build, 1, (1 + b * 0.035) * H.build);
   arm0.position.y = arm1.position.y = H.armY + b * 0.012;
   H.neck.position.y = H.neckY + b * 0.012;
-  H.waist.rotation.y = moving ? sw * 0.22 : Math.sin(t * 0.5) * 0.14;
+  H.waist.rotation.y = sw * 0.22 + (1 - mv) * Math.sin(t * 0.5) * 0.14;
   H.waist.rotation.x = lean;
-  H.waist.rotation.z = !moving ? Math.sin(t * 0.8) * 0.03 : 0;
+  H.waist.rotation.z = (1 - mv) * Math.sin(t * 0.8) * 0.03;
 
   // --- Хуруу, бугуй ---
   const relaxed = 0.35 + Math.sin(t * 0.9) * 0.08;
@@ -170,5 +178,5 @@ export function animateCharacter(H: CharacterRig, p: CharacterPose): number {
   for (const k of Object.keys(a.emo) as Array<keyof Emotion>) a.emo[k] += (target[k] - a.emo[k]) * Math.min(1, dt * 8);
   H.face.paint({ blink, gaze, mouth, emo: a.emo });
 
-  return moving ? Math.abs(Math.sin(phase)) * mix(0.02, 0.1, run) * H.k : 0;
+  return Math.abs(Math.sin(phase)) * mix(0.02, 0.1, run) * H.k * mv;
 }

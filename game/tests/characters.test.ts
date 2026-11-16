@@ -107,6 +107,31 @@ describe('Дүрийн сан (render/character, V4.5 R1–R2)', () => {
     expect(new Set(rigs.map((r) => r.sleeveMat.map)).size).toBe(1);
   });
 
+  it('animateCharacter: зогсохдоо зөөлөн (хурдын шуугиан босго дээр сэгсрэхгүй)', () => {
+    const rig = lab.buildCharacter(characterSpec('player'));
+    const pose = { dt: 1 / 60, speed: 6, mode: 'foot', raise: false, uurga: false, talk: false, emotion: 'neutral' } as const;
+    for (let i = 0; i < 60; i++) lab.animateCharacter(rig, pose);
+    // зогсонги: хурд 0 → нэг кадрт хөл тэг рүү үсрэхгүй
+    let prev = rig.legs[0].rotation.x, maxStep = 0, flips = 0, wasMoving = rig.anim.moving;
+    for (let i = 0; i < 90; i++) {
+      lab.animateCharacter(rig, { ...pose, speed: i < 3 ? 0.2 : 0 });
+      maxStep = Math.max(maxStep, Math.abs(rig.legs[0].rotation.x - prev));
+      prev = rig.legs[0].rotation.x;
+      if (rig.anim.moving !== wasMoving) { flips++; wasMoving = rig.anim.moving; }
+    }
+    expect(maxStep).toBeLessThan(0.35);
+    expect(flips).toBe(1);
+    expect(rig.legs[0].rotation.x).toBeCloseTo(0, 5);
+    // босго орчмын шуугиантай хурд → алхаа/зогсолт хооронд давхар шилжихгүй
+    const rig2 = lab.buildCharacter(characterSpec('player'));
+    let flips2 = 0, was = false;
+    for (let i = 0; i < 120; i++) {
+      lab.animateCharacter(rig2, { ...pose, speed: i % 2 ? 0.1 : 0.55 });
+      if (rig2.anim.moving !== was) { flips2++; was = rig2.anim.moving; }
+    }
+    expect(flips2).toBeLessThanOrEqual(1);
+  });
+
   it('animateCharacter: алхаа, морь, суух байрлал ба дэвхцэлт', () => {
     const rig = lab.buildCharacter(characterSpec('player'));
     const pose = { dt: 1 / 60, speed: 1.6, mode: 'foot', raise: false, uurga: false, talk: false, emotion: 'happy' } as const;

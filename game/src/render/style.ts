@@ -61,6 +61,14 @@ export type HerderEmotion = 'neutral' | 'happy' | 'angry' | 'sad' | 'surprised';
 export type HerderEvent = 'birth' | 'loss' | 'wolf' | 'shout' | 'scare' | 'call';
 export interface HerderAnimVisual {
   moveMin: number;
+  /** hysteresis: алхаа эхлэх босго moveMin, зогсох босго moveStop (< moveMin) */
+  moveStop: number;
+  /** зөөлрүүлсэн хурд энэ хэмээс бага бол тэг (м/с) */
+  deadzone: number;
+  /** хурдын EMA (1/с) */
+  speedSmooth: number;
+  /** алхаа↔зогсолтын жинг зөөлөн өөрчлөх хурд (1/с) */
+  gaitRate: number;
   runFrom: number;
   runFull: number;
   strideWalk: number;
@@ -257,6 +265,8 @@ function parseHerderAnim(h: Record<string, unknown>): HerderAnimVisual {
   };
   const isEmotion = (v: unknown): v is HerderEmotion => herderEmotions.includes(v as HerderEmotion);
   if (!isPositive(h.moveMin)) bad('moveMin');
+  if (!isPositive(h.moveStop) || (h.moveStop as number) >= (h.moveMin as number)) bad('moveStop');
+  if (!isPositive(h.deadzone) || !isPositive(h.speedSmooth) || !isPositive(h.gaitRate)) bad('deadzone/speedSmooth/gaitRate');
   if (!isPositive(h.runFrom) || !isPositive(h.runFull) || (h.runFull as number) <= (h.runFrom as number)) bad('runFrom/runFull');
   if (!isPositive(h.strideWalk) || !isPositive(h.strideRun)) bad('stride');
   if (!isEmotion(h.threat)) bad('threat');
@@ -273,7 +283,7 @@ function parseHerderAnim(h: Record<string, unknown>): HerderAnimVisual {
     });
   }
   return {
-    moveMin: h.moveMin as number, runFrom: h.runFrom as number, runFull: h.runFull as number,
+    moveMin: h.moveMin as number, moveStop: h.moveStop as number, deadzone: h.deadzone as number, speedSmooth: h.speedSmooth as number, gaitRate: h.gaitRate as number, runFrom: h.runFrom as number, runFull: h.runFull as number,
     strideWalk: h.strideWalk as number, strideRun: h.strideRun as number, threat: h.threat as HerderEmotion, events,
   };
 }
