@@ -846,5 +846,6 @@
   "ui.skip_stop_arrived": "Алгасалт зогслоо: хүрэх газартаа ирлээ.",
   "ui.skip_too_late": "Орой болсон байна.",
   "ui.enter_act": "Орох",
-  "ui.perf_panel": "📊 FPS / draw call самбар: {x}"
+  "ui.perf_panel": "📊 FPS / draw call самбар: {x}",
+  "ui.load_act": "Ачих"
 }

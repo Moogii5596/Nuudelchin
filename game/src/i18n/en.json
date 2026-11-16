@@ -846,5 +846,6 @@
   "ui.skip_stop_arrived": "Skip stopped: you have arrived.",
   "ui.skip_too_late": "It is already evening.",
   "ui.enter_act": "Enter",
-  "ui.perf_panel": "📊 FPS / draw calls panel: {x}"
+  "ui.perf_panel": "📊 FPS / draw calls panel: {x}",
+  "ui.load_act": "Load"
 }

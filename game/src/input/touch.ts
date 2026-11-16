@@ -3,7 +3,7 @@
  *  - зүүн доод: джойстик — алхах/давхих (захад нь түлхвэл гүйнэ), жолоодох
  *  - баруун доод: үйлдлийн том товчнууд — Морь, Зураг, Уурга байнга; бусад нь нөхцөлөөр (түүх: ойр бүтээгдэхүүн байхад,
  *    үргээх: чоно ойртоход г.м.). Тухайн мөчид хамгийн хэрэгтэй товч томорч тодорно (.prime)
- *  - баруун дээд: хурд, ⏭ алгасах (render/ui/timebar.ts), бүтэн дэлгэц, ☰ цэс (агуулах, ачаа, нүүх, туслах, нохой, бүс, тусламж)
+ *  - баруун дээд: хурд, ⏭ алгасах (render/ui/timebar.ts), бүтэн дэлгэц, ☰ цэс (агуулах, нүүх, туслах, нохой, бүс, тусламж); 🧺 ачаа бэлтгэх нь тэрэгний дэргэд үйлдлийн товчоор гарна
  * Товч бүр PlayerController.press(<товчны код>)-ийг дуудна — тоглоомын логик гартай яг адил.
  * Газар дээр дарах (тийш явах), чирэх (камер), хоёр хуруугаар чимхэх (томруулах) — render/camera.ts.
  */
@@ -98,7 +98,13 @@ export class TouchUI {
       const p = s.player, home = this.cfg.camps.home;
       return s.items.some((it) => dist(it, p) <= this.cfg.products.pickupRadius * 1.6) || (p.carry.length > 0 && dist(p, home) <= home.storageRadius);
     };
-    const canSend = (s: GameState): boolean => camp(s) && !!driverSendTarget(this.cfg, s);
+    // Тэрэг/машины дэргэд: эхлээд 🧺 ачаа бэлтгэх; ачаатай (жолоочтой) болмогц 📦 сум руу явуулах гарна
+    const campVehicle = (s: GameState) => {
+      const f = camp(s) && !s.player.mounted ? nearestVehicle(this.cfg, s, this.cfg.vehicles.road.enterRange) : null;
+      return f && f.place === 'camp' ? f : null;
+    };
+    const loaded = (s: GameState): boolean => Object.keys(campVehicle(s)?.cargo ?? {}).length > 0;
+    const canSend = (s: GameState): boolean => camp(s) && !!driverSendTarget(this.cfg, s) && loaded(s);
     const herdNear = (s: GameState): boolean => {
       const r = s.player.mounted ? this.cfg.player.shout.radiusMounted : this.cfg.player.shout.radius;
       return s.animals.some((a) => !a.riding && dist(a, s.player) <= r);
@@ -110,6 +116,7 @@ export class TouchUI {
     addAct('🐺', t('ui.scare'), 'KeyQ', (s) => camp(s) && wolfNear(s), () => 5);
     addAct('✋', t('ui.pick_up'), 'KeyE', (s) => camp(s) && !canSend(s) && canPick(s), () => 4);
     addAct('📦', t('ui.send_act'), 'KeyE', canSend, () => 4);
+    addAct('🧺', t('ui.load_act'), 'KeyT', (s) => !!campVehicle(s), (s) => (loaded(s) ? 0 : 3));
     addAct('🚪', t('ui.enter_act'), 'KeyE', (s) => camp(s) && !canSend(s) && !canPick(s) && !s.player.mounted && !!nearEnterDoor(this.cfg, s), () => 3);
     addAct('🏪', t('ui.trade'), 'KeyE', (s) => s.player.place === 'sum' && !s.player.driving && !s.player.interior, () => 3);
     addAct('🚪', t('ui.leave_act'), 'KeyE', (s) => !!s.player.interior, () => 3);   // V6.1: дотор E — гарах эсвэл лангуунд цонх нээх
@@ -149,7 +156,6 @@ export class TouchUI {
     };
     const atCamp = (s: GameState): boolean => s.player.place === 'camp' && !s.move;
     addMenu('📦', t('ui.storage'), 'KeyB', atCamp);
-    addMenu('🧺', t('ui.load_goods'), 'KeyT', atCamp);
     addMenu('🏕', t('ui.move_camp'), 'KeyM', atCamp);
     addMenu('👥', t('ui.helpers_319'), 'KeyJ');
     addMenu('🐕', t('ui.dogs'), 'KeyK', (s) => s.dogs.length > 0);
