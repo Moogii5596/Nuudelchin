@@ -15,10 +15,11 @@ SYM game/src/device.ts:49 const QUALITY_SPEC
 SYM game/src/device.ts:55 const Q
 SYM game/src/device.ts:58 const KEY_ICON
 SYM game/src/device.ts:63 fn touchKeys
-FILE game/src/i18n/i18n.ts 0.5KB 16L exports: Lang,setLang,t
+FILE game/src/i18n/i18n.ts 0.5KB 20L exports: Lang,setLang,getLang,t
 SYM game/src/i18n/i18n.ts:4 type Lang
 SYM game/src/i18n/i18n.ts:8 fn setLang
-SYM game/src/i18n/i18n.ts:13 fn t
+SYM game/src/i18n/i18n.ts:12 fn getLang
+SYM game/src/i18n/i18n.ts:17 fn t
 FILE game/src/input/controller.ts 14.6KB 357L exports: ActionKind,ControllerHooks,PlayerController
 SYM game/src/input/controller.ts:15 type ActionKind
 SYM game/src/input/controller.ts:17 interface ControllerHooks
@@ -45,10 +46,10 @@ SYM game/src/input/touch.ts:260 method TouchUI.fullscreen
 SYM game/src/input/touch.ts:273 method TouchUI.paused
 SYM game/src/input/touch.ts:277 method TouchUI.portrait
 SYM game/src/input/touch.ts:282 method TouchUI.update
-FILE game/src/main.ts 31.9KB 492L
-SYM game/src/main.ts:39 fn toast
-SYM game/src/main.ts:55 fn start
-SYM game/src/main.ts:477 fn boot
+FILE game/src/main.ts 34.4KB 536L
+SYM game/src/main.ts:41 fn toast
+SYM game/src/main.ts:64 fn start
+SYM game/src/main.ts:509 fn boot
 FILE game/src/persist/autosave.ts 4.7KB 102L exports: SaveReason,AutosaveDeps,Autosave,attachSimEvents,attachPageEvents
 SYM game/src/persist/autosave.ts:11 type SaveReason
 SYM game/src/persist/autosave.ts:13 interface AutosaveDeps
@@ -107,23 +108,21 @@ SYM game/src/render/animals.ts:216 method AnimalsView.setQuality
 SYM game/src/render/animals.ts:221 method AnimalsView.snapshot
 SYM game/src/render/animals.ts:235 method AnimalsView.update
 SYM game/src/render/animals.ts:346 method AnimalsView.reset
-FILE game/src/render/camclip.ts 5.8KB 109L exports: CamBox,CamCyl,CamSolids,CamRoom,V3,CAM_MARGIN,clipThroughSolids,clipInRoom
-SYM game/src/render/camclip.ts:8 interface CamBox
-SYM game/src/render/camclip.ts:10 interface CamCyl
-SYM game/src/render/camclip.ts:11 interface CamSolids
-SYM game/src/render/camclip.ts:13 interface CamRoom
-SYM game/src/render/camclip.ts:15 type V3
-SYM game/src/render/camclip.ts:18 const CAM_MARGIN
-SYM game/src/render/camclip.ts:25 fn slabHit
-SYM game/src/render/camclip.ts:39 fn boxHit
-SYM game/src/render/camclip.ts:49 fn cylHit
-SYM game/src/render/camclip.ts:71 fn clipThroughSolids
-SYM game/src/render/camclip.ts:86 fn clipInRoom
-FILE game/src/render/camera.ts 7.9KB 160L exports: FollowCamera
+FILE game/src/render/camclip.ts 4.7KB 82L exports: CamBox,CamCyl,CamSolids,V3,CAM_MARGIN,clipThroughSolids
+SYM game/src/render/camclip.ts:9 interface CamBox
+SYM game/src/render/camclip.ts:11 interface CamCyl
+SYM game/src/render/camclip.ts:12 interface CamSolids
+SYM game/src/render/camclip.ts:14 type V3
+SYM game/src/render/camclip.ts:17 const CAM_MARGIN
+SYM game/src/render/camclip.ts:24 fn slabHit
+SYM game/src/render/camclip.ts:38 fn boxHit
+SYM game/src/render/camclip.ts:48 fn cylHit
+SYM game/src/render/camclip.ts:70 fn clipThroughSolids
+FILE game/src/render/camera.ts 7.6KB 158L exports: FollowCamera
 SYM game/src/render/camera.ts:12 class FollowCamera
-SYM game/src/render/camera.ts:37 method FollowCamera.span
-SYM game/src/render/camera.ts:123 method FollowCamera.update
-SYM game/src/render/camera.ts:156 method FollowCamera.resize
+SYM game/src/render/camera.ts:36 method FollowCamera.span
+SYM game/src/render/camera.ts:122 method FollowCamera.update
+SYM game/src/render/camera.ts:154 method FollowCamera.resize
 FILE game/src/render/character/animate.ts 6.6KB 139L exports: CharacterPose,animateCharacter
 SYM game/src/render/character/animate.ts:11 interface CharacterPose
 SYM game/src/render/character/animate.ts:24 fn sstep
@@ -408,20 +407,20 @@ SYM game/src/render/labelAtlas.ts:42 method LabelAtlas.add
 SYM game/src/render/labelAtlas.ts:50 method LabelAtlas.build
 SYM game/src/render/labelAtlas.ts:68 method LabelAtlas.setText
 SYM game/src/render/labelAtlas.ts:74 method LabelAtlas.setCell
-FILE game/src/render/scene.ts 24.2KB 513L exports: GameView
+FILE game/src/render/scene.ts 24.1KB 510L exports: GameView
 SYM game/src/render/scene.ts:28 fn flakeTexture
 SYM game/src/render/scene.ts:41 class GameView
 SYM game/src/render/scene.ts:241 method GameView.applyQuality
 SYM game/src/render/scene.ts:271 method GameView.snapshot
 SYM game/src/render/scene.ts:285 method GameView.toggleHeatmap
 SYM game/src/render/scene.ts:291 method GameView.frame
-SYM game/src/render/scene.ts:363 method GameView.campSolids
-SYM game/src/render/scene.ts:391 method GameView.frameInterior
-SYM game/src/render/scene.ts:415 method GameView.leaveInterior
-SYM game/src/render/scene.ts:430 method GameView.applyDaylight
-SYM game/src/render/scene.ts:490 method GameView.updateFlakes
-SYM game/src/render/scene.ts:506 method GameView.drawCalls
-SYM game/src/render/scene.ts:510 method GameView.triangleCount
+SYM game/src/render/scene.ts:362 method GameView.campSolids
+SYM game/src/render/scene.ts:390 method GameView.frameInterior
+SYM game/src/render/scene.ts:412 method GameView.leaveInterior
+SYM game/src/render/scene.ts:427 method GameView.applyDaylight
+SYM game/src/render/scene.ts:487 method GameView.updateFlakes
+SYM game/src/render/scene.ts:503 method GameView.drawCalls
+SYM game/src/render/scene.ts:507 method GameView.triangleCount
 FILE game/src/render/staff.ts 6.8KB 151L exports: makeDwelling,StaffView
 SYM game/src/render/staff.ts:22 fn helperRole
 SYM game/src/render/staff.ts:31 fn makeDwelling
@@ -526,6 +525,41 @@ SYM game/src/render/terrain.ts:1214 method TerrainView.buildPostAndFire
 SYM game/src/render/terrain.ts:1238 method TerrainView.syncHay
 SYM game/src/render/terrain.ts:1264 method TerrainView.buildDens
 SYM game/src/render/terrain.ts:1301 method TerrainView.buildHome
+FILE game/src/render/ui/menu.ts 18.8KB 393L exports: Intent,takeIntent,putIntent,storedLang,MenuDeps,MenuUI
+SYM game/src/render/ui/menu.ts:23 type Intent
+SYM game/src/render/ui/menu.ts:28 fn takeIntent
+SYM game/src/render/ui/menu.ts:40 fn putIntent
+SYM game/src/render/ui/menu.ts:45 fn storedLang
+SYM game/src/render/ui/menu.ts:54 interface MenuDeps
+SYM game/src/render/ui/menu.ts:74 fn esc
+SYM game/src/render/ui/menu.ts:76 class MenuUI
+SYM game/src/render/ui/menu.ts:107 method MenuUI.showStart
+SYM game/src/render/ui/menu.ts:112 method MenuUI.toggleGame
+SYM game/src/render/ui/menu.ts:118 method MenuUI.close
+SYM game/src/render/ui/menu.ts:124 method MenuUI.showIntro
+SYM game/src/render/ui/menu.ts:131 method MenuUI.go
+SYM game/src/render/ui/menu.ts:143 method MenuUI.refreshSlots
+SYM game/src/render/ui/menu.ts:153 method MenuUI.onKey
+SYM game/src/render/ui/menu.ts:164 method MenuUI.render
+SYM game/src/render/ui/menu.ts:170 method MenuUI.ver
+SYM game/src/render/ui/menu.ts:174 method MenuUI.back
+SYM game/src/render/ui/menu.ts:178 method MenuUI.rStart
+SYM game/src/render/ui/menu.ts:194 method MenuUI.rGame
+SYM game/src/render/ui/menu.ts:208 method MenuUI.slotInfoHtml
+SYM game/src/render/ui/menu.ts:217 method MenuUI.rSlots
+SYM game/src/render/ui/menu.ts:231 method MenuUI.rangeRow
+SYM game/src/render/ui/menu.ts:236 method MenuUI.difficultyHtml
+SYM game/src/render/ui/menu.ts:242 method MenuUI.rNew
+SYM game/src/render/ui/menu.ts:257 method MenuUI.firstFreeSlot
+SYM game/src/render/ui/menu.ts:262 method MenuUI.rFile
+SYM game/src/render/ui/menu.ts:272 method MenuUI.rSettings
+SYM game/src/render/ui/menu.ts:282 method MenuUI.rIntro
+SYM game/src/render/ui/menu.ts:292 method MenuUI.finishIntro
+SYM game/src/render/ui/menu.ts:299 method MenuUI.onInput
+SYM game/src/render/ui/menu.ts:309 method MenuUI.onChange
+SYM game/src/render/ui/menu.ts:323 method MenuUI.setDie
+SYM game/src/render/ui/menu.ts:328 method MenuUI.onClick
+SYM game/src/render/ui/menu.ts:389 method MenuUI.busyDo
 FILE game/src/render/ui/names.ts 4.7KB 111L exports: stageName,speciesEmoji,PRODUCT_EMOJI,productName,unitOf,expenseName,PROCESSOR_NAME,fmtMoney,fmtNum,fmtMinutes,PASTURE_NAME,SEASON_NAME,SEASON_EMOJI,CAMP_HINT,+2
 SYM game/src/render/ui/names.ts:22 fn stageName
 SYM game/src/render/ui/names.ts:33 fn speciesEmoji
@@ -1150,7 +1184,7 @@ SYM tools/codemap.ts:141 fn generate
 SYM tools/codemap.ts:195 fn main
 FILE game/tests/animals.test.ts 2.3KB 39L
 FILE game/tests/breeding.test.ts 1.4KB 33L
-FILE game/tests/camclip.test.ts 5.0KB 94L
+FILE game/tests/camclip.test.ts 3.9KB 68L
 FILE game/tests/characters.test.ts 26.0KB 438L
 FILE game/tests/clock.test.ts 2.3KB 47L
 FILE game/tests/config.test.ts 1.4KB 29L
@@ -1178,7 +1212,7 @@ FILE game/tests/sumtown.test.ts 4.5KB 90L
 FILE game/tests/town.test.ts 6.1KB 127L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 18.7KB 107L
+FILE docs/CONTEXT.md 18.9KB 107L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-28 ## 2. Стек ба командууд
 DOC docs/CONTEXT.md:29-81 ## 3. Файлын зураглал (`game/src/`)
@@ -1373,12 +1407,12 @@ FILE docs/plan/M7.md 7.6KB 31L
 DOC docs/plan/M7.md:12-22 ## Блокууд
 DOC docs/plan/M7.md:23-27 ## Асуулга (10 асуулт)
 DOC docs/plan/M7.md:28-31 ## Эрсдэл
-FILE docs/plan/V.md 34.9KB 85L
+FILE docs/plan/V.md 37.3KB 85L
 DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
 DOC docs/plan/V.md:24-79 ## Блокууд ба чеклист (2026-11-15)
 DOC docs/plan/V.md:80-85 ## Зогссон цэг
-FILE docs/plan/playtest.md 10.1KB 66L
+FILE docs/plan/playtest.md 9.9KB 66L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
 DOC docs/plan/playtest.md:19-39 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
 DOC docs/plan/playtest.md:40-66 ## C. Мэдрэмж, үе шат бүрээр

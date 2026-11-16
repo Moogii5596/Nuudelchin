@@ -7,6 +7,8 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { doorPoint, plotHouse, sumHeight, type SumLayout, type SumBuildingSpec, type SumSpecialPlotSpec, type SumXZ } from '../sim/systems/sumtown';
 
+import type { CamSolids } from './camclip';
+
 type XZ = SumXZ;
 type BuildingSpec = SumBuildingSpec;
 export interface Rect { id: string; x: number; z: number; w: number; d: number }
@@ -28,6 +30,8 @@ export interface SumCenterBuild {
   /** Айлын гэрийн байрлал (V3.5: render/ger-ээр sumcenter.ts зурна) — y газрын өндөр, r хананы радиус */
   gers: SumGer[];
   colliders: Rect[];
+  /** Камерын мөргөлдөөн (V4.5 R7): барилга, гэрийн хайрцаг/цилиндр */
+  solids: CamSolids;
   heightAt: (x: number, z: number) => number;
   dispose: () => void;
 }
@@ -147,6 +151,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
   group.name = `sumcenter:${L.id}`;
   const homes: HomeDoor[] = [];
   const colliders: Rect[] = [];
+  const solids: CamSolids = { boxes: [], cyls: [] };
   const disposables: { dispose(): void }[] = [];
   const FH = L.floorHeight;
   const roadPts = L.roads.map(r => ({ r, pts: r.points as XZ[] }));
@@ -261,7 +266,8 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
   // --- Гэр ---
   const gers: SumGer[] = [];
   const ger = (x: number, z: number, color = '#F3EDE2', r = 3.2) => {
-    gers.push({ x, y: heightAt(x, z), z, color, r });   // хаалга урагшаа (+z); загвар — sumcenter.ts (makeGer)
+    gers.push({ x, y: heightAt(x, z), z, color, r });
+    solids.cyls.push({ x, z, r: r + 0.3, y0: heightAt(x, z) - 2, y1: heightAt(x, z) + 3.4 });   // хаалга урагшаа (+z); загвар — sumcenter.ts (makeGer)
   };
 
   // --- Барилга ---
@@ -321,6 +327,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     B.box(horizDoor ? 1.6 : 0.16, 2.2, horizDoor ? 0.16 : 1.6, dx, base, dz, 0, '#5C3A24');
     if (b.chimney) B.cyl(0.8, 1.1, b.chimney.h, b.x + b.chimney.dx, base, b.z + b.chimney.dz, '#7A746C', 8);
     colliders.push({ id: b.id, x: b.x, z: b.z, w: b.w, d: b.d });
+    solids.boxes.push({ x: b.x, z: b.z, hw: b.w / 2, hd: b.d / 2, rot, y0: yMin - 2, y1: base + h + (b.roof.type === 'pagoda' ? 6 : b.roof.type === 'flat' ? 1 : Math.min(b.w, b.d) * 0.4) });
     const dp = doorPoint(b);
     const door: HomeDoor = { x: dp.x, y: base, z: dp.z };
     if (b.yard) {
@@ -722,6 +729,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     gers,
     ground: terrainMesh,
     colliders,
+    solids,
     heightAt,
     dispose: () => disposables.forEach(d => d.dispose()),
   };

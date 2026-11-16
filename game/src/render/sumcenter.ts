@@ -19,6 +19,7 @@ import { makeCrowdFar, makeCrowdParts } from './character/crowd';
 import { bakeStatic, staticMeshes } from './character/bake';
 import { GER } from './ger/config';
 import { makeGer, type GerBuilt } from './ger/ger';
+import type { CamSolids } from './camclip';
 import { seasonOf } from '../sim/systems/seasons';
 import { LabelAtlas, type LabelStyle } from './labelAtlas';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
@@ -210,6 +211,8 @@ export class SumCenterView {
   }
 
   heightAt = (x: number, z: number): number => this.built.heightAt(x, z);
+  /** Камерын мөргөлдөөний саад (барилга, гэр) */
+  get solids(): CamSolids { return this.built.solids; }
 
   /** V3.4: худалдаж авсан байшингийн шошго (R7: сумын төвд кадр бүр дуудагддаг тул ярилцлагыг ч эндээс) */
   syncTown(state: GameState): void {

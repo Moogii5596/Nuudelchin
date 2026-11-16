@@ -65,7 +65,7 @@ TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `gam
 | `ger/` | Гэр, майхны загвар (V3.5/V6.2, лабораторийн баталсан): `config.ts` (data/ger.json шалгагч, `GER`, `TENT`), `geo.ts` (Geo угсрагч), `atlas.ts` (хаалга, дотор талын canvas атлас), `ger.ts` (`makeGer` — гадна; helper = `GER.helper` тохиргоо), `tent.ts` (`makeTent`), `gerInterior.ts` (`makeGerInterior` — дотор тал, тавилга). `terrain.ts` бууцны гэр/майхныг, `interior.ts` гэрийн өрөөг ашиглана. Гэр ≤ 3 draw call, ≤ 1500 гурвалжин |
 | `items.ts` · `vehicles.ts` · `zones.ts` | Газрын бүтээгдэхүүн · тэрэг/машин · хамгаалалтын бүс |
 | `sumcenter.ts` · `labelAtlas.ts` · `sumlayout.ts` · `worldmap.ts` | Сумын төвийн view (шошго — нэг атлас, тойрог — нэг mesh, оршин суугч — `crowd.nearR` LOD, хэвтээ нохой — нэгтгэсэн, айлын гэр — `sumlayout` `gers` байрлалаар `makeGer` → нэг mesh, улирлаар, худалдаанд байгаа машин; draw call high ≈ 84) · олон бичигтэй самбарыг 1 текстур, 1 mesh болгох `LabelAtlas` · `data/sumcenter.json`-ийг low-poly merged mesh болгох бүтээгч (V3.3 Могод сум) · газрын зураг (дээрээс харсан) |
-| `camera.ts` · `style.ts` · `util.ts` | Дагах камер · `data/visuals.json`-ийн шалгалт, `visualStyle` · туслах |
+| `camera.ts` · `camclip.ts` · `style.ts` · `util.ts` | Дагах камер · камерын мөргөлдөөн (барилга/гэрийн хайрцаг, цилиндр; цэвэр) · `data/visuals.json`-ийн шалгалт, `visualStyle` · туслах |
 | `ui/panels.ts` · `ui/names.ts` | Бүх цонх: агуулах, тайлан, Худалдаачин, нүүх, нохой, туслах · нэрс, форматлагч |
 ### Бусад
 | Файл | Үүрэг |

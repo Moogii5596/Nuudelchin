@@ -9,6 +9,8 @@ import { TerrainView } from './terrain';
 import { AnimalsView } from './animals';
 import { CharactersView } from './characters';
 import { FollowCamera } from './camera';
+import type { CamSolids } from './camclip';
+import { GER, TENT } from './ger/config';
 import { ItemsView } from './items';
 import { ZonesView } from './zones';
 import { VehiclesView, nightFactor } from './vehicles';
@@ -345,12 +347,43 @@ export class GameView {
     // Малчныг (жолоодож байвал тээврийг) дагана — байрлал кадр бүр бодит цагаар шинэчлэгддэг тул жигд
     const cx = p.x, cz = p.z;
     const ty = this.heightAt(cx, cz) + (p.mounted || p.driving ? 2.4 : 1.6);
+    this.cam.solids = camp ? this.campSolids(state) : p.place === 'sum' ? this.sum.solids : null;   // V4.5 R7: камер барилга, гэрт орохгүй
     this.cam.update(cx, cz, ty, this.heightAt, dt);
     this.terrain.updateGrassCenter(cx, cz, (this.scene.fog as THREE.Fog).far);
     this.skyDome.position.copy(this.cam.camera.position);
     this.stars.position.copy(this.cam.camera.position);
     this.updateFlakes(look.snowing && p.place === 'camp', cx, ty, cz, dt);
     this.renderer.render(this.scene, this.cam.camera);
+  }
+
+  private campKey = '';
+  private campSol: CamSolids = { boxes: [], cyls: [] };
+  /** Бууцны камерын саад: өөрийн гэр/майхан, туслахын байр, айлын гэр (цөөн, өөрчлөгдвөл л дахин тооцно) */
+  private campSolids(state: GameState): CamSolids {
+    const dw = state.helpers.dwellings;
+    const key = state.home + '|' + dw.map((d) => d.kind + d.x + ',' + d.z).join(';');
+    if (key === this.campKey) return this.campSol;
+    this.campKey = key;
+    const cyls: CamSolids['cyls'] = [];
+    const gerAt = (x: number, z: number, size: string): void => {
+      const s = GER.sizes[size]!;
+      const y = this.heightAt(x, z);
+      cyls.push({ x, z, r: s.diameter / 2 + 0.45, y0: y - 2, y1: y + s.topH + 0.6 });
+    };
+    const tentAt = (x: number, z: number, kind: string): void => {
+      const k = TENT.kinds[kind]!;
+      const y = this.heightAt(x, z);
+      cyls.push({ x, z, r: Math.max(k.L, k.W) / 2 + TENT.ropeOut * 0.5 + 0.3, y0: y - 2, y1: y + k.H + 0.5 });
+    };
+    const h = this.cfg.camps.home;
+    if (state.home === 'ger') gerAt(h.x, h.z, GER.home.size); else tentAt(h.x, h.z, 'start');
+    for (const d of dw) {
+      if (d.kind === 'helperTent') tentAt(d.x, d.z, 'otor');
+      else if (d.kind === 'horseCamp') tentAt(d.x, d.z, 'horse');
+      else gerAt(d.x, d.z, d.kind === 'helperGer' ? GER.helper.size : GER.home.size);
+    }
+    this.campSol = { boxes: [], cyls };
+    return this.campSol;
   }
 
   /** V6.1: барилга дотор — тусдаа дүр зураг, өөрийн гэрэл. Гаднах ертөнцийг шинэчлэхгүй */
@@ -370,6 +403,7 @@ export class GameView {
     // Малчны загвар дотоод координатаар: байрлал, чиглэл нь өрөөний; бусад нь хэвээр
     const proxy = { ...state, player: { ...p, x: ip.x, z: ip.z, heading: ip.heading, mounted: false, driving: null, place: 'sum' as const } } as GameState;
     this.characters.update(proxy, this.heightAt, dt);
+    this.cam.solids = null;   // дотор тал: нэг талт ханатай хайрцаг — камер ханын гадна байх нь зориуд
     this.cam.update(ip.x, ip.z, 1.0, this.heightAt, dt);
     this.renderer.render(this.interior.scene, this.cam.camera);
   }

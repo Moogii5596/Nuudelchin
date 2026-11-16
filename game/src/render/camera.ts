@@ -3,9 +3,11 @@
  * Чирээгүй товшилтыг onClick-ээр (газар дээр дарж явах) дамжуулна.
  * M4.6: газрын зургийн горимд (mapMode) хулганы баруун товчоор чирэхэд эргүүлнэ, дунд товчоор дээш доош хазайлгана
  * (mapYaw, mapPitch). Зүүн товч — зөвхөн дарах.
+ * V4.5 R7: мөргөлдөөн — `solids` (гаднах барилга, гэр) тавигдвал камер тэдгээрт орохгүй, малчин руу зөөлөн ойртоно.
  */
 import * as THREE from 'three';
 import { clamp } from './util';
+import { clipThroughSolids, type CamSolids } from './camclip';
 
 export class FollowCamera {
   readonly camera: THREE.PerspectiveCamera;
@@ -17,6 +19,10 @@ export class FollowCamera {
   mapMode = false;
   mapYaw = 0;
   mapPitch = 0.95;
+  /** Мөргөлдөөний саад (гадаа) — scene.ts кадр бүр тавина; дотор талд null */
+  solids: CamSolids | null = null;
+  /** Саадаас болж камерын зай хэд хувь үлдсэн (1 = бүтэн) — аажмаар сэргэнэ */
+  private clipT = 1;
   private ptr: { x: number; y: number; sx: number; sy: number; id: number; drag: boolean; button: number; touch: boolean } | null = null;
   private lastTap = 0;
   private cameraReady = false;
@@ -119,7 +125,13 @@ export class FollowCamera {
     let cy = ty + Math.sin(this.pitch) * this.dist;
     cy = Math.max(cy, heightAt(cx, cz) + 1.2);
     this.desiredTarget.set(tx, ty, tz);
-    this.desiredPosition.set(cx, cy, cz);
+    // Мөргөлдөөн: малчин → камер сегментийг саадад тулгана. Ойртох нь хурдан (~0.08 с), холдох нь аажим (~0.4 с)
+    let t = 1;
+    if (this.solids) t = clipThroughSolids([tx, ty, tz], [cx, cy, cz], this.solids);
+    if (!this.cameraReady || dt <= 0 || t < this.clipT) this.clipT = t < this.clipT ? this.clipT + (t - this.clipT) * (this.cameraReady && dt > 0 ? 1 - Math.exp(-dt * 25) : 1) : t;
+    else this.clipT += (t - this.clipT) * (1 - Math.exp(-dt * 2.5));
+    const k = Math.min(this.clipT, t);                  // зөөлрүүлсэн ч хана руу орохгүй (t-ээс их болохгүй)
+    this.desiredPosition.set(tx + (cx - tx) * k, ty + (cy - ty) * k, tz + (cz - tz) * k);
     if (!this.cameraReady || dt <= 0) {
       this.smoothPosition.copy(this.desiredPosition);
       this.smoothTarget.copy(this.desiredTarget);
@@ -128,6 +140,12 @@ export class FollowCamera {
       const blend = 1 - Math.exp(-dt * 10);
       this.smoothPosition.lerp(this.desiredPosition, blend);
       this.smoothTarget.lerp(this.desiredTarget, blend);
+    }
+    // Гөлгөржүүлэлтийн хоцролт камерыг барилга руу оруулж болох тул эцсийн байрлалыг дахин саадад тулгана
+    if (this.solids) {
+      const sp = this.smoothPosition, st = this.smoothTarget;
+      const k2 = clipThroughSolids([st.x, st.y, st.z], [sp.x, sp.y, sp.z], this.solids);
+      if (k2 < 1) sp.set(st.x + (sp.x - st.x) * k2, st.y + (sp.y - st.y) * k2, st.z + (sp.z - st.z) * k2);
     }
     this.camera.position.copy(this.smoothPosition);
     this.camera.lookAt(this.smoothTarget);
