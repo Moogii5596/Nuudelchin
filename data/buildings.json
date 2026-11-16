@@ -1449,7 +1449,8 @@
    },
    "kinder": {
     "type": "public",
-    "kind": "kinder"
+    "kind": "kinder",
+    "entrance": 1
    },
    "boiler": {
     "type": "public",

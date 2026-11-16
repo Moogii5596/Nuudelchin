@@ -436,6 +436,7 @@
       "w": 12,
       "d": 34,
       "floors": 2,
+      "front": "w",
       "roof": {
         "type": "gable",
         "color": "#D9622E"
@@ -510,9 +511,9 @@
       "kind": "hospital",
       "x": 63.5,
       "z": -102,
-      "w": 44,
-      "d": 11,
-      "floors": 1,
+      "w": 50,
+      "d": 12,
+      "floors": 2,
       "roof": {
         "type": "flat",
         "color": "#4A4A4A"
@@ -752,7 +753,7 @@
       "gameRole": "equipment",
       "x": 218,
       "z": -12,
-      "w": 10,
+      "w": 9.6,
       "d": 8,
       "floors": 1,
       "roof": {
@@ -804,8 +805,8 @@
           "gameRole": "buyer",
           "x": 177.5,
           "z": -15.5,
-          "w": 10,
-          "d": 8,
+          "w": 7,
+          "d": 6,
           "floors": 1,
           "roof": {
             "type": "gable",
@@ -851,8 +852,8 @@
           "gameRole": "ger_tent",
           "x": 194.5,
           "z": -37.5,
-          "w": 9,
-          "d": 7,
+          "w": 9.6,
+          "d": 8,
           "floors": 1,
           "roof": {
             "type": "gable",

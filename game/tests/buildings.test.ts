@@ -52,3 +52,58 @@ describe('барилгын загвар (лабораторийн баталса
     expect(r.geo.triangles).toBeGreaterThan(r.house!.geo.triangles);
   });
 });
+
+import { cfg } from './helpers';
+import { allBuildings, doorPoint } from '../src/sim/systems/sumtown';
+import { entryFootprint, labDoorPoint, labOrigin, rotLocal, townEntry, worldSize } from '../src/sim/systems/buildingSize';
+import { TOWN } from '../src/render/building';
+import { buildWoolStore } from '../src/render/building/shops';
+
+describe('сумын төв ↔ лабораторийн барилга (sim хэмжээ, хаалга)', () => {
+  const blds = allBuildings(cfg.sumcenter);
+  const byId = new Map(blds.map((b) => [b.id, b]));
+  const single = Object.entries(TOWN.byId);
+
+  it('town.byId бүх id sumcenter.json-д бий', () => { for (const [id] of single) expect(byId.has(id), id).toBe(true); });
+
+  it('sumcenter.json-ийн хэмжээ = лабораторийн хэмжээ (rot-оор эргүүлсэн)', () => {
+    for (const [id, e] of single) {
+      const b = byId.get(id)!, f = entryFootprint(e), s = worldSize(e, f);
+      expect([id, b.w, b.d]).toEqual([id, s.w, s.d]);
+    }
+  });
+
+  it('нүүр: rot → front (0 урагш, 90 баруун, 180 хойд)', () => {
+    const want: Record<number, string> = { 0: 's', 90: 'w', 180: 'n' };
+    for (const [id, e] of single) expect(byId.get(id)!.front ?? 's', id).toBe(want[e.rot ?? 0]);
+  });
+
+  it('sim-ийн doorPoint = лабораторийн геометрийн хаалга (дэлхийд)', () => {
+    for (const [id, e] of single) {
+      const b = byId.get(id)!;
+      let door: { x: number; z: number };
+      if (e.type === 'woolStore') door = buildWoolStore({}).door.position;
+      else if (e.type === 'temple') door = makeBuilding('temple', {}).door.position;
+      else { const m = makeBuilding(e.kind!, {}); door = (e.entrance ? m.points![e.entrance - 1]! : m.door).position; }
+      const o = labOrigin(e, b), r = rotLocal(door.x, door.z, e.rot ?? 0), p = doorPoint(b);
+      expect(p.x, `${id} x`).toBeCloseTo(o.x + r.x, 6);
+      expect(p.z, `${id} z`).toBeCloseTo(o.z + r.z, 6);
+      expect(labDoorPoint(b)).toEqual(p);
+    }
+  });
+
+  it('хаалганы цэг барилгын хайрцагнаас гадна, rot 0 бол нүүрэн талд', () => {
+    for (const [id, e] of single) {
+      const b = byId.get(id)!, p = doorPoint(b);
+      if (e.type === 'temple') continue;
+      const inside = Math.abs(p.x - b.x) < b.w / 2 && Math.abs(p.z - b.z) < b.d / 2;
+      expect(inside, id).toBe(false);
+    }
+  });
+
+  it('лабораторийн бус барилга хуучин томьёогоор (2 м)', () => {
+    const r = byId.get('resort_main')!;
+    expect(townEntry(r.id)).toBeNull();
+    expect(doorPoint(r)).toEqual({ x: r.x, z: r.z + r.d / 2 + 2 });
+  });
+});

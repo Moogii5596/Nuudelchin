@@ -19,6 +19,8 @@ export interface TownEntry {
   /** public.kinds / shop.types түлхүүр (type=public|shop үед) */
   kind?: string;
   /** Эргүүлэлт (градус, нүүр +Z-ээс цагийн зүүний эсрэг биш — render-ийн Geo.append phi = rot·π/180) */
+  /** public: тоглоомын гол үүд — entrances-ийн индекс (анхдагч 0) */
+  entrance?: number;
   rot?: number;
   /** Орон нутгийн төвөөс (x, z) зөөх (м) — нийлмэл талбайн голыг барилгын цэгт тааруулах */
   dx?: number;
@@ -81,6 +83,7 @@ function collectErrors(c: unknown): string[] {
     if (!ok.includes(e.type)) errs.push(`town.byId.${id}.type "${e.type}" буруу`);
     else if (e.type === 'public' && !pub[e.kind ?? '']) errs.push(`town.byId.${id}.kind "${e.kind}" public.kinds-д алга`);
     else if (e.type === 'shop' && !isObj(shop.types[e.kind ?? ''])) errs.push(`town.byId.${id}.kind "${e.kind}" shop.types-д алга`);
+    if (e.type === 'public' && pub[e.kind ?? ''] && e.entrance !== undefined && !(Number.isInteger(e.entrance) && e.entrance >= 0 && e.entrance < (pub[e.kind!]!.entrances as unknown[]).length)) errs.push(`town.byId.${id}.entrance буруу`);
     if (e.roofColor !== undefined && !roofColors[e.roofColor] && !HEX.test(e.roofColor)) errs.push(`town.byId.${id}.roofColor буруу`);
   }
   for (const grp of ['compounds', 'fields', 'props'] as const) for (const [id, e] of Object.entries(town[grp] ?? {})) if (!TOWN_TYPES.includes(e.type)) errs.push(`town.${grp}.${id}.type "${e.type}" буруу`);

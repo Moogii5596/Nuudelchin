@@ -6,6 +6,7 @@
 import type { BuyOrder } from '../state';
 import type { GameConfig } from '../config';
 import type { GameState } from '../state';
+import { labDoorPoint } from './buildingSize';
 
 // ---------- data/sumcenter.json-ийн төрөл (config.ts → GameConfig.sumcenter) ----------
 /** V3.3: сумын төвийн 3D байршил (data/sumcenter.json). Нэгж м; z− = хойд, x+ = зүүн */
@@ -83,7 +84,9 @@ export function facingOf(b: Pick<SumBuildingSpec, 'front'>): Facing {
 }
 
 /** Хаалганы гаднах цэг: нүүрэн хананаас `out` м */
-export function doorPoint(b: Pick<SumBuildingSpec, 'x' | 'z' | 'w' | 'd' | 'front'>, out = 2): { x: number; z: number } {
+export function doorPoint(b: Pick<SumBuildingSpec, 'x' | 'z' | 'w' | 'd' | 'front'> & { id?: string }, out = 2): { x: number; z: number } {
+  const lab = out === 2 ? labDoorPoint(b) : null;   // V3.5: лабораторийн барилга — үүдний байрлал загвараас (data/buildings.json)
+  if (lab) return lab;
   switch (facingOf(b)) {
     case 'n':
       return { x: b.x, z: b.z - b.d / 2 - out };
