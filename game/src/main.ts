@@ -28,7 +28,8 @@ import { atExit, interiorService, nearEnterDoor } from './sim/systems/interior';
 import { campAccess, seasonProgress, yearOf } from './sim/systems/seasons';
 import { GameView } from './render/scene';
 import { Panels } from './render/ui/panels';
-import { PRODUCT_EMOJI, SEASON_EMOJI, SEASON_NAME, fmtMinutes, fmtMoney, fmtNum } from './render/ui/names';
+import { PRODUCT_EMOJI, SEASON_EMOJI, SEASON_NAME, fmtMinutes, fmtMoney, fmtNum, productName } from './render/ui/names';
+import { PRODUCTS, type ProductId } from './sim/state';
 import { driverSendTarget, PlayerController } from './input/controller';
 import { t } from './i18n/i18n';
 import { tm } from './i18n/msg';
@@ -48,8 +49,11 @@ import { isTouch, touchKeys, quality, QUALITIES, QUALITY_NAME, QUALITY_SPEC, set
 /** 📜 Тэмдэглэлд бүртгэх (start() дотор тавигдана) */
 let noteSink: ((text: string, kind: '' | 'good' | 'bad') => void) | null = null;
 
-/** log=false: тэмдэглэлд бүртгэхгүй (автомат хадгалалт г.м. тоглоомын үйл явдал биш мэдэгдэл) */
-function toast(message: string | Msg, kind: '' | 'good' | 'bad' = '', log = true): void {
+/**
+ * Дэлгэцийн мэдэгдэл. log=true бол 📜 Тэмдэглэлд мөн бүртгэнэ — зөвхөн чухал үйл явдал (чоно, төрөлт/үхэл, туслах,
+ * жолоочийн аялал, мөнгө/худалдаа, анхааруулга): доорх note(). Жижиг үйлдэл (түүх, агуулахад хийх) хөвөх текст болно (floatText).
+ */
+function toast(message: string | Msg, kind: '' | 'good' | 'bad' = '', log = false): void {
   let msg = tm(message);
   if (isTouch) msg = touchKeys(msg.replace(t('ui.with_the_mouse'), t('ui.with_your_finger')));
   if (log && msg) noteSink?.(msg, kind);
@@ -63,6 +67,8 @@ function toast(message: string | Msg, kind: '' | 'good' | 'bad' = '', log = true
   while (box.querySelectorAll('.toast').length > (isTouch ? 3 : 4)) box.querySelector('.toast')?.remove();
   setTimeout(() => d.remove(), kind === 'bad' ? 5000 : 3500);
 }
+
+const note = (message: string | Msg, kind: '' | 'good' | 'bad' = ''): void => toast(message, kind, true);
 
 /** Хөтчийн хадгалалт (M6.2): ачаалсан слот, эсвэл шинэ тоглоомд ашиглах слот. Эхлэлийн дэлгэц M6.3 */
 interface Boot {
@@ -191,7 +197,7 @@ function start(boot?: Boot): void {
   // M6.2: автомат хадгалалт. Sim-ийн алхмын дунд бичихгүй — хүсэлт тэмдэглээд кадрын давталт алхмуудын дараа flush хийнэ
   const autosave = persistence?.store && boot?.state ? new Autosave({
     store: persistence.store, state: () => state, slot: () => persistence.slot,
-    onSaved: (reason) => { if (reason !== 'hidden') toast(t('save.done'), 'good', false); },
+    onSaved: (reason) => { if (reason !== 'hidden') toast(t('save.done'), 'good'); },
     onError: (err) => { console.error(err); toast(t('save.failed'), 'bad'); },
   }) : null;
   if (autosave) {
@@ -215,28 +221,34 @@ function start(boot?: Boot): void {
     },
     onFirstTap: () => touchUI?.enterLandscape(),
   });
-  const panels = new Panels(cfg, state, { dispatch: (cmd) => { const r = sim.command(cmd); if (r.ok && (cmd.type === 'moveCamp' || cmd.type === 'sleep')) autosave?.request('move'); return r; }, toast, toggleZones: () => view.zones.toggle(), perf: { on: () => showPerf, toggle: () => setPerf(!showPerf) } });
+  const panels = new Panels(cfg, state, { dispatch: (cmd) => { const r = sim.command(cmd); if (r.ok && (cmd.type === 'moveCamp' || cmd.type === 'sleep')) autosave?.request('move'); return r; }, toast: (m, k) => toast(m, k, LOG_PANELS.has(panels.current ?? '')), toggleZones: () => view.zones.toggle(), perf: { on: () => showPerf, toggle: () => setPerf(!showPerf) } });
+  /** Эдгээр цонхны мэдэгдэл (мөнгө/худалдаа, туслах) 📜-д бүртгэгдэнэ; агуулах, ачаа, cheat г.м. үгүй */
+  const LOG_PANELS = new Set(['shop', 'trader', 'lot', 'town', 'teahouse', 'helpers']);
   const showReports = qs.get('report') !== '0';
   let huntToastT = 0;
   sim.on((e) => {
     // Өдрийн тайлан автоматаар гарахгүй: 📜 Тэмдэглэл → «Өдрийн тайлан» табд хадгалагдана (sim/systems/journal.ts)
-    if (e.type === 'dayReport' && showReports) toast(t('log.report_ready', { day: e.report.day }), '');
-    else if (e.type === 'traderArrive') toast(t('trader.arrive', { kind: t('trader.kind.' + e.kind), until: formatTime({ day: state.time.day, minute: e.until }) }), 'good');
-    else if (e.type === 'traderLeave') toast(t('trader.leave'), '');
-    else if (e.type === 'milestone') toast(t(e.kind === 'stage' ? 'ms.reached' : 'ms.first_toast', { name: t((e.kind === 'stage' ? 'ms.stage.' : 'ms.first.') + e.id) }), 'good');
+    if (e.type === 'dayReport') {
+      if (showReports) toast(t('log.report_ready', { day: e.report.day }), '');
+      if (e.report.births) note(t('log.births', { n: e.report.births }), 'good');
+      if (e.report.deaths) note(t('log.deaths', { n: e.report.deaths }), 'bad');
+    }
+    else if (e.type === 'traderArrive') note(t('trader.arrive', { kind: t('trader.kind.' + e.kind), until: formatTime({ day: state.time.day, minute: e.until }) }), 'good');
+    else if (e.type === 'traderLeave') note(t('trader.leave'), '');
+    else if (e.type === 'milestone') note(t(e.kind === 'stage' ? 'ms.reached' : 'ms.first_toast', { name: t((e.kind === 'stage' ? 'ms.stage.' : 'ms.first.') + e.id) }), 'good');
     else if (e.type === 'wolfHunt') {
       const now = performance.now();
       if (now - huntToastT > 4000) {
         huntToastT = now;
         const d = Math.round(Math.hypot(e.x - state.player.x, e.z - state.player.z));
-        toast(t('ui.a_wolf_is_attacking', { x: t('species.' + e.species).toLowerCase(), d }), 'bad');
+        note(t('ui.a_wolf_is_attacking', { x: t('species.' + e.species).toLowerCase(), d }), 'bad');
       }
-    } else if (e.type === 'wolfKill') toast(t('ui.a_wolf_caught_a', { x: t('species.' + e.species).toLowerCase() }), 'bad');
-    else if (e.type === 'wolfGiveUp') toast(t('ui.the_wolf_gave_up'), 'good');
-    else if (e.type === 'town') toast(e.msg, e.good ? 'good' : 'bad');
-    else if (e.type === 'dogFight') toast(e.result === 'wolfKilled' ? t('ui.fought_the_wolf_and', { dog: e.dog }) : e.result === 'bothDied' ? t('ui.fought_the_wolf_and_7', { dog: e.dog }) : t('ui.two_wolves_killed', { dog: e.dog }), e.result === 'wolfKilled' ? 'good' : 'bad');
-    else if (e.type === 'wolfPups') toast(t('ui.pups_were_born_in', { n: e.n }), 'bad');
-    else if (e.type === 'wolfArrive') toast(t('ui.wolves_from_elsewhere_settled', { n: e.n }), 'bad');
+    } else if (e.type === 'wolfKill') note(t('ui.a_wolf_caught_a', { x: t('species.' + e.species).toLowerCase() }), 'bad');
+    else if (e.type === 'wolfGiveUp') note(t('ui.the_wolf_gave_up'), 'good');
+    else if (e.type === 'town') note(e.msg, e.good ? 'good' : 'bad');
+    else if (e.type === 'dogFight') note(e.result === 'wolfKilled' ? t('ui.fought_the_wolf_and', { dog: e.dog }) : e.result === 'bothDied' ? t('ui.fought_the_wolf_and_7', { dog: e.dog }) : t('ui.two_wolves_killed', { dog: e.dog }), e.result === 'wolfKilled' ? 'good' : 'bad');
+    else if (e.type === 'wolfPups') note(t('ui.pups_were_born_in', { n: e.n }), 'bad');
+    else if (e.type === 'wolfArrive') note(t('ui.wolves_from_elsewhere_settled', { n: e.n }), 'bad');
     else if (e.type === 'leftToMap') toast(t('ui.map_click_where_you'), 'good');
     else if (e.type === 'arrived') toast(e.place === 'sum' ? t('ui.you_arrived_at_the') : t('ui.you_are_home'), 'good');
     else if (e.type === 'arriveCamp') panels.showArrive(e.campId);
@@ -247,15 +259,34 @@ function start(boot?: Boot): void {
         winter: t('ui.winter_the_snow_has'),
         spring: t('ui.spring_birthing_season_snow'),
       };
-      toast(msg[e.season] ?? '', 'good');
-    } else if (e.type === 'helperQuit') toast(e.reason === 'wage' ? t('ui.not_enough_money_for', { x: e.names.join(', ') }) : t('ui.quit', { x: e.names.join(', ') }), 'bad');
-    else if (e.type === 'helperWarn') toast(t('ui.helper_warn', { x: e.names.join(', ') }), 'bad');
-    else if (e.type === 'helperTrip') toast(t('ui.arrived_from_the_sum', { name: e.name, x: fmtMoney(e.income) }), 'good');
-    else if (e.type === 'otorLoss') toast(t('ui.at_the_otor_a', { x: t('camp.' + e.campId), x2: t('species.' + e.species).toLowerCase() }), 'bad');
-    else if (e.type === 'wolfRaid') toast(t('ui.tonight_heading_for_the', { x: e.n > 1 ? e.n + t('ui.wolves') : t('ui.a_wolf') }), 'bad');
+      note(msg[e.season] ?? '', 'good');
+    } else if (e.type === 'helperQuit') note(e.reason === 'wage' ? t('ui.not_enough_money_for', { x: e.names.join(', ') }) : t('ui.quit', { x: e.names.join(', ') }), 'bad');
+    else if (e.type === 'helperWarn') note(t('ui.helper_warn', { x: e.names.join(', ') }), 'bad');
+    else if (e.type === 'helperTrip') note(t('ui.arrived_from_the_sum', { name: e.name, x: fmtMoney(e.income) }), 'good');
+    else if (e.type === 'otorLoss') note(t('ui.at_the_otor_a', { x: t('camp.' + e.campId), x2: t('species.' + e.species).toLowerCase() }), 'bad');
+    else if (e.type === 'wolfRaid') note(t('ui.tonight_heading_for_the', { x: e.n > 1 ? e.n + t('ui.wolves') : t('ui.a_wolf') }), 'bad');
     else if (e.type === 'hour' && e.hour === Math.ceil(Math.min(...Object.values(cfg.time.homeMinute)) / 60)) toast(t('ui.evening_the_animals_are'), '');
   });
 
+  const carryNow = (): Partial<Record<ProductId, number>> => {
+    const o: Partial<Record<ProductId, number>> = {};
+    for (const c of state.player.carry) o[c.product as ProductId] = (o[c.product as ProductId] ?? 0) + c.amount;
+    return o;
+  };
+  let lastCarry = carryNow();
+  const floats = document.getElementById('floats')!;
+  const floatText = (text: string): void => {
+    if (!text) return;
+    const p = state.player;
+    const at = view.screenPoint(p.x, view.heightAt(p.x, p.z) + (p.mounted ? 3.2 : 2.3), p.z);
+    const d = document.createElement('div');
+    d.className = 'floatnote';
+    d.textContent = isTouch ? touchKeys(text) : text;
+    d.style.left = `${Math.round(at.x)}px`;
+    d.style.top = `${Math.round(at.y) - floats.childElementCount * 18}px`;
+    floats.appendChild(d);
+    setTimeout(() => d.remove(), 1000);
+  };
   const controllerWalk = view.sum.playerWalk;   // сумын төвийн саад (барилга, хашаа) — тоглогч нэвтлэхгүй
   let speedIdx = Math.max(0, Math.min(cfg.time.speeds.length - 1, (Number(qs.get('speed')) || 1) - 1));
   const controller = new PlayerController(cfg, {
@@ -264,8 +295,15 @@ function start(boot?: Boot): void {
     blocked: (code) => panels.isOpen || menu.isOpen || !!skip || (photoMode && code !== 'KeyP'),
     onAction: (kind, res) => {
       if (res.ok && (kind === 'shout' || kind === 'scare' || kind === 'call')) view.characters.say(kind);
-      if (res.msg) toast(res.msg, res.ok ? 'good' : 'bad');
-      else if (kind === 'deposit' && res.ok) toast(t('ui.put_in_storage'), 'good');
+      // Жижиг үйлдэл: мэдэгдэл биш — малчны дээр 1 секунд хөвөх текст («+3 ноос»); 📜-д орохгүй
+      const now = carryNow();
+      if (res.ok && (kind === 'pickup' || kind === 'deposit')) {
+        const parts = PRODUCTS.map((pr) => ({ pr, d: (now[pr] ?? 0) - (lastCarry[pr] ?? 0) })).filter((x) => Math.abs(x.d) > 1e-9)
+          .map((x) => `${kind === 'deposit' ? '📦 ' : ''}+${fmtNum(Math.abs(x.d))} ${PRODUCT_EMOJI[x.pr]} ${productName(x.pr).toLowerCase()}`);
+        floatText(parts.join(' · ') || tm(res.msg ?? t('ui.put_in_storage')));
+      } else if (res.ok && res.msg) floatText(tm(res.msg));
+      else if (res.msg) toast(res.msg, 'bad');
+      lastCarry = now;
     },
     onSpeed: (i) => {
       speedIdx = i;
@@ -305,7 +343,7 @@ function start(boot?: Boot): void {
     else if (s.stop === 'user') toast(t('ui.skip_stop_user'), '');
     else if (s.stop) {
       const why = { wolf: t('ui.skip_stop_wolf'), zone: t('ui.skip_stop_zone'), driver: t('ui.skip_stop_driver'), helper: t('ui.skip_stop_helper'), arrived: t('ui.skip_stop_arrived') }[s.stop];
-      toast(why, s.stop === 'wolf' || s.stop === 'zone' ? 'bad' : 'good');
+      note(why, s.stop === 'wolf' || s.stop === 'zone' ? 'bad' : 'good');
     }
   };
   const startSkip = (target: SkipTarget): void => {
@@ -591,6 +629,7 @@ function start(boot?: Boot): void {
           (alert ? '<br>' + alert.replace(/<br>$/, '') : '')
         : touchKeys(full) + (isTouch ? t('ui.collapse') : '');
       const uiHidden = panels.isOpen || menu.isOpen || help.style.display === 'block';
+      lastCarry = carryNow();   // цонхоор (ачаа, худалдаа) өөрчлөгдсөн ачааг хөвөх текстэд тооцохгүй
       const unread = state.journal.unread;
       logBadge.textContent = unread ? String(unread) : '';
       logBtn.style.display = uiHidden || photoMode ? 'none' : '';

@@ -44,12 +44,20 @@
       #modalBox .logtabs .btn { min-height: 44px; padding: 0 16px; }
       #modalBox .lognav { display: flex; align-items: center; gap: 10px; }
       #modalBox .lognav .btn { min-width: 44px; min-height: 44px; font-size: 18px; }
+      #modalBox .replist { margin: 4px 0 8px; padding-left: 18px; }
+      #modalBox .replist li { margin: 2px 0; }
       #modalBox .logwhen { white-space: nowrap; width: 1%; }
       #perf { top: 62px; right: 12px; font: 12px ui-monospace, monospace; white-space: pre-line; }
       #help { left: 50%; top: 50%; transform: translate(-50%, -50%); white-space: pre-line; max-width: 620px; display: none; font-size: 15px; }
       #help h3 { margin: 0 0 6px; color: #e8b64c; }
       #toasts { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none; }
       .toast { padding: 7px 14px; border-radius: 8px; background: rgba(30, 24, 18, 0.82); color: #f4ead6; font-size: 14px; }
+      /* Жижиг үйлдлийн хөвөх текст (малчны дээр, 1 сек) */
+      #floats { position: fixed; inset: 0; pointer-events: none; z-index: 4; }
+      .floatnote { position: absolute; transform: translate(-50%, -100%); white-space: nowrap; font-size: 14px; font-weight: 700; color: #fff6d8;
+                   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85), 0 0 6px rgba(0, 0, 0, 0.5); animation: float-note 1s ease-out both; }
+      @keyframes float-note { 0% { opacity: 0; margin-top: 6px; } 15% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; margin-top: -34px; } }
+      body.photo-mode #floats { display: none; }
       .toast.good { border-left: 4px solid #7bbf5a; }
       .toast.bad { border-left: 4px solid #d9534f; }
       #prompt { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); padding: 6px 14px; border-radius: 8px;
@@ -172,6 +180,7 @@
     <div id="help" class="panel"></div>
     <div id="prompt"></div>
     <div id="toasts"></div>
+    <div id="floats"></div>
     <div id="modal"><div id="modalBox"></div></div>
     <div id="err"></div>
     <script type="module" src="/src/main.ts"></script>

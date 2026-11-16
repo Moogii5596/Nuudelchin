@@ -29,6 +29,7 @@ import { detectStuck } from './systems/safety';
 import { traderDaily, traderHour, type TraderEvent } from './systems/trader';
 import { refreshLeaders } from './systems/herding';
 import { addReport } from './systems/journal';
+import { birthForecast, type BirthForecast } from './systems/breeding';
 import { townDaily, townMonthly, townSeason, type TownEvent } from './systems/town';
 import { wolvesDaily, wolvesStep, nightRaid, endRaid, type WolfEvent } from './systems/wolves';
 
@@ -39,6 +40,8 @@ export interface DayReport extends DayStats {
   animals: number;
   sheepUnits: number;
   avgEweKg: number;        // нас гүйцсэн эм хонины дундаж жин
+  /** Ирэх төллөлт, төрлөөр (1f) — төллөлтийн мөчлөгийн өгөгдлөөс */
+  forecast?: BirthForecast[];
   avgCondition: number;
   avgGutFill: number;      // өнөөдрийн дундаж идэш (тааз = 1)
   grass: number;           // бууцны 120 м доторх дундаж өвс
@@ -122,7 +125,10 @@ export class Sim {
     grazingStep(cfg, state, rng, this.quality, this.centers);
     detectStuck(cfg, state);   // M6.8
     for (const ev of dogsStep(cfg, state, herds)) this.emit(ev);
-    for (const ev of wolvesStep(cfg, state)) this.emit(ev);
+    for (const ev of wolvesStep(cfg, state)) {
+      if (ev.type === 'wolfHunt') state.today.wolfAttacks = (state.today.wolfAttacks ?? 0) + 1;
+      this.emit(ev);
+    }
     groundAgingStep(cfg, state);
     processingStep(cfg, state);
     for (const ev of mapStep(cfg, state, rng)) this.emit(ev);
@@ -251,9 +257,11 @@ export class Sim {
     recordDay(cfg, state, day, su);
     const reached = checkMilestones(cfg, state, day);
     report.milestones = reached.map((r) => r.id);
+    report.forecast = birthForecast(cfg, state);
     for (const r of reached) this.emit({ type: 'milestone', id: r.id, kind: r.kind, ceremony: r.ceremony, day });
     state.dayStartMoney = state.money;
     state.today = emptyDayStats();
+    state.today.animalsStart = report.animals;
     addReport(cfg, state, report);
     for (const e2 of wageEvents) this.emit(e2);
     this.emit({ type: 'dayReport', report });

@@ -10,7 +10,7 @@
  */
 import type { GameConfig, Species } from '../config';
 import type { Rng } from '../rng';
-import type { Animal, GameState, ProductId } from '../state';
+import type { Animal, GameState, ProductId, YieldNote, YieldSpecies } from '../state';
 import { isNight } from '../clock';
 
 /** Тухайн мал хотондоо харьдаг уу (адуу, унаа морь үгүй) */
@@ -85,24 +85,38 @@ function drop(state: GameState, rng: Rng, product: ProductId, amount: number, x:
 export function morning(cfg: GameConfig, state: GameState, rng: Rng): void {
   const d = cfg.products.drops;
   const dif = state.settings.difficulty;   // M6.10: бүтээгдэхүүний гарц ×0.5–2
+  // Тайланд: хэдэн мал үлдээсэн, үлдээгээгүй нь яагаад (доорх дүрмийн яг тэр нөхцөлөөр тоолно)
+  const notes: Partial<Record<YieldSpecies, YieldNote>> = (state.today.yield ??= {});
+  const note = (sp: YieldSpecies): YieldNote => (notes[sp] ??= { gave: 0, outside: 0, lowGut: 0, lowCond: 0, partial: 0, dry: 0 });
+  const gave = (sp: YieldSpecies, a: Animal): void => {
+    note(sp).gave++;
+    if (!atHome(cfg, a)) note(sp).outside++;
+  };
   for (const a of state.animals) {
     if (a.riding) continue;
     // Туслахын малын сүү, ноос ч тоглогчийнх (тоглогчийн бэлчээрт бэлчдэг)
     if (a.species === 'cow' && a.sex === 'f' && a.lactating) {
       a.milkTimer += dailyMilkLiters(cfg, a) * dif.products;
+      let cans = 0;
       while (a.milkTimer >= d.milk.amount) {
         a.milkTimer -= d.milk.amount;
         drop(state, rng, 'milk', d.milk.amount, a.x, a.z, 1.2);
+        cans++;
       }
-    }
+      if (cans) gave('cow', a);
+      else if (intakeFactor(cfg, a.lastGut) <= 0) note('cow').lowGut++;
+      else note('cow').partial++;
+    } else if (a.species === 'cow' && a.sex === 'f' && a.age >= cfg.animals.species.cow.breedAge) note('cow').dry++;
     const rule = a.species === 'sheep' ? d.wool : a.species === 'goat' ? d.cashmere : null;
+    const fsp: YieldSpecies = a.species === 'goat' ? 'goat' : 'sheep';
     if (rule && a.age >= 1 && a.condition >= rule.minCondition) {
       a.fiberDays += intakeFactor(cfg, a.lastGut) * dif.products;
       if (a.fiberDays >= rule.everyDays) {
         a.fiberDays -= rule.everyDays;
         drop(state, rng, a.species === 'sheep' ? 'wool' : 'cashmere', rule.amount, a.x, a.z, 0.6);
-      }
-    }
+        gave(fsp, a);
+      } else if (intakeFactor(cfg, a.lastGut) <= 0) note(fsp).lowGut++;
+    } else if (rule && a.age >= 1) note(fsp).lowCond++;
     if (a.mode === 'sleep' || a.mode === 'home' || a.mode === 'rest') {
       a.mode = 'graze';
       a.tx = a.x;

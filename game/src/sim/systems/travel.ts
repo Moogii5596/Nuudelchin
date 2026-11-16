@@ -495,6 +495,7 @@ export function trade(cfg: GameConfig, state: GameState, rng: Rng, plan: TradePl
     const inc = salePrice(a, cfg.animals);
     state.money += inc;
     state.today.income.animals = (state.today.income.animals ?? 0) + inc;
+    state.today.sold = (state.today.sold ?? 0) + 1;
   }
   if (f) f.animals = f.animals.filter((a) => !sellA.includes(a));
   p.drove = p.drove.filter((a) => !sellA.includes(a));
@@ -524,6 +525,7 @@ export function trade(cfg: GameConfig, state: GameState, rng: Rng, plan: TradePl
       const a: Animal = newAnimal(cfg, rng, state.nextId++, { species: o.species, sex: o.sex, age: o.age, x: p.x, z: p.z });
       if (f) f.animals.push(a);
       else p.drove.push(a);
+      state.today.bought = (state.today.bought ?? 0) + 1;
     } else if (o.kind === 'vehicle') {
       addVehicle(cfg, state, o.id);   // худалдаачин гэрийн зогсоолд хүргэнэ 🙋
     } else if (f) f.orders.push(o);

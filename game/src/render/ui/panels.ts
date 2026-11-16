@@ -152,6 +152,11 @@ export class Panels {
     });
   }
 
+  /** Одоо нээлттэй цонхны төрөл (null = хаалттай) */
+  get current(): string | null {
+    return this.kind;
+  }
+
   get isOpen(): boolean {
     return this.kind !== null;
   }
@@ -738,7 +743,50 @@ export class Panels {
     const html = t('ui.daily_report_year_money', { day: r.day, x: SEASON_EMOJI[r.season], x2: SEASON_NAME[r.season], x3: yearOf(cfg, r.day), x4: inc.map(([k, n]) => `<tr><td>${k === 'animals' ? t('ui.animals_sold') : k === 'rent' ? t('ui.house_rent') : k === 'loan' ? t('ui.bank_loan') : `${PRODUCT_EMOJI[k] ?? ''} ${productName(k)}`}</td><td class="num good">+${fmtMoney(n ?? 0)}</td></tr>`).join('') || t('ui.no_income_today'), x5: expRows, x6: profit >= 0 ? 'good' : 'bad', x7: profit >= 0 ? '+' : '', x8: fmtMoney(profit), x9: fmtMoney(r.moneyEnd), x10: fmtMoney(totalInc), x11: fmtMoney(totalExp), x12: prodRows || '<tr><td class="muted" colspan="4">—</td></tr>', x13: fmtNum(r.storageUsed), cap, animals: r.animals, x14: fmtNum(r.sheepUnits), x15: r.births ? t('ui.born', { births: r.births }) : '', x16: r.deaths ? t('ui.died', { deaths: r.deaths }) : '', x17: Math.round(r.avgCondition * 100), x18: Math.round(r.avgGutFill * 100), x19: fmtNum(Math.round(r.avgEweKg * 10) / 10), x20: this.wolfKillsHtml(r), x21: t('camp.' + this.state.campId), campDays: r.campDays, x22: r.snow >= 0.5 ? t('ui.snow_cm_grazing_access', { x: Math.round(r.snow), x2: Math.round(campAccess(cfg, r.snow) * 100) }) : '', x23: r.hayFed > 0 ? t('ui.hay_bales_fed_left', { x: fmtNum(Math.round(r.hayFed * 10) / 10), x2: fmtNum(Math.round(r.hay * 10) / 10) }) : r.season === 'winter' || r.season === 'spring' ? t('ui.hay_feed_bales', { x: r.hay > 0 ? '' : 'bad', x2: fmtNum(Math.round(r.hay * 10) / 10) }) : '', x24: r.coldHit > 0 ? t('ui.animals_lost_condition_sleeping', { coldHit: r.coldHit }) : '', x25: Math.round(r.grass * 100), x26: r.campDegrade > 0.3 ? 'bad' : '', x27: Math.round(r.campDegrade * 100), x28: r.regrowthMult < 0.8 ? 'bad' : '', x29: Math.round(r.regrowthMult * 100), x30: r.campDegrade > 0.6 ? t('ui.the_pasture_is_degraded') : r.campDegrade > 0.3 ? t('ui.time_to_change_camp') : '', x31: Object.entries(r.camps).filter(([id]) => id !== this.state.campId).map(([id, c]) => `${t('camp.' + id)} ${Math.round(c.degrade * 100)}%`).join(' · '), goalSU, walls, x32: Math.min(100, (r.sheepUnits / goalSU) * 100), x33: this.state.home === 'ger' ? t('ui.ger_progress', { mark: goalGerReached(cfg, this.state) ? '✅' : '⬜', label: t('ger.size.' + this.state.homeSize), have: cfg.ger.sizes[this.state.homeSize]!.walls, need: cfg.economy.goalGerWalls }) : t('ui.ger', { x: fmtMoney(cfg.ger.sizes[cfg.ger.home.size]!.price) }), x34: fmtNum(r.sheepUnits), goalSU2: goalSU, x35: r.goalReached ? t('ui.goal_reached') : '' });
     // M6.5: өдрийн онцлох мөр — энэ өдөр хүрсэн замын тэмдэг
     const hl = r.milestones.length ? `<p class="good">${t('ms.highlight', { x: r.milestones.map((id) => t(cfg.milestones.stages.some((s) => s.id === id) ? 'ms.stage.' + id : 'ms.first.' + id)).join(', ') })}</p>` : '';
-    return html.replace('</h2>', '</h2>' + hl);
+    return html.replace('</h2>', '</h2>' + hl) + this.reportDetailHtml(r);
+  }
+
+  /** 1f: тайлангийн дэлгэрэнгүй хэсгүүд — бүгд симуляцийн бүртгэлээс; хоосон хэсэг харагдахгүй */
+  private reportDetailHtml(r: DayReport): string {
+    const sec = (title: string, lines: string[]): string => (lines.length ? `<h3>${title}</h3><ul class="replist">${lines.map((l) => `<li>${l}</li>`).join('')}</ul>` : '');
+    const sp = (s: string, n: number): string => `${n} ${t('species.' + s).toLowerCase()}`;
+    // (а) Бүтээгдэхүүн: хэдэн мал үлдээсэн, үлдээгээгүй нь яагаад
+    const yl: string[] = [];
+    for (const k of ['cow', 'sheep', 'goat'] as const) {
+      const y = r.yield?.[k];
+      if (!y) continue;
+      if (y.gave) yl.push(t('rep.gave.' + k, { n: y.gave }) + (y.outside ? ' — ' + t('rep.gave_outside', { n: y.outside }) : ''));
+      const none = y.lowGut + y.lowCond + y.partial + y.dry;
+      if (none) {
+        const why = [y.lowGut ? t('rep.why_gut', { n: y.lowGut }) : '', y.lowCond ? t('rep.why_cond', { n: y.lowCond }) : '', y.partial ? t('rep.why_partial', { n: y.partial }) : '', y.dry ? t('rep.why_dry', { n: y.dry }) : ''].filter(Boolean);
+        yl.push(`<span class="bad">${t('rep.none.' + k, { n: none })}</span>: ${why.join(', ')}`);
+      }
+    }
+    // (б) Чоно
+    const kills = Object.entries(r.wolfKills).filter(([, n]) => (n ?? 0) > 0);
+    const wl: string[] = [];
+    if (r.wolfAttacks) wl.push(t('rep.wolf_attacks', { n: r.wolfAttacks }));
+    if (kills.length) wl.push(`<span class="bad">${t('rep.wolf_lost', { x: kills.map(([k, n]) => sp(k, n ?? 0)).join(', ') })}</span>`);
+    const where = Object.entries(r.wolfWhere ?? {}).filter(([, n]) => (n ?? 0) > 0);
+    if (where.length) wl.push(t('rep.wolf_where', { x: where.map(([k, n]) => `${t('rep.where.' + k)} ${n}`).join(', ') }));
+    // (в) Малын хөдөлгөөн
+    const ml: string[] = [];
+    if (r.births) ml.push(`<span class="good">${t('rep.born', { n: r.births })}</span>`);
+    if (r.deaths) {
+      const causes = Object.entries(r.deathCauses ?? {}).filter(([, n]) => (n ?? 0) > 0).map(([k, n]) => `${t('rep.cause.' + k)} ${n}`);
+      ml.push(`<span class="bad">${t('rep.died', { n: r.deaths })}</span>${causes.length ? ` (${causes.join(', ')})` : ''}`);
+    }
+    if (r.sold) ml.push(t('rep.sold', { n: r.sold }));
+    if (r.bought) ml.push(t('rep.bought', { n: r.bought }));
+    if (ml.length || kills.length) {
+      if (r.animalsStart !== undefined) {
+        const d = r.animals - r.animalsStart;
+        ml.push(`<b>${t('rep.net', { x: (d > 0 ? '+' : '') + d, n: r.animals })}</b>`);
+      }
+    }
+    // (г) Ирэх төллөлт
+    const fl = (r.forecast ?? []).filter((f) => f.females > 0).map((f) => t('rep.forecast', { what: t('rep.birth.' + f.species), n: f.inDays, day: f.day, y: f.females, who: t('rep.dam.' + f.species) }));
+    return sec(t('rep.h_yield'), yl) + sec(t('rep.h_wolf'), wl) + sec(t('rep.h_herd'), ml) + sec(t('rep.h_forecast'), fl);
   }
 
   private wolfKillsHtml(r: DayReport): string {

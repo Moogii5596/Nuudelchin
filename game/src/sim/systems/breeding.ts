@@ -73,3 +73,28 @@ function breedGroup(cfg: GameConfig, state: GameState, rng: Rng, animals: Animal
   }
   animals.push(...born);
 }
+
+export interface BirthForecast {
+  species: Species;
+  /** Хамгийн ойрын төллөх өдөр хүртэл (хоног) ба тэр өдрийн дугаар */
+  inDays: number;
+  day: number;
+  /** Тэр өдрөөс эхлэн forecastWindowDays хоногт төллөх ээлжтэй, үржилд орох насны эм мал (төллөх магадлал birthChance-аас хамаарна) */
+  females: number;
+}
+
+/** Ирэх төллөлт: эм мал бүрийн мөчлөгөөс (cycleOffset → birthYearDay) хамгийн ойрын өдөр ба тэр үеийн эм малын тоо */
+export function birthForecast(cfg: GameConfig, state: GameState): BirthForecast[] {
+  const Y = cfg.time.animalYearDays, yd = yearDay(cfg, state.time.day), win = cfg.time.journal.forecastWindowDays;
+  const out: BirthForecast[] = [];
+  for (const sp of SPECIES) {
+    const breedAge = cfg.animals.species[sp].breedAge;
+    const due = state.animals
+      .filter((a) => a.species === sp && a.sex === 'f' && !a.riding && a.age >= breedAge)
+      .map((a) => ((birthYearDay(cfg, a.cycleOffset) - yd - 1 + Y) % Y) + 1);   // өнөөдрийн төллөлт өнгөрсөн → 1..Y хоногийн дараа
+    if (!due.length) continue;
+    const inDays = Math.min(...due);
+    out.push({ species: sp, inDays, day: state.time.day + inDays, females: due.filter((d) => d < inDays + win).length });
+  }
+  return out;
+}

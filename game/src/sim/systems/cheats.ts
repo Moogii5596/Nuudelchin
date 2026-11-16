@@ -145,6 +145,7 @@ export function applyCheat(sim: Sim, action: CheatAction): string {
       best.w.fed = 0;
       best.w.hunger = Math.max(best.w.hunger ?? 0, cfg.wolves.hunger.hungryAtDays);
       best.w.scared = 0;
+      state.today.wolfAttacks = (state.today.wolfAttacks ?? 0) + 1;   // тайланд: cheat-ийн дайралт ч халдлага
       return `🐺 Чоно ${Math.round(best.d)} м зайтай мал руу дайрлаа`;
     }
     case 'wolvesPeaceful':

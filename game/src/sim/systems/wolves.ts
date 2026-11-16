@@ -358,6 +358,7 @@ export function wolvesStep(cfg: GameConfig, state: GameState): WolfEvent[] {
         } else if (Math.hypot(a.x - o.x, a.z - o.z) <= at.killRange) {
           killed.add(a.id);
           state.today.wolfKills[a.species] = (state.today.wolfKills[a.species] ?? 0) + 1;
+          noteKillPlace(cfg, state, a.x, a.z);
           // Олзны мах үүрний нөөцөд — үүрний чоно тэнцүү хувааж олон хоног иднэ (B6)
           den.food = (den.food ?? 0) + liveWeightKg(a, cfg.animals) * H.carcassShare;
           o.travel = undefined;
@@ -652,6 +653,14 @@ export function scareWolves(cfg: GameConfig, state: GameState): number {
     n++;
   }
   return n;
+}
+
+/** Тайланд: мал хаана барьдсан — хотон (хашаа/хэвтэр/гэрийн бүс), чонын нутаг (үүрний радиус), эсвэл бэлчээр */
+export function noteKillPlace(cfg: GameConfig, state: GameState, x: number, z: number): void {
+  const fixed = protectionZones(cfg, state).filter((c) => c.kind === 'pen' || c.kind === 'yard' || c.kind === 'home');
+  const where = isProtected(fixed, x, z) ? 'pen' : state.wolves.dens.some((d) => Math.hypot(x - d.x, z - d.z) <= d.r) ? 'den' : 'pasture';
+  const w = (state.today.wolfWhere ??= {});
+  w[where] = (w[where] ?? 0) + 1;
 }
 
 /** Ангуучилж буй чоно (HUD-ийн сануулга) */

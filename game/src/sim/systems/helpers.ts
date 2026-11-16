@@ -957,6 +957,8 @@ export function dailyOtor(cfg: GameConfig, state: GameState, rng: Rng): HelperEv
       const v = prey[Math.floor(rng.next() * prey.length)]!;
       g.animals = g.animals.filter((a) => a !== v);
       state.today.wolfKills[v.species] = (state.today.wolfKills[v.species] ?? 0) + 1;
+      const ww = (state.today.wolfWhere ??= {});
+      ww.pasture = (ww.pasture ?? 0) + 1;   // отрын бэлчээрт
       ev.push({ type: 'otorLoss', campId: g.campId, species: v.species });
     }
   }

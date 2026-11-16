@@ -540,6 +540,13 @@ export class GameView {
     this.flakes.position.set(cx, cy - 6, cz);
   }
 
+  /** Дэлхийн цэгийн дэлгэц дээрх байрлал (px) — хөвөх текст г.м. DOM давхаргад */
+  screenPoint(x: number, y: number, z: number): { x: number; y: number } {
+    const v = new THREE.Vector3(x, y, z).project(this.cam.camera);
+    const r = this.renderer.domElement.getBoundingClientRect();
+    return { x: r.left + ((v.x + 1) / 2) * r.width, y: r.top + ((1 - v.y) / 2) * r.height };
+  }
+
   /** Гүйцэтгэлийн мэдээлэл (HUD) */
   get drawCalls(): number {
     return this.renderer.info.render.calls;

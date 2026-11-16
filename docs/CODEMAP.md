@@ -71,10 +71,11 @@ SYM game/src/input/touch.ts:266 method TouchUI.fullscreen
 SYM game/src/input/touch.ts:279 method TouchUI.paused
 SYM game/src/input/touch.ts:283 method TouchUI.portrait
 SYM game/src/input/touch.ts:288 method TouchUI.update
-FILE game/src/main.ts 38.2KB 646L
-SYM game/src/main.ts:52 fn toast
-SYM game/src/main.ts:77 fn start
-SYM game/src/main.ts:621 fn boot
+FILE game/src/main.ts 40.7KB 685L
+SYM game/src/main.ts:56 fn toast
+SYM game/src/main.ts:71 fn note
+SYM game/src/main.ts:83 fn start
+SYM game/src/main.ts:660 fn boot
 FILE game/src/persist/autosave.ts 4.7KB 102L exports: SaveReason,AutosaveDeps,Autosave,attachSimEvents,attachPageEvents
 SYM game/src/persist/autosave.ts:11 type SaveReason
 SYM game/src/persist/autosave.ts:13 interface AutosaveDeps
@@ -769,7 +770,7 @@ SYM game/src/render/npcs.ts:319 method NpcView.hideEntry
 SYM game/src/render/npcs.ts:327 method NpcView.hideOutdoor
 SYM game/src/render/npcs.ts:362 method NpcView.leaveIndoor
 SYM game/src/render/npcs.ts:371 method NpcView.syncAwaySign
-FILE game/src/render/scene.ts 27.7KB 551L exports: GameView
+FILE game/src/render/scene.ts 28.1KB 558L exports: GameView
 SYM game/src/render/scene.ts:31 fn flakeTexture
 SYM game/src/render/scene.ts:47 class GameView
 SYM game/src/render/scene.ts:251 method GameView.applyQuality
@@ -782,8 +783,8 @@ SYM game/src/render/scene.ts:416 method GameView.frameInterior
 SYM game/src/render/scene.ts:441 method GameView.leaveInterior
 SYM game/src/render/scene.ts:458 method GameView.applyDaylight
 SYM game/src/render/scene.ts:528 method GameView.updateFlakes
-SYM game/src/render/scene.ts:544 method GameView.drawCalls
-SYM game/src/render/scene.ts:548 method GameView.triangleCount
+SYM game/src/render/scene.ts:551 method GameView.drawCalls
+SYM game/src/render/scene.ts:555 method GameView.triangleCount
 FILE game/src/render/staff.ts 8.9KB 187L exports: makeDwelling,StaffView
 SYM game/src/render/staff.ts:28 fn helperRole
 SYM game/src/render/staff.ts:37 fn makeDwelling
@@ -958,46 +959,48 @@ SYM game/src/render/ui/names.ts:101 const SEASON_EMOJI
 SYM game/src/render/ui/names.ts:103 const CAMP_HINT
 SYM game/src/render/ui/names.ts:110 const WATER_NAME
 SYM game/src/render/ui/names.ts:111 const WOLF_LEVEL_NAME
-FILE game/src/render/ui/panels.ts 77.4KB 1216L exports: UiHooks,Panels
+FILE game/src/render/ui/panels.ts 80.5KB 1264L exports: UiHooks,Panels
 SYM game/src/render/ui/panels.ts:98 fn esc
 SYM game/src/render/ui/panels.ts:100 interface UiHooks
 SYM game/src/render/ui/panels.ts:109 class Panels
-SYM game/src/render/ui/panels.ts:155 method Panels.isOpen
-SYM game/src/render/ui/panels.ts:159 method Panels.open
-SYM game/src/render/ui/panels.ts:191 method Panels.closedShop
-SYM game/src/render/ui/panels.ts:198 method Panels.close
-SYM game/src/render/ui/panels.ts:213 method Panels.showReport
-SYM game/src/render/ui/panels.ts:225 method Panels.refresh
-SYM game/src/render/ui/panels.ts:231 method Panels.showArrive
-SYM game/src/render/ui/panels.ts:237 method Panels.render
-SYM game/src/render/ui/panels.ts:261 method Panels.milestonesHtml
-SYM game/src/render/ui/panels.ts:272 method Panels.spark
-SYM game/src/render/ui/panels.ts:280 method Panels.ceremonyHtml
-SYM game/src/render/ui/panels.ts:291 method Panels.storageHtml
-SYM game/src/render/ui/panels.ts:345 method Panels.buyItems
-SYM game/src/render/ui/panels.ts:369 method Panels.vehicleButtons
-SYM game/src/render/ui/panels.ts:377 method Panels.cargoList
-SYM game/src/render/ui/panels.ts:391 method Panels.cargoHtml
-SYM game/src/render/ui/panels.ts:453 method Panels.selectedAnimals
-SYM game/src/render/ui/panels.ts:461 method Panels.shopHtml
-SYM game/src/render/ui/panels.ts:521 method Panels.traderHtml
-SYM game/src/render/ui/panels.ts:544 method Panels.gerSellHtml
-SYM game/src/render/ui/panels.ts:551 method Panels.townCommand
-SYM game/src/render/ui/panels.ts:581 method Panels.townHtml
-SYM game/src/render/ui/panels.ts:643 method Panels.lotHtml
-SYM game/src/render/ui/panels.ts:671 method Panels.arriveHtml
-SYM game/src/render/ui/panels.ts:698 method Panels.openLog
-SYM game/src/render/ui/panels.ts:704 method Panels.logHtml
-SYM game/src/render/ui/panels.ts:722 method Panels.reportHtml
-SYM game/src/render/ui/panels.ts:744 method Panels.wolfKillsHtml
-SYM game/src/render/ui/panels.ts:751 method Panels.dogsHtml
-SYM game/src/render/ui/panels.ts:774 method Panels.campsHtml
-SYM game/src/render/ui/panels.ts:805 method Panels.cheatHtml
-SYM game/src/render/ui/panels.ts:815 method Panels.teahouseHtml
-SYM game/src/render/ui/panels.ts:832 method Panels.helpersHtml
-SYM game/src/render/ui/panels.ts:877 method Panels.otorHtml
-SYM game/src/render/ui/panels.ts:897 method Panels.payHtml
-SYM game/src/render/ui/panels.ts:912 method Panels.act
+SYM game/src/render/ui/panels.ts:156 method Panels.current
+SYM game/src/render/ui/panels.ts:160 method Panels.isOpen
+SYM game/src/render/ui/panels.ts:164 method Panels.open
+SYM game/src/render/ui/panels.ts:196 method Panels.closedShop
+SYM game/src/render/ui/panels.ts:203 method Panels.close
+SYM game/src/render/ui/panels.ts:218 method Panels.showReport
+SYM game/src/render/ui/panels.ts:230 method Panels.refresh
+SYM game/src/render/ui/panels.ts:236 method Panels.showArrive
+SYM game/src/render/ui/panels.ts:242 method Panels.render
+SYM game/src/render/ui/panels.ts:266 method Panels.milestonesHtml
+SYM game/src/render/ui/panels.ts:277 method Panels.spark
+SYM game/src/render/ui/panels.ts:285 method Panels.ceremonyHtml
+SYM game/src/render/ui/panels.ts:296 method Panels.storageHtml
+SYM game/src/render/ui/panels.ts:350 method Panels.buyItems
+SYM game/src/render/ui/panels.ts:374 method Panels.vehicleButtons
+SYM game/src/render/ui/panels.ts:382 method Panels.cargoList
+SYM game/src/render/ui/panels.ts:396 method Panels.cargoHtml
+SYM game/src/render/ui/panels.ts:458 method Panels.selectedAnimals
+SYM game/src/render/ui/panels.ts:466 method Panels.shopHtml
+SYM game/src/render/ui/panels.ts:526 method Panels.traderHtml
+SYM game/src/render/ui/panels.ts:549 method Panels.gerSellHtml
+SYM game/src/render/ui/panels.ts:556 method Panels.townCommand
+SYM game/src/render/ui/panels.ts:586 method Panels.townHtml
+SYM game/src/render/ui/panels.ts:648 method Panels.lotHtml
+SYM game/src/render/ui/panels.ts:676 method Panels.arriveHtml
+SYM game/src/render/ui/panels.ts:703 method Panels.openLog
+SYM game/src/render/ui/panels.ts:709 method Panels.logHtml
+SYM game/src/render/ui/panels.ts:727 method Panels.reportHtml
+SYM game/src/render/ui/panels.ts:750 method Panels.reportDetailHtml
+SYM game/src/render/ui/panels.ts:792 method Panels.wolfKillsHtml
+SYM game/src/render/ui/panels.ts:799 method Panels.dogsHtml
+SYM game/src/render/ui/panels.ts:822 method Panels.campsHtml
+SYM game/src/render/ui/panels.ts:853 method Panels.cheatHtml
+SYM game/src/render/ui/panels.ts:863 method Panels.teahouseHtml
+SYM game/src/render/ui/panels.ts:880 method Panels.helpersHtml
+SYM game/src/render/ui/panels.ts:925 method Panels.otorHtml
+SYM game/src/render/ui/panels.ts:945 method Panels.payHtml
+SYM game/src/render/ui/panels.ts:960 method Panels.act
 FILE game/src/render/ui/sleepPanel.ts 2.4KB 49L exports: SleepCtx,SleepPanel
 SYM game/src/render/ui/sleepPanel.ts:12 interface SleepCtx
 SYM game/src/render/ui/sleepPanel.ts:19 fn hhmm
@@ -1152,21 +1155,21 @@ SYM game/src/sim/save.ts:90 fn isObj
 SYM game/src/sim/save.ts:91 fn fin
 SYM game/src/sim/save.ts:92 fn u32
 SYM game/src/sim/save.ts:97 fn validateState
-FILE game/src/sim/sim.ts 13.1KB 271L exports: DayReport,SimEvent,Sim
-SYM game/src/sim/sim.ts:35 interface DayReport
-SYM game/src/sim/sim.ts:59 type SimEvent
-SYM game/src/sim/sim.ts:61 class Sim
-SYM game/src/sim/sim.ts:82 method Sim.on
-SYM game/src/sim/sim.ts:89 method Sim.emit
-SYM game/src/sim/sim.ts:93 method Sim.command
-SYM game/src/sim/sim.ts:102 method Sim.emitTravel
-SYM game/src/sim/sim.ts:107 method Sim.step
-SYM game/src/sim/sim.ts:170 method Sim.refreshQuality
-SYM game/src/sim/sim.ts:175 method Sim.runDays
-SYM game/src/sim/sim.ts:180 method Sim.endDay
-SYM game/src/sim/sim.ts:262 method Sim.spend
-SYM game/src/sim/sim.ts:268 method Sim.random
-FILE game/src/sim/state.ts 20.0KB 399L exports: SAVE_VERSION,ProductId,PRODUCTS,AnimalMode,Animal,GroundItem,Batch,ProcessorKind,ProcessorState,VehicleId,VEHICLES,BuyOrder,Place,InteriorState,+12
+FILE game/src/sim/sim.ts 13.5KB 279L exports: DayReport,SimEvent,Sim
+SYM game/src/sim/sim.ts:36 interface DayReport
+SYM game/src/sim/sim.ts:62 type SimEvent
+SYM game/src/sim/sim.ts:64 class Sim
+SYM game/src/sim/sim.ts:85 method Sim.on
+SYM game/src/sim/sim.ts:92 method Sim.emit
+SYM game/src/sim/sim.ts:96 method Sim.command
+SYM game/src/sim/sim.ts:105 method Sim.emitTravel
+SYM game/src/sim/sim.ts:110 method Sim.step
+SYM game/src/sim/sim.ts:176 method Sim.refreshQuality
+SYM game/src/sim/sim.ts:181 method Sim.runDays
+SYM game/src/sim/sim.ts:186 method Sim.endDay
+SYM game/src/sim/sim.ts:270 method Sim.spend
+SYM game/src/sim/sim.ts:276 method Sim.random
+FILE game/src/sim/state.ts 21.8KB 426L exports: SAVE_VERSION,ProductId,PRODUCTS,AnimalMode,Animal,GroundItem,Batch,ProcessorKind,ProcessorState,VehicleId,VEHICLES,BuyOrder,Place,InteriorState,+16
 SYM game/src/sim/state.ts:21 const SAVE_VERSION
 SYM game/src/sim/state.ts:23 type ProductId
 SYM game/src/sim/state.ts:24 const PRODUCTS
@@ -1185,15 +1188,19 @@ SYM game/src/sim/state.ts:122 interface FleetVehicle
 SYM game/src/sim/state.ts:134 interface MapState
 SYM game/src/sim/state.ts:142 interface CampState
 SYM game/src/sim/state.ts:150 interface DayStats
-SYM game/src/sim/state.ts:163 interface PlayerState
-SYM game/src/sim/state.ts:182 interface GameState
-SYM game/src/sim/state.ts:236 fn emptyDayStats
-SYM game/src/sim/state.ts:240 fn newAnimal
-SYM game/src/sim/state.ts:273 fn createInitialState
-SYM game/src/sim/state.ts:342 const MIGRATIONS
-SYM game/src/sim/state.ts:387 const MIN_SAVE_VERSION
-SYM game/src/sim/state.ts:390 fn migrateState
-FILE game/src/sim/systems/animals.ts 5.2KB 123L exports: AnimalBody,frameKg,liveWeightKg,salePrice,buyPrice,sheepUnits,herdSheepUnits,grazingSheepUnits,dailyConditionDelta,dailyAnimals
+SYM game/src/sim/state.ts:177 type YieldSpecies
+SYM game/src/sim/state.ts:178 type WolfWhere
+SYM game/src/sim/state.ts:179 type DeathCause
+SYM game/src/sim/state.ts:181 interface YieldNote
+SYM game/src/sim/state.ts:190 interface PlayerState
+SYM game/src/sim/state.ts:209 interface GameState
+SYM game/src/sim/state.ts:263 fn emptyDayStats
+SYM game/src/sim/state.ts:267 fn newAnimal
+SYM game/src/sim/state.ts:300 fn createInitialState
+SYM game/src/sim/state.ts:369 const MIGRATIONS
+SYM game/src/sim/state.ts:414 const MIN_SAVE_VERSION
+SYM game/src/sim/state.ts:417 fn migrateState
+FILE game/src/sim/systems/animals.ts 5.6KB 130L exports: AnimalBody,frameKg,liveWeightKg,salePrice,buyPrice,sheepUnits,herdSheepUnits,grazingSheepUnits,dailyConditionDelta,dailyAnimals
 SYM game/src/sim/systems/animals.ts:8 interface AnimalBody
 SYM game/src/sim/systems/animals.ts:21 fn frameKg
 SYM game/src/sim/systems/animals.ts:44 fn liveWeightKg
@@ -1204,10 +1211,12 @@ SYM game/src/sim/systems/animals.ts:70 fn herdSheepUnits
 SYM game/src/sim/systems/animals.ts:77 fn grazingSheepUnits
 SYM game/src/sim/systems/animals.ts:87 fn dailyConditionDelta
 SYM game/src/sim/systems/animals.ts:98 fn dailyAnimals
-FILE game/src/sim/systems/breeding.ts 3.3KB 75L exports: BreedingResult,dailyBreeding
+FILE game/src/sim/systems/breeding.ts 4.7KB 100L exports: BreedingResult,dailyBreeding,BirthForecast,birthForecast
 SYM game/src/sim/systems/breeding.ts:11 interface BreedingResult
 SYM game/src/sim/systems/breeding.ts:16 fn dailyBreeding
 SYM game/src/sim/systems/breeding.ts:23 fn breedGroup
+SYM game/src/sim/systems/breeding.ts:77 interface BirthForecast
+SYM game/src/sim/systems/breeding.ts:87 fn birthForecast
 FILE game/src/sim/systems/buildingSize.ts 6.8KB 103L exports: TownEntry,LabFootprint,townEntry,entryFootprint,rotLocal,worldSize,labOrigin,labDoorPoint,houseFootprint,houseSlot,PlotLab,townPlots,GATE_PHI,plotHouseLab
 SYM game/src/sim/systems/buildingSize.ts:11 interface TownEntry
 SYM game/src/sim/systems/buildingSize.ts:12 interface LabFootprint
@@ -1227,7 +1236,7 @@ FILE game/src/sim/systems/camps.ts 4.4KB 99L exports: moveHours,startMove,moveSt
 SYM game/src/sim/systems/camps.ts:19 fn moveHours
 SYM game/src/sim/systems/camps.ts:30 fn startMove
 SYM game/src/sim/systems/camps.ts:50 fn moveStep
-FILE game/src/sim/systems/cheats.ts 6.8KB 174L exports: CheatAction,applyCheat
+FILE game/src/sim/systems/cheats.ts 6.9KB 175L exports: CheatAction,applyCheat
 SYM game/src/sim/systems/cheats.ts:12 type CheatAction
 SYM game/src/sim/systems/cheats.ts:24 fn applyCheat
 FILE game/src/sim/systems/difficulty.ts 3.5KB 73L exports: Difficulty,DifficultyRange,DifficultyConfig,DIFFICULTY_KEYS,defaultDifficulty,clampDifficulty,validateDifficultyConfig,difficultyProblems
@@ -1282,7 +1291,7 @@ SYM game/src/sim/systems/grazing.ts:132 fn moveToward
 SYM game/src/sim/systems/grazing.ts:155 fn grazingStep
 SYM game/src/sim/systems/grazing.ts:247 fn eat
 SYM game/src/sim/systems/grazing.ts:267 fn driveFlock
-FILE game/src/sim/systems/helpers.ts 47.9KB 974L exports: HelperKind,HelperTask,HerdGroup,HelperTrip,Helper,CandidateMember,Candidate,OtorGroup,Dwelling,HelpersState,HelperEvent,newHelpersState,bedsTotal,bedsUsed,+26
+FILE game/src/sim/systems/helpers.ts 48.0KB 976L exports: HelperKind,HelperTask,HerdGroup,HelperTrip,Helper,CandidateMember,Candidate,OtorGroup,Dwelling,HelpersState,HelperEvent,newHelpersState,bedsTotal,bedsUsed,+26
 SYM game/src/sim/systems/helpers.ts:36 type HelperKind
 SYM game/src/sim/systems/helpers.ts:37 type HelperTask
 SYM game/src/sim/systems/helpers.ts:38 type HerdGroup
@@ -1337,7 +1346,7 @@ SYM game/src/sim/systems/helpers.ts:808 fn recallOtor
 SYM game/src/sim/systems/helpers.ts:831 fn setOtorCollector
 SYM game/src/sim/systems/helpers.ts:854 fn takeFromOtor
 SYM game/src/sim/systems/helpers.ts:885 fn dailyOtor
-SYM game/src/sim/systems/helpers.ts:967 fn relocateHelpers
+SYM game/src/sim/systems/helpers.ts:969 fn relocateHelpers
 FILE game/src/sim/systems/herder.ts 5.8KB 140L exports: ridingHorse,herderStep,shout,toggleUurga,toggleMount
 SYM game/src/sim/systems/herder.ts:15 fn ridingHorse
 SYM game/src/sim/systems/herder.ts:20 fn herderStep
@@ -1422,7 +1431,7 @@ SYM game/src/sim/systems/milestones.ts:115 interface GoalProgress
 SYM game/src/sim/systems/milestones.ts:118 fn seasonGoal
 SYM game/src/sim/systems/milestones.ts:131 fn nextStage
 SYM game/src/sim/systems/milestones.ts:150 fn validateMilestones
-FILE game/src/sim/systems/night.ts 5.6KB 112L exports: goesHome,homeSpot,atHome,eveningStep,sleepAll,intakeFactor,dailyMilkLiters,morning
+FILE game/src/sim/systems/night.ts 6.6KB 126L exports: goesHome,homeSpot,atHome,eveningStep,sleepAll,intakeFactor,dailyMilkLiters,morning
 SYM game/src/sim/systems/night.ts:17 fn goesHome
 SYM game/src/sim/systems/night.ts:22 fn homeSpot
 SYM game/src/sim/systems/night.ts:31 fn atHome
@@ -1678,7 +1687,7 @@ SYM game/src/sim/systems/trader.ts:107 interface TraderPlan
 SYM game/src/sim/systems/trader.ts:113 fn traderBuyPrice
 SYM game/src/sim/systems/trader.ts:116 fn traderHayPrice
 SYM game/src/sim/systems/trader.ts:121 fn traderTrade
-FILE game/src/sim/systems/travel.ts 25.2KB 575L exports: TravelEvent,fleetOf,initFleetVehicle,addVehicle,syncAway,cargoUnits,hayInOrders,hayRoom,cargoSlots,nearestVehicle,enterVehicle,exitVehicle,boardBest,takeFromStorage,+20
+FILE game/src/sim/systems/travel.ts 25.4KB 577L exports: TravelEvent,fleetOf,initFleetVehicle,addVehicle,syncAway,cargoUnits,hayInOrders,hayRoom,cargoSlots,nearestVehicle,enterVehicle,exitVehicle,boardBest,takeFromStorage,+20
 SYM game/src/sim/systems/travel.ts:24 type TravelEvent
 SYM game/src/sim/systems/travel.ts:29 fn fleetOf
 SYM game/src/sim/systems/travel.ts:34 fn initFleetVehicle
@@ -1715,7 +1724,7 @@ SYM game/src/sim/systems/travel.ts:425 fn sellableAtShop
 SYM game/src/sim/systems/travel.ts:434 fn sellableAnimals
 SYM game/src/sim/systems/travel.ts:440 fn animalRoom
 SYM game/src/sim/systems/travel.ts:452 fn trade
-SYM game/src/sim/systems/travel.ts:541 fn buyLotVehicle
+SYM game/src/sim/systems/travel.ts:543 fn buyLotVehicle
 FILE game/src/sim/systems/trip.ts 4.3KB 108L exports: VehicleSpec,vehicleCfg,bestTruck,parkingSpot,productPrice,orderPrice,animalSlots,deliver
 SYM game/src/sim/systems/trip.ts:15 type VehicleSpec
 SYM game/src/sim/systems/trip.ts:17 fn vehicleCfg
@@ -1725,7 +1734,7 @@ SYM game/src/sim/systems/trip.ts:36 fn productPrice
 SYM game/src/sim/systems/trip.ts:40 fn orderPrice
 SYM game/src/sim/systems/trip.ts:64 fn animalSlots
 SYM game/src/sim/systems/trip.ts:70 fn deliver
-FILE game/src/sim/systems/wolves.ts 31.9KB 660L exports: Den,WolfMode,Wolf,isPup,hungerStage,WolfState,Zone,WolfEvent,spawnWolves,protectionZones,isProtected,spookAnimals,scareWolf,wolvesStep,+6
+FILE game/src/sim/systems/wolves.ts 32.6KB 669L exports: Den,WolfMode,Wolf,isPup,hungerStage,WolfState,Zone,WolfEvent,spawnWolves,protectionZones,isProtected,spookAnimals,scareWolf,wolvesStep,+7
 SYM game/src/sim/systems/wolves.ts:37 interface Den
 SYM game/src/sim/systems/wolves.ts:44 type WolfMode
 SYM game/src/sim/systems/wolves.ts:46 interface Wolf
@@ -1743,15 +1752,16 @@ SYM game/src/sim/systems/wolves.ts:187 fn pushOut
 SYM game/src/sim/systems/wolves.ts:205 fn spookAnimals
 SYM game/src/sim/systems/wolves.ts:262 fn scareWolf
 SYM game/src/sim/systems/wolves.ts:270 fn wolvesStep
-SYM game/src/sim/systems/wolves.ts:477 fn nextDen
-SYM game/src/sim/systems/wolves.ts:486 fn nearestPrey
-SYM game/src/sim/systems/wolves.ts:506 fn raidStep
-SYM game/src/sim/systems/wolves.ts:545 fn nightRaid
-SYM game/src/sim/systems/wolves.ts:574 fn wolvesDaily
-SYM game/src/sim/systems/wolves.ts:628 fn killWolf
-SYM game/src/sim/systems/wolves.ts:633 fn endRaid
-SYM game/src/sim/systems/wolves.ts:645 fn scareWolves
-SYM game/src/sim/systems/wolves.ts:658 fn huntingWolves
+SYM game/src/sim/systems/wolves.ts:478 fn nextDen
+SYM game/src/sim/systems/wolves.ts:487 fn nearestPrey
+SYM game/src/sim/systems/wolves.ts:507 fn raidStep
+SYM game/src/sim/systems/wolves.ts:546 fn nightRaid
+SYM game/src/sim/systems/wolves.ts:575 fn wolvesDaily
+SYM game/src/sim/systems/wolves.ts:629 fn killWolf
+SYM game/src/sim/systems/wolves.ts:634 fn endRaid
+SYM game/src/sim/systems/wolves.ts:646 fn scareWolves
+SYM game/src/sim/systems/wolves.ts:659 fn noteKillPlace
+SYM game/src/sim/systems/wolves.ts:667 fn huntingWolves
 FILE game/src/sim/terrain.ts 3.2KB 83L exports: smoothstep,riverZ,waterDistance,baseHeightAt,heightAt,waterLevel
 SYM game/src/sim/terrain.ts:7 fn clamp
 SYM game/src/sim/terrain.ts:8 const smoothstep
@@ -1828,6 +1838,7 @@ FILE game/tests/perf.perf.test.ts 3.2KB 57L
 FILE game/tests/persist.test.ts 10.2KB 212L
 FILE game/tests/playthrough.test.ts 6.3KB 133L
 FILE game/tests/products.test.ts 3.0KB 56L
+FILE game/tests/report.test.ts 4.8KB 83L
 FILE game/tests/rng.test.ts 0.8KB 26L
 FILE game/tests/save.test.ts 12.5KB 243L
 FILE game/tests/seasons.test.ts 7.2KB 140L
@@ -2048,11 +2059,11 @@ FILE docs/plan/M7.md 7.6KB 31L
 DOC docs/plan/M7.md:12-22 ## Блокууд
 DOC docs/plan/M7.md:23-27 ## Асуулга (10 асуулт)
 DOC docs/plan/M7.md:28-31 ## Эрсдэл
-FILE docs/plan/V.md 81.9KB 293L
+FILE docs/plan/V.md 83.1KB 295L
 DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
 DOC docs/plan/V.md:24-265 ## Блокууд ба чеклист (2026-11-15)
-DOC docs/plan/V.md:266-293 ## Зогссон цэг
+DOC docs/plan/V.md:266-295 ## Зогссон цэг
 FILE docs/plan/playtest.md 23.5KB 143L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
 DOC docs/plan/playtest.md:19-39 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])

@@ -27,9 +27,10 @@
     "zoneCheckMinutes": 10
   },
   "journal": {
-    "_doc": "Тэмдэглэл (📜): хадгалах мэдэгдлийн тоо, өдрийн тайлангийн өдөр (sim/systems/journal.ts).",
+    "_doc": "Тэмдэглэл (📜): хадгалах мэдэгдлийн тоо, өдрийн тайлангийн өдөр; forecastWindowDays — «ирэх төллөлт»-д хамгийн ойрын төллөх өдрөөс хойш хэдэн хоногийн эм малыг тоолох (sim/systems/journal.ts).",
     "notes": 30,
-    "reportDays": 7
+    "reportDays": 7,
+    "forecastWindowDays": 5
   },
   "monthDays": 5,
   "animalYearDays": 50,

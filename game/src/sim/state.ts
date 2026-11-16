@@ -158,6 +158,33 @@ export interface DayStats {
   wolfKills: Partial<Record<Species, number>>;   // чонод барьдсан (deaths-д ороогүй)
   hayFed: number;    // өгсөн боодол өвс (M5.5)
   coldHit: number;   // гадуур хүйтэнд хоносон мал (M5.5)
+  // --- Өдрийн тайлангийн дэлгэрэнгүй (1f; хуучин хадгалалтад байхгүй байж болно) ---
+  /** Өглөө сүү/ноос үлдээсэн байдал, төрлөөр (night.ts morning) */
+  yield?: Partial<Record<YieldSpecies, YieldNote>>;
+  /** Чоно мал хөөж эхэлсэн удаа */
+  wolfAttacks?: number;
+  /** Чонод алдсан мал хаана барьдсан: хотон / бэлчээр / чонын нутаг */
+  wolfWhere?: Partial<Record<WolfWhere, number>>;
+  /** Үхлийн шалтгаан (deaths-ийн задаргаа) */
+  deathCauses?: Partial<Record<DeathCause, number>>;
+  /** Зарсан, худалдаж авсан малын тоо */
+  sold?: number;
+  bought?: number;
+  /** Өдрийн эхэнд (өмнөх тайлангийн дараа) байсан малын тоо — нийт өөрчлөлт */
+  animalsStart?: number;
+}
+
+export type YieldSpecies = 'cow' | 'sheep' | 'goat';
+export type WolfWhere = 'pen' | 'pasture' | 'den';
+export type DeathCause = 'old' | 'starve' | 'thirst' | 'weak';
+/** Өглөөний бүтээгдэхүүн: хэдэн мал үлдээсэн, үлдээгээгүй нь яагаад (симуляцийн бодит нөхцөлөөр) */
+export interface YieldNote {
+  gave: number;      // сүү/ноос үлдээсэн
+  outside: number;   // үүнээс хотноос гадуур хоносон (бүтээгдэхүүн тэнд үлдсэн)
+  lowGut: number;    // өчигдөр өвс бараг идээгүй (идшийн хүчин зүйл 0) — юу ч гараагүй
+  lowCond: number;   // тарга муу (ноос/ноолуур ургахгүй)
+  partial: number;   // сүү: нэг сав хүрээгүй, хуримтлагдаж байна
+  dry: number;       // үнээ: тугаллаагүй, сүүгүй
 }
 
 export interface PlayerState {

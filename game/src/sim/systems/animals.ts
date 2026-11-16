@@ -105,6 +105,7 @@ export function dailyAnimals(cfg: GameConfig, state: GameState): Animal[] {
     }
     const dq = a.gutFill > 0 ? a.dietSum / a.gutFill : 0;
     let dc = dailyConditionDelta(a.gutFill, dq, a.lactating && a.species === 'cow', ac);
+    const thirsty = a.thirstMaxedToday;
     if (a.thirstMaxedToday) {
       dc -= ac.thirst.fullConditionLossPerDay ?? 0.03;
       a.health -= ac.thirst.fullHealthLossPerDay ?? 5;
@@ -116,7 +117,13 @@ export function dailyAnimals(cfg: GameConfig, state: GameState): Animal[] {
     a.dietSum = 0;
     a.thirstMaxedToday = false;
     a.age += 1 / cfg.time.animalYearDays;
-    if (a.health <= 0 || a.age >= ac.species[a.species].deathAge) dead.push(a);
+    if (a.health <= 0 || a.age >= ac.species[a.species].deathAge) {
+      dead.push(a);
+      // Тайланд: шалтгаан — нас, турал (тарга 0), цангаа, бусад (эрүүл мэнд 0: хүйтэн г.м.)
+      const cause = a.age >= ac.species[a.species].deathAge ? 'old' : a.condition <= 0 ? 'starve' : thirsty ? 'thirst' : 'weak';
+      const dcs = (state.today.deathCauses ??= {});
+      dcs[cause] = (dcs[cause] ?? 0) + 1;
+    }
   }
   if (dead.length) state.animals = state.animals.filter((a) => !dead.includes(a));
   return dead;
