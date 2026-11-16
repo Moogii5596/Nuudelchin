@@ -807,5 +807,14 @@
   "trader.prompt": "🚛 trade",
   "trader.all": "all",
   "trader.income": "Income",
-  "trader.expenses": "Expenses"
+  "trader.expenses": "Expenses",
+  "sim.sleep_go_to_relatives": "Go to your relatives’ gate to sleep",
+  "sim.sleep_only_at_night": "Not sleeping time — you can sleep between 18:00 and 03:00",
+  "sim.sleep_bad_wake": "Invalid wake-up time (04:00–10:00)",
+  "sim.slept_woke_up": "😴 Slept at your relatives’ — woke up at {x}",
+  "sleep.title": "😴 Sleep at your relatives’",
+  "sleep.hint": "Pick a wake-up time. While you sleep, animals, helpers and dogs carry on as usual; the night wolf risk remains.",
+  "sleep.wake": "Wake-up time",
+  "sleep.go": "😴 Sleep — wake at {x}",
+  "sleep.closed": "Not sleeping time (you can sleep between 18:00 and 03:00)"
 }

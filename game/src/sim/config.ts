@@ -20,6 +20,7 @@ import worldmapJson from '../../../data/worldmap.json';
 import seasonsJson from '../../../data/seasons.json';
 import sumcenterJson from '../../../data/sumcenter.json';
 import townJson from '../../../data/town.json';
+import sleepJson from '../../../data/sleep.json';
 import interiorsJson from '../../../data/interiors.json';
 import npcsJson from '../../../data/npcs.json';
 import { npcConfigErrors, type NpcsConfig } from './systems/npc';
@@ -276,6 +277,8 @@ export interface GameConfig {
   sumcenter: SumLayout;
   /** V3.4: сумын төвийн амьдрал (байшин, хандив, зээл, хамаатан) — data/town.json */
   town: typeof townJson;
+  /** Хамаатны айлд унтах (2026-11-16) — data/sleep.json */
+  sleep: typeof sleepJson;
   /** V6.1: орж болдог барилгын дотор тал — data/interiors.json */
   interiors: InteriorsConfig;
   /** V6.3: сумын төвийн NPC (хуваарь, байрлал) — data/npcs.json */
@@ -313,6 +316,7 @@ export function loadConfig(): GameConfig {
     seasons: seasonsJson as unknown as SeasonsConfig,
     sumcenter: sumcenterJson as unknown as SumLayout,
     town: townJson,
+    sleep: sleepJson,
     interiors: interiorsJson as unknown as InteriorsConfig,
     npcs: npcsJson as unknown as NpcsConfig,
     ger: gerJson.ger as unknown as GerSimConfig,
@@ -435,6 +439,10 @@ export function validateSumLayout(cfg: GameConfig): string[] {
   const doors = sumDoors(cfg);
   if (doors.filter((d) => d.role === 'teahouse').length !== 1) e.push('sumcenter: Цайны газар (gameRole teahouse) яг 1 байх ёстой');
   for (const r of TRADE_ROLES) if (!doors.some((d) => d.role === r)) e.push(`sumcenter: "${r}" үүрэгтэй дэлгүүр алга`);
+  // data/sleep.json
+  const Z = cfg.sleep;
+  if (!(Z.wakeStep > 0 && Z.wakeMin <= Z.wakeDefault && Z.wakeDefault <= Z.wakeMax && Z.startMinute < Z.endMinute)) e.push('sleep: wakeStep > 0, wakeMin ≤ wakeDefault ≤ wakeMax, startMinute < endMinute');
+  if (Z.endMinute >= cfg.time.nightEndMinute - 1 || (Z.wakeDefault - Z.wakeMin) % Z.wakeStep !== 0) e.push('sleep: endMinute нь шөнийн төгсгөлөөс өмнө, wakeDefault нь wakeStep-ийн алхамд таарах ёстой');
   // V3.4 data/town.json
   const forSale = new Set((L.specialPlots ?? []).filter((p) => p.role === 'forSale').map((p) => p.id));
   for (const [id, h] of Object.entries(cfg.town.houses)) {
