@@ -1416,7 +1416,7 @@
  "gateStandOff": 1.2,
  "outlineW": 0.03,
  "town": {
-  "_doc": "Сумын төвийн барилга (data/sumcenter.json-ийн id) → лабораторийн төрөл. rot: градус (нүүр урагшаа +Z, цагийн зүүн — Geo.append phi=-rot·π/180); dx,dz: барилгын (x,z)-ээс загварын эхлэл цэг хүртэл. byId-д байхгүй барилга хуучин хайрцгаар. compounds/fields/props: id/kind-аар нийлмэл талбай (хашаа, цэнгэлдэх…) — sumcenter.json-ийн байрлал хэвээр, хэмжээ нь лабораторийнх. plotHouses: хашаа байшингийн гол байшингийн төрлүүд.",
+  "_doc": "Сумын төвийн барилга (data/sumcenter.json-ийн id) → лабораторийн төрөл. rot: градус (нүүр урагшаа +Z, цагийн зүүн — Geo.append phi=-rot·π/180); dx,dz: барилгын (x,z)-ээс загварын эхлэл цэг хүртэл. byId-д байхгүй барилга хуучин хайрцгаар. compounds/fields/props: id/kind-аар нийлмэл талбай (хашаа, цэнгэлдэх…) — sumcenter.json-ийн байрлал хэвээр, хэмжээ нь лабораторийнх. plotHouses: хашаа байшингийн гол байшингийн төрлүүд. plots: тусгай хашаа (specialPlots id) → гол байшингийн төрөл (houseA|houseC — дотор өрөө 'house' багтана). skip: зурахгүй барилга (нийлмэл загварт орсон). Барилгын лабораторийн хэмжээнд багтсан props (дуганы хашаанд орсон суварга, гэр) зурагдахгүй.",
   "byId": {
    "school": {
     "type": "public",
@@ -1532,6 +1532,27 @@
    "houseA",
    "houseB",
    "houseC"
+  ],
+  "plots": {
+   "plot_sale_1": {
+    "house": "houseA",
+    "roofColor": "blue"
+   },
+   "plot_sale_2": {
+    "house": "houseC",
+    "roofColor": "red"
+   },
+   "plot_rel_1": {
+    "house": "houseA",
+    "roofColor": "green"
+   },
+   "plot_rel_2": {
+    "house": "houseC",
+    "roofColor": "#6E2222"
+   }
+  },
+  "skip": [
+   "market_office"
   ]
  }
 }

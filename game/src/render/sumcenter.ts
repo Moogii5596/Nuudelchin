@@ -9,6 +9,7 @@ import type { GameConfig } from '../sim/config';
 import type { VehicleId } from '../sim/state';
 import { allBuildings, facingOf, lotSlots, nearTradeDoor, sumDoors, TRADE_ROLES, type SumBuildingSpec } from '../sim/systems/sumtown';
 import { buildSumCenter, type SumCenterBuild } from './sumlayout';
+import { makeBuildingMaterials, type BuildingMaterials } from './building';
 import { nearTownDoor, plotDoors } from '../sim/systems/town';
 import { nearTeahouse } from '../sim/systems/helpers';
 import type { GameState } from '../sim/state';
@@ -83,6 +84,10 @@ export class SumCenterView {
   /** V3.5: айлын гэрүүд (makeGer → bakeStatic, бүгд нэг mesh + бэхэн хүрээ); улирал солигдоход дахин угсарна */
   private gerMeshes: THREE.Mesh[] = [];
   private gerWinter: boolean | null = null;
+  /** V3.5: лабораторийн барилгууд — бие + бэхэн хүрээ (2 draw call) ба дуганы хүрд; улирал солигдоход дахин угсарна */
+  private townObjs: THREE.Mesh[] = [];
+  private townWinter: boolean | null = null;
+  private townMats: BuildingMaterials | null = null;
   /** V6.3: хуваарьтай NPC-үүд (гадаа; дотор нь render/interior.ts-ээр) */
   readonly npcs: NpcView;
   private liveRigs = new Map<number, CharacterRig>();
@@ -220,14 +225,37 @@ export class SumCenterView {
   get solids(): CamSolids { return this.built.solids; }
 
   /** V3.4: худалдаж авсан байшингийн шошго (R7: сумын төвд кадр бүр дуудагддаг тул ярилцлагыг ч эндээс) */
-  syncTown(state: GameState): void {
+  syncTown(state: GameState, night = 0): void {
     const winter = seasonOf(this.cfg, state.time.day) === 'winter';
     if (winter !== this.gerWinter) this.buildGers(winter);
+    if (winter !== this.townWinter) this.buildTown(winter);
+    this.townMats?.setGlow(night * 1.6);   // шөнө цонх, хаягийн самбар, гэрлийн шон гэрэлтэнэ
     this.syncTalk(state);
     for (const s of this.houseSigns) {
       const own = !!state.town.houses[s.plot];
       if (own !== s.own) { this.labels.setText(s.quad, own ? MINE : SALE); s.own = own; }
     }
+  }
+
+  /** V3.5: сумын төвийн бүх барилга, хашаа байшин, жорлон — нэг Geo (атлас + vertex color) + бэхэн хүрээ. Хүрд тусдаа mesh */
+  private buildTown(winter: boolean): void {
+    this.townWinter = winter;
+    for (const m of this.townObjs) { this.group.remove(m); if (m.userData.own) m.geometry.dispose(); }
+    this.townObjs = [];
+    const part = this.built.town.build(winter ? 'winter' : 'summer');
+    const mats = (this.townMats ??= makeBuildingMaterials());
+    const geometry = part.geo.build();
+    geometry.computeBoundingSphere();
+    const body = new THREE.Mesh(geometry, mats.mat), outline = new THREE.Mesh(geometry, mats.outlineMat);
+    body.name = 'town:buildings'; outline.name = 'town:outline';
+    body.castShadow = true; body.receiveShadow = true; body.userData.own = true;
+    this.townObjs.push(body, outline);
+    for (const w of part.wheels) {
+      const m = new THREE.Mesh(w.geo.build(), mats.mat);
+      m.name = 'town:wheel'; m.position.set(w.x, w.y, w.z); m.rotation.y = w.yaw; m.castShadow = true; m.userData.own = true;
+      this.townObjs.push(m);
+    }
+    for (const m of this.townObjs) this.group.add(m);
   }
 
   /**

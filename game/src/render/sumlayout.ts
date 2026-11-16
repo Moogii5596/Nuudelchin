@@ -8,6 +8,10 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { doorPoint, plotHouse, sumHeight, type SumLayout, type SumBuildingSpec, type SumSpecialPlotSpec, type SumXZ } from '../sim/systems/sumtown';
 
 import type { CamSolids } from './camclip';
+import { TOWN, BUILDING_CONFIG as BC, appendAt, makePlot } from './building';
+import { TownBuilder, labModel, gerSlotLocal } from './building/town';
+import { GER } from './ger/config';
+import { GATE_PHI, houseFootprint, houseSlot, labOrigin, rotLocal, type TownEntry } from '../sim/systems/buildingSize';
 
 type XZ = SumXZ;
 type BuildingSpec = SumBuildingSpec;
@@ -32,6 +36,8 @@ export interface SumCenterBuild {
   colliders: Rect[];
   /** Камерын мөргөлдөөн (V4.5 R7): барилга, гэрийн хайрцаг/цилиндр */
   solids: CamSolids;
+  /** V3.5: лабораторийн барилгууд (улирлаар нэг mesh-д угсарна) */
+  town: TownBuilder;
   heightAt: (x: number, z: number) => number;
   dispose: () => void;
 }
@@ -190,7 +196,8 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     disposables.push(g, m.material as THREE.Material);
   }
 
-  const B = new Batch();     // барилга, хашаа, зам — бүгд нэг mesh
+  const B = new Batch();     // зам, хашлага, жижиг зүйл, хуучин хайрцаг барилга — нэг mesh
+  const town = new TownBuilder();   // V3.5: лабораторийн барилга, хашаа байшин — улирал бүрт нэг mesh (render/building)
   const ribbon = (pts: XZ[], width: number, color: string, lift: number) => {
     const c = new THREE.Color(color);
     const verts: number[] = [];
@@ -270,9 +277,67 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     solids.cyls.push({ x, z, r: r + 0.3, y0: heightAt(x, z) - 2, y1: heightAt(x, z) + 3.4 });   // хаалга урагшаа (+z); загвар — sumcenter.ts (makeGer)
   };
 
+  // --- V3.5 лабораторийн барилга ---
+  const GER_R = GER.sizes.small4!.diameter / 2;
+  const houseTop = (kind: string): number => { const K = BC.house[BC.special[kind]?.base ?? kind]; return K.wallH + (K.d / 2) * K.roofPitch + K.roofLift + K.chimney.rise + 0.4; };
+  /** Нийлмэл талбай: (x, z)-д лабораторийн загвар, rot градус */
+  const labAt = (e: TownEntry, x: number, z: number): { top: number } => {
+    const phi = -((e.rot ?? 0) * Math.PI) / 180, y = heightAt(x, z), probe = labModel(e, 'summer');
+    town.add((season, out, wheels) => {
+      const m = labModel(e, season);
+      appendAt(out, m.geo, phi, x, y, z);
+      for (const w of m.wheels ?? []) { const r = rotLocal(w.position.x, w.position.z, e.rot ?? 0); wheels.push({ geo: w.geo, x: x + r.x, y: y + w.position.y, z: z + r.z, yaw: phi, style: w.style }); }
+    });
+    return { top: probe.dims.ridgeH };
+  };
+  const labBuilding = (b: BuildingSpec, e: TownEntry): HomeDoor => {
+    const o = labOrigin(e, b), hw = b.w / 2, hd = b.d / 2;
+    const hs = [heightAt(b.x - hw, b.z - hd), heightAt(b.x + hw, b.z - hd), heightAt(b.x - hw, b.z + hd), heightAt(b.x + hw, b.z + hd), heightAt(b.x, b.z)];
+    const y0 = Math.max(...hs), yMin = Math.min(...hs);
+    if (y0 - yMin > 0.02) B.box(b.w + 0.1, y0 - yMin + 0.6, b.d + 0.1, b.x, yMin - 0.6, b.z, 0, BC.palette.plinth);   // налуу газар: суурь
+    const phi = -((e.rot ?? 0) * Math.PI) / 180, probe = labModel(e, 'summer');
+    town.add((season, out, wheels) => {
+      const m = labModel(e, season);
+      appendAt(out, m.geo, phi, o.x, y0, o.z);
+      for (const w of m.wheels ?? []) { const r = rotLocal(w.position.x, w.position.z, e.rot ?? 0); wheels.push({ geo: w.geo, x: o.x + r.x, y: y0 + w.position.y, z: o.z + r.z, yaw: phi, style: w.style }); }
+    });
+    colliders.push({ id: b.id, x: b.x, z: b.z, w: b.w, d: b.d });
+    solids.boxes.push({ x: b.x, z: b.z, hw, hd, rot: 0, y0: yMin - 2, y1: y0 + probe.dims.ridgeH });
+    if (b.yard) {
+      const yx = b.x + (b.yard.dx ?? 0), yz = b.z + (b.yard.dz ?? 0);
+      fence(yx, yz, b.yard.w, b.yard.d, b.yard.fence, 1.3, b.front ?? 's', 6);
+      colliders.push({ id: b.id + ':yard', x: yx, z: yz, w: b.yard.w, d: b.yard.d });
+    }
+    const dp = doorPoint(b);
+    return { x: dp.x, y: y0, z: dp.z };
+  };
+  /** Нэг айлын хашаа (лабораторийн makePlot): хашааны төв (x, z), хаалганы чиглэл gate. Орчуулга: хашааны локал нүүр +Z */
+  const plotLab = (o: { x: number; z: number; w: number; d: number; gate: 'n' | 's' | 'e' | 'w'; kind: string; seed: number; roofColor?: string; extras?: string[];
+    path?: 'walk' | 'dirt'; trees?: 'full' | 'bush'; kennel?: boolean; fenceColor: string; gateColor: string; gerColor?: string }): HomeDoor => {
+    const vertical = o.gate === 'e' || o.gate === 'w', lw = vertical ? o.d : o.w, ld = vertical ? o.w : o.d, phi = GATE_PHI[o.gate], y = heightAt(o.x, o.z);
+    const c = Math.cos(phi), s = Math.sin(phi), toW = (lx: number, lz: number) => ({ x: o.x + lx * c + lz * s, z: o.z - lx * s + lz * c });
+    town.add((season, out) => {
+      const p = makePlot({ kind: o.kind, season, roofColor: o.roofColor, seed: o.seed, w: lw, d: ld, fenceColor: o.fenceColor, gateColor: o.gateColor, extras: o.extras, path: o.path, trees: o.trees, kennel: o.kennel, yard: true });
+      appendAt(out, p.geo, phi, o.x, y, o.z);
+      for (const g of p.gers) g.ger.dispose();   // гэр нь айлын гэрийн нэгдсэн mesh-ээр (sumcenter.ts buildGers)
+    });
+    if (o.kind === 'gerYard') {
+      const gs = gerSlotLocal(lw, ld, GER_R), g = toW(gs.x, gs.z), dd = toW(gs.x, gs.z + GER_R + 1.4);
+      ger(g.x, g.z, o.gerColor ?? '#F3EDE2', GER_R);
+      return { x: dd.x, y, z: dd.z };
+    }
+    const base = BC.special[o.kind]?.base ?? o.kind, hf = houseFootprint(base), sl = houseSlot(lw, ld, hf.w, hf.d);
+    const dw = toW(sl.x + hf.door.x, sl.z + hf.door.z), hc = toW(sl.x, sl.z);
+    solids.boxes.push({ x: hc.x, z: hc.z, hw: (vertical ? hf.d : hf.w) / 2, hd: (vertical ? hf.w : hf.d) / 2, rot: 0, y0: y - 2, y1: y + houseTop(o.kind) });
+    return { x: dw.x, y, z: dw.z };
+  };
+
   // --- Барилга ---
   /** Барилга зурна; хаалганы гаднах цэгийг буцаана (sim-ийн doorPoint-той ижил) */
   const building = (b: BuildingSpec): HomeDoor => {
+    if (TOWN.skip.includes(b.id)) { const sp = doorPoint(b); return { x: sp.x, y: heightAt(sp.x, sp.z), z: sp.z }; }   // нийлмэл загварт орсон (market)
+    const lab = TOWN.byId[b.id];
+    if (lab) return labBuilding(b, lab);
     const rot = b.rot ?? 0;
     const h = b.h ?? b.floors * FH;
     const y0 = Math.max(heightAt(b.x - b.w / 2, b.z - b.d / 2), heightAt(b.x + b.w / 2, b.z + b.d / 2), heightAt(b.x, b.z));
@@ -359,6 +424,8 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     const gate = c.gate ?? faceTowardRoad(c.x, c.z);
     fence(c.x, c.z, c.w, c.d, c.fence, 1.6, gate, 6, c.gateOffset ?? 0);
     colliders.push({ id: c.id + ':yard', x: c.x, z: c.z, w: c.w, d: c.d });
+    const lc = TOWN.compounds[c.id];
+    if (lc) labAt(lc, c.x, c.z);   // малын зах: хороо, саравч, налуу (лаборатори)
     c.buildings?.forEach(building);
     c.gers?.forEach(([x, z]) => ger(x, z));
     c.solar?.forEach(([x, z]) => {
@@ -373,6 +440,13 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
   // --- Талбай ---
   for (const f of L.fields) {
     const y = heightAt(f.x, f.z);
+    const lf = TOWN.fields[f.id];
+    if (lf) {   // V3.5: тоглоомын, бөхийн талбай — лабораторийн загвар
+      labAt(lf, f.x, f.z);
+      const lot = (BC[lf.type === 'stadium' ? 'stadium' : 'wrestle'].lot as [number, number]);
+      if (f.kind === 'wrestling') colliders.push({ id: f.id, x: f.x, z: f.z, w: lot[0] * 0.5, d: lot[1] * 0.5 });
+      continue;
+    }
     if (f.kind === 'football') {
       const w = f.w!, d = f.d!;
       if (f.track) {
@@ -460,9 +534,20 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
   };
 
   // --- Жижиг зүйлс ---
+  const temple = L.buildings.find(b => b.id === 'temple'), templeEntry = temple ? TOWN.byId[temple.id] : undefined;
+  const templeYard = temple && templeEntry ? { o: labOrigin(templeEntry, temple), w: BC.temple.yard[0] as number, d: BC.temple.yard[1] as number } : null;
   for (const p of L.props) {
     const y = heightAt(p.x, p.z);
     const n = (k: string, d = 0) => (p[k] as number) ?? d;
+    if (templeYard && (p.kind === 'stupa' || p.kind === 'ger') && Math.abs(p.x - templeYard.o.x) < templeYard.w / 2 && Math.abs(p.z - templeYard.o.z) < templeYard.d / 2) continue;   // лабораторийн дуганы хашаанд орсон
+    const lp = TOWN.props[p.kind];
+    if (lp) {   // V3.5: колонк — лабораторийн загвар (халхавч, түгээгүүр, касс, үнийн шон)
+      labAt(lp, p.x, p.z);
+      const K = BC.fuel.kiosk, kw = BC.shop.types.fuelKiosk;
+      colliders.push({ id: (p.id as string) ?? 'fuel', x: p.x + K.x, z: p.z + K.z, w: kw.w, d: kw.d });
+      solids.boxes.push({ x: p.x + K.x, z: p.z + K.z, hw: kw.w / 2, hd: kw.d / 2, rot: 0, y0: y - 2, y1: y + kw.wallH + 1 });
+      continue;
+    }
     switch (p.kind) {
       case 'flagpole':
         B.cyl(0.08, 0.12, n('h', 10), p.x, y, p.z, '#C9C9C9', 6);
@@ -625,15 +710,15 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
   // --- Хашаа байшингийн бүс (процедураар) ---
   // --- Тусгай хашаа (зарагдах, хамаатны айл) ---
   const plots: SumPlotView[] = [];
+  const gatePalette = ['#2E5E9E', '#D9622B', '#4E6B3A', '#9A3B2E', '#5E7A4A'];
   for (const sp of L.specialPlots ?? []) {
     const ph = plotHouse(L, sp);
     const gate = ph.gate;
-    fence(sp.x, sp.z, sp.w, sp.d, sp.role === 'forSale' ? '#6B4F3A' : '#3F7A4A', 1.9, gate, 3.5);
     colliders.push({ id: `${sp.id}:plot`, x: sp.x, z: sp.z, w: sp.w, d: sp.d });
-    const h = sp.house;
-    const door = building({ id: sp.id + ':house', name: sp.name, kind: 'house', enterable: true, interior: sp.role === 'forSale' ? 'house_empty' : 'house_relative',
-      x: ph.house.x, z: ph.house.z, w: h.w, d: h.d, floors: h.floors, roof: { type: 'gable', color: h.roof }, wall: h.wall, trim: '#A0522D', front: 's' });
-    colliders.pop();
+    const lab = TOWN.plots[sp.id]!;
+    const kind = sp.role === 'relative' ? (lab.house === 'houseA' ? 'relative1' : 'relative2') : lab.house;   // хамаатны айл: айлын самбартай
+    const door = plotLab({ x: sp.x, z: sp.z, w: sp.w, d: sp.d, gate, kind, seed: 11 + homes.length * 7, roofColor: lab.roofColor, extras: sp.role === 'relative' ? ['woodshed'] : [], path: 'walk', trees: 'full',
+      fenceColor: sp.role === 'forSale' ? '#6B4F3A' : '#5E7A4A', gateColor: sp.role === 'forSale' ? '#2E5E9E' : '#5E7A4A' });
     homes.push(door);
     if (sp.ger) ger(sp.x + sp.w / 2 - 5, sp.z, '#F3EDE2', 2.8);
     const go: XZ = { n: [0, -sp.d / 2] as XZ, s: [0, sp.d / 2] as XZ, e: [sp.w / 2, 0] as XZ, w: [-sp.w / 2, 0] as XZ }[gate];
@@ -643,8 +728,6 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
       const sx = gx + 3.5, sz = gz + (gate === 's' ? 1 : -1);
       B.cyl(0.07, 0.07, 2.4, sx, heightAt(sx, sz), sz, '#6B4F3A', 5);
       B.box(1.6, 1, 0.08, sx, heightAt(sx, sz) + 1.8, sz, 0, '#E0C23A');
-    } else {
-      B.box(0.9, 0.5, 0.06, gx + 2.6, heightAt(gx, gz) + 1.2, gz + (gate === 's' ? 0.1 : -0.1), 0, '#F3EDE2'); // хаягийн самбар
     }
     plots.push({ id: sp.id, role: sp.role, x: sp.x, z: sp.z, door });
   }
@@ -660,7 +743,6 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     ...L.props.filter(p => ['greenhouse', 'stupa', 'ger', 'tent', 'gazebo', 'coalPile', 'tank', 'flagpole', 'monument'].includes(p.kind))
       .map(p => ({ id: p.kind, x: p.x, z: p.z, w: 14, d: 14 })),
   ];
-  const roofPalette = ['#D9622E', '#3A5FB0', '#3F9E6E', '#C85A4A', '#E0A1B5', '#8FA7B0', '#D98A54', '#6E2222', '#2E8FB0', '#E0C23A'];
   const fencePalette = ['#5C4430', '#6B4F3A', '#4A3A2C', '#5C4430', '#A23B2A', '#3F7A4A', '#2E5C8A'];
   const lanes = { plotW: 24, plotD: 28, laneEvery: 2, lane: 7 };
   for (const zn of L.zones) {
@@ -678,32 +760,16 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
         if (heightAt(x, z) > 2) continue;
         const gate = faceTowardRoad(x, z);
         const fc = fencePalette[Math.floor(rand() * fencePalette.length)]!;
-        fence(x, z, pw, pd, fc, 1.9, gate, 3.5);
         colliders.push({ id: `${zn.id}:plot`, x, z, w: pw, d: pd });
-        // гол байшин — хаалганы эсрэг талд
-        const hw = 7 + rand() * 3, hd = 5.5 + rand() * 2;
-        const backZ = z - pd / 2 + hd / 2 + 2;                        // байшин хойд хэсэгт, нүүр нь урагшаа
-        const side = rand() < 0.5 ? -1 : 1;
-        const hx = gate === 'n' ? x + side * (pw / 2 - hw / 2 - 1.5) : x + (rand() - 0.5) * (pw - hw - 4);
-        const wood = rand() < 0.45;
-        const hd0 = building({
-          id: `${zn.id}:h${homes.length}`, name: 'Байшин', kind: 'house',
-          x: hx, z: backZ, w: hw, d: hd, floors: rand() < 0.12 ? 2 : 1,
-          roof: { type: 'gable', color: roofPalette[Math.floor(rand() * roofPalette.length)]! },
-          wall: wood ? '#9A6B45' : (rand() < 0.5 ? '#EFEBE2' : '#E8DCC0'), trim: wood ? '#6B4F3A' : '#A0522D',
-        });
-        colliders.pop();
+        // V3.5: лабораторийн хашаа (банзан хашаа, хаалга), байшин эсвэл гэр, жорлон, нэмэлт барилга, зам, мод
+        const isGer = rand() < 0.35, houseKinds = ['houseA', 'houseB', 'houseC'], roofKeys = Object.keys(BC.roofColors);
+        const kind = isGer ? 'gerYard' : houseKinds[Math.floor(rand() * houseKinds.length)]!;
+        const roofColor = roofKeys[Math.floor(rand() * roofKeys.length)]!;
+        const extras: string[] = [], rich = quality !== 'low';
+        if (rich) { if (rand() < 0.5) extras.push('woodshed'); if (rand() < 0.22) extras.push('greenhouse'); if (rand() < 0.25) extras.push('animalShed'); }
+        const hd0 = plotLab({ x, z, w: pw, d: pd, gate, kind, seed: 1 + Math.floor(rand() * 997), roofColor, extras, path: rand() < 0.5 ? 'walk' : 'dirt',
+          trees: rich ? (rand() < 0.5 ? 'full' : 'bush') : undefined, kennel: rich && rand() < 0.3, fenceColor: fc, gateColor: gatePalette[Math.floor(rand() * gatePalette.length)]!, gerColor: rand() < 0.15 ? '#E8DCC0' : '#F3EDE2' });
         homes.push(hd0);
-        // нэмэлт: гэр, саравч, жорлон, түлээ
-        const sx = x - Math.sign(hx - x || 1) * (pw / 2 - 4);
-        if (rand() < 0.35) ger(sx, z + (rand() - 0.5) * 4, rand() < 0.15 ? '#E8DCC0' : '#F3EDE2', 2.8);
-        else if (rand() < 0.6) {
-          B.box(4, 2.2, 3.2, sx, heightAt(sx, z), z, 0, '#8A6A4A');
-          B.add(gableGeometry(4.4, 3.6, 0.9), roofPalette[Math.floor(rand() * roofPalette.length)]!, mat(sx, heightAt(sx, z) + 2.2, z));
-        }
-        const ox = x + pw / 2 - 2, oz = gate === 'n' ? z + pd / 2 - 2 : z - pd / 2 + 2;
-        if (rand() < 0.8) B.box(1.2, 2, 1.2, ox, heightAt(ox, oz), oz, 0, '#7A5A3E');
-        if (rand() < 0.5) B.box(3, 1, 1.4, x - pw / 2 + 3, heightAt(x, z), z + (rand() - 0.5) * 6, 0, '#6E5136');
       }
     }
   }
@@ -730,6 +796,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     ground: terrainMesh,
     colliders,
     solids,
+    town,
     heightAt,
     dispose: () => disposables.forEach(d => d.dispose()),
   };

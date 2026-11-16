@@ -62,3 +62,42 @@ export function labDoorPoint(b: { id?: string; x: number; z: number }): { x: num
   const f = entryFootprint(e), o = labOrigin(e, b), r = rotLocal(f.door.x, f.door.z, e.rot ?? 0);
   return { x: o.x + r.x, z: o.z + r.z };
 }
+
+// ---------- Хашаа байшин (lab: buildHouse + khashaa.houseSlot) ----------
+/** Байшингийн хаалганы цэг байшингийн локал координатад (үүдний амбаарын гадна), хэмжээ w × d */
+export function houseFootprint(kind: string): { w: number; d: number; door: { x: number; z: number } } {
+  const K = B.house[kind], Q = K.porch, St = K.step, stand: number = B.doorStandOff, hw = K.w / 2, hd = K.d / 2;
+  const phi: number = { front: 0, east: Math.PI / 2, west: -Math.PI / 2 }[Q.side as 'front' | 'east' | 'west'];
+  const [tx, tz] = { front: [Q.x, hd], east: [hw, Q.z], west: [-hw, Q.z] }[Q.side as 'front' | 'east' | 'west'];
+  let lx: number, lz: number;
+  if (Q.doorFace === 'out') { lx = 0; lz = Q.d + St.d + stand; }
+  else { const sx = Q.doorFace === 'right' ? 1 : -1; lx = sx * (Q.w / 2 + St.d + stand); lz = Q.d / 2; }
+  const c = Math.cos(phi), s = Math.sin(phi);
+  return { w: K.w, d: K.d, door: { x: lx * c + lz * s + tx, z: -lx * s + lz * c + tz } };
+}
+
+/** Хашааны локал: байшин хойд (−z) буланд — khashaa.houseSlot */
+export function houseSlot(plotW: number, plotD: number, houseW: number, houseD: number): { x: number; z: number } {
+  const K = B.khashaa;
+  return { x: -(plotW / 2 - houseW / 2 - K.houseSide), z: -plotD / 2 + houseD / 2 + K.houseGap };
+}
+
+export interface PlotLab { house: string; roofColor?: string }
+export const townPlots = (): Record<string, PlotLab> => B.town.plots as Record<string, PlotLab>;
+
+/** Хашааны хаалганы чиглэл → render-ийн эргэлт (Geo.append phi): s 0, n π, e π/2, w −π/2. Нүүр нь +Z (локал) */
+export const GATE_PHI: Record<'n' | 's' | 'e' | 'w', number> = { s: 0, n: Math.PI, e: Math.PI / 2, w: -Math.PI / 2 };
+
+/** Тусгай хашааны гол байшин: хашааны төв, хаалганы чиглэл → дэлхийн төв, хэмжээ (тэнхлэгт зэрэгцсэн), хаалганы цэг */
+export function plotHouseLab(plot: { id: string; x: number; z: number; w: number; d: number }, gate: 'n' | 's' | 'e' | 'w'):
+  { house: { x: number; z: number; w: number; d: number }; door: { x: number; z: number }; kind: string } | null {
+  const lab = townPlots()[plot.id];
+  if (!lab) return null;
+  const vertical = gate === 'e' || gate === 'w';
+  const pw = vertical ? plot.d : plot.w, pd = vertical ? plot.w : plot.d;   // хашааны локал w, d
+  const hf = houseFootprint(lab.house), s = houseSlot(pw, pd, hf.w, hf.d);
+  const phi = GATE_PHI[gate], c = Math.cos(phi), sn = Math.sin(phi);
+  const toWorld = (x: number, z: number): { x: number; z: number } => ({ x: plot.x + x * c + z * sn, z: plot.z - x * sn + z * c });
+  const ctr = toWorld(s.x, s.z), door = toWorld(s.x + hf.door.x, s.z + hf.door.z);
+  return { house: { ...ctr, w: vertical ? hf.d : hf.w, d: vertical ? hf.w : hf.d }, door, kind: lab.house };
+}

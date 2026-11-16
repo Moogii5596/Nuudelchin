@@ -6,7 +6,7 @@
 import type { BuyOrder } from '../state';
 import type { GameConfig } from '../config';
 import type { GameState } from '../state';
-import { labDoorPoint } from './buildingSize';
+import { labDoorPoint, plotHouseLab } from './buildingSize';
 
 // ---------- data/sumcenter.json-ийн төрөл (config.ts → GameConfig.sumcenter) ----------
 /** V3.3: сумын төвийн 3D байршил (data/sumcenter.json). Нэгж м; z− = хойд, x+ = зүүн */
@@ -261,6 +261,8 @@ export function faceTowardRoad(L: SumLayout, x: number, z: number): Facing {
 /** Тусгай хашааны гол байшин: хашааны хойд хэсэгт, нүүр урагшаа; хаалга хойд талд бол хажуу тийш */
 export function plotHouse(L: SumLayout, sp: SumSpecialPlotSpec): { gate: Facing; house: { x: number; z: number; w: number; d: number }; door: { x: number; z: number } } {
   const gate = faceTowardRoad(L, sp.x, sp.z);
+  const lab = plotHouseLab(sp, gate);   // V3.5: лабораторийн байшин — хашааны локал байрлал, үүдний амбаар (data/buildings.json town.plots)
+  if (lab) return { gate, house: lab.house, door: lab.door };
   const h = sp.house;
   const hxOff = gate === 'n' ? -(sp.w / 2 - h.w / 2 - 1.5) : -2;
   const house = { x: sp.x + hxOff, z: sp.z - sp.d / 2 + h.d / 2 + 3, w: h.w, d: h.d };

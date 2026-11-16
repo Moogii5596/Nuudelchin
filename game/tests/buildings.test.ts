@@ -54,7 +54,7 @@ describe('барилгын загвар (лабораторийн баталса
 });
 
 import { cfg } from './helpers';
-import { allBuildings, doorPoint } from '../src/sim/systems/sumtown';
+import { allBuildings, doorPoint, plotHouse } from '../src/sim/systems/sumtown';
 import { entryFootprint, labDoorPoint, labOrigin, rotLocal, townEntry, worldSize } from '../src/sim/systems/buildingSize';
 import { TOWN } from '../src/render/building';
 import { buildWoolStore } from '../src/render/building/shops';
@@ -105,5 +105,26 @@ describe('сумын төв ↔ лабораторийн барилга (sim х�
     const r = byId.get('resort_main')!;
     expect(townEntry(r.id)).toBeNull();
     expect(doorPoint(r)).toEqual({ x: r.x, z: r.z + r.d / 2 + 2 });
+  });
+});
+
+describe('дотор өрөө (data/interiors.json) ⊂ барилгын дотор өрөө (interior.main)', () => {
+  const rooms = cfg.interiors.rooms as Record<string, { w: number; d: number; h: number }>;
+  const pairs: [string, string][] = [['house', 'houseA'], ['house', 'houseC'], ['school', 'school'], ['admin', 'zdtg'], ['bank', 'bank'], ['culture', 'culture'], ['kindergarten', 'kinder'],
+    ['teahouse', 'teahouse'], ['temple', 'temple'], ...['grocery', 'feed', 'equipment', 'gertent', 'clothes', 'pets'].map((k): [string, string] => ['shop', k])];
+  for (const [room, kind] of pairs) it(`${room} өрөө ≤ ${kind}`, () => {
+    const r = rooms[room]!, m = makeBuilding(kind, {}).interior!.main;
+    expect(r.w, 'w').toBeLessThanOrEqual(m.w + 1e-9); expect(r.d, 'd').toBeLessThanOrEqual(m.d + 1e-9); expect(r.h, 'h').toBeLessThanOrEqual(m.h + 1e-9);
+  });
+});
+
+describe('тусгай хашааны байшин (plotHouse) = лабораторийн геометр', () => {
+  it('хаалга байшингийн хашлагаас гадна, хашааны дотор', () => {
+    for (const sp of cfg.sumcenter.specialPlots ?? []) {
+      const ph = plotHouse(cfg.sumcenter, sp);
+      expect(Math.abs(ph.door.x - sp.x)).toBeLessThan(sp.w / 2); expect(Math.abs(ph.door.z - sp.z)).toBeLessThan(sp.d / 2);
+      const inside = Math.abs(ph.door.x - ph.house.x) < ph.house.w / 2 && Math.abs(ph.door.z - ph.house.z) < ph.house.d / 2;
+      expect(inside, sp.id).toBe(false);
+    }
   });
 });

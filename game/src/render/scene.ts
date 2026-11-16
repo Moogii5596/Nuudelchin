@@ -320,7 +320,7 @@ export class GameView {
     this.sum.group.visible = !camp;
     if (!camp) {
       this.sum.syncLot(state.vehicles);
-      this.sum.syncTown(state);
+      this.sum.syncTown(state, nightFactor(this.daylight));
     }
     this.homeLight.visible = camp;
     if (camp) {

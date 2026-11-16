@@ -34,6 +34,10 @@ export interface TownConfig {
   compounds: Record<string, TownEntry>;
   fields: Record<string, TownEntry>;
   props: Record<string, TownEntry>;
+  /** Тусгай хашаа (specialPlots id) → гол байшин */
+  plots: Record<string, { house: string; roofColor?: string }>;
+  /** Зурахгүй барилгын id (нийлмэл загварт орсон) */
+  skip: string[];
   /** Сумын төвийн айлын хашаанд ашиглах байшингийн төрлүүд (түлхүүр → houseA|houseB|houseC) */
   plotHouses: string[];
 }
@@ -87,6 +91,7 @@ function collectErrors(c: unknown): string[] {
     if (e.roofColor !== undefined && !roofColors[e.roofColor] && !HEX.test(e.roofColor)) errs.push(`town.byId.${id}.roofColor буруу`);
   }
   for (const grp of ['compounds', 'fields', 'props'] as const) for (const [id, e] of Object.entries(town[grp] ?? {})) if (!TOWN_TYPES.includes(e.type)) errs.push(`town.${grp}.${id}.type "${e.type}" буруу`);
+  for (const [id, p] of Object.entries(town.plots ?? {})) if (!isObj((c.house as Obj)[p.house]) || (p.roofColor !== undefined && !roofColors[p.roofColor] && !HEX.test(p.roofColor))) errs.push(`town.plots.${id} буруу`);
   if (!Array.isArray(town.plotHouses) || town.plotHouses.length === 0 || town.plotHouses.some((k) => !isObj((c.house as Obj)[k]))) errs.push('town.plotHouses: house түлхүүрүүд байх ёстой');
   return errs;
 }

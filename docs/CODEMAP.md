@@ -1476,7 +1476,7 @@ SYM tools/codemap.ts:195 fn main
 FILE game/tests/animalLook.test.ts 7.7KB 137L
 FILE game/tests/animals.test.ts 2.3KB 39L
 FILE game/tests/breeding.test.ts 1.4KB 33L
-FILE game/tests/buildings.test.ts 6.5KB 109L
+FILE game/tests/buildings.test.ts 8.0KB 130L
 FILE game/tests/camclip.test.ts 3.9KB 68L
 FILE game/tests/characters.test.ts 26.1KB 438L
 FILE game/tests/clock.test.ts 2.3KB 47L
@@ -1509,15 +1509,15 @@ FILE game/tests/town.test.ts 6.1KB 127L
 FILE game/tests/transfer.test.ts 14.2KB 255L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 23.9KB 116L
+FILE docs/CONTEXT.md 25.6KB 118L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-29 ## 2. Стек ба командууд
-DOC docs/CONTEXT.md:30-90 ## 3. Файлын зураглал (`game/src/`)
-DOC docs/CONTEXT.md:91-93 ## 4. `data/*.json` → аль файл хэрэглэдэг
-DOC docs/CONTEXT.md:94-102 ## 5. Архитектурын дүрэм ([[architecture]])
-DOC docs/CONTEXT.md:103-106 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
-DOC docs/CONTEXT.md:107-109 ## 7. Нээлттэй асуултууд
-DOC docs/CONTEXT.md:110-116 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
+DOC docs/CONTEXT.md:30-92 ## 3. Файлын зураглал (`game/src/`)
+DOC docs/CONTEXT.md:93-95 ## 4. `data/*.json` → аль файл хэрэглэдэг
+DOC docs/CONTEXT.md:96-104 ## 5. Архитектурын дүрэм ([[architecture]])
+DOC docs/CONTEXT.md:105-108 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
+DOC docs/CONTEXT.md:109-111 ## 7. Нээлттэй асуултууд
+DOC docs/CONTEXT.md:112-118 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
 FILE docs/INDEX.md 13.9KB 135L
 DOC docs/INDEX.md:16-30 ## 1. Унших дараалал ба давуу эрх
 DOC docs/INDEX.md:31-106 ## 2. Баримтууд

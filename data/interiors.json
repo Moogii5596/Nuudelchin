@@ -1,5 +1,5 @@
 ﻿{
-  "_doc": "gerSize = гэр төрлийн өрөө (render/ger makeGerInterior): r, entry, exit, саад нь data/ger.json-оос тооцогдоно (home — тоглогчийн гэр, helper — туслахын гэр); тавилга нь гэрийн загварын нэг хэсэг тул spots хоосон. dwellingBaseRadius = туслахын/айлын гэрийн хуучин загварын радиус (S1-ээр шинэ загвар холбогдтол). V6.1 Орж болдог барилгын дотор тал. Өрөө бүр өөрийн координаттай (төв 0,0; хаалга нь урд (z+) ханын голд). enterR = гаднах хаалганаас E дарж орох зай (м). exitR = хаалганы дэргэд E дарж гарах зай. counterR = лангуу/тооцооны цэгээс E дарах зай. campDoorOut/dwellingDoorOut = гэрийн хаалганы цэг (гэрийн гадна талаас, м). kindRoom = сумын төвийн барилгын kind → өрөөний төрөл; idRoom = тодорхой барилгын id-д өөр өрөө (хоосон бол kindRoom). rooms.*.spots = тавилга байрлуулах цэгүүд (V6.2-т ашиглана, одоохондоо дүрслэгдэхгүй). counter = лангуу: энд E дарвал тухайн барилгын цонх (худалдаа, дуган, ЗДТГ, банк, цайны газар) нээгдэнэ — гаднах хаалганы үйлдэл дотроос ч ажиллана.",
+  "_doc": "gerSize = гэр төрлийн өрөө (render/ger makeGerInterior): r, entry, exit, саад нь data/ger.json-оос тооцогдоно (home — тоглогчийн гэр, helper — туслахын гэр); тавилга нь гэрийн загварын нэг хэсэг тул spots хоосон. dwellingBaseRadius = туслахын/айлын гэрийн хуучин загварын радиус (S1-ээр шинэ загвар холбогдтол). V6.1 Орж болдог барилгын дотор тал. Өрөө бүр өөрийн координаттай (төв 0,0; хаалга нь урд (z+) ханын голд). enterR = гаднах хаалганаас E дарж орох зай (м). exitR = хаалганы дэргэд E дарж гарах зай. counterR = лангуу/тооцооны цэгээс E дарах зай. campDoorOut/dwellingDoorOut = гэрийн хаалганы цэг (гэрийн гадна талаас, м). kindRoom = сумын төвийн барилгын kind → өрөөний төрөл; idRoom = тодорхой барилгын id-д өөр өрөө (хоосон бол kindRoom). V3.5: өрөөний w,d,h нь data/buildings.json-ийн барилгын «дотор өрөө»-д багтана (tests/buildings.test.ts). rooms.*.spots = тавилга байрлуулах цэгүүд (V6.2-т ашиглана, одоохондоо дүрслэгдэхгүй). counter = лангуу: энд E дарвал тухайн барилгын цонх (худалдаа, дуган, ЗДТГ, банк, цайны газар) нээгдэнэ — гаднах хаалганы үйлдэл дотроос ч ажиллана.",
   "enterR": 3.2,
   "exitR": 1.8,
   "counterR": 2.0,
@@ -39,19 +39,19 @@
       "spots": []
     },
     "house": {
-      "shape": "box", "w": 8, "d": 6, "h": 2.8,
+      "shape": "box", "w": 6.6, "d": 5, "h": 2.4,
       "floor": "#a0825a", "wall": "#d9cbb0", "trim": "#7a5a3a",
       "light": { "color": "#ffd9a8", "intensity": 8 },
-      "entry": [0, 1.9], "exit": [0, 2.8], "counter": [0, 0.3],
+      "entry": [0, 1.58], "exit": [0, 2.33], "counter": [0, 0.25],
       "spots": [
-        { "id": "stove", "kind": "stove", "x": -3.0, "z": -2.2, "rot": 0 },
-        { "id": "bed", "kind": "bed", "x": 3.0, "z": -2.0, "rot": 0 },
-        { "id": "table", "kind": "table", "x": 0, "z": -0.6, "rot": 0 },
-        { "id": "chest", "kind": "chest", "x": -3.2, "z": 1.0, "rot": 1.57 }
+        { "id": "stove", "kind": "stove", "x": -2.47, "z": -1.83, "rot": 0 },
+        { "id": "bed", "kind": "bed", "x": 2.47, "z": -1.67, "rot": 0 },
+        { "id": "table", "kind": "table", "x": 0, "z": -0.5, "rot": 0 },
+        { "id": "chest", "kind": "chest", "x": -2.64, "z": 0.83, "rot": 1.57 }
       ]
     },
     "school": {
-      "shape": "box", "w": 14, "d": 10, "h": 3.2,
+      "shape": "box", "w": 14, "d": 10, "h": 2.9,
       "floor": "#b9a37a", "wall": "#e7e2d0", "trim": "#5d7a4a",
       "light": { "color": "#fff1d0", "intensity": 12 },
       "entry": [0, 3.8], "exit": [0, 4.8], "counter": null,
@@ -67,21 +67,21 @@
       ]
     },
     "temple": {
-      "shape": "box", "w": 10, "d": 9, "h": 4.0,
+      "shape": "box", "w": 9.4, "d": 9, "h": 3.7,
       "floor": "#6b4a2e", "wall": "#b8402a", "trim": "#d9a93a",
       "light": { "color": "#ffbf6a", "intensity": 9 },
       "entry": [0, 3.3], "exit": [0, 4.2], "counter": [0, -2.4],
       "spots": [
         { "id": "altar", "kind": "altar", "x": 0, "z": -3.8, "rot": 0 },
         { "id": "donation", "kind": "chest", "x": 0, "z": -2.4, "rot": 0 },
-        { "id": "seat_w1", "kind": "seat", "x": -3.0, "z": -1.0, "rot": 0 },
-        { "id": "seat_w2", "kind": "seat", "x": -3.0, "z": 0.8, "rot": 0 },
-        { "id": "seat_e1", "kind": "seat", "x": 3.0, "z": -1.0, "rot": 0 },
-        { "id": "seat_e2", "kind": "seat", "x": 3.0, "z": 0.8, "rot": 0 }
+        { "id": "seat_w1", "kind": "seat", "x": -2.82, "z": -1, "rot": 0 },
+        { "id": "seat_w2", "kind": "seat", "x": -2.82, "z": 0.8, "rot": 0 },
+        { "id": "seat_e1", "kind": "seat", "x": 2.82, "z": -1, "rot": 0 },
+        { "id": "seat_e2", "kind": "seat", "x": 2.82, "z": 0.8, "rot": 0 }
       ]
     },
     "admin": {
-      "shape": "box", "w": 12, "d": 8, "h": 3.0,
+      "shape": "box", "w": 12, "d": 8, "h": 2.9,
       "floor": "#a89c86", "wall": "#e4e0d4", "trim": "#2f5d8a",
       "light": { "color": "#fff1d0", "intensity": 11 },
       "entry": [0, 2.8], "exit": [0, 3.7], "counter": [0, -1.8],
@@ -94,7 +94,7 @@
       ]
     },
     "bank": {
-      "shape": "box", "w": 10, "d": 7, "h": 3.0,
+      "shape": "box", "w": 10, "d": 7, "h": 2.9,
       "floor": "#9aa09a", "wall": "#e9e6dc", "trim": "#2a6a4a",
       "light": { "color": "#fff1d0", "intensity": 11 },
       "entry": [0, 2.3], "exit": [0, 3.2], "counter": [0, -1.5],
@@ -121,7 +121,7 @@
       ]
     },
     "kindergarten": {
-      "shape": "box", "w": 12, "d": 8, "h": 3.0,
+      "shape": "box", "w": 12, "d": 8, "h": 2.9,
       "floor": "#c9b27a", "wall": "#f0e2b8", "trim": "#d9783a",
       "light": { "color": "#fff1d0", "intensity": 11 },
       "entry": [0, 2.8], "exit": [0, 3.7], "counter": null,
@@ -133,16 +133,16 @@
       ]
     },
     "teahouse": {
-      "shape": "box", "w": 10, "d": 7, "h": 2.9,
+      "shape": "box", "w": 9.4, "d": 7, "h": 2.9,
       "floor": "#8a6a45", "wall": "#e2cfa4", "trim": "#8a3a2a",
       "light": { "color": "#ffcf94", "intensity": 10 },
-      "entry": [0, 2.3], "exit": [0, 3.2], "counter": [-3.0, -1.6],
+      "entry": [0, 2.3], "exit": [0, 3.2], "counter": [-2.82, -1.6],
       "spots": [
-        { "id": "counter", "kind": "counter", "x": -3.0, "z": -2.5, "rot": 0 },
-        { "id": "table_1", "kind": "table", "x": 1.0, "z": -1.6, "rot": 0 },
-        { "id": "table_2", "kind": "table", "x": 3.4, "z": -1.6, "rot": 0 },
-        { "id": "table_3", "kind": "table", "x": 1.0, "z": 0.8, "rot": 0 },
-        { "id": "table_4", "kind": "table", "x": 3.4, "z": 0.8, "rot": 0 }
+        { "id": "counter", "kind": "counter", "x": -2.82, "z": -2.5, "rot": 0 },
+        { "id": "table_1", "kind": "table", "x": 0.94, "z": -1.6, "rot": 0 },
+        { "id": "table_2", "kind": "table", "x": 3.2, "z": -1.6, "rot": 0 },
+        { "id": "table_3", "kind": "table", "x": 0.94, "z": 0.8, "rot": 0 },
+        { "id": "table_4", "kind": "table", "x": 3.2, "z": 0.8, "rot": 0 }
       ]
     },
     "shop": {
