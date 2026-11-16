@@ -8,8 +8,7 @@ import type { GameConfig } from '../sim/config';
 import type { GameState } from '../sim/state';
 import { mat, VisualRng } from './util';
 import { bakeAnimal } from './animal/static';
-import { animalLook } from './animal/config';
-import { saddleDims } from './animal/shapes';
+import { riderSeat } from './animal/ride';
 import { animateCharacter } from './character/animate';
 import { buildCharacter } from './character/rig';
 import { characterSpec } from './character/spec';
@@ -347,10 +346,10 @@ export class WorldMapView {
     if (!m) {
       if (key === 'horse') {
         const g = new THREE.Group();
-        const h = bakeAnimal('horse', { id: 5, male: true, saddled: true }), S = saddleDims(animalLook.species.horse.d);
+        const h = bakeAnimal('horse', { id: 5, male: true, saddled: true });
         // тоглогч (npc нарийвчлал), морь унасан тогтмол поз
         const r = buildCharacter(characterSpec('player'), { detail: 'npc' });
-        animateCharacter(r, { dt: 0, speed: 0, mode: 'mounted', raise: false, uurga: false, talk: false, emotion: 'neutral', seat: { side: S.side, drop: S.seat - S.stir - 0.006 } });
+        animateCharacter(r, { dt: 0, speed: 0, mode: 'mounted', raise: false, uurga: false, talk: false, emotion: 'neutral', seat: riderSeat() });
         r.root.position.set(h.seat.x, h.seat.y - 0.85, h.seat.z);   // эмээлийн суудалд, хөл дөрөөнд
         g.add(h.mesh, r.root);
         m = g;

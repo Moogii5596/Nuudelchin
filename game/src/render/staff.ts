@@ -8,6 +8,7 @@ import type { Dwelling, Helper } from '../sim/systems/helpers';
 import type { Quality } from '../device';
 import { animalLook } from './animal/config';
 import { gaitFor } from './animal/pose';
+import { riderSeat } from './animal/ride';
 import { saddleDims } from './animal/shapes';
 import { ModelAnimals } from './animal/view';
 import { visualStyle } from './style';
@@ -151,8 +152,7 @@ export class StaffView {
     this.models.flush(dt, visualStyle.quality[this.quality].animalAnimationDistance);
     for (const v of this.views.values()) {   // морьтой малчин: эмээлийн суудалд, хөл дөрөөнд
       if (!v.horse || !v.root.visible) continue;
-      const S = this.saddle;
-      animateCharacter(v.rig, { dt, speed: 0, mode: 'mounted', raise: false, uurga: false, talk: false, emotion: v.emo.step(dt), seat: { side: S.side, drop: S.seat - S.stir - 0.006 } });
+      animateCharacter(v.rig, { dt, speed: 0, mode: 'mounted', raise: false, uurga: false, talk: false, emotion: v.emo.step(dt), seat: riderSeat() });
       if (v.seat) v.rig.root.position.set(v.seat.x, v.seat.y - 0.85, v.seat.z);
       v.rig.root.rotation.y = v.h;
     }

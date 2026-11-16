@@ -535,7 +535,7 @@
     },
     "saddle": {
      "z": 0.2,
-     "drop": 0.5
+     "drop": 0.29
     }
    },
    "head": {
@@ -665,7 +665,8 @@
      "patch": true,
      "weight": 1
     }
-   ]
+   ],
+   "scale": 1.45
   },
   "dog": {
    "stride": 1,

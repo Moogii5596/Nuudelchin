@@ -110,7 +110,7 @@ export function poseAnimal(S: Rig, dt0: number, o: PoseInput): void {
   const fe = f + A_.old.fat * old;
   const gx = mo.fatX[0] + mo.fatX[1] * fe, gy = mo.fatY[0] + mo.fatY[1] * fe;
   const legK = 1 + young * A_.young.legK, zS = 1 - young * A_.young.bodyShort;
-  S.root.scale.setScalar(sc);
+  S.root.scale.setScalar(sc * (S.look.scale ?? 1));
 
   const pG = mo.pitch * gz, pitch = pG + (mo.browsePitch ?? 0) * br, sPg = Math.sin(pG), cPg = Math.cos(pG), sP = Math.sin(pitch);
   const H = d.legY * legK, lz = d.legZ * zS;

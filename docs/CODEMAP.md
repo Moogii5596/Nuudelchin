@@ -126,7 +126,7 @@ SYM game/src/pwa.ts:48 const pwa
 SYM game/src/pwa.ts:77 fn landscapeFullscreen
 SYM game/src/pwa.ts:92 fn registerServiceWorker
 SYM game/src/pwa.ts:104 fn onConnectionChange
-FILE game/src/render/animal/config.ts 17.5KB 200L exports: LookSpecies,LOOK_SPECIES,V3,Pair,BodyLook,Bump,SkirtLook,DLook,HornLook,HeadLook,MotionLook,Gait,VariantLook,SpeciesLook,+3
+FILE game/src/render/animal/config.ts 17.7KB 203L exports: LookSpecies,LOOK_SPECIES,V3,Pair,BodyLook,Bump,SkirtLook,DLook,HornLook,HeadLook,MotionLook,Gait,VariantLook,SpeciesLook,+3
 SYM game/src/render/animal/config.ts:7 type LookSpecies
 SYM game/src/render/animal/config.ts:8 const LOOK_SPECIES
 SYM game/src/render/animal/config.ts:9 type V3
@@ -141,23 +141,23 @@ SYM game/src/render/animal/config.ts:38 interface MotionLook
 SYM game/src/render/animal/config.ts:44 interface Gait
 SYM game/src/render/animal/config.ts:45 interface VariantLook
 SYM game/src/render/animal/config.ts:46 interface SpeciesLook
-SYM game/src/render/animal/config.ts:53 interface AnimalLook
-SYM game/src/render/animal/config.ts:69 fn fail
-SYM game/src/render/animal/config.ts:70 fn isObj
-SYM game/src/render/animal/config.ts:71 fn obj
-SYM game/src/render/animal/config.ts:72 fn num
-SYM game/src/render/animal/config.ts:74 fn hex
-SYM game/src/render/animal/config.ts:75 fn tup
-SYM game/src/render/animal/config.ts:76 fn pair
-SYM game/src/render/animal/config.ts:77 fn v3
-SYM game/src/render/animal/config.ts:80 fn leaves
-SYM game/src/render/animal/config.ts:88 fn copyExtra
-SYM game/src/render/animal/config.ts:93 fn parseD
-SYM game/src/render/animal/config.ts:114 fn parseHead
-SYM game/src/render/animal/config.ts:139 fn parseMotion
-SYM game/src/render/animal/config.ts:151 fn parseSpecies
-SYM game/src/render/animal/config.ts:173 fn parseAnimalLook
-SYM game/src/render/animal/config.ts:200 const animalLook
+SYM game/src/render/animal/config.ts:55 interface AnimalLook
+SYM game/src/render/animal/config.ts:71 fn fail
+SYM game/src/render/animal/config.ts:72 fn isObj
+SYM game/src/render/animal/config.ts:73 fn obj
+SYM game/src/render/animal/config.ts:74 fn num
+SYM game/src/render/animal/config.ts:76 fn hex
+SYM game/src/render/animal/config.ts:77 fn tup
+SYM game/src/render/animal/config.ts:78 fn pair
+SYM game/src/render/animal/config.ts:79 fn v3
+SYM game/src/render/animal/config.ts:82 fn leaves
+SYM game/src/render/animal/config.ts:90 fn copyExtra
+SYM game/src/render/animal/config.ts:95 fn parseD
+SYM game/src/render/animal/config.ts:116 fn parseHead
+SYM game/src/render/animal/config.ts:141 fn parseMotion
+SYM game/src/render/animal/config.ts:153 fn parseSpecies
+SYM game/src/render/animal/config.ts:176 fn parseAnimalLook
+SYM game/src/render/animal/config.ts:203 const animalLook
 FILE game/src/render/animal/cow.ts 0.2KB 4L exports: cowModel
 SYM game/src/render/animal/cow.ts:4 const cowModel
 FILE game/src/render/animal/dog.ts 0.2KB 4L exports: dogModel
@@ -235,7 +235,7 @@ SYM game/src/render/animal/model.ts:23 fn mixHex
 SYM game/src/render/animal/model.ts:24 fn hash
 SYM game/src/render/animal/model.ts:26 fn createModel
 SYM game/src/render/animal/model.ts:48 const ageIdxOf
-FILE game/src/render/animal/pose.ts 14.6KB 204L exports: Action,LegNode,PoseState,Rig,PoseInput,newState,makeRig,actionsOf,fitAction,gaitFor,poseAnimal,settle
+FILE game/src/render/animal/pose.ts 14.7KB 204L exports: Action,LegNode,PoseState,Rig,PoseInput,newState,makeRig,actionsOf,fitAction,gaitFor,poseAnimal,settle
 SYM game/src/render/animal/pose.ts:12 type Action
 SYM game/src/render/animal/pose.ts:16 interface LegNode
 SYM game/src/render/animal/pose.ts:18 interface PoseState
@@ -250,6 +250,10 @@ SYM game/src/render/animal/pose.ts:68 fn fitAction
 SYM game/src/render/animal/pose.ts:83 fn gaitFor
 SYM game/src/render/animal/pose.ts:93 fn poseAnimal
 SYM game/src/render/animal/pose.ts:198 fn settle
+FILE game/src/render/animal/ride.ts 1.7KB 23L exports: horseShown,horseWithers,riderSeat
+SYM game/src/render/animal/ride.ts:9 fn horseShown
+SYM game/src/render/animal/ride.ts:14 fn horseWithers
+SYM game/src/render/animal/ride.ts:20 fn riderSeat
 FILE game/src/render/animal/shapes.ts 10.2KB 156L exports: twoFaced,maneGeo,horseTailGeo,ruffGeo,bushyTailGeo,cowTailGeo,longTailGeo,dewlapGeo,udderGeo,saddleDims,saddleGeo,patchCyl
 SYM game/src/render/animal/shapes.ts:12 fn twoFaced
 SYM game/src/render/animal/shapes.ts:23 fn maneGeo
@@ -337,33 +341,43 @@ SYM game/src/render/building/houses.ts:144 fn buildGreenhouse
 SYM game/src/render/building/houses.ts:163 fn buildKennel
 SYM game/src/render/building/houses.ts:176 fn plantGeo
 SYM game/src/render/building/houses.ts:190 fn pathSeg
-FILE game/src/render/building/index.ts 7.6KB 131L exports: BuildingDoor,BuildingRoom,BuildingPoint,BuildingWheel,BuiltBuilding,BuildOpts,makeBuilding,Khashaa,makeKhashaa,appendAt,BuildingMaterials,makeBuildingMaterials,emptyGeo,PlotSpec,+2
-SYM game/src/render/building/index.ts:20 interface BuildingDoor
-SYM game/src/render/building/index.ts:21 interface BuildingRoom
-SYM game/src/render/building/index.ts:22 interface BuildingPoint
-SYM game/src/render/building/index.ts:23 interface BuildingWheel
-SYM game/src/render/building/index.ts:24 interface BuiltBuilding
-SYM game/src/render/building/index.ts:40 interface BuildOpts
-SYM game/src/render/building/index.ts:43 fn makeBuilding
-SYM game/src/render/building/index.ts:47 interface Khashaa
-SYM game/src/render/building/index.ts:49 fn makeKhashaa
-SYM game/src/render/building/index.ts:53 fn makeAny
-SYM game/src/render/building/index.ts:78 fn appendAt
-SYM game/src/render/building/index.ts:84 interface BuildingMaterials
-SYM game/src/render/building/index.ts:92 fn makeBuildingMaterials
-SYM game/src/render/building/index.ts:99 const emptyGeo
-SYM game/src/render/building/index.ts:101 interface PlotSpec
-SYM game/src/render/building/index.ts:109 interface Plot
-SYM game/src/render/building/index.ts:131 fn makePlot
-FILE game/src/render/building/interior.ts 16.8KB 141L exports: buildInterior,mirroredHouse,mirrorGeoX,makeInterior
+FILE game/src/render/building/index.ts 7.7KB 132L exports: BuildingDoor,BuildingRoom,BuildingPoint,BuildingWheel,BuiltBuilding,BuildOpts,makeBuilding,Khashaa,makeKhashaa,appendAt,BuildingMaterials,makeBuildingMaterials,emptyGeo,PlotSpec,+2
+SYM game/src/render/building/index.ts:21 interface BuildingDoor
+SYM game/src/render/building/index.ts:22 interface BuildingRoom
+SYM game/src/render/building/index.ts:23 interface BuildingPoint
+SYM game/src/render/building/index.ts:24 interface BuildingWheel
+SYM game/src/render/building/index.ts:25 interface BuiltBuilding
+SYM game/src/render/building/index.ts:41 interface BuildOpts
+SYM game/src/render/building/index.ts:44 fn makeBuilding
+SYM game/src/render/building/index.ts:48 interface Khashaa
+SYM game/src/render/building/index.ts:50 fn makeKhashaa
+SYM game/src/render/building/index.ts:54 fn makeAny
+SYM game/src/render/building/index.ts:79 fn appendAt
+SYM game/src/render/building/index.ts:85 interface BuildingMaterials
+SYM game/src/render/building/index.ts:93 fn makeBuildingMaterials
+SYM game/src/render/building/index.ts:100 const emptyGeo
+SYM game/src/render/building/index.ts:102 interface PlotSpec
+SYM game/src/render/building/index.ts:110 interface Plot
+SYM game/src/render/building/index.ts:132 fn makePlot
+FILE game/src/render/building/interior.ts 19.1KB 163L exports: buildInterior,mirroredHouse,mirrorGeoX,makeInterior,trimFrontStrip
 SYM game/src/render/building/interior.ts:7 fn buildInterior
 SYM game/src/render/building/interior.ts:116 fn mirroredHouse
 SYM game/src/render/building/interior.ts:120 fn mirrorGeoX
 SYM game/src/render/building/interior.ts:128 fn makeInterior
+SYM game/src/render/building/interior.ts:151 fn trimFrontStrip
 FILE game/src/render/building/interiorData.ts 2.3KB 31L exports: HouseInteriorData,houseInteriorData
 SYM game/src/render/building/interiorData.ts:5 fn r3
 SYM game/src/render/building/interiorData.ts:6 interface HouseInteriorData
 SYM game/src/render/building/interiorData.ts:15 fn houseInteriorData
+FILE game/src/render/building/publicInterior.ts 28.1KB 237L exports: makePublicInterior
+SYM game/src/render/building/publicInterior.ts:7 fn lth
+SYM game/src/render/building/publicInterior.ts:9 fn appendY
+SYM game/src/render/building/publicInterior.ts:11 fn discZ
+SYM game/src/render/building/publicInterior.ts:19 fn makePublicInterior
+SYM game/src/render/building/publicInterior.ts:56 fn furnishSchool
+SYM game/src/render/building/publicInterior.ts:118 fn chair
+SYM game/src/render/building/publicInterior.ts:125 fn studentDesk
+SYM game/src/render/building/publicInterior.ts:133 fn furnishTemple
 FILE game/src/render/building/shops.ts 21.1KB 175L exports: buildShop,goods,buildMilkWool,makeMoto,buildCarDealer,buildFuel,buildWoolStore
 SYM game/src/render/building/shops.ts:10 fn buildShop
 SYM game/src/render/building/shops.ts:58 fn goods
@@ -588,22 +602,22 @@ SYM game/src/render/character/talk.ts:18 fn postTalkEvent
 SYM game/src/render/character/talk.ts:24 class EmotionQueue
 SYM game/src/render/character/talk.ts:29 method EmotionQueue.step
 SYM game/src/render/character/talk.ts:39 fn turnToward
-FILE game/src/render/characters.ts 17.1KB 341L exports: makeDog,poseDogLying,CharactersView
-SYM game/src/render/characters.ts:28 fn makeDog
-SYM game/src/render/characters.ts:32 fn poseDogLying
-SYM game/src/render/characters.ts:35 fn makeBubble
-SYM game/src/render/characters.ts:60 class CharactersView
-SYM game/src/render/characters.ts:97 method CharactersView.setQuality
-SYM game/src/render/characters.ts:103 method CharactersView.say
-SYM game/src/render/characters.ts:110 method CharactersView.react
-SYM game/src/render/characters.ts:115 method CharactersView.emotion
-SYM game/src/render/characters.ts:133 method CharactersView.seatHerder
-SYM game/src/render/characters.ts:146 method CharactersView.setSeason
-SYM game/src/render/characters.ts:152 method CharactersView.herderObject
-SYM game/src/render/characters.ts:156 method CharactersView.update
-SYM game/src/render/characters.ts:225 method CharactersView.stepAnimals
-SYM game/src/render/characters.ts:257 method CharactersView.updateDogs
-SYM game/src/render/characters.ts:299 method CharactersView.updateWolves
+FILE game/src/render/characters.ts 17.1KB 342L exports: makeDog,poseDogLying,CharactersView
+SYM game/src/render/characters.ts:29 fn makeDog
+SYM game/src/render/characters.ts:33 fn poseDogLying
+SYM game/src/render/characters.ts:36 fn makeBubble
+SYM game/src/render/characters.ts:61 class CharactersView
+SYM game/src/render/characters.ts:98 method CharactersView.setQuality
+SYM game/src/render/characters.ts:104 method CharactersView.say
+SYM game/src/render/characters.ts:111 method CharactersView.react
+SYM game/src/render/characters.ts:116 method CharactersView.emotion
+SYM game/src/render/characters.ts:134 method CharactersView.seatHerder
+SYM game/src/render/characters.ts:147 method CharactersView.setSeason
+SYM game/src/render/characters.ts:153 method CharactersView.herderObject
+SYM game/src/render/characters.ts:157 method CharactersView.update
+SYM game/src/render/characters.ts:226 method CharactersView.stepAnimals
+SYM game/src/render/characters.ts:258 method CharactersView.updateDogs
+SYM game/src/render/characters.ts:300 method CharactersView.updateWolves
 FILE game/src/render/ger/atlas.ts 16.0KB 177L exports: AtlasMaps,doorAtlas,IN_RECT,interiorAtlas
 SYM game/src/render/ger/atlas.ts:5 interface AtlasMaps
 SYM game/src/render/ger/atlas.ts:7 fn hasDom
@@ -662,16 +676,17 @@ SYM game/src/render/ger/gerInterior.ts:28 fn makeGerInterior
 FILE game/src/render/ger/tent.ts 6.1KB 79L exports: TentOptions,makeTent
 SYM game/src/render/ger/tent.ts:11 interface TentOptions
 SYM game/src/render/ger/tent.ts:13 fn makeTent
-FILE game/src/render/interior.ts 13.9KB 282L exports: InteriorView
-SYM game/src/render/interior.ts:20 class InteriorView
-SYM game/src/render/interior.ts:41 method InteriorView.active
-SYM game/src/render/interior.ts:46 method InteriorView.show
-SYM game/src/render/interior.ts:61 method InteriorView.hide
-SYM game/src/render/interior.ts:90 method InteriorView.releaseNpcs
-SYM game/src/render/interior.ts:95 method InteriorView.update
-SYM game/src/render/interior.ts:110 method InteriorView.buildGer
-SYM game/src/render/interior.ts:143 method InteriorView.buildHouse
-SYM game/src/render/interior.ts:183 method InteriorView.build
+FILE game/src/render/interior.ts 16.8KB 329L exports: InteriorView
+SYM game/src/render/interior.ts:22 class InteriorView
+SYM game/src/render/interior.ts:43 method InteriorView.active
+SYM game/src/render/interior.ts:48 method InteriorView.show
+SYM game/src/render/interior.ts:63 method InteriorView.hide
+SYM game/src/render/interior.ts:92 method InteriorView.releaseNpcs
+SYM game/src/render/interior.ts:97 method InteriorView.update
+SYM game/src/render/interior.ts:112 method InteriorView.buildGer
+SYM game/src/render/interior.ts:145 method InteriorView.buildHouse
+SYM game/src/render/interior.ts:190 method InteriorView.buildPublic
+SYM game/src/render/interior.ts:229 method InteriorView.build
 FILE game/src/render/items.ts 3.7KB 97L exports: ItemsView
 SYM game/src/render/items.ts:12 fn canGeo
 SYM game/src/render/items.ts:22 fn fiberGeo
@@ -718,12 +733,12 @@ SYM game/src/render/scene.ts:505 method GameView.updateFlakes
 SYM game/src/render/scene.ts:521 method GameView.drawCalls
 SYM game/src/render/scene.ts:525 method GameView.triangleCount
 FILE game/src/render/staff.ts 8.9KB 187L exports: makeDwelling,StaffView
-SYM game/src/render/staff.ts:27 fn helperRole
-SYM game/src/render/staff.ts:36 fn makeDwelling
-SYM game/src/render/staff.ts:64 class StaffView
-SYM game/src/render/staff.ts:75 method StaffView.setQuality
-SYM game/src/render/staff.ts:83 method StaffView.setSeason
-SYM game/src/render/staff.ts:89 method StaffView.update
+SYM game/src/render/staff.ts:28 fn helperRole
+SYM game/src/render/staff.ts:37 fn makeDwelling
+SYM game/src/render/staff.ts:65 class StaffView
+SYM game/src/render/staff.ts:76 method StaffView.setQuality
+SYM game/src/render/staff.ts:84 method StaffView.setSeason
+SYM game/src/render/staff.ts:90 method StaffView.update
 SYM game/src/render/staff.ts:166 method StaffView.syncDwellings
 FILE game/src/render/style.ts 25.4KB 613L exports: TimeVisual,SeasonVisual,GrassVisual,WaterVisual,SmokeVisual,DogRestVisual,HerderEmotion,HerderEvent,HerderAnimVisual,SumResidentsVisual,OutfitBody,OutfitHat,HelperRole,OutfitsVisual,+10
 SYM game/src/render/style.ts:5 interface TimeVisual
@@ -945,22 +960,22 @@ SYM game/src/render/vehicles.ts:291 method VehiclesView.applyLights
 SYM game/src/render/vehicles.ts:301 method VehiclesView.rig
 SYM game/src/render/vehicles.ts:313 method VehiclesView.buildRoad
 SYM game/src/render/vehicles.ts:358 method VehiclesView.update
-FILE game/src/render/worldmap.ts 22.5KB 489L exports: paperPixels,WorldMapView
-SYM game/src/render/worldmap.ts:23 fn textSprite
-SYM game/src/render/worldmap.ts:49 fn paperPixels
-SYM game/src/render/worldmap.ts:89 class WorldMapView
-SYM game/src/render/worldmap.ts:239 method WorldMapView.inkLines
-SYM game/src/render/worldmap.ts:291 method WorldMapView.heightAt
-SYM game/src/render/worldmap.ts:300 method WorldMapView.addCamp
-SYM game/src/render/worldmap.ts:312 method WorldMapView.addSum
-SYM game/src/render/worldmap.ts:326 method WorldMapView.addPath
-SYM game/src/render/worldmap.ts:338 method WorldMapView.resize
-SYM game/src/render/worldmap.ts:344 method WorldMapView.partyModel
-SYM game/src/render/worldmap.ts:369 method WorldMapView.snapshot
-SYM game/src/render/worldmap.ts:379 method WorldMapView.applySeason
-SYM game/src/render/worldmap.ts:401 method WorldMapView.update
-SYM game/src/render/worldmap.ts:452 method WorldMapView.replaceLabel
-SYM game/src/render/worldmap.ts:484 fn segDist
+FILE game/src/render/worldmap.ts 22.4KB 488L exports: paperPixels,WorldMapView
+SYM game/src/render/worldmap.ts:22 fn textSprite
+SYM game/src/render/worldmap.ts:48 fn paperPixels
+SYM game/src/render/worldmap.ts:88 class WorldMapView
+SYM game/src/render/worldmap.ts:238 method WorldMapView.inkLines
+SYM game/src/render/worldmap.ts:290 method WorldMapView.heightAt
+SYM game/src/render/worldmap.ts:299 method WorldMapView.addCamp
+SYM game/src/render/worldmap.ts:311 method WorldMapView.addSum
+SYM game/src/render/worldmap.ts:325 method WorldMapView.addPath
+SYM game/src/render/worldmap.ts:337 method WorldMapView.resize
+SYM game/src/render/worldmap.ts:343 method WorldMapView.partyModel
+SYM game/src/render/worldmap.ts:368 method WorldMapView.snapshot
+SYM game/src/render/worldmap.ts:378 method WorldMapView.applySeason
+SYM game/src/render/worldmap.ts:400 method WorldMapView.update
+SYM game/src/render/worldmap.ts:451 method WorldMapView.replaceLabel
+SYM game/src/render/worldmap.ts:483 fn segDist
 FILE game/src/render/zones.ts 3.5KB 100L exports: ZonesView
 SYM game/src/render/zones.ts:22 class ZonesView
 SYM game/src/render/zones.ts:32 method ZonesView.toggle
@@ -1252,29 +1267,29 @@ SYM game/src/sim/systems/houseLayout.ts:28 const houseInteriorKeys
 SYM game/src/sim/systems/houseLayout.ts:30 fn resolve
 SYM game/src/sim/systems/houseLayout.ts:40 fn houseRoom
 SYM game/src/sim/systems/houseLayout.ts:107 fn clampToWalk
-FILE game/src/sim/systems/interior.ts 19.1KB 358L exports: InteriorSpot,RoomSpec,InteriorsConfig,InteriorService,EnterDoor,sumEnterDoors,campEnterDoors,enterDoors,nearEnterDoor,roomSpec,roomGerSize,currentRoom,clampToRoom,enterBuilding,+7
-SYM game/src/sim/systems/interior.ts:19 interface InteriorSpot
-SYM game/src/sim/systems/interior.ts:20 interface RoomSpec
-SYM game/src/sim/systems/interior.ts:56 interface InteriorsConfig
-SYM game/src/sim/systems/interior.ts:75 type InteriorService
-SYM game/src/sim/systems/interior.ts:77 interface EnterDoor
-SYM game/src/sim/systems/interior.ts:94 fn serviceOf
-SYM game/src/sim/systems/interior.ts:102 fn sumEnterDoors
-SYM game/src/sim/systems/interior.ts:125 fn campEnterDoors
-SYM game/src/sim/systems/interior.ts:144 fn enterDoors
-SYM game/src/sim/systems/interior.ts:154 fn nearEnterDoor
-SYM game/src/sim/systems/interior.ts:173 fn roomSpec
-SYM game/src/sim/systems/interior.ts:196 fn roomGerSize
-SYM game/src/sim/systems/interior.ts:201 fn currentRoom
-SYM game/src/sim/systems/interior.ts:207 fn clampToRoom
-SYM game/src/sim/systems/interior.ts:242 fn enterBuilding
-SYM game/src/sim/systems/interior.ts:260 fn atExit
-SYM game/src/sim/systems/interior.ts:266 fn exitBuilding
-SYM game/src/sim/systems/interior.ts:281 fn moveInterior
-SYM game/src/sim/systems/interior.ts:292 fn atCounter
-SYM game/src/sim/systems/interior.ts:298 fn interiorService
-SYM game/src/sim/systems/interior.ts:305 fn ensureInteriorValid
-SYM game/src/sim/systems/interior.ts:312 fn validateInteriors
+FILE game/src/sim/systems/interior.ts 20.0KB 372L exports: InteriorSpot,RoomSpec,InteriorsConfig,InteriorService,EnterDoor,sumEnterDoors,campEnterDoors,enterDoors,nearEnterDoor,roomSpec,roomGerSize,currentRoom,clampToRoom,enterBuilding,+7
+SYM game/src/sim/systems/interior.ts:20 interface InteriorSpot
+SYM game/src/sim/systems/interior.ts:21 interface RoomSpec
+SYM game/src/sim/systems/interior.ts:59 interface InteriorsConfig
+SYM game/src/sim/systems/interior.ts:78 type InteriorService
+SYM game/src/sim/systems/interior.ts:80 interface EnterDoor
+SYM game/src/sim/systems/interior.ts:97 fn serviceOf
+SYM game/src/sim/systems/interior.ts:105 fn sumEnterDoors
+SYM game/src/sim/systems/interior.ts:128 fn campEnterDoors
+SYM game/src/sim/systems/interior.ts:147 fn enterDoors
+SYM game/src/sim/systems/interior.ts:157 fn nearEnterDoor
+SYM game/src/sim/systems/interior.ts:176 fn roomSpec
+SYM game/src/sim/systems/interior.ts:203 fn roomGerSize
+SYM game/src/sim/systems/interior.ts:208 fn currentRoom
+SYM game/src/sim/systems/interior.ts:214 fn clampToRoom
+SYM game/src/sim/systems/interior.ts:256 fn enterBuilding
+SYM game/src/sim/systems/interior.ts:274 fn atExit
+SYM game/src/sim/systems/interior.ts:280 fn exitBuilding
+SYM game/src/sim/systems/interior.ts:295 fn moveInterior
+SYM game/src/sim/systems/interior.ts:306 fn atCounter
+SYM game/src/sim/systems/interior.ts:312 fn interiorService
+SYM game/src/sim/systems/interior.ts:319 fn ensureInteriorValid
+SYM game/src/sim/systems/interior.ts:326 fn validateInteriors
 FILE game/src/sim/systems/milestones.ts 8.8KB 168L exports: Stats,MilestoneState,newStats,newMilestones,MilestoneDef,MilestonesConfig,conditionMet,Reached,checkMilestones,recordDay,GoalProgress,seasonGoal,nextStage,validateMilestones
 SYM game/src/sim/systems/milestones.ts:12 interface Stats
 SYM game/src/sim/systems/milestones.ts:27 interface MilestoneState
@@ -1332,6 +1347,21 @@ SYM game/src/sim/systems/npc.ts:302 fn npcsAt
 SYM game/src/sim/systems/npc.ts:307 fn awayBuildings
 SYM game/src/sim/systems/npc.ts:314 fn relativeAtBuilding
 SYM game/src/sim/systems/npc.ts:325 fn npcConfigErrors
+FILE game/src/sim/systems/ownGers.ts 5.5KB 97L exports: ExtraGer,OwnGer,ownGers,gerCount,moveMultSum,gerStorageBonus,gerAddPrice,gerSellPrice,freeDwellingSlot,addExtraGer,sellGer,extraDoorId,gerSizeOfDoor,sellableGers
+SYM game/src/sim/systems/ownGers.ts:12 interface ExtraGer
+SYM game/src/sim/systems/ownGers.ts:14 interface OwnGer
+SYM game/src/sim/systems/ownGers.ts:17 fn ownGers
+SYM game/src/sim/systems/ownGers.ts:24 const gerCount
+SYM game/src/sim/systems/ownGers.ts:27 fn moveMultSum
+SYM game/src/sim/systems/ownGers.ts:33 fn gerStorageBonus
+SYM game/src/sim/systems/ownGers.ts:38 fn gerAddPrice
+SYM game/src/sim/systems/ownGers.ts:44 fn gerSellPrice
+SYM game/src/sim/systems/ownGers.ts:50 fn freeDwellingSlot
+SYM game/src/sim/systems/ownGers.ts:57 fn addExtraGer
+SYM game/src/sim/systems/ownGers.ts:66 fn sellGer
+SYM game/src/sim/systems/ownGers.ts:83 const extraDoorId
+SYM game/src/sim/systems/ownGers.ts:86 fn gerSizeOfDoor
+SYM game/src/sim/systems/ownGers.ts:92 fn sellableGers
 FILE game/src/sim/systems/pasture.ts 7.3KB 159L exports: GrassGrid,buildGrid,cellIndex,typeIdOf,typeQualities,absBiomass,grassHeightCm,grassCapacity,dailyRegrowth,degradeGain,dailyCampDegrade,nearestWater,averageBiomass
 SYM game/src/sim/systems/pasture.ts:12 interface GrassGrid
 SYM game/src/sim/systems/pasture.ts:23 fn hashNoise
@@ -1355,6 +1385,9 @@ SYM game/src/sim/systems/processing.ts:29 fn processingStep
 FILE game/src/sim/systems/production.ts 1.7KB 37L exports: groundAgingStep
 SYM game/src/sim/systems/production.ts:9 fn bump
 SYM game/src/sim/systems/production.ts:14 fn groundAgingStep
+FILE game/src/sim/systems/publicLayout.ts 3.4KB 48L exports: publicInteriorKinds,publicBlockers
+SYM game/src/sim/systems/publicLayout.ts:15 const publicInteriorKinds
+SYM game/src/sim/systems/publicLayout.ts:18 fn publicBlockers
 FILE game/src/sim/systems/seasons.ts 11.2KB 232L exports: yearDay,seasonStart,seasonOf,seasonProgress,yearOf,snowAccess,applyAccess,campAccess,dailySnow,dailyGrass,dailyAwayGrass,ShelterFn,coldNight,feedHay,+3
 SYM game/src/sim/systems/seasons.ts:17 fn yearDay
 SYM game/src/sim/systems/seasons.ts:22 fn seasonStart
@@ -1531,23 +1564,23 @@ SYM game/src/sim/terrain.ts:22 fn waterDistance
 SYM game/src/sim/terrain.ts:28 fn baseHeightAt
 SYM game/src/sim/terrain.ts:54 fn heightAt
 SYM game/src/sim/terrain.ts:77 fn waterLevel
-FILE tools/balance_sim/run.ts 27.0KB 460L
-SYM tools/balance_sim/run.ts:31 fn nextGerOrder
-SYM tools/balance_sim/run.ts:53 fn applyOverrides
-SYM tools/balance_sim/run.ts:74 fn escort
-SYM tools/balance_sim/run.ts:81 fn dogsGuard
-SYM tools/balance_sim/run.ts:87 fn collectAll
-SYM tools/balance_sim/run.ts:97 fn processAll
-SYM tools/balance_sim/run.ts:104 fn surplusMales
-SYM tools/balance_sim/run.ts:119 fn tripIfUseful
-SYM tools/balance_sim/run.ts:141 fn bestSpot
-SYM tools/balance_sim/run.ts:178 fn rotateCamp
-SYM tools/balance_sim/run.ts:194 fn buyPlan
-SYM tools/balance_sim/run.ts:248 fn mediumStrategy
-SYM tools/balance_sim/run.ts:341 fn run
-SYM tools/balance_sim/run.ts:390 fn killsTxt
-SYM tools/balance_sim/run.ts:397 fn median
-SYM tools/balance_sim/run.ts:402 fn fmt
+FILE tools/balance_sim/run.ts 27.3KB 463L
+SYM tools/balance_sim/run.ts:34 fn nextGerOrder
+SYM tools/balance_sim/run.ts:56 fn applyOverrides
+SYM tools/balance_sim/run.ts:77 fn escort
+SYM tools/balance_sim/run.ts:84 fn dogsGuard
+SYM tools/balance_sim/run.ts:90 fn collectAll
+SYM tools/balance_sim/run.ts:100 fn processAll
+SYM tools/balance_sim/run.ts:107 fn surplusMales
+SYM tools/balance_sim/run.ts:122 fn tripIfUseful
+SYM tools/balance_sim/run.ts:144 fn bestSpot
+SYM tools/balance_sim/run.ts:181 fn rotateCamp
+SYM tools/balance_sim/run.ts:197 fn buyPlan
+SYM tools/balance_sim/run.ts:251 fn mediumStrategy
+SYM tools/balance_sim/run.ts:344 fn run
+SYM tools/balance_sim/run.ts:393 fn killsTxt
+SYM tools/balance_sim/run.ts:400 fn median
+SYM tools/balance_sim/run.ts:405 fn fmt
 FILE tools/genHouseInteriors.ts 0.8KB 10L
 FILE tools/codemap.ts 8.3KB 203L exports: CONTEXT_START,CONTEXT_END,INDEXED_DOCS,Generated,extractSymbols,extractH2,generate
 SYM tools/codemap.ts:18 const CONTEXT_START
@@ -1565,10 +1598,10 @@ SYM tools/codemap.ts:127 fn shortLabel
 SYM tools/codemap.ts:132 fn indexLine
 SYM tools/codemap.ts:141 fn generate
 SYM tools/codemap.ts:195 fn main
-FILE game/tests/animalLook.test.ts 9.6KB 171L
+FILE game/tests/animalLook.test.ts 11.0KB 192L
 FILE game/tests/animals.test.ts 2.3KB 39L
 FILE game/tests/breeding.test.ts 1.4KB 33L
-FILE game/tests/buildings.test.ts 11.8KB 167L
+FILE game/tests/buildings.test.ts 15.0KB 206L
 FILE game/tests/camclip.test.ts 3.9KB 68L
 FILE game/tests/characters.test.ts 26.1KB 438L
 FILE game/tests/clock.test.ts 2.7KB 52L
@@ -1764,7 +1797,7 @@ DOC docs/helpers-m5.md:45-55 ## 3. Тэнцвэр (улиралгүй үед; 6 
 DOC docs/helpers-m5.md:56-61 ## 4. Хязгаарлалт / 🙋
 FILE docs/milestones.md 8.9KB 45L
 DOC docs/milestones.md:39-45 ## Эрсдэл
-FILE docs/mvp-spec.md 51.4KB 461L
+FILE docs/mvp-spec.md 52.1KB 462L
 DOC docs/mvp-spec.md:17-22 ## 0. Хэрэглэгчийн шийдвэрийн түүх
 DOC docs/mvp-spec.md:23-50 ## 1. Хүрээ
 DOC docs/mvp-spec.md:51-69 ## 2. Цаг (M4.5, M5.5)
@@ -1775,11 +1808,11 @@ DOC docs/mvp-spec.md:210-252 ## 6. Туслах малчид (M5 — [[helpers-m
 DOC docs/mvp-spec.md:253-294 ## 7. Бэлчээр, бууц сэлгэх, доройтол
 DOC docs/mvp-spec.md:295-332 ## 8. Чоно (M4, M4.5, B6)
 DOC docs/mvp-spec.md:333-348 ## 9. Төллөлт ба нас (M5.5)
-DOC docs/mvp-spec.md:349-423 ## 10. Тоглоомын зорилго ба замын тэмдэгтүүд
-DOC docs/mvp-spec.md:424-446 ## 11. Прототипоос хасагдах, өөрчлөгдөх зүйл
-DOC docs/mvp-spec.md:447-452 ## 12. Хөгжүүлэлтийн явц
-DOC docs/mvp-spec.md:453-457 ## 13. Нээлттэй шийдвэр байхгүй
-DOC docs/mvp-spec.md:458-461 ## Эх сурвалж
+DOC docs/mvp-spec.md:349-424 ## 10. Тоглоомын зорилго ба замын тэмдэгтүүд
+DOC docs/mvp-spec.md:425-447 ## 11. Прототипоос хасагдах, өөрчлөгдөх зүйл
+DOC docs/mvp-spec.md:448-453 ## 12. Хөгжүүлэлтийн явц
+DOC docs/mvp-spec.md:454-458 ## 13. Нээлттэй шийдвэр байхгүй
+DOC docs/mvp-spec.md:459-462 ## Эх сурвалж
 FILE docs/night-transport.md 9.4KB 106L
 DOC docs/night-transport.md:18-32 ## 1. Цаг ба шөнө
 DOC docs/night-transport.md:33-44 ## 2. Хотлох (хэрэглэгчийн дүрэм)
@@ -1787,7 +1820,14 @@ DOC docs/night-transport.md:45-68 ## 3. Сүү, ноос хоносон газр
 DOC docs/night-transport.md:69-87 ## 4. Шөнийн чоно (хэрэглэгчийн дүрэм)
 DOC docs/night-transport.md:88-103 ## 5. Тээвэр
 DOC docs/night-transport.md:104-106 ## 6. Хэрэглэгчийн шийдвэр 🙋
-FILE docs/plan/M6.md 18.0KB 66L
+FILE docs/plan/LEAD.md 5.8KB 47L
+DOC docs/plan/LEAD.md:12-16 ## 1. Ажлын загвар
+DOC docs/plan/LEAD.md:17-25 ## 2. Хийгдсэн (2026-11-15 19:00 → 11-16 15:00, ~60 commit, push хийгээгүй)
+DOC docs/plan/LEAD.md:26-32 ## 3. Явж буй ажил (энэ тэмдэглэлийн үед)
+DOC docs/plan/LEAD.md:33-38 ## 4. Хэрэглэгчийн шийдвэр хүлээж буй
+DOC docs/plan/LEAD.md:39-43 ## 5. Дараагийн алхам
+DOC docs/plan/LEAD.md:44-47 ## 6. Контекст хэмнэх (2026-11-16)
+FILE docs/plan/M6.md 18.2KB 66L
 DOC docs/plan/M6.md:15-17 ## Зорилго
 DOC docs/plan/M6.md:18-34 ## MVP «дууссан» шалгуур (D1–D10 — M6 ба M7-ийн нийт)
 DOC docs/plan/M6.md:35-37 ## Одоогийн байдал
@@ -1798,11 +1838,11 @@ FILE docs/plan/M7.md 7.6KB 31L
 DOC docs/plan/M7.md:12-22 ## Блокууд
 DOC docs/plan/M7.md:23-27 ## Асуулга (10 асуулт)
 DOC docs/plan/M7.md:28-31 ## Эрсдэл
-FILE docs/plan/V.md 67.0KB 224L
+FILE docs/plan/V.md 72.1KB 261L
 DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
-DOC docs/plan/V.md:24-206 ## Блокууд ба чеклист (2026-11-15)
-DOC docs/plan/V.md:207-224 ## Зогссон цэг
+DOC docs/plan/V.md:24-241 ## Блокууд ба чеклист (2026-11-15)
+DOC docs/plan/V.md:242-261 ## Зогссон цэг
 FILE docs/plan/playtest.md 16.7KB 104L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
 DOC docs/plan/playtest.md:19-39 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])

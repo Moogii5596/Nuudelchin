@@ -48,6 +48,8 @@ export interface SpeciesLook {
   light: { bodySeg: number; bodyRows: number; tail: Pair; neck: Pair; skirt?: Pair; mane?: Pair };
   detail: { bodySeg: number; bodyRows: number; tail: Pair; neck: Pair; skirt?: Pair; mane?: Pair };
   patchMask?: boolean; variants: VariantLook[];
+  /** дэлхийн масштаб (лабораторийн м → тоглоомын м): морь = малчин/лабораторийн малчин ≈ 1.45 */
+  scale?: number;
   sexBody?: boolean; polledOption?: boolean; patchMap?: [number, number, number, number][]; actions?: string[];
 }
 export interface AnimalLook {
@@ -163,6 +165,7 @@ function parseSpecies(raw: unknown, path: string): SpeciesLook {
   if (!variants.some((v) => v.weight > 0)) fail(`${path}.variants`, 'weight-ийн нийлбэр > 0');
   const s: SpeciesLook = { stride: num(r.stride, `${path}.stride`, 0.2, 5), d: parseD(r.d, `${path}.d`), head: parseHead(r.head, `${path}.head`), motion: parseMotion(r.motion, `${path}.motion`), light: geo(l, `${path}.light`, hasSkirt), detail: geo(dt, `${path}.detail`, hasSkirt), variants };
   if (r.patchMask === true) s.patchMask = true;
+  if (r.scale !== undefined) s.scale = num(r.scale, `${path}.scale`, 0.5, 3);
   if (r.sexBody === true) s.sexBody = true;
   if (r.polledOption === true) s.polledOption = true;
   if (r.patchMap !== undefined) s.patchMap = leaves(r.patchMap, `${path}.patchMap`);

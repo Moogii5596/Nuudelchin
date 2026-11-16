@@ -19,6 +19,7 @@ import { quality as activeQuality, type Quality } from '../device';
 import { animalLook } from './animal/config';
 import { ageIdxOf } from './animal/model';
 import { gaitFor, type Action } from './animal/pose';
+import { horseShown, riderSeat } from './animal/ride';
 import { saddleDims } from './animal/shapes';
 import { bakeAnimal } from './animal/static';
 import { ModelAnimals } from './animal/view';
@@ -189,7 +190,7 @@ export class CharactersView {
       uurga: p.holdingUurga,
       talk: talking,
       emotion: this.emotion(state, dt),
-      ...(p.mounted ? { seat: { side: SADDLE.side, drop: SADDLE.seat - SADDLE.stir - 0.006 } } : {}),
+      ...(p.mounted ? { seat: riderSeat() } : {}),
     });
     if (!p.mounted) H.root.position.y += bob;
     if (partner) {
@@ -213,7 +214,7 @@ export class CharactersView {
     for (const b of Object.values(this.bubbles)) {
       b.t = Math.max(0, b.t - dt);
       b.sprite.visible = b.t > 0 && p.place !== 'map';
-      b.sprite.position.set(p.x, y + (p.mounted ? 3.7 : 3.1) + (1.2 - b.t) * 0.3, p.z);
+      b.sprite.position.set(p.x, y + (p.mounted ? 4.7 : 3.1) + (1.2 - b.t) * 0.3, p.z);
     }
 
   }
@@ -226,7 +227,7 @@ export class CharactersView {
     const p = state.player, look = animalLook.species;
     this.seat = null;
     const rh = ridingHorse(state);
-    if (rh && shown && (p.place === 'camp' || p.mounted)) {
+    if (rh && horseShown(p.place, p.mounted, shown)) {
       if (p.mounted) {
         this.horsePos = { x: p.x, z: p.z, h: p.heading, init: true };
         this.horseSpeed = speed;

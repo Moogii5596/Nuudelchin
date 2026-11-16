@@ -11,6 +11,7 @@ import { horseModel } from '../src/render/animal/horse';
 import { dogModel } from '../src/render/animal/dog';
 import { wolfModel } from '../src/render/animal/wolf';
 import { makeRig, poseAnimal, settle } from '../src/render/animal/pose';
+import { horseShown, horseWithers } from '../src/render/animal/ride';
 import { buildFarGeometry, FarSet } from '../src/render/animal/far';
 import { LOOK_SPECIES } from '../src/render/animal/config';
 
@@ -112,6 +113,26 @@ describe('render/animal — алс мал (far.ts)', () => {
     expect(set.mesh.geometry.attributes.iPose!.getX(1)).toBe(2);
     expect(set.mesh.geometry.attributes.iFlags!.getY(1)).toBe(1);
     set.dispose();
+  });
+});
+
+describe('render/animal — унаа морь', () => {
+  it('мориноос буухад бууц, сумын төвд харагдсан хэвээр; газрын зураг дээр үгүй', () => {
+    expect(horseShown('camp', false, true)).toBe(true);
+    expect(horseShown('sum', false, true)).toBe(true);   // буусан газраа зогсож үлдэнэ
+    expect(horseShown('sum', true, true)).toBe(true);
+    expect(horseShown('map', true, false)).toBe(false);
+    expect(horseShown('map', false, true)).toBe(false);
+  });
+  it('морины сэрвээ 1.30–1.40 м, эмээлийн суудал ≈ 1.36 м (лабораторийн H2)', () => {
+    const w = horseWithers();
+    expect(w).toBeGreaterThanOrEqual(1.3); expect(w).toBeLessThanOrEqual(1.4);   // лабораторийн м
+    expect(animalLook.species.horse.scale).toBeCloseTo(1.45, 2);              // малчин лабораториноосоо ~1.45 дахин өндөр: морь түүнтэй пропорцтой
+    expect(horseWithers(0.6, 1, true)).toBeCloseTo(w * 1.45, 5);
+    const rig = makeRig('horse');
+    settle(rig, 'stand', { speed: 0, fast: false, sc: 1, old: false, fat: 0.6, saddled: true });
+    const seat = rig.saddle.localToWorld(new THREE.Vector3(0, 0.085, 0)).y;
+    expect(seat).toBeGreaterThan(1.32 * 1.45); expect(seat).toBeLessThan(1.4 * 1.45);   // тоглоомын м
   });
 });
 
