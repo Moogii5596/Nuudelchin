@@ -8,10 +8,10 @@
 import * as THREE from 'three';
 import type { GameConfig } from '../sim/config';
 import type { GameState } from '../sim/state';
-import { allBuildings, doorPoint, facingOf } from '../sim/systems/sumtown';
+import { allBuildings, doorPoint, facingOf, plotHouse } from '../sim/systems/sumtown';
 import { npcAt, awayBuildings, type NpcDef, type NpcNow } from '../sim/systems/npc';
 import { seasonOf } from '../sim/systems/seasons';
-import { chaseVia, pushOut, type WalkSolids } from '../sim/systems/sumwalk';
+import { findLeg, inYard, NavMap, planLegPath, polyAt, pushOut, type Anchor, type Poly, type Pt, type RouteCfg, type WalkSolids } from '../sim/systems/sumwalk';
 import { buildCharacter, showOutfit, type CharacterRig } from './character/rig';
 import { animateCharacter } from './character/animate';
 import { makeCrowdFar, type CrowdLook } from './character/crowd';
@@ -34,20 +34,33 @@ interface Entry {
   yaw: number;
   px: number; pz: number; speed: number;
   placed: boolean;
-  /** Хашааны хаалгаар дамжуулсан харуулах байрлал (sim-ийн зорилтыг хөөнө) */
-  rx: number; rz: number;
   lineNo: number;
   scale: number;
   /** тоглогчийг тойрох зөөлөн шилжилт (м) */
   ox: number; oz: number;
   /** render-ийн цагийн хазайлт (мин, id-аас тогтмол) */
   shift: number;
-  /** sim-д гаднаас гарсан ч (орсон, алга болсон) хаалгаар тойрч очих сүүлийн sim байрлал, үлдсэн хугацаа (с) */
-  last: { x: number; z: number; h: number } | null; ling: number;
+  /** Одоогийн алхалт: хашаа, хаалга, барилгыг тойрсон зам; sim-ийн цагтай нийцүүлж явна (sim-д орчихсон ч зам дуустал харагдана) */
+  leg: Leg | null;
+  /** Гэрийн хашаа, үүд (олдохгүй бол null; undefined = хараахан шийдээгүй) */
+  home?: Home | null;
 }
+/** Алхалтын зам: t0..t1 — sim-ийн алхалтын цаг (render-ийн минут), rate — зам дээрх м/мин */
+interface Leg { t0: number; t1: number; poly: Poly; rate: number }
+interface Home { pt: Pt; door: Anchor; yard: number }
 
-interface NpcRender { shiftMin: [number, number]; lingerSec: number }
+interface NpcRender { shiftMin: [number, number]; route: RouteCfg }
 const idHash = (s: string): number => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967296; };
+
+/** Идэвхтэй дүрслэл (getHomeState-д) */
+let active: NpcView | null = null;
+/**
+ * Айлын хашаа (plotId: sumcenter.json specialPlots-ийн id, `yard:<i>` — walk.yards-ийн индекс, эсвэл барилгын id — дотуур байр г.м.)
+ * дотор NPC байвал 'occupied', үгүй бол 'empty'. «Дотор» = гэрт байгаа (sim-д 'home', гадаа алхаагүй).
+ */
+export function getHomeState(plotId: string): 'empty' | 'occupied' {
+  return active?.homeState(plotId) ?? 'empty';
+}
 
 export class NpcView {
   readonly group = new THREE.Group();
@@ -60,8 +73,14 @@ export class NpcView {
   private readonly maxLive = MAX_LIVE[quality] ?? 5;
   /** Камерын байрлал (scene тавина): камер дүрийн биед орвол тэр дүрийг нууна */
   camera: THREE.Vector3 | null = null;
-  /** Алхалтын саад (сумын төв) — гаднах NPC-ийг барилга, хашаанаас түлхэнэ */
-  walk: WalkSolids | null = null;
+  /** Алхалтын саад (сумын төв) — гаднах NPC-ийг барилга, хашаанаас түлхэнэ; замын тор, үүдний жагсаалтыг эндээс угсарна */
+  get walk(): WalkSolids | null { return this.walkSolids; }
+  set walk(w: WalkSolids | null) { this.walkSolids = w; this.nav = null; this.anchorList = null; for (const e of this.entries) { e.leg = null; e.home = undefined; } }
+  private walkSolids: WalkSolids | null = null;
+  private nav: NavMap | null = null;
+  private anchorList: Anchor[] | null = null;
+  /** getHomeState-д: сүүлийн тоглоомын цаг (өдөр, минут — render-ийн хазайлтгүй) */
+  private clock: { day: number; minute: number } | null = null;
   /** Одоогийн sim минутын дотор өнгөрсөн хувь 0–1 (scene.frame-ийн alpha) */
   minuteFrac = 0;
 
@@ -74,7 +93,58 @@ export class NpcView {
 
   constructor(private readonly cfg: GameConfig) {
     this.group.name = 'npcs';
-    this.entries = cfg.npcs.npcs.map((def) => ({ def, rig: null, far: null, yaw: 0, px: 0, pz: 0, speed: 0, placed: false, lineNo: 0, scale: def.look.figure?.stature ?? 1, ox: 0, oz: 0, rx: 0, rz: 0, shift: this.shiftOf(def.id), last: null, ling: 0 }));
+    this.entries = cfg.npcs.npcs.map((def) => ({ def, rig: null, far: null, yaw: 0, px: 0, pz: 0, speed: 0, placed: false, lineNo: 0, scale: def.look.figure?.stature ?? 1, ox: 0, oz: 0, shift: this.shiftOf(def.id), leg: null }));
+    active = this;
+  }
+
+  // ---------- гудамжны зам ----------
+  /** Үүдний жагсаалт: барилга бүрийн хаалга (sim-ийн doorPoint + чиглэл), айлын хашааны үүд */
+  private anchors(): Anchor[] {
+    if (this.anchorList) return this.anchorList;
+    const v = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] } as const;
+    const out: Anchor[] = allBuildings(this.cfg.sumcenter).map((b) => { const d = doorPoint(b), f = v[facingOf(b)]; return { x: d.x, z: d.z, dx: f[0], dz: f[1] }; });
+    for (const y of this.walkSolids?.yards ?? []) if (y.door) out.push(y.door);
+    return (this.anchorList = out);
+  }
+  /** NPC-ийн гэр: sim-ийн «гэр» цэг орших хашаа ба тэр хашааны үүд (айлын байшин/гэр) */
+  private homeOf(e: Entry): Home | null {
+    if (e.home !== undefined) return e.home;
+    const h = e.def.home, L = this.cfg.sumcenter, ys = this.walkSolids?.yards ?? [];
+    let pt: Pt | null = typeof h === 'object' ? h : null;
+    if (typeof h === 'string' && h.startsWith('plot:')) { const sp = (L.specialPlots ?? []).find((q) => q.id === h.slice(5)); pt = sp ? plotHouse(L, sp).door : null; }
+    const yard = pt ? ys.findIndex((y) => inYard(y, pt!.x, pt!.z)) : -1, y = yard >= 0 ? ys[yard]! : null;
+    return (e.home = pt && y?.door ? { pt, door: y.door, yard } : null);
+  }
+  /** minute (render-ийн цаг)-д NPC-ийн нэг алхалтын замыг (хашаа, хаалга, барилгыг тойруулан) зурна */
+  private buildLeg(e: Entry, day: number, m: number): Leg | null {
+    const walk = this.walkSolids;
+    if (!walk) return null;
+    const R = this.rcfg.route;
+    const L = findLeg((t) => { const r = npcAt(this.cfg, e.def, day, t); return { moving: r.moving, out: r.mode === 'out', x: r.x, z: r.z }; }, m, R.sampleMin);
+    if (!L) return null;
+    this.nav ??= new NavMap(walk, R.cell);
+    const poly = planLegPath(this.nav, walk, L, { anchors: this.anchors(), home: this.homeOf(e) }, R, this.cfg.worldmap.sum3d.walk.npcR);
+    const span = Math.max(1e-6, L.t1 - L.t0), factor = L.simLen > 0.05 ? Math.min(R.catchUp, Math.max(1, poly.len / L.simLen)) : 1;
+    return { t0: L.t0, t1: L.t1, poly, rate: L.simLen > 0.05 ? (factor * L.simLen) / span : poly.len / span };
+  }
+
+  /** getHomeState: айлын хашаа/барилгын түлхүүр → «y:<хашааны индекс>» эсвэл «b:<барилгын id>» */
+  private homeKey(plotId: string): string | null {
+    const ys = this.walkSolids?.yards ?? [], m = /^yard:(\d+)$/.exec(plotId);
+    if (m) return 'y:' + m[1];
+    const sp = (this.cfg.sumcenter.specialPlots ?? []).find((q) => q.id === plotId);
+    if (sp) { const i = ys.findIndex((y) => inYard(y, sp.x, sp.z)); return i >= 0 ? 'y:' + i : null; }
+    return allBuildings(this.cfg.sumcenter).some((b) => b.id === plotId) ? 'b:' + plotId : null;
+  }
+  homeState(plotId: string): 'empty' | 'occupied' {
+    const key = this.homeKey(plotId), c = this.clock;
+    if (!key || !c) return 'empty';
+    for (const e of this.entries) {
+      const h = e.def.home, hm = this.homeOf(e), mine = typeof h === 'string' && h.startsWith('door:') ? 'b:' + h.slice(5) : hm ? 'y:' + hm.yard : null;
+      if (mine !== key || e.leg) continue;
+      if (npcAt(this.cfg, e.def, c.day, c.minute - e.shift).mode === 'hidden') return 'occupied';
+    }
+    return 'empty';
   }
 
   // ---------- төрх ----------
@@ -134,11 +204,6 @@ export class NpcView {
     const rig = this.ensureRig(e);
     if (!e.yaw && !e.placed) e.yaw = n.heading;
     // тоглогчийн биеэс (1.15 м) түлхэгдэж зөөлөн тойрно — тоглогчийн дэргэд, биед нь зогсохгүй
-    // sim-ийн зам хашааг мэддэггүй: хашааны хоёр талд байвал хаалганы дундуур хөөнө
-    if (this.walk?.yards) {
-      const q = e.placed ? chaseVia(this.walk.yards, { x: e.rx, z: e.rz }, { x, z }, e.def.speed * 2 * dt) : { x, z };
-      e.rx = q.x; e.rz = q.z; x = q.x; z = q.z;
-    }
     const dx = x - playerX, dz = z - playerZ, d = Math.hypot(dx, dz), MINP = 1.15;
     let tx = 0, tz = 0;
     if (d < MINP) { const nx = d > 1e-3 ? dx / d : Math.cos(n.heading + Math.PI / 2), nz = d > 1e-3 ? dz / d : -Math.sin(n.heading + Math.PI / 2); tx = nx * MINP - dx; tz = nz * MINP - dz; }
@@ -202,16 +267,21 @@ export class NpcView {
     this.group.visible = true;
     this.syncSeason(state);
     this.syncAwaySign(state, heightAt);
+    this.clock = { day: state.time.day, minute: state.time.minute + this.minuteFrac };
     const nows = this.now(state), R = characters.crowd.nearR;
     const cand: { e: Entry; n: NpcNow; d: number }[] = [];
     this.entries.forEach((e, i) => {
       let n = nows[i]!;
-      if (n.mode === 'out') { e.last = { x: n.x, z: n.z, h: n.heading }; e.ling = this.rcfg.lingerSec; }
-      else if (e.last && e.placed && e.ling > 0 && Math.hypot(e.rx - e.last.x, e.rz - e.last.z) > 0.4) {
-        // sim-д орчихсон (гэрт, барилгад) ч хашааны хаалгаар тойрч яваа: очих газартаа хүрээд л алга болно
-        e.ling -= dt;
-        n = { ...n, mode: 'out', x: e.last.x, z: e.last.z, heading: e.last.h, moving: true };
-      } else { e.last = null; this.hideEntry(e); return; }
+      const m = state.time.minute + this.minuteFrac - e.shift;
+      // алхаж эхэлбэл (өглөө гэрийн үүднээс гэх мэт) тэр алхалтын замыг нэг удаа зурна
+      if (n.mode === 'out' && n.moving && (!e.leg || m < e.leg.t0 || m > e.leg.t1 + 1e-6)) e.leg = this.buildLeg(e, state.time.day, m);
+      if (e.leg) {
+        // sim-д орчихсон (гэрт, барилгад) ч үүд хүртэл замаараа алхаж дуусна: алга болох нь зөвхөн үүдэнд
+        const L = e.leg, s = L.rate * (m - L.t0);
+        if (m < L.t0 || (m > L.t1 && s >= L.poly.len - 1e-6) || m > L.t1 + 240) e.leg = null;
+        else { const q = polyAt(L.poly, s); n = { ...n, mode: 'out', x: q.x, z: q.z, heading: q.heading, moving: s < L.poly.len - 1e-6 }; }
+      }
+      if (!e.leg && n.mode !== 'out') { this.hideEntry(e); return; }
       cand.push({ e, n, d: Math.hypot(n.x - px, n.z - pz) });
     });
     cand.sort((a, b) => a.d - b.d);
@@ -231,7 +301,6 @@ export class NpcView {
         if (c.e.rig) c.e.rig.root.visible = false;
         const f = this.ensureFar(c.e);
         this.measure(c.e, c.n.x, c.n.z, dt);
-        c.e.rx = c.n.x; c.e.rz = c.n.z;
         c.e.yaw = c.n.heading;
         f.visible = true;
         f.position.set(c.n.x, y, c.n.z);
@@ -250,7 +319,7 @@ export class NpcView {
 
   /** Тоглогч сумын төвөөс гадна/барилга дотор: гаднах NPC-үүдийг нууна */
   hideOutdoor(): void {
-    for (const e of this.entries) e.last = null;
+    for (const e of this.entries) e.leg = null;
     this.group.visible = false;
     for (const e of this.entries) if (e.rig && e.rig.root.parent === this.group) e.rig.root.visible = false;
     this.talkWith = null;
@@ -261,6 +330,7 @@ export class NpcView {
   /** Орсон барилгын (door id) NPC-үүд өрөөний байрлалд. parent — дотор дүр зураг; өрөөнийх нь координат */
   updateIndoor(state: GameState, dt: number, parent: THREE.Object3D, building: string, px: number, pz: number, pspeed: number): { x: number; z: number } | null {
     this.syncSeason(state);
+    this.clock = { day: state.time.day, minute: state.time.minute + this.minuteFrac };
     const nows = this.now(state), cand: { e: Entry; n: NpcNow; d: number }[] = [];
     this.entries.forEach((e, i) => {
       const n = nows[i]!;
@@ -284,7 +354,7 @@ export class NpcView {
 
   /** Дотроос гарсан: NPC-үүдийг гаднах бүлэгт буцаана (нуугдсан) */
   leaveIndoor(): void {
-    for (const e of this.entries) e.last = null;
+    for (const e of this.entries) e.leg = null;
     for (const e of this.entries) if (e.rig) { this.group.add(e.rig.root); e.rig.root.visible = false; e.placed = false; }
     this.talkWith = null;
     this.showSpeech(null);

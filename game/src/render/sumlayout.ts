@@ -8,7 +8,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { doorPoint, plotHouse, sumHeight, type SumLayout, type SumBuildingSpec, type SumSpecialPlotSpec, type SumXZ } from '../sim/systems/sumtown';
 
 import type { CamSolids } from './camclip';
-import { wallRing, type WalkConfig, type WalkSolids } from '../sim/systems/sumwalk';
+import { wallRing, type WalkConfig, type WalkSolids, type WalkYard } from '../sim/systems/sumwalk';
 import { TOWN, BUILDING_CONFIG as BC, appendAt, makePlot } from './building';
 import { TownBuilder, labModel, gerSlotLocal } from './building/town';
 import { GER } from './ger/config';
@@ -21,7 +21,7 @@ export interface Rect { id: string; x: number; z: number; w: number; d: number }
 /** Худалдаанд гаргасан тээврийн зогсоол */
 export interface VehicleSlotView { id: string; vehicle: string; x: number; y: number; z: number; rot: number }
 /** Хашаа байшингийн гол байшингийн хаалга (нохой, оршин суугч байрлуулахад) */
-export interface HomeDoor { x: number; y: number; z: number }
+export interface HomeDoor { x: number; y: number; z: number; /** үүдний гадагш чиглэх нэгж вектор (NPC үүд рүү шулуун орох/гарах) */ dx?: number; dz?: number }
 export interface SumPlotView { id: string; role: SumSpecialPlotSpec['role']; x: number; z: number; door: HomeDoor }
 export interface SumGer { x: number; y: number; z: number; color: string; r: number }
 export interface SumCenterBuild {
@@ -358,7 +358,8 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
   const plotLab = (o: { x: number; z: number; w: number; d: number; gate: 'n' | 's' | 'e' | 'w'; kind: string; seed: number; roofColor?: string; extras?: string[];
     path?: 'walk' | 'dirt'; trees?: 'full' | 'bush'; kennel?: boolean; fenceColor: string; gateColor: string; gerColor?: string }): HomeDoor => {
     wallRing(walk.boxes, o.x, o.z, o.w, o.d, o.gate, WK.plotGateW, 0, WK.fenceT);   // айлын хашаа: хаалга төвд (building/yard.ts gateX = 0)
-    walk.yards!.push({ x: o.x, z: o.z, w: o.w, d: o.d, gate: o.gate, off: 0, gw: WK.plotGateW });
+    const yardRec: WalkYard = { x: o.x, z: o.z, w: o.w, d: o.d, gate: o.gate, off: 0, gw: WK.plotGateW };
+    walk.yards!.push(yardRec);
     const vertical = o.gate === 'e' || o.gate === 'w', lw = vertical ? o.d : o.w, ld = vertical ? o.w : o.d, phi = GATE_PHI[o.gate], y = heightAt(o.x, o.z);
     const c = Math.cos(phi), s = Math.sin(phi), toW = (lx: number, lz: number) => ({ x: o.x + lx * c + lz * s, z: o.z - lx * s + lz * c });
     town.add((season, out) => {
@@ -369,13 +370,15 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     if (o.kind === 'gerYard') {
       const gs = gerSlotLocal(lw, ld, GER_R), g = toW(gs.x, gs.z), dd = toW(gs.x, gs.z + GER_R + 1.4);
       ger(g.x, g.z, o.gerColor ?? '#F3EDE2', GER_R);
-      return { x: dd.x, y, z: dd.z };
+      yardRec.door = { x: dd.x, z: dd.z, dx: s, dz: c };   // гэрийн үүд: хашааны локал +Z
+      return { x: dd.x, y, z: dd.z, dx: s, dz: c };
     }
     const base = BC.special[o.kind]?.base ?? o.kind, hf = houseFootprint(base), sl = houseSlot(lw, ld, hf.w, hf.d);
     const dw = toW(sl.x + hf.door.x, sl.z + hf.door.z), hc = toW(sl.x, sl.z);
     walk.boxes.push({ x: hc.x, z: hc.z, hw: (vertical ? hf.d : hf.w) / 2, hd: (vertical ? hf.w : hf.d) / 2 });
     solids.boxes.push({ x: hc.x, z: hc.z, hw: (vertical ? hf.d : hf.w) / 2, hd: (vertical ? hf.w : hf.d) / 2, rot: 0, y0: y - 2, y1: y + houseTop(o.kind) });
-    return { x: dw.x, y, z: dw.z };
+    yardRec.door = { x: dw.x, z: dw.z, dx: s, dz: c };   // байшингийн үүд хашааны локал +Z (хаалганы тал)
+    return { x: dw.x, y, z: dw.z, dx: s, dz: c };
   };
 
   // --- Барилга ---
