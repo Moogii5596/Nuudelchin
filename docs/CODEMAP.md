@@ -429,7 +429,7 @@ SYM game/src/render/camera.ts:15 class FollowCamera
 SYM game/src/render/camera.ts:39 method FollowCamera.span
 SYM game/src/render/camera.ts:125 method FollowCamera.update
 SYM game/src/render/camera.ts:175 method FollowCamera.resize
-FILE game/src/render/character/animate.ts 9.0KB 174L exports: CharacterPose,animateCharacter
+FILE game/src/render/character/animate.ts 9.6KB 182L exports: CharacterPose,animateCharacter
 SYM game/src/render/character/animate.ts:11 interface CharacterPose
 SYM game/src/render/character/animate.ts:27 fn solveLeg
 SYM game/src/render/character/animate.ts:52 fn sstep
@@ -549,7 +549,7 @@ SYM game/src/render/character/parts/torso.ts:110 fn buildApron
 SYM game/src/render/character/parts/torso.ts:120 fn buildVest
 SYM game/src/render/character/parts/torso.ts:152 fn winterHem
 SYM game/src/render/character/parts/torso.ts:161 fn buildBodies
-FILE game/src/render/character/rig.ts 9.6KB 182L exports: Pair,CharacterRig,BuildOptions,buildCharacter,wearOf,showOutfit,dressCharacter
+FILE game/src/render/character/rig.ts 9.7KB 182L exports: Pair,CharacterRig,BuildOptions,buildCharacter,wearOf,showOutfit,dressCharacter
 SYM game/src/render/character/rig.ts:20 type Pair
 SYM game/src/render/character/rig.ts:22 interface CharacterRig
 SYM game/src/render/character/rig.ts:50 interface BuildOptions
@@ -716,22 +716,24 @@ SYM game/src/render/labelAtlas.ts:50 method LabelAtlas.add
 SYM game/src/render/labelAtlas.ts:58 method LabelAtlas.build
 SYM game/src/render/labelAtlas.ts:76 method LabelAtlas.setText
 SYM game/src/render/labelAtlas.ts:82 method LabelAtlas.setCell
-FILE game/src/render/npcs.ts 16.2KB 292L exports: NpcView
+FILE game/src/render/npcs.ts 18.4KB 321L exports: NpcView
 SYM game/src/render/npcs.ts:28 fn hex
-SYM game/src/render/npcs.ts:43 class NpcView
-SYM game/src/render/npcs.ts:65 method NpcView.spec
-SYM game/src/render/npcs.ts:74 method NpcView.ensureRig
-SYM game/src/render/npcs.ts:84 method NpcView.ensureFar
-SYM game/src/render/npcs.ts:95 method NpcView.syncSeason
-SYM game/src/render/npcs.ts:106 method NpcView.now
-SYM game/src/render/npcs.ts:110 method NpcView.measure
-SYM game/src/render/npcs.ts:117 method NpcView.drive
-SYM game/src/render/npcs.ts:139 method NpcView.pickTalk
-SYM game/src/render/npcs.ts:165 method NpcView.showSpeech
-SYM game/src/render/npcs.ts:217 method NpcView.hideEntry
-SYM game/src/render/npcs.ts:225 method NpcView.hideOutdoor
-SYM game/src/render/npcs.ts:258 method NpcView.leaveIndoor
-SYM game/src/render/npcs.ts:266 method NpcView.syncAwaySign
+SYM game/src/render/npcs.ts:50 fn idHash
+SYM game/src/render/npcs.ts:52 class NpcView
+SYM game/src/render/npcs.ts:70 method NpcView.shiftOf
+SYM game/src/render/npcs.ts:81 method NpcView.spec
+SYM game/src/render/npcs.ts:90 method NpcView.ensureRig
+SYM game/src/render/npcs.ts:100 method NpcView.ensureFar
+SYM game/src/render/npcs.ts:111 method NpcView.syncSeason
+SYM game/src/render/npcs.ts:122 method NpcView.now
+SYM game/src/render/npcs.ts:126 method NpcView.measure
+SYM game/src/render/npcs.ts:133 method NpcView.drive
+SYM game/src/render/npcs.ts:160 method NpcView.pickTalk
+SYM game/src/render/npcs.ts:186 method NpcView.showSpeech
+SYM game/src/render/npcs.ts:244 method NpcView.hideEntry
+SYM game/src/render/npcs.ts:252 method NpcView.hideOutdoor
+SYM game/src/render/npcs.ts:286 method NpcView.leaveIndoor
+SYM game/src/render/npcs.ts:295 method NpcView.syncAwaySign
 FILE game/src/render/scene.ts 27.3KB 546L exports: GameView
 SYM game/src/render/scene.ts:29 fn flakeTexture
 SYM game/src/render/scene.ts:42 class GameView
@@ -755,7 +757,7 @@ SYM game/src/render/staff.ts:76 method StaffView.setQuality
 SYM game/src/render/staff.ts:84 method StaffView.setSeason
 SYM game/src/render/staff.ts:90 method StaffView.update
 SYM game/src/render/staff.ts:166 method StaffView.syncDwellings
-FILE game/src/render/style.ts 28.1KB 658L exports: TimeVisual,SeasonVisual,GrassVisual,WaterVisual,SmokeVisual,DogRestVisual,HerderEmotion,HerderEvent,HerderAnimVisual,SumResidentsVisual,OutfitBody,OutfitHat,HelperRole,OutfitsVisual,+11
+FILE game/src/render/style.ts 28.8KB 668L exports: TimeVisual,SeasonVisual,GrassVisual,WaterVisual,SmokeVisual,DogRestVisual,HerderEmotion,HerderEvent,HerderAnimVisual,SumResidentsVisual,OutfitBody,OutfitHat,HelperRole,OutfitsVisual,+11
 SYM game/src/render/style.ts:5 interface TimeVisual
 SYM game/src/render/style.ts:17 interface SeasonVisual
 SYM game/src/render/style.ts:24 interface GrassVisual
@@ -765,31 +767,31 @@ SYM game/src/render/style.ts:50 interface DogRestVisual
 SYM game/src/render/style.ts:60 type HerderEmotion
 SYM game/src/render/style.ts:61 type HerderEvent
 SYM game/src/render/style.ts:62 interface HerderAnimVisual
-SYM game/src/render/style.ts:73 interface SumResidentsVisual
-SYM game/src/render/style.ts:82 type OutfitBody
-SYM game/src/render/style.ts:83 type OutfitHat
-SYM game/src/render/style.ts:84 type HelperRole
-SYM game/src/render/style.ts:85 interface OutfitsVisual
-SYM game/src/render/style.ts:91 interface MapPaperVisual
-SYM game/src/render/style.ts:98 interface VehicleFxVisual
-SYM game/src/render/style.ts:109 interface CloudShadowVisual
-SYM game/src/render/style.ts:118 interface FlowersVisual
-SYM game/src/render/style.ts:125 interface MountainLayerVisual
-SYM game/src/render/style.ts:135 interface VisualPalette
-SYM game/src/render/style.ts:169 interface NightVisual
-SYM game/src/render/style.ts:181 interface VisualStyle
-SYM game/src/render/style.ts:208 fn isRecord
-SYM game/src/render/style.ts:210 fn isColor
-SYM game/src/render/style.ts:211 fn isPositive
-SYM game/src/render/style.ts:214 fn parseMapPaper
-SYM game/src/render/style.ts:233 fn parseVehicleFx
-SYM game/src/render/style.ts:254 fn parseHerderAnim
-SYM game/src/render/style.ts:281 fn parseSumResidents
-SYM game/src/render/style.ts:299 fn parseOutfits
-SYM game/src/render/style.ts:329 fn parseNight
-SYM game/src/render/style.ts:359 fn validateVisualStyle
-SYM game/src/render/style.ts:654 const visualStyle
-SYM game/src/render/style.ts:656 fn paletteHex
+SYM game/src/render/style.ts:81 interface SumResidentsVisual
+SYM game/src/render/style.ts:90 type OutfitBody
+SYM game/src/render/style.ts:91 type OutfitHat
+SYM game/src/render/style.ts:92 type HelperRole
+SYM game/src/render/style.ts:93 interface OutfitsVisual
+SYM game/src/render/style.ts:99 interface MapPaperVisual
+SYM game/src/render/style.ts:106 interface VehicleFxVisual
+SYM game/src/render/style.ts:117 interface CloudShadowVisual
+SYM game/src/render/style.ts:126 interface FlowersVisual
+SYM game/src/render/style.ts:133 interface MountainLayerVisual
+SYM game/src/render/style.ts:143 interface VisualPalette
+SYM game/src/render/style.ts:177 interface NightVisual
+SYM game/src/render/style.ts:189 interface VisualStyle
+SYM game/src/render/style.ts:216 fn isRecord
+SYM game/src/render/style.ts:218 fn isColor
+SYM game/src/render/style.ts:219 fn isPositive
+SYM game/src/render/style.ts:222 fn parseMapPaper
+SYM game/src/render/style.ts:241 fn parseVehicleFx
+SYM game/src/render/style.ts:262 fn parseHerderAnim
+SYM game/src/render/style.ts:291 fn parseSumResidents
+SYM game/src/render/style.ts:309 fn parseOutfits
+SYM game/src/render/style.ts:339 fn parseNight
+SYM game/src/render/style.ts:369 fn validateVisualStyle
+SYM game/src/render/style.ts:664 const visualStyle
+SYM game/src/render/style.ts:666 fn paletteHex
 FILE game/src/render/sumcenter.ts 25.8KB 474L exports: SumCenterView
 SYM game/src/render/sumcenter.ts:43 fn residentMatrix
 SYM game/src/render/sumcenter.ts:47 fn residents
@@ -804,7 +806,7 @@ SYM game/src/render/sumcenter.ts:422 method SumCenterView.syncCrowd
 SYM game/src/render/sumcenter.ts:447 method SumCenterView.takeLive
 SYM game/src/render/sumcenter.ts:464 method SumCenterView.releaseLive
 SYM game/src/render/sumcenter.ts:471 method SumCenterView.syncLot
-FILE game/src/render/sumlayout.ts 47.5KB 857L exports: Rect,VehicleSlotView,HomeDoor,SumPlotView,SumGer,SumCenterBuild,buildSumCenter
+FILE game/src/render/sumlayout.ts 47.7KB 859L exports: Rect,VehicleSlotView,HomeDoor,SumPlotView,SumGer,SumCenterBuild,buildSumCenter
 SYM game/src/render/sumlayout.ts:20 interface Rect
 SYM game/src/render/sumlayout.ts:22 interface VehicleSlotView
 SYM game/src/render/sumlayout.ts:24 interface HomeDoor
@@ -1494,17 +1496,24 @@ SYM game/src/sim/systems/sumtown.ts:218 fn sumHeight
 SYM game/src/sim/systems/sumtown.ts:228 fn nearestOnPolyline
 SYM game/src/sim/systems/sumtown.ts:246 fn faceTowardRoad
 SYM game/src/sim/systems/sumtown.ts:261 fn plotHouse
-FILE game/src/sim/systems/sumwalk.ts 5.2KB 90L exports: WalkBox,WalkCyl,WalkSolids,WalkConfig,Pushed,pushOut,wallRing,StuckState,stuckStep,nearestFreeSpot
+FILE game/src/sim/systems/sumwalk.ts 10.7KB 169L exports: WalkBox,WalkCyl,WalkYard,WalkSolids,WalkConfig,Pushed,pushOut,wallRing,StuckState,stuckStep,nearestFreeSpot,inYard,yardGate,yardWaypoint,+2
 SYM game/src/sim/systems/sumwalk.ts:6 interface WalkBox
 SYM game/src/sim/systems/sumwalk.ts:7 interface WalkCyl
-SYM game/src/sim/systems/sumwalk.ts:8 interface WalkSolids
-SYM game/src/sim/systems/sumwalk.ts:10 interface WalkConfig
-SYM game/src/sim/systems/sumwalk.ts:22 interface Pushed
-SYM game/src/sim/systems/sumwalk.ts:25 fn pushOut
-SYM game/src/sim/systems/sumwalk.ts:56 fn wallRing
-SYM game/src/sim/systems/sumwalk.ts:72 interface StuckState
-SYM game/src/sim/systems/sumwalk.ts:73 fn stuckStep
-SYM game/src/sim/systems/sumwalk.ts:82 fn nearestFreeSpot
+SYM game/src/sim/systems/sumwalk.ts:9 interface WalkYard
+SYM game/src/sim/systems/sumwalk.ts:10 interface WalkSolids
+SYM game/src/sim/systems/sumwalk.ts:12 interface WalkConfig
+SYM game/src/sim/systems/sumwalk.ts:24 interface Pushed
+SYM game/src/sim/systems/sumwalk.ts:27 fn pushOut
+SYM game/src/sim/systems/sumwalk.ts:58 fn wallRing
+SYM game/src/sim/systems/sumwalk.ts:74 interface StuckState
+SYM game/src/sim/systems/sumwalk.ts:75 fn stuckStep
+SYM game/src/sim/systems/sumwalk.ts:84 fn nearestFreeSpot
+SYM game/src/sim/systems/sumwalk.ts:98 const inYard
+SYM game/src/sim/systems/sumwalk.ts:101 fn yardGate
+SYM game/src/sim/systems/sumwalk.ts:116 fn yardWaypoint
+SYM game/src/sim/systems/sumwalk.ts:129 fn chaseVia
+SYM game/src/sim/systems/sumwalk.ts:138 fn segHitsRect
+SYM game/src/sim/systems/sumwalk.ts:152 fn yardDetour
 FILE game/src/sim/systems/town.ts 18.8KB 371L exports: HouseMode,ZdtgLoan,BankLoan,RelativeState,TownState,TownEvent,newTownState,plotDoors,TownRole,nearTownDoor,housePrice,buyHouse,setHouseMode,donate,+13
 SYM game/src/sim/systems/town.ts:20 type HouseMode
 SYM game/src/sim/systems/town.ts:21 interface ZdtgLoan
@@ -1674,7 +1683,7 @@ FILE game/tests/animals.test.ts 2.3KB 39L
 FILE game/tests/breeding.test.ts 1.4KB 33L
 FILE game/tests/buildings.test.ts 18.9KB 250L
 FILE game/tests/camclip.test.ts 3.9KB 68L
-FILE game/tests/characters.test.ts 27.1KB 457L
+FILE game/tests/characters.test.ts 28.6KB 482L
 FILE game/tests/clock.test.ts 2.7KB 52L
 FILE game/tests/config.test.ts 1.4KB 29L
 FILE game/tests/difficulty.test.ts 4.9KB 99L
@@ -1707,7 +1716,7 @@ FILE game/tests/staff.test.ts 13.5KB 248L
 FILE game/tests/stuck.test.ts 4.4KB 80L
 FILE game/tests/style.test.ts 8.9KB 165L
 FILE game/tests/sumtown.test.ts 4.5KB 90L
-FILE game/tests/sumwalk.test.ts 4.9KB 91L
+FILE game/tests/sumwalk.test.ts 6.7KB 127L
 FILE game/tests/town.test.ts 6.1KB 127L
 FILE game/tests/trader.test.ts 8.4KB 164L
 FILE game/tests/transfer.test.ts 14.2KB 255L
