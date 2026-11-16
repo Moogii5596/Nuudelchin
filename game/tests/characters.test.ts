@@ -143,6 +143,50 @@ describe('Дүрийн сан (render/character, V4.5 R1–R2)', () => {
     expect(calls).toBeLessThanOrEqual(4 * 12);
   });
 
+  it('crowd far: төрх бүр 1 хэсэг (оройн өнгө, сүүдэргүй, бэхэн хүрээгүй), кэштэй', () => {
+    for (const look of characters.crowd.looks) {
+      const far = lab.makeCrowdFar(look);
+      expect(lab.makeCrowdFar({ ...look })).toBe(far);
+      expect(far.castShadow).toBe(false);
+      expect((far.material as THREE.MeshLambertMaterial).vertexColors).toBe(true);
+      expect(far.geometry.attributes.color!.count).toBe(far.geometry.attributes.position!.count);
+      const near = lab.makeCrowdParts(look).filter((p) => (p.material as THREE.Material).side !== THREE.BackSide);
+      expect(far.geometry.attributes.position!.count).toBe(near.reduce((n, p) => n + p.geometry.attributes.position!.count, 0));
+    }
+  });
+
+  it('bakeStatic: материалаар нэгтгэж ертөнцийн байрлалд шингээнэ, swap null хасна', async () => {
+    const { bakeStatic } = await import('../src/render/character/bake');
+    const a = new THREE.MeshLambertMaterial(), b = new THREE.MeshLambertMaterial();
+    const root = (x: number, m: THREE.Material): THREE.Object3D => { const g = new THREE.Group(); g.position.x = x; g.add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), m)); return g; };
+    const hidden = root(9, a); hidden.children[0]!.visible = false;
+    const parts = bakeStatic([root(0, a), root(10, a), root(20, b), hidden]);
+    expect(parts.length).toBe(2);
+    const pa = parts.find((p) => p.material === a)!;
+    pa.geometry.computeBoundingBox();
+    expect(pa.geometry.boundingBox!.min.x).toBeCloseTo(-0.5);
+    expect(pa.geometry.boundingBox!.max.x).toBeCloseTo(10.5);
+    expect(pa.geometry.attributes.position!.count).toBe(72);
+    expect(bakeStatic([root(0, a), root(5, b)], { swap: (_m, m) => (m === b ? null : m) }).length).toBe(1);
+    // ижил тохиргоотой өөр материалууд key-ээр нэг хэсэг болно
+    expect(bakeStatic([root(0, a), root(5, b)], { key: (m) => m.type }).length).toBe(1);
+  });
+
+  it('LabelAtlas: олон самбар 1 mesh, бичгийг UV-ээр солино', async () => {
+    const { LabelAtlas } = await import('../src/render/labelAtlas');
+    const at = new LabelAtlas(), A = { text: 'A', bg: '#000000', fg: '#ffffff' }, B = { text: 'B', bg: '#000000', fg: '#ffffff' };
+    at.cell(B);
+    const q = at.add(A, 2, 1, 0, 0, 0, 0);
+    at.add(A, 2, 1, 5, 0, 0, Math.PI / 2);
+    const mesh = at.build()!;
+    expect(mesh.geometry.attributes.position!.count).toBe(8);
+    const uv = mesh.geometry.attributes.uv!, u0 = uv.getX(0);
+    at.setText(q, B);
+    expect(uv.getX(0)).not.toBeCloseTo(u0);
+    expect(uv.getX(4)).toBeCloseTo(u0);   // нөгөө самбар хэвээр
+    expect(() => at.setText(q, { text: 'C', bg: '#000000', fg: '#ffffff' })).toThrow(/C/);
+  });
+
   it('туслах: үүрэг × хүйс → preset, дээл үүргийн өнгөөр, улирлаар хувцаслана (R5)', () => {
     const roles = (visualsJson as { outfits: { helperRoles: Record<string, string> } }).outfits.helperRoles;
     const herder = helperSpec('herd', 'm', false);
@@ -381,6 +425,8 @@ describe('Ярилцлага, NPC сэтгэл хөдлөл (V4.5 R7)', () => {
     const cases: Array<[(j: Record<string, unknown>) => void, RegExp]> = [
       [(j) => { ((j.talk as Record<string, unknown>).events as Record<string, unknown>).sell = [['joy', 1]]; }, /talk\.events\.sell\[0\]\[0\]/],
       [(j) => { (j.talk as Record<string, unknown>).partnerR = 0; }, /talk\.partnerR/],
+      [(j) => { (j.crowd as Record<string, unknown>).nearR = -1; }, /crowd\.nearR/],
+      [(j) => { (j.crowd as Record<string, unknown>).liveShadow = 'yes'; }, /crowd\.liveShadow/],
       [(j) => { delete ((j.talk as Record<string, unknown>).events as Record<string, unknown>).wolfSeen; }, /talk\.events\.wolfSeen/],
     ];
     for (const [mutate, re] of cases) {

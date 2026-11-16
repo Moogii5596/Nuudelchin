@@ -15,61 +15,50 @@ import type { GameState } from '../sim/state';
 import { mat, VisualRng } from './util';
 import { visualStyle } from './style';
 import { makeDog, poseDogLying } from './characters';
-import { makeCrowdParts } from './character/crowd';
+import { makeCrowdFar, makeCrowdParts } from './character/crowd';
+import { bakeStatic, staticMeshes } from './character/bake';
+import { LabelAtlas, type LabelStyle } from './labelAtlas';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { characters, characterSpec } from './character/spec';
 import { animateCharacter } from './character/animate';
 import { buildCharacter, showOutfit, type CharacterRig } from './character/rig';
 import { EmotionQueue, postTalkEvent, talkBus, turnToward } from './character/talk';
 import { t } from '../i18n/i18n';
 
-function label(text: string, bg: string, fg: string, w = 4.2, h = 1): THREE.Mesh {
-  const cv = document.createElement('canvas');
-  cv.width = 512;
-  cv.height = 128;
-  const c = cv.getContext('2d')!;
-  c.fillStyle = bg;
-  c.fillRect(0, 0, 512, 128);
-  c.strokeStyle = fg;
-  c.lineWidth = 8;
-  c.strokeRect(6, 6, 500, 116);
-  c.fillStyle = fg;
-  const size = text.length > 14 ? 46 : text.length > 9 ? 58 : 70;
-  c.font = `bold ${size}px system-ui, sans-serif`;
-  c.textAlign = 'center';
-  c.textBaseline = 'middle';
-  c.fillText(text, 256, 68);
-  return new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv) }));
-}
-
 /**
  * Оршин суугчид (хөдөлгөөнгүй): render/character-ийн `crowd` хэлбэр — төрх (data/characters.json crowd.looks: preset ×
  * бие × малгай) бүр хэсэг бүрээрээ нэг InstancedMesh, хүн бүр өөрийн байрлал, чиглэл, өндөртэй (docs/character-design.md §4).
  */
 interface Resident { x: number; y: number; z: number; heading: number; scale: number; look: number; slot: number }
+/** Төрх бүрийн InstancedMesh-үүд: near — ойрын бүрэн дүр (хэсэг бүр, хүн солигдоно), far — холын хялбаршуулсан (1 mesh) */
+interface LookMeshes { members: Resident[]; near: THREE.InstancedMesh[]; far: THREE.InstancedMesh }
 const residentMatrix = (p: Resident, hidden = false): THREE.Matrix4 => {
   const k = hidden ? 0 : p.scale;
   return new THREE.Matrix4().compose(new THREE.Vector3(p.x, p.y, p.z), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), p.heading), new THREE.Vector3(k, k, k));
 };
-function residents(g: THREE.Group, people: Resident[]): THREE.InstancedMesh[][] {
-  const meshes: THREE.InstancedMesh[][] = [];
-  characters.crowd.looks.forEach((look, li) => {
-    const mine = people.filter((p) => p.look === li);
-    meshes[li] = [];
-    if (!mine.length) return;
-    mine.forEach((p, i) => { p.slot = i; });
-    for (const part of makeCrowdParts(look)) {
-      const inst = new THREE.InstancedMesh(part.geometry, part.material, mine.length);
-      mine.forEach((p, i) => inst.setMatrixAt(i, residentMatrix(p)));
-      inst.instanceMatrix.needsUpdate = true;
-      inst.computeBoundingSphere();
+function residents(g: THREE.Group, people: Resident[]): (LookMeshes | null)[] {
+  return characters.crowd.looks.map((look, li) => {
+    const members = people.filter((p) => p.look === li);
+    if (!members.length) return null;
+    members.forEach((p, i) => { p.slot = i; });
+    const fp = makeCrowdFar(look);
+    const far = new THREE.InstancedMesh(fp.geometry, fp.material, members.length);
+    members.forEach((p) => far.setMatrixAt(p.slot, residentMatrix(p)));
+    far.castShadow = false;
+    far.receiveShadow = true;
+    const near = makeCrowdParts(look).map((part) => {
+      const inst = new THREE.InstancedMesh(part.geometry, part.material, members.length);
+      inst.count = 0;
+      inst.visible = false;
       inst.castShadow = part.castShadow;
-      g.add(inst);
-      meshes[li]!.push(inst);
-    }
+      return inst;
+    });
+    g.add(far, ...near);
+    return { members, near, far };
   });
-  return meshes;
 }
 
+const SALE: LabelStyle = { text: 'ЗАРНА', bg: '#e0c23a', fg: '#2b2620' }, MINE: LabelStyle = { text: 'ТАНЫХ', bg: '#3f7a4a', fg: '#ffffff' };
 const FACING_YAW = { s: 0, n: Math.PI, e: Math.PI / 2, w: -Math.PI / 2 } as const;
 
 export class SumCenterView {
@@ -78,11 +67,14 @@ export class SumCenterView {
   private built: SumCenterBuild;
   private lotVehicles: { id: VehicleId; mesh: THREE.Object3D }[] = [];
   /** Зарах байшингийн «ЗАРНА» / «ТАНЫХ» шошго */
-  private houseSigns: { plot: string; sale: THREE.Object3D; mine: THREE.Object3D }[] = [];
+  private houseSigns: { plot: string; quad: number; own: boolean }[] = [];
   /** R7: оршин суугчид (instanced) ба ярилцлагын үед амьд дүрээр солигдох нэг нь */
   private readonly cfg: GameConfig;
   private people: Resident[] = [];
-  private peopleMeshes: THREE.InstancedMesh[][] = [];
+  private peopleMeshes: (LookMeshes | null)[] = [];
+  /** ойрын/нуусан оршин суугчдын түлхүүр — өөрчлөгдвөл л InstancedMesh-ийг шинэчилнэ */
+  private crowdKey = '';
+  private labels = new LabelAtlas();
   private liveRigs = new Map<number, CharacterRig>();
   private live: { idx: number; rig: CharacterRig; yaw: number; emo: EmotionQueue } | null = null;
   private talkClock = 0;
@@ -97,6 +89,7 @@ export class SumCenterView {
     this.group.add(this.built.group);
     const H = this.built.heightAt;
 
+    const signs: { style: LabelStyle; w: number; h: number; x: number; y: number; z: number; yaw: number }[] = [];
     // Шошго: үүрэгтэй, орж болох барилгын нүүрэн дээр
     const byId = new Map<string, SumBuildingSpec>(allBuildings(L).map((b) => [b.id, b]));
     const signColor: Record<string, [string, string]> = {
@@ -108,24 +101,25 @@ export class SumCenterView {
       const b = byId.get(d.id);
       const [bg, fg] = signColor[d.role] ?? (d.role ? ['#1f5fa8', '#ffe9a8'] : ['#526d82', '#f4ead6']);
       const text = t(`sum3d.${d.id}`);
-      const s = label(text, bg, fg, b ? Math.min(7, Math.max(3.4, b.w * 0.7)) : 6, b ? 0.9 : 1.2);
       const face = b ? facingOf(b) : 's';
       const yaw = FACING_YAW[face];
       // Хаалганы гаднах цэгээс хана руу 1.85 м буцаж, хананаас 0.12 м гадна
       const back = 2 - 0.12;
       const fx = d.x - Math.sin(yaw) * back, fz = d.z - Math.cos(yaw) * back;
       const y = H(fx, fz) + (b ? Math.min(b.h ?? b.floors * L.floorHeight, L.floorHeight) + 0.5 + 0.6 : 3.2);
-      s.position.set(fx, y, fz);
-      s.rotation.y = yaw;
-      this.group.add(s);
+      signs.push({ style: { text, bg, fg }, w: b ? Math.min(7, Math.max(3.4, b.w * 0.7)) : 6, h: b ? 0.9 : 1.2, x: fx, y, z: fz, yaw });
     }
 
     // Арилжааны дэлгүүрийн шар тойрог, цайны газрын цэнхэр тойрог (E)
+    // бүх тойрог нэг mesh (оройн өнгө) — 1 draw call
+    const rings: THREE.BufferGeometry[] = [];
     const ringAt = (x: number, z: number, r: number, color: number): void => {
-      const ring = new THREE.Mesh(new THREE.RingGeometry(r - 0.35, r, 40), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.45 }));
-      ring.rotation.x = -Math.PI / 2;
-      ring.position.set(x, H(x, z) + 0.15, z);
-      this.group.add(ring);
+      const g = new THREE.RingGeometry(r - 0.35, r, 40);
+      g.rotateX(-Math.PI / 2);
+      g.translate(x, H(x, z) + 0.15, z);
+      const c = new THREE.Color(color), n = g.attributes.position!.count;
+      g.setAttribute('color', new THREE.Float32BufferAttribute(Array.from({ length: n * 3 }, (_, i) => [c.r, c.g, c.b][i % 3]!), 3));
+      rings.push(g);
     };
     const S = cfg.worldmap.sum3d;
     for (const d of sumDoors(cfg)) {
@@ -139,18 +133,18 @@ export class SumCenterView {
       ringAt(d.x, d.z, S.shopR, 0xd08cff);
       const y = H(d.x, d.z) + 4.4;
       if (d.role === 'house') {
-        const sale = label('ЗАРНА', '#e0c23a', '#2b2620', 3.2, 0.8), mine = label('ТАНЫХ', '#3f7a4a', '#ffffff', 3.2, 0.8);
-        for (const m of [sale, mine]) {
-          m.position.set(d.x, y, d.z - 1.88);
-          this.group.add(m);
-        }
-        mine.visible = false;
-        this.houseSigns.push({ plot: d.id, sale, mine });
-      } else {
-        const m = label('ХАМААТАН', '#3f7a4a', '#ffffff', 3.6, 0.8);
-        m.position.set(d.x, y, d.z - 1.88);
-        this.group.add(m);
-      }
+        this.labels.cell(MINE);
+        this.houseSigns.push({ plot: d.id, quad: this.labels.add(SALE, 3.2, 0.8, d.x, y, d.z - 1.88, 0), own: false });
+      } else signs.push({ style: { text: 'ХАМААТАН', bg: '#3f7a4a', fg: '#ffffff' }, w: 3.6, h: 0.8, x: d.x, y, z: d.z - 1.88, yaw: 0 });
+    }
+    for (const sg of signs) this.labels.add(sg.style, sg.w, sg.h, sg.x, sg.y, sg.z, sg.yaw);
+    const labelMesh = this.labels.build();
+    if (labelMesh) this.group.add(labelMesh);
+    if (rings.length) {
+      const rm = new THREE.Mesh(mergeGeometries(rings, false)!, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.45 }));
+      rm.name = 'rings';
+      rings.forEach((g) => g.dispose());
+      this.group.add(rm);
     }
 
     // Худалдаанд байгаа тээвэр (зарагдсан нь нуугдана — syncLot)
@@ -178,9 +172,11 @@ export class SumCenterView {
     people.userData.sumPeople = crowd.length;
     this.peopleMeshes = residents(people, crowd);
     this.people = crowd;
+    this.syncCrowd(Infinity, Infinity);
     this.group.add(people);
 
-    // V3.2: айлын үүдэнд хэвтэх нохой (байрлалын хэш)
+    // V3.2: айлын үүдэнд хэвтэх нохой (байрлалын хэш) — хөдөлгөөнгүй тул бүгдийг материалаар нь нэгтгэнэ (bakeStatic)
+    const dogs: THREE.Object3D[] = [];
     for (const h of this.built.homes) {
       const hash = (k: number): number => {
         const v = Math.sin(h.x * 12.9898 + h.z * 78.233 + k * 37.719) * 43758.5453;
@@ -192,17 +188,19 @@ export class SumCenterView {
       const side = hash(2) < 0.5 ? -1 : 1;
       dog.root.position.set(h.x + side * (1.2 + hash(3) * 0.8), h.y - 0.4 + dog.root.position.y, h.z - 1.2);
       dog.root.rotation.y = side * (Math.PI / 2) + (hash(4) - 0.5) * 0.8;
-      this.group.add(dog.root);
+      dogs.push(dog.root);
     }
+    for (const m of staticMeshes(bakeStatic(dogs))) { m.name = 'town-dogs'; this.group.add(m); }
 
-    // Алсын уулс (3D-ийн хязгаараас цааш)
-    const R = S.radius;
+    // Алсын уулс (3D-ийн хязгаараас цааш) — нэг mesh
+    const R = S.radius, hills: THREE.Object3D[] = [];
     for (let k = 0; k < 22; k++) {
       const a = (k / 22) * Math.PI * 2, r = R + 160 + rng.range(-20, 60), h = rng.range(30, 70);
       const m = new THREE.Mesh(new THREE.ConeGeometry(rng.range(60, 110), h, 6), mat(0x7a8a6a));
       m.position.set(Math.cos(a) * r, h / 2 - 2, Math.sin(a) * r);
-      this.group.add(m);
+      hills.push(m);
     }
+    for (const m of staticMeshes(bakeStatic(hills), false)) { m.name = 'hills'; this.group.add(m); }
   }
 
   heightAt = (x: number, z: number): number => this.built.heightAt(x, z);
@@ -212,8 +210,7 @@ export class SumCenterView {
     this.syncTalk(state);
     for (const s of this.houseSigns) {
       const own = !!state.town.houses[s.plot];
-      s.sale.visible = !own;
-      s.mine.visible = own;
+      if (own !== s.own) { this.labels.setText(s.quad, own ? MINE : SALE); s.own = own; }
     }
   }
 
@@ -248,6 +245,7 @@ export class SumCenterView {
       this.live?.emo.playEvent(e);
     }
     this.talkMoney = active ? state.money : NaN;
+    this.syncCrowd(p.x, p.z);
     if (this.live && r) {
       const L = this.live;
       L.yaw = turnToward(L.yaw, Math.atan2(p.x - r.x, p.z - r.z), T.turnRate, dt);
@@ -256,9 +254,33 @@ export class SumCenterView {
     }
   }
 
-  private setResidentHidden(idx: number, hidden: boolean): void {
-    const r = this.people[idx]!;
-    for (const m of this.peopleMeshes[r.look] ?? []) { m.setMatrixAt(r.slot, residentMatrix(r, hidden)); m.instanceMatrix.needsUpdate = true; }
+  /**
+   * Оршин суугчдын LOD: тоглогчоос crowd.nearR дотор — бүрэн дүр (хэсэг бүр InstancedMesh, сүүдэртэй), цааш — хялбаршуулсан
+   * (төрх бүр 1 draw call, сүүдэргүй); ярилцлагын амьд дүр болсон хүн хоёуланд нуугдана. Өөрчлөгдсөн үед л шинэчилнэ.
+   */
+  private syncCrowd(px: number, pz: number): void {
+    const R = characters.crowd.nearR, liveIdx = this.live?.idx ?? -1;
+    const near = this.people.map((r, i) => i !== liveIdx && Math.hypot(r.x - px, r.z - pz) < R);
+    const key = liveIdx + ':' + near.map((b) => (b ? 1 : 0)).join('');
+    if (key === this.crowdKey) return;
+    this.crowdKey = key;
+    for (const L of this.peopleMeshes) {
+      if (!L) continue;
+      const close = L.members.filter((r) => near[this.people.indexOf(r)]);
+      for (const m of L.near) {
+        close.forEach((r, j) => m.setMatrixAt(j, residentMatrix(r)));
+        m.count = close.length;
+        m.visible = close.length > 0;
+        m.instanceMatrix.needsUpdate = true;
+        m.boundingSphere = null;
+      }
+      for (const r of L.members) {
+        const i = this.people.indexOf(r);
+        L.far.setMatrixAt(r.slot, residentMatrix(r, near[i]! || i === liveIdx));
+      }
+      L.far.instanceMatrix.needsUpdate = true;
+      L.far.boundingSphere = null;
+    }
   }
 
   private takeLive(idx: number): void {
@@ -267,6 +289,7 @@ export class SumCenterView {
     if (!rig) {
       rig = buildCharacter(characterSpec(look.preset), { detail: 'npc', hats: look.hat === 'none' ? [] : [look.hat] });
       showOutfit(rig.root, look.body, look.hat);
+      if (!characters.crowd.liveShadow) rig.root.traverse((o) => { o.castShadow = false; });
       this.liveRigs.set(r.look, rig);
       this.group.add(rig.root);
     }
@@ -274,14 +297,12 @@ export class SumCenterView {
     rig.root.position.set(r.x, r.y, r.z);
     rig.root.scale.setScalar(r.scale);
     rig.root.rotation.y = r.heading;
-    this.setResidentHidden(idx, true);
     this.live = { idx, rig, yaw: r.heading, emo: new EmotionQueue() };
   }
 
   private releaseLive(): void {
     if (!this.live) return;
     this.live.rig.root.visible = false;
-    this.setResidentHidden(this.live.idx, false);
     this.live = null;
   }
 

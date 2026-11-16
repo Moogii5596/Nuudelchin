@@ -5,7 +5,8 @@
  */
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { flipWinding } from './bake';
+import { bakeStatic } from './bake';
+import { vertexColored } from './materials';
 import { staticFaceMat } from './face';
 import { makeKit } from './geom';
 import { headSegments } from './parts/head';
@@ -39,58 +40,47 @@ export function makeCrowdParts(look: CrowdLook): CrowdPart[] {
   rig.curls.forEach((c) => c(0.35));
   rig.root.updateMatrixWorld(true);
   const face = staticFaceMat(spec, headSegments(makeKit(lod, 'npc')));
-  const shown = (o: THREE.Object3D): boolean => { for (let q: THREE.Object3D | null = o; q && q !== rig.root; q = q.parent) if (!q.visible) return false; return true; };
-  const byMat = new Map<THREE.Material, { geos: THREE.BufferGeometry[]; shadow: boolean }>();
-  const add = (material: THREE.Material, g: THREE.BufferGeometry, shadow: boolean): void => {
-    const e = byMat.get(material) ?? { geos: [], shadow: false };
-    e.geos.push(g); e.shadow ||= shadow;
-    byMat.set(material, e);
-  };
-  const keep = (g: THREE.BufferGeometry, material: THREE.Material): THREE.BufferGeometry => {
-    const m = material as THREE.MeshLambertMaterial;
-    for (const name of Object.keys(g.attributes)) {
-      const ok = name === 'position' || name === 'normal' || (name === 'uv' && !!m.map) || (name === 'color' && !!m.vertexColors);
-      if (!ok) g.deleteAttribute(name);
-    }
-    if (m.map && !g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position!.count * 2), 2));
-    return g;
-  };
-  const v = new THREE.Vector3(), nm = new THREE.Matrix3(), M = new THREE.Matrix4();
-  rig.root.traverse((o: THREE.Object3D) => {
-    const mesh = o as THREE.Mesh;
-    if (!mesh.isMesh || (mesh as THREE.InstancedMesh).isInstancedMesh || !shown(mesh) || Array.isArray(mesh.material)) return;
-    const material = mesh.material === rig.face.material ? face : (mesh.material as THREE.Material);
-    const src = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone();
-    if (!src.attributes.normal) src.computeVertexNormals();
-    const sk = mesh as THREE.SkinnedMesh;
-    if (sk.isSkinnedMesh) {
-      // хатуу холбоос (яс бүрд 100%): орой бүрийг өөрийн ясны одоогийн байрлалаар хувиргана
-      const bones = sk.skeleton.bones, inv = sk.skeleton.boneInverses;
-      const si = src.attributes.skinIndex!, pos = src.attributes.position!, nor = src.attributes.normal!;
-      const mats = bones.map((b, i) => new THREE.Matrix4().multiplyMatrices(b.matrixWorld, inv[i]!));
-      for (let i = 0; i < pos.count; i++) {
-        const bm = mats[si.getX(i)]!;
-        v.fromBufferAttribute(pos, i).applyMatrix4(bm); pos.setXYZ(i, v.x, v.y, v.z);
-        nm.getNormalMatrix(bm);
-        v.fromBufferAttribute(nor, i).applyMatrix3(nm).normalize(); nor.setXYZ(i, v.x, v.y, v.z);
-      }
-    } else {
-      M.copy(mesh.matrixWorld);
-      src.applyMatrix4(M);
-      if (M.determinant() < 0) flipWinding(src);
-    }
-    add(material, keep(src, material), mesh.castShadow && !(material as THREE.MeshBasicMaterial).isMeshBasicMaterial);
-  });
-  const parts: CrowdPart[] = [];
-  for (const [material, e] of byMat) {
-    const geometry = mergeGeometries(e.geos, false);
-    if (!geometry) throw new Error('makeCrowdParts: mergeGeometries амжилтгүй');
-    geometry.computeBoundingSphere();
-    parts.push({ geometry, material, castShadow: e.shadow });
-  }
+  const parts: CrowdPart[] = bakeStatic([rig.root], { swap: (mesh, m) => (mesh.material === rig.face.material ? face : m) });
   // сүүдрийг зөвхөн хамгийн том хэсгүүд тусгана (сүүдрийн дамжлагын draw call хэмнэнэ)
   const big = parts.filter((p) => p.castShadow).sort((a, b) => b.geometry.attributes.position!.count - a.geometry.attributes.position!.count);
   parts.forEach((p) => { const i = big.indexOf(p); p.castShadow = i >= 0 && i < shadowParts; });
   cache.set(key, parts);
+  faceSkin.set(face, spec.skin.base);
   return parts;
+}
+
+const faceSkin = new Map<THREE.Material, number>();
+const farCache = new Map<string, CrowdPart>();
+
+/**
+ * Холын хялбаршуулсан хувилбар (characters.json crowd.nearR-ээс цааш): төрхийн бүх хэсгийг нэг оройн өнгөт геометрт
+ * нийлүүлнэ — нүүрний зураг арьсны өнгө, бэхэн хүрээгүй, сүүдэргүй. Нэг төрх = 1 draw call.
+ */
+export function makeCrowdFar(look: CrowdLook): CrowdPart {
+  const key = JSON.stringify(look);
+  const hit = farCache.get(key);
+  if (hit) return hit;
+  const c = new THREE.Color(), geos: THREE.BufferGeometry[] = [];
+  for (const p of makeCrowdParts(look)) {
+    const m = p.material as THREE.MeshLambertMaterial;
+    if (m.side === THREE.BackSide) continue;   // бэхэн хүрээ
+    const skin = faceSkin.get(m);
+    c.set(skin ?? m.color ?? 0xffffff);
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', p.geometry.attributes.position!.clone());
+    g.setAttribute('normal', p.geometry.attributes.normal!.clone());
+    const n = g.attributes.position!.count, src = m.vertexColors ? p.geometry.attributes.color : undefined, col = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      col[i * 3] = c.r * (src ? src.getX(i) : 1); col[i * 3 + 1] = c.g * (src ? src.getY(i) : 1); col[i * 3 + 2] = c.b * (src ? src.getZ(i) : 1);
+    }
+    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    geos.push(g);
+  }
+  const geometry = mergeGeometries(geos, false);
+  if (!geometry) throw new Error('makeCrowdFar: mergeGeometries амжилтгүй');
+  geos.forEach((g) => g.dispose());
+  geometry.computeBoundingSphere();
+  const part: CrowdPart = { geometry, material: vertexColored(true, THREE.DoubleSide), castShadow: false };
+  farCache.set(key, part);
+  return part;
 }

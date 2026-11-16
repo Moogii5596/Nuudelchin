@@ -102,7 +102,7 @@ export interface CharactersData {
   /** бэлэн дүрүүд — өөр preset-ийн base болдоггүй (лабораторийн эгнээ, тест) */
   ready: string[];
   roles: Record<RoleKey, Record<'m' | 'f', string>>;
-  crowd: { lod: number; shadowParts: number; looks: CrowdLookSpec[] };
+  crowd: { lod: number; shadowParts: number; nearR: number; liveShadow: boolean; looks: CrowdLookSpec[] };
   talk: TalkConfig;
   player: CharacterSpec;
 }
@@ -286,10 +286,11 @@ export function validateCharacters(json: unknown): CharactersData {
     const r = group(rolesRaw[k], `roles.${k}`, ['m', 'f']);
     roles[k] = { m: known(r.m, `roles.${k}.m`), f: known(r.f, `roles.${k}.f`) };
   }
-  const c = group(root.crowd, 'crowd', ['lod', 'shadowParts', 'looks']);
+  const c = group(root.crowd, 'crowd', ['lod', 'shadowParts', 'nearR', 'liveShadow', 'looks']);
   if (!Array.isArray(c.looks) || c.looks.length === 0 || c.looks.length > 8) fail('crowd.looks', '1–8 төрх байх ёстой');
   const crowd = {
     lod: num(c.lod, 'crowd.lod', 0.2, 1), shadowParts: num(c.shadowParts, 'crowd.shadowParts', 0, 20),
+    nearR: num(c.nearR, 'crowd.nearR', 0, 200), liveShadow: typeof c.liveShadow === 'boolean' ? c.liveShadow : fail('crowd.liveShadow', 'true/false байх ёстой'),
     looks: (c.looks as unknown[]).map((l, i): CrowdLookSpec => {
       const o = group(l, `crowd.looks[${i}]`, ['preset', 'body', 'hat']);
       return { preset: known(o.preset, `crowd.looks[${i}].preset`), body: oneOf(o.body, `crowd.looks[${i}].body`, OUTFIT_BODIES), hat: oneOf(o.hat, `crowd.looks[${i}].hat`, [...CHARACTER_HATS, 'none'] as const) };

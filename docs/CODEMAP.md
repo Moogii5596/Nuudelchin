@@ -80,15 +80,20 @@ FILE game/src/render/character/animate.ts 6.6KB 139L exports: CharacterPose,anim
 SYM game/src/render/character/animate.ts:11 interface CharacterPose
 SYM game/src/render/character/animate.ts:24 fn sstep
 SYM game/src/render/character/animate.ts:30 fn animateCharacter
-FILE game/src/render/character/bake.ts 9.3KB 152L exports: flipWinding,BakeOptions,bakeSkinned,addOutline
+FILE game/src/render/character/bake.ts 14.1KB 236L exports: flipWinding,BakeOptions,bakeSkinned,addOutline,StaticPart,StaticBakeOptions,bakeStatic,staticMeshes
 SYM game/src/render/character/bake.ts:16 fn flipWinding
 SYM game/src/render/character/bake.ts:26 interface BakeOptions
 SYM game/src/render/character/bake.ts:37 fn bakeSkinned
 SYM game/src/render/character/bake.ts:143 fn addOutline
-FILE game/src/render/character/crowd.ts 5.5KB 96L exports: CrowdPart,CrowdLook,makeCrowdParts
-SYM game/src/render/character/crowd.ts:15 interface CrowdPart
-SYM game/src/render/character/crowd.ts:21 interface CrowdLook
-SYM game/src/render/character/crowd.ts:27 fn makeCrowdParts
+SYM game/src/render/character/bake.ts:155 interface StaticPart
+SYM game/src/render/character/bake.ts:160 interface StaticBakeOptions
+SYM game/src/render/character/bake.ts:172 fn bakeStatic
+SYM game/src/render/character/bake.ts:229 fn staticMeshes
+FILE game/src/render/character/crowd.ts 4.7KB 86L exports: CrowdPart,CrowdLook,makeCrowdParts,makeCrowdFar
+SYM game/src/render/character/crowd.ts:16 interface CrowdPart
+SYM game/src/render/character/crowd.ts:22 interface CrowdLook
+SYM game/src/render/character/crowd.ts:28 fn makeCrowdParts
+SYM game/src/render/character/crowd.ts:59 fn makeCrowdFar
 FILE game/src/render/character/face.ts 14.2KB 235L exports: Emotion,FaceState,FacePainter,FaceSpec,EMOTIONS,faceOffset,liveFace,atlasCount,atlasFace,staticFaceMat
 SYM game/src/render/character/face.ts:14 interface Emotion
 SYM game/src/render/character/face.ts:16 interface FaceState
@@ -198,7 +203,7 @@ SYM game/src/render/character/rig.ts:135 fn applyFigure
 SYM game/src/render/character/rig.ts:155 fn wearOf
 SYM game/src/render/character/rig.ts:162 fn showOutfit
 SYM game/src/render/character/rig.ts:171 fn dressCharacter
-FILE game/src/render/character/spec.ts 20.8KB 337L exports: BootPalette,BodyForm,ToortsogLook,FoxHatLook,HairStyle,HAIR_STYLES,Beard,BEARDS,EyeShape,EYE_SHAPES,BrowShape,BROW_SHAPES,CharacterHat,CHARACTER_HATS,+22
+FILE game/src/render/character/spec.ts 21.0KB 338L exports: BootPalette,BodyForm,ToortsogLook,FoxHatLook,HairStyle,HAIR_STYLES,Beard,BEARDS,EyeShape,EYE_SHAPES,BrowShape,BROW_SHAPES,CharacterHat,CHARACTER_HATS,+22
 SYM game/src/render/character/spec.ts:10 interface BootPalette
 SYM game/src/render/character/spec.ts:11 interface BodyForm
 SYM game/src/render/character/spec.ts:12 interface ToortsogLook
@@ -246,10 +251,10 @@ SYM game/src/render/character/spec.ts:185 fn parseWear
 SYM game/src/render/character/spec.ts:197 fn parseSpec
 SYM game/src/render/character/spec.ts:239 fn merge
 SYM game/src/render/character/spec.ts:246 fn validateCharacters
-SYM game/src/render/character/spec.ts:316 const characters
-SYM game/src/render/character/spec.ts:319 fn characterSpec
-SYM game/src/render/character/spec.ts:326 fn withColors
-SYM game/src/render/character/spec.ts:334 fn helperSpec
+SYM game/src/render/character/spec.ts:317 const characters
+SYM game/src/render/character/spec.ts:320 fn characterSpec
+SYM game/src/render/character/spec.ts:327 fn withColors
+SYM game/src/render/character/spec.ts:335 fn helperSpec
 FILE game/src/render/character/talk.ts 1.9KB 43L exports: TalkBus,talkBus,postTalkEvent,EmotionQueue,turnToward
 SYM game/src/render/character/talk.ts:9 interface TalkBus
 SYM game/src/render/character/talk.ts:16 const talkBus
@@ -346,6 +351,15 @@ SYM game/src/render/items.ts:12 fn canGeo
 SYM game/src/render/items.ts:22 fn fiberGeo
 SYM game/src/render/items.ts:37 class ItemsView
 SYM game/src/render/items.ts:64 method ItemsView.update
+FILE game/src/render/labelAtlas.ts 3.8KB 83L exports: LabelStyle,LabelAtlas
+SYM game/src/render/labelAtlas.ts:8 interface LabelStyle
+SYM game/src/render/labelAtlas.ts:12 fn drawCell
+SYM game/src/render/labelAtlas.ts:26 class LabelAtlas
+SYM game/src/render/labelAtlas.ts:34 method LabelAtlas.cell
+SYM game/src/render/labelAtlas.ts:42 method LabelAtlas.add
+SYM game/src/render/labelAtlas.ts:50 method LabelAtlas.build
+SYM game/src/render/labelAtlas.ts:68 method LabelAtlas.setText
+SYM game/src/render/labelAtlas.ts:74 method LabelAtlas.setCell
 FILE game/src/render/scene.ts 22.3KB 476L exports: GameView
 SYM game/src/render/scene.ts:26 fn flakeTexture
 SYM game/src/render/scene.ts:39 class GameView
@@ -400,17 +414,16 @@ SYM game/src/render/style.ts:285 fn parseOutfits
 SYM game/src/render/style.ts:315 fn validateVisualStyle
 SYM game/src/render/style.ts:609 const visualStyle
 SYM game/src/render/style.ts:611 fn paletteHex
-FILE game/src/render/sumcenter.ts 14.4KB 292L exports: SumCenterView
-SYM game/src/render/sumcenter.ts:25 fn label
-SYM game/src/render/sumcenter.ts:49 fn residentMatrix
-SYM game/src/render/sumcenter.ts:53 fn residents
-SYM game/src/render/sumcenter.ts:75 class SumCenterView
-SYM game/src/render/sumcenter.ts:211 method SumCenterView.syncTown
-SYM game/src/render/sumcenter.ts:225 method SumCenterView.syncTalk
-SYM game/src/render/sumcenter.ts:259 method SumCenterView.setResidentHidden
-SYM game/src/render/sumcenter.ts:264 method SumCenterView.takeLive
-SYM game/src/render/sumcenter.ts:281 method SumCenterView.releaseLive
-SYM game/src/render/sumcenter.ts:289 method SumCenterView.syncLot
+FILE game/src/render/sumcenter.ts 16.9KB 313L exports: SumCenterView
+SYM game/src/render/sumcenter.ts:35 fn residentMatrix
+SYM game/src/render/sumcenter.ts:39 fn residents
+SYM game/src/render/sumcenter.ts:64 class SumCenterView
+SYM game/src/render/sumcenter.ts:209 method SumCenterView.syncTown
+SYM game/src/render/sumcenter.ts:222 method SumCenterView.syncTalk
+SYM game/src/render/sumcenter.ts:261 method SumCenterView.syncCrowd
+SYM game/src/render/sumcenter.ts:286 method SumCenterView.takeLive
+SYM game/src/render/sumcenter.ts:303 method SumCenterView.releaseLive
+SYM game/src/render/sumcenter.ts:310 method SumCenterView.syncLot
 FILE game/src/render/sumlayout.ts 37.0KB 727L exports: Rect,VehicleSlotView,HomeDoor,SumPlotView,SumCenterBuild,buildSumCenter
 SYM game/src/render/sumlayout.ts:12 interface Rect
 SYM game/src/render/sumlayout.ts:14 interface VehicleSlotView
@@ -1077,7 +1090,7 @@ SYM tools/codemap.ts:141 fn generate
 SYM tools/codemap.ts:195 fn main
 FILE game/tests/animals.test.ts 2.3KB 39L
 FILE game/tests/breeding.test.ts 1.4KB 33L
-FILE game/tests/characters.test.ts 23.1KB 392L
+FILE game/tests/characters.test.ts 26.0KB 438L
 FILE game/tests/clock.test.ts 2.3KB 47L
 FILE game/tests/config.test.ts 1.4KB 29L
 FILE game/tests/docs.test.ts 4.0KB 76L
@@ -1085,7 +1098,7 @@ FILE game/tests/dogs.test.ts 7.5KB 190L
 FILE game/tests/ger.test.ts 9.5KB 181L
 FILE game/tests/grazing.test.ts 2.3KB 46L
 FILE game/tests/helpers.ts 0.8KB 20L
-FILE game/tests/herder.test.ts 7.0KB 153L
+FILE game/tests/herder.test.ts 8.4KB 176L
 FILE game/tests/herds.test.ts 5.1KB 112L
 FILE game/tests/interior.test.ts 10.1KB 200L
 FILE game/tests/night.test.ts 6.5KB 127L
@@ -1102,7 +1115,7 @@ FILE game/tests/sumtown.test.ts 4.5KB 90L
 FILE game/tests/town.test.ts 6.1KB 127L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 16.8KB 103L
+FILE docs/CONTEXT.md 17.2KB 103L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-28 ## 2. Стек ба командууд
 DOC docs/CONTEXT.md:29-77 ## 3. Файлын зураглал (`game/src/`)
@@ -1297,15 +1310,15 @@ FILE docs/plan/M7.md 7.6KB 31L
 DOC docs/plan/M7.md:12-22 ## Блокууд
 DOC docs/plan/M7.md:23-27 ## Асуулга (10 асуулт)
 DOC docs/plan/M7.md:28-31 ## Эрсдэл
-FILE docs/plan/V.md 32.6KB 85L
+FILE docs/plan/V.md 33.9KB 85L
 DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
 DOC docs/plan/V.md:24-79 ## Блокууд ба чеклист (2026-11-15)
 DOC docs/plan/V.md:80-85 ## Зогссон цэг
-FILE docs/plan/playtest.md 8.7KB 60L
+FILE docs/plan/playtest.md 9.3KB 61L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
-DOC docs/plan/playtest.md:19-38 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
-DOC docs/plan/playtest.md:39-60 ## C. Мэдрэмж, үе шат бүрээр
+DOC docs/plan/playtest.md:19-39 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
+DOC docs/plan/playtest.md:40-61 ## C. Мэдрэмж, үе шат бүрээр
 FILE docs/seasons-camps.md 10.2KB 104L
 DOC docs/seasons-camps.md:17-40 ## 1. Хэрэглэгчийн шийдвэрүүд
 DOC docs/seasons-camps.md:41-54 ## 2. Улирал

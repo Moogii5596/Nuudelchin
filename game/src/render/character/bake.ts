@@ -150,3 +150,87 @@ export function addOutline(root: THREE.Object3D, k = 1.06): void {
     m.add(o);
   }
 }
+
+/** Хөдөлгөөнгүй объектуудын нэгтгэсэн хэсэг: нэг материал = нэг draw call */
+export interface StaticPart {
+  geometry: THREE.BufferGeometry;
+  material: THREE.Material;
+  castShadow: boolean;
+}
+export interface StaticBakeOptions {
+  /** материалын нэгтгэх түлхүүр — ижил тохиргоотой өөр материалтай объектуудыг нэгтгэнэ (байхгүй бол материал өөрөө) */
+  key?: (m: THREE.Material) => string;
+  /** mesh-ийн материалыг солих; null — тэр mesh-ийг хасна */
+  swap?: (mesh: THREE.Mesh, m: THREE.Material) => THREE.Material | null;
+}
+
+/**
+ * Хөдөлгөөнгүй объектуудыг (root бүрийн одоогийн байрлал, яс, харагдах байдлаар) CPU дээр геометрт шингээж материалаар
+ * нь нэгтгэнэ: N объект × M материал → M хэсэг. SkinnedMesh-ийн оройг өөрийн ясаар (100% холбоос) хувиргана. Үр дүн
+ * root-уудын эцгийн координатад (root-ууд үзэгдэлд залгаагүй байх ёстой). Хүмүүсийн бөөгнөрөл, хэвтээ нохой, гэр.
+ */
+export function bakeStatic(roots: readonly THREE.Object3D[], opts: StaticBakeOptions = {}): StaticPart[] {
+  const groups = new Map<unknown, { material: THREE.Material; geos: THREE.BufferGeometry[]; shadow: boolean }>();
+  const v = new THREE.Vector3(), nm = new THREE.Matrix3();
+  const keep = (g: THREE.BufferGeometry, m: THREE.MeshLambertMaterial): THREE.BufferGeometry => {
+    for (const name of Object.keys(g.attributes)) {
+      const ok = name === 'position' || name === 'normal' || (name === 'uv' && !!m.map) || (name === 'color' && !!m.vertexColors);
+      if (!ok) g.deleteAttribute(name);
+    }
+    const n = g.attributes.position!.count;
+    if (m.map && !g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(n * 2), 2));
+    if (m.vertexColors && !g.attributes.color) g.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(n * 3).fill(1), 3));
+    return g;
+  };
+  for (const root of roots) {
+    root.updateMatrixWorld(true);
+    const shown = (o: THREE.Object3D): boolean => { for (let q: THREE.Object3D | null = o; q; q = q === root ? null : q.parent) if (!q.visible) return false; return true; };
+    root.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh || (mesh as THREE.InstancedMesh).isInstancedMesh || Array.isArray(mesh.material) || !shown(mesh)) return;
+      const material = opts.swap ? opts.swap(mesh, mesh.material) : mesh.material;
+      if (!material) return;
+      const src = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone();
+      if (!src.attributes.normal) src.computeVertexNormals();
+      const sk = mesh as THREE.SkinnedMesh;
+      if (sk.isSkinnedMesh && src.attributes.skinIndex) {
+        const bones = sk.skeleton.bones, inv = sk.skeleton.boneInverses;
+        const si = src.attributes.skinIndex, pos = src.attributes.position!, nor = src.attributes.normal!;
+        const mats = bones.map((b, i) => new THREE.Matrix4().multiplyMatrices(b.matrixWorld, inv[i]!));
+        for (let i = 0; i < pos.count; i++) {
+          const bm = mats[si.getX(i)]!;
+          v.fromBufferAttribute(pos, i).applyMatrix4(bm); pos.setXYZ(i, v.x, v.y, v.z);
+          nm.getNormalMatrix(bm);
+          v.fromBufferAttribute(nor, i).applyMatrix3(nm).normalize(); nor.setXYZ(i, v.x, v.y, v.z);
+        }
+      } else {
+        src.applyMatrix4(mesh.matrixWorld);
+        if (mesh.matrixWorld.determinant() < 0) flipWinding(src);
+      }
+      const k = opts.key ? opts.key(material) : material;
+      const e = groups.get(k) ?? { material, geos: [], shadow: false };
+      e.geos.push(keep(src, material as THREE.MeshLambertMaterial));
+      e.shadow ||= mesh.castShadow && !(material as THREE.MeshBasicMaterial).isMeshBasicMaterial;
+      groups.set(k, e);
+    });
+  }
+  const parts: StaticPart[] = [];
+  for (const e of groups.values()) {
+    const geometry = mergeGeometries(e.geos, false);
+    if (!geometry) throw new Error('bakeStatic: mergeGeometries амжилтгүй');
+    e.geos.forEach((g) => g.dispose());
+    geometry.computeBoundingSphere();
+    parts.push({ geometry, material: e.material, castShadow: e.shadow });
+  }
+  return parts;
+}
+
+/** Хэсгүүдийг Mesh болгоно (хүлээн авах сүүдэр — материал хүлээн авдаг бол) */
+export function staticMeshes(parts: readonly StaticPart[], castShadow = true): THREE.Mesh[] {
+  return parts.map((p) => {
+    const m = new THREE.Mesh(p.geometry, p.material);
+    m.castShadow = castShadow && p.castShadow;
+    m.receiveShadow = !(p.material as THREE.MeshBasicMaterial).isMeshBasicMaterial;
+    return m;
+  });
+}
