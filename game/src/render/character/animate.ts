@@ -18,6 +18,34 @@ export interface CharacterPose {
   uurga: boolean;
   talk: boolean;
   emotion: HerderEmotion;
+  /** mounted: эмээлийн дөрөө — хажуугийн зай (ташаанаас биш, төвөөс), ташаанаас дөрөө хүртэлх доош зай (м). Байвал хөл дөрөөнд хүрнэ */
+  seat?: { side: number; drop: number };
+}
+
+const HIP_X = 0.15, THIGH = 0.31, SHIN = 0.54;
+/** Хөлийг (ташааны эргэлт x, z; өвдөг k) тавьж ташаанаас (tx, ty, tz) цэгт хүргэнэ: тоон Ньютон (3 үл мэдэгдэгч, 3 тэгшитгэл) */
+function solveLeg(tx: number, ty: number, tz: number, g: [number, number, number]): [number, number, number] {
+  const f = (a: number, b: number, k: number): [number, number, number] => {
+    const ux = 0, uy = -THIGH - SHIN * Math.cos(k), uz = -SHIN * Math.sin(k);
+    const x1 = ux * Math.cos(b) - uy * Math.sin(b), y1 = ux * Math.sin(b) + uy * Math.cos(b);
+    return [x1, y1 * Math.cos(a) - uz * Math.sin(a), y1 * Math.sin(a) + uz * Math.cos(a)];
+  };
+  let [a, b, k] = g;
+  for (let it = 0; it < 8; it++) {
+    const f0 = f(a, b, k), e = [tx - f0[0], ty - f0[1], tz - f0[2]], h = 1e-4;
+    const J = [f(a + h, b, k), f(a, b + h, k), f(a, b, k + h)].map((q) => [(q[0] - f0[0]) / h, (q[1] - f0[1]) / h, (q[2] - f0[2]) / h]);   // J[j][i] = df_i/dp_j
+    const [c0, c1, c2] = J as [number[], number[], number[]];
+    const det = c0[0]! * (c1[1]! * c2[2]! - c2[1]! * c1[2]!) - c1[0]! * (c0[1]! * c2[2]! - c2[1]! * c0[2]!) + c2[0]! * (c0[1]! * c1[2]! - c1[1]! * c0[2]!);
+    if (Math.abs(det) < 1e-9) break;
+    const sol = (col: number): number => {   // Cramer: e = J·d, d[col] ← e
+      const M = [c0, c1, c2].map((c) => [...c]);
+      M[col] = e;
+      return (M[0]![0]! * (M[1]![1]! * M[2]![2]! - M[2]![1]! * M[1]![2]!) - M[1]![0]! * (M[0]![1]! * M[2]![2]! - M[2]![1]! * M[0]![2]!) + M[2]![0]! * (M[0]![1]! * M[1]![2]! - M[1]![1]! * M[0]![2]!)) / det;
+    };
+    a += Math.max(-0.5, Math.min(0.5, sol(0))); b += Math.max(-0.5, Math.min(0.5, sol(1))); k += Math.max(-0.5, Math.min(0.5, sol(2)));
+    k = Math.min(2.4, Math.max(0.05, k));
+  }
+  return [a, b, k];
 }
 
 const TAU = Math.PI * 2;
@@ -97,9 +125,16 @@ export function animateCharacter(H: CharacterRig, p: CharacterPose): number {
 
   // --- Морь унасан / тэрэг дээр суусан / гар өргөсөн ---
   if (p.mode === 'mounted') {
-    leg0.rotation.set(-0.9, 0, -0.5);
-    leg1.rotation.set(-0.9, 0, 0.5);
-    knee0.rotation.x = knee1.rotation.x = 0.9;
+    if (p.seat) {   // хөл дөрөөнд: (x ташаа −0.15 / +0.15) → дөрөө (∓side)
+      for (const [leg, knee, sg] of [[leg0, knee0, -1], [leg1, knee1, 1]] as const) {
+        const [ax, bz, k] = solveLeg(sg * (p.seat.side - HIP_X), -p.seat.drop, 0.03, [-0.8, sg * 0.4, 1.3]);
+        leg.rotation.set(ax, 0, bz); knee.rotation.x = k;
+      }
+    } else {
+      leg0.rotation.set(-0.9, 0, -0.5);
+      leg1.rotation.set(-0.9, 0, 0.5);
+      knee0.rotation.x = knee1.rotation.x = 0.9;
+    }
     arm0.rotation.set(-0.45, 0, arm0.rotation.z);
     arm1.rotation.set(-0.45, 0, arm1.rotation.z);
     elb0.rotation.x = elb1.rotation.x = -0.85;   // жолоо барьсан

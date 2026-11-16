@@ -17,7 +17,7 @@ import { goatModel } from './goat';
 import { horseModel } from './horse';
 import { AnimalSet, RestPoses, type Rec } from './lod';
 import { ageIdxOf, type AnimalModel } from './model';
-import { makeRig, newState, poseAnimal, type Action, type PoseState, type Rig } from './pose';
+import { gaitFor, makeRig, newState, poseAnimal, type Action, type PoseState, type Rig } from './pose';
 import { sheepModel } from './sheep';
 import { wolfModel } from './wolf';
 
@@ -37,6 +37,8 @@ export interface Placed {
   /** туслахын нурууны тэмдэг */
   mark: boolean;
   action: Action; speed: number; fast: boolean; noStep?: boolean; saddled?: boolean;
+  /** poseAnimal-ийн дараа дуудна (унаа морины эмээлийн байрлалыг авахад) */
+  onPose?: (rig: Rig) => void;
   x: number; y: number; z: number; heading: number;
   /** тоглогч/камераас зай (м) — дэлгэрэнгүйг сонгоно */
   dist: number;
@@ -52,7 +54,7 @@ export function placedOf(a: Animal, cfg: GameConfig, at: { x: number; y: number;
   const sp = a.species as LookSpecies, resting = a.mode === 'rest' || a.mode === 'sleep';
   let action: Action = 'stand';
   if (resting) action = 'lie';
-  else if (at.speed > 0.3) action = sp === 'horse' ? (at.speed > 4.8 ? 'gallop' : at.speed > 2.2 ? 'trot' : 'walk') : 'walk';
+  else if (at.speed > 0.3) action = sp === 'horse' ? gaitFor(animalLook.species.horse, at.speed) : 'walk';
   else if (a.mode === 'graze' || a.mode === 'drink') action = 'graze';
   return {
     id: a.id, species: sp, male: a.sex === 'm', age: a.age, old: a.age >= sc0.oldAge,
@@ -149,6 +151,7 @@ export class ModelAnimals {
       rig.root.position.copy(this.pv); rig.root.quaternion.copy(this.qt);
       poseAnimal(rig, dt, { action: p.action, speed: p.speed, fast: p.fast, sc: p.sc, old: p.old, fat: p.fat, noStep: p.noStep, saddled: p.saddled });
       rig.root.updateMatrixWorld(true);
+      p.onPose?.(rig);
       target.push(rig, rec, cols);
     } else {
       this.sv.setScalar(p.sc);

@@ -5,7 +5,12 @@
 import * as THREE from 'three';
 import type { GameState } from '../sim/state';
 import type { Dwelling, Helper } from '../sim/systems/helpers';
-import { makeHorse, swingLegs, type Rig } from './characters';
+import { quality as activeQuality, type Quality } from '../device';
+import { animalLook } from './animal/config';
+import { gaitFor } from './animal/pose';
+import { saddleDims } from './animal/shapes';
+import { ModelAnimals } from './animal/view';
+import { visualStyle } from './style';
 import { animateCharacter } from './character/animate';
 import { buildCharacter, dressCharacter, type CharacterRig } from './character/rig';
 import { characters, helperSpec } from './character/spec';
@@ -40,7 +45,11 @@ export function makeDwelling(d: Dwelling, season: 'summer' | 'winter'): GerBuilt
 
 interface HelperView {
   rig: CharacterRig;
-  horse: Rig | null;
+  /** морьтой (адуучин, малчин): морь render/animal/-д, малчин эмээлд */
+  horse: boolean;
+  /** эмээлийн суудал (poseAnimal-ийн дараа) */
+  seat: { x: number; y: number; z: number } | null;
+  speed: number;
   root: THREE.Group;
   x: number;
   z: number;
@@ -55,6 +64,18 @@ interface HelperView {
 export class StaffView {
   readonly group = new THREE.Group();
   private views = new Map<number, HelperView>();
+  private models: ModelAnimals;
+  private quality: Quality = activeQuality;
+  private readonly saddle = saddleDims(animalLook.species.horse.d);
+
+  constructor() {
+    this.models = new ModelAnimals(this.group, this.quality);
+  }
+
+  setQuality(quality: Quality): void {
+    this.quality = quality;
+    this.models.setQuality(quality);
+  }
   private dwellings = new Map<string, GerBuilt>();
 
   private season: Season = 'summer';
@@ -82,19 +103,16 @@ export class StaffView {
         const rig = buildCharacter(helperSpec(role, h.sex, h.kind === 'child'), { detail: 'npc' });
         dressCharacter(rig, this.season);
         const root = new THREE.Group();
-        let horse: Rig | null = null;
-        if (h.kind === 'adult') {
-          horse = makeHorse(h.id % 2 ? 0x5a3a22 : 0x9a6a3a);
-          root.add(horse.root);
-          rig.root.position.y = 1.05;   // эмээл дээр (поз — animateCharacter mounted)
-        }
-        root.add(rig.root);
+        const horse = h.kind === 'adult';
+        if (horse) this.group.add(rig.root);   // морьтой малчин дэлхийн байрлалаар (эмээлийн суудлаас)
+        else root.add(rig.root);
         this.group.add(root);
-        v = { rig, horse, root, x: h.x, z: h.z, h: h.heading, phase: 0, role, emo: new EmotionQueue(), sawWolf: false };
+        v = { rig, horse, seat: null, speed: 0, root, x: h.x, z: h.z, h: h.heading, phase: 0, role, emo: new EmotionQueue(), sawWolf: false };
         this.views.set(h.id, v);
       }
       const visible = h.mode !== 'away' && state.player.place === 'camp' && !state.move;
       v.root.visible = visible;
+      if (v.horse) v.rig.root.visible = visible;
       if (!visible) continue;
       if (Math.hypot(h.x - v.x, h.z - v.z) > 30) {
         v.x = h.x;
@@ -107,21 +125,39 @@ export class StaffView {
       v.x = nx;
       v.z = nz;
       v.phase += dt * sp * (v.horse ? 0.9 : 2.6);
-      const sw = sp > 0.3 ? Math.sin(v.phase) * 0.7 : 0;
-      if (v.horse) swingLegs(v.horse, sw);
       // дайрч буй чоно ойроос харвал гайхна → уурлана (data/characters.json talk.events.wolfSeen)
       const R = characters.talk.wolfSeeR;
       const wolf = (state.wolves.list as Wolf[]).some((w) => (w.mode === 'hunt' || w.mode === 'drag') && Math.hypot(w.x - v!.x, w.z - v!.z) < R);
       if (wolf && !v.sawWolf) v.emo.playEvent('wolfSeen');
       v.sawWolf = wolf;
-      const bob = animateCharacter(v.rig, { dt, speed: v.horse ? 0 : sp, mode: v.horse ? 'mounted' : 'foot', raise: false, uurga: false, talk: false, emotion: v.emo.step(dt) });
-      if (!v.horse) v.rig.root.position.y = bob;
+      v.speed = sp;
+      if (v.horse) {   // морь: render/animal/ (эмээлтэй); малчны поз — flush-ийн дараа (суудлын байрлал)
+        const hy = heightAt(v.x, v.z);
+        this.models.add({
+          id: 700000 + h.id, species: 'horse', male: h.id % 3 !== 0, age: 4, old: false, sc: 1, fat: 0.6, mark: false,
+          action: gaitFor(animalLook.species.horse, sp), speed: Math.min(sp, 20), fast: sp > 5.3, saddled: true,
+          x: v.x, y: hy, z: v.z, heading: v.h, dist: Math.hypot(v.x - state.player.x, v.z - state.player.z),
+          onPose: (rig) => { const o = rig.saddle.localToWorld(new THREE.Vector3(0, this.saddle.seat, 0)); v!.seat = { x: o.x, y: o.y, z: o.z }; },
+        });
+        continue;
+      }
+      const bob = animateCharacter(v.rig, { dt, speed: sp, mode: 'foot', raise: false, uurga: false, talk: false, emotion: v.emo.step(dt) });
+      v.rig.root.position.y = bob;
       // Унтаж байхад хэвтэнэ (хүүхэд, малчин гэртээ)
       v.root.rotation.z = h.mode === 'sleep' && !v.horse ? Math.PI / 2 : 0;
       v.root.position.set(v.x, heightAt(v.x, v.z) + (h.mode === 'sleep' && !v.horse ? 0.3 : 0), v.z);
       v.root.rotation.y = v.h;
     }
+    this.models.flush(dt, visualStyle.quality[this.quality].animalAnimationDistance);
+    for (const v of this.views.values()) {   // морьтой малчин: эмээлийн суудалд, хөл дөрөөнд
+      if (!v.horse || !v.root.visible) continue;
+      const S = this.saddle;
+      animateCharacter(v.rig, { dt, speed: 0, mode: 'mounted', raise: false, uurga: false, talk: false, emotion: v.emo.step(dt), seat: { side: S.side, drop: S.seat - S.stir - 0.006 } });
+      if (v.seat) v.rig.root.position.set(v.seat.x, v.seat.y - 0.85, v.seat.z);
+      v.rig.root.rotation.y = v.h;
+    }
     for (const [id, v] of this.views) if (!alive.has(id)) {
+      if (v.horse) this.group.remove(v.rig.root);
       this.group.remove(v.root);
       this.views.delete(id);
     }

@@ -79,6 +79,16 @@ export function fitAction(look: SpeciesLook, action: Action): Action {
   return action === 'browse' || action === 'graze' ? (acts.includes('graze') ? 'graze' : 'stand') : 'stand';
 }
 
+/** Газар дээрх хурдаар явдал сонгоно (адуу: алхах, хатирах, давхих; нохой, чоно: алхах, гүйх). Хурдны завсар = ойрын хоёр жишиг хурдны дундаж */
+export function gaitFor(look: SpeciesLook, speed: number): Action {
+  const sp = look.motion.speeds;
+  if (!look.motion.gaits || !sp) return speed > 0.3 ? 'walk' : 'stand';
+  if (speed <= 0.3) return 'stand';
+  const g = Object.entries(sp).filter(([k]) => k !== 'stalk').sort((a, b) => a[1] - b[1]);
+  for (let i = 0; i < g.length - 1; i++) if (speed <= (g[i]![1] + g[i + 1]![1]) / 2) return g[i]![0] as Action;
+  return g[g.length - 1]![0] as Action;
+}
+
 /** Хөдөлгөөнийг rig-д тавина (dt = бодит секунд). Дараа нь rig.root.updateMatrixWorld(true) */
 export function poseAnimal(S: Rig, dt0: number, o: PoseInput): void {
   const dt = dt0 > 0 ? Math.min(dt0, 0.25) : 0;   // сөрөг/том dt үйлдлийн жинг тархааж болохгүй

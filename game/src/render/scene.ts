@@ -260,6 +260,8 @@ export class GameView {
     }
     this.terrain.setQuality(tier, state, this.heatmap);
     this.animals.setQuality(tier);
+    this.characters.setQuality(tier);
+    this.staff.setQuality(tier);
   }
 
   /** Одоогийн 3D газрын өндөр (бууц эсвэл сумын төв) */

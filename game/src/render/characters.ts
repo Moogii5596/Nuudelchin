@@ -1,7 +1,7 @@
 /**
- * Малчин (render/character — нэг кодын сан), унаа морь, чоно, нохой (прототип v1.2-ын загварууд, энгийн Mesh).
+ * Малчин (render/character — нэг кодын сан), унаа морь, чоно, нохой (V4.6: render/animal/ — H2 морь эмээлтэй, D1 нохой, W1 чоно).
  * Байрлалыг GameState-ээс уншина; малчныг input бодит цагаар хөдөлгөдөг тул шууд,
- * морь ба чоныг алхам хооронд зөөлрүүлнэ.
+ * морь, нохой, чоныг алхам хооронд зөөлрүүлнэ. Малчин морин дээр эмээлийн өндөрт, хөл нь дөрөөнд (animate.ts seat).
  */
 import * as THREE from 'three';
 import type { GameState } from '../sim/state';
@@ -14,115 +14,22 @@ import { buildCharacter, dressCharacter } from './character/rig';
 import { characters, characterSpec } from './character/spec';
 import { talkBus, turnToward } from './character/talk';
 import type { Season } from '../sim/config';
-import { angDiff, limb, meshBox, mat } from './util';
+import { angDiff } from './util';
+import { quality as activeQuality, type Quality } from '../device';
+import { animalLook } from './animal/config';
+import { ageIdxOf } from './animal/model';
+import { gaitFor, type Action } from './animal/pose';
+import { saddleDims } from './animal/shapes';
+import { bakeAnimal } from './animal/static';
+import { ModelAnimals } from './animal/view';
 
-export interface Rig {
-  root: THREE.Group;
-  legs: THREE.Group[];
-  arms: THREE.Group[];
-  head?: THREE.Group;
-  tail?: THREE.Object3D;
+let dogSeq = 0;
+/** Сумын төвийн үүдэнд хэвтсэн нохой (sumcenter.ts дуудна): D1 загвар, хэвтсэн позоор шахсан ганц Mesh */
+export function makeDog(): { root: THREE.Object3D } {
+  return { root: bakeAnimal('dog', { action: 'lie', id: ++dogSeq }).mesh };
 }
-
-export function makeHorse(color: number): Rig {
-  const g = new THREE.Group();
-  const dk = 0x2a1c12;
-  meshBox(0.6, 0.7, 1.5, color, 0, 1.3, 0, g);
-  meshBox(0.32, 0.8, 0.36, color, 0, 1.75, 0.72, g).rotation.x = 0.55;
-  meshBox(0.3, 0.32, 0.62, color, 0, 2.08, 1.12, g);
-  meshBox(0.08, 0.55, 0.4, dk, 0, 1.95, 0.62, g).rotation.x = 0.55;
-  const tail = meshBox(0.14, 0.8, 0.14, dk, 0, 1.15, -0.85, g);
-  tail.name = 'tail';
-  tail.rotation.x = 0.35;
-  meshBox(0.66, 0.12, 0.6, 0x8b2e2e, 0, 1.7, 0, g);   // эмээлийн гөлөм
-  meshBox(0.18, 0.2, 0.6, 0x5a3a20, 0, 1.82, 0, g);   // эмээл
-  const legs = ([[-0.2, 0.58], [0.2, 0.58], [-0.2, -0.58], [0.2, -0.58]] as const).map(([x, z]) => limb(0.14, 0.95, color, x, 0.95, z, g));
-  return { root: g, legs, arms: [], tail };
-}
-
-function makeWolf(): Rig {
-  const g = new THREE.Group();
-  const c = 0x77716a, dk = 0x4a4540;
-  meshBox(0.42, 0.5, 1.15, c, 0, 0.78, 0, g);
-  meshBox(0.46, 0.42, 0.4, 0x8a847c, 0, 0.86, 0.42, g);
-  const head = new THREE.Group();
-  head.name = 'head';
-  head.position.set(0, 1.0, 0.72);
-  g.add(head);
-  meshBox(0.34, 0.32, 0.4, c, 0, 0, 0.05, head);
-  meshBox(0.18, 0.16, 0.3, dk, 0, -0.06, 0.35, head);
-  const eye = new THREE.MeshBasicMaterial({ color: 0xffd34a });
-  for (const sx of [-1, 1]) {
-    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.18, 4), mat(dk));
-    ear.position.set(sx * 0.11, 0.22, -0.02);
-    head.add(ear);
-    const e = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.04, 0.02), eye);
-    e.position.set(sx * 0.09, 0.06, 0.26);
-    head.add(e);
-  }
-  const tail = meshBox(0.14, 0.14, 0.6, dk, 0, 0.72, -0.78, g);
-  tail.name = 'tail';
-  tail.rotation.x = 0.6;
-  const legs = ([[-0.14, 0.4], [0.14, 0.4], [-0.14, -0.4], [0.14, -0.4]] as const).map(([x, z]) => limb(0.12, 0.56, dk, x, 0.56, z, g));
-  // Барьсан мал (үүр лүүгээ чирэх үед)
-  const prey = meshBox(0.5, 0.35, 0.8, 0xe8e2d4, 0.25, 0.35, 1.1, g);
-  prey.name = 'prey';
-  prey.rotation.y = 0.9;
-  prey.visible = false;
-  return { root: g, legs, arms: [], head, tail };
-}
-
-/** Монгол банхар: хар, хүрэн хацартай */
-export function makeDog(): Rig {
-  const g = new THREE.Group();
-  const c = 0x231d19, tan = 0x9a6634;
-  meshBox(0.34, 0.4, 0.85, c, 0, 0.62, 0, g);
-  meshBox(0.36, 0.34, 0.3, tan, 0, 0.58, 0.32, g);   // цээж
-  const head = new THREE.Group();
-  head.position.set(0, 0.86, 0.52);
-  g.add(head);
-  meshBox(0.3, 0.28, 0.32, c, 0, 0, 0, head);
-  meshBox(0.16, 0.13, 0.22, tan, 0, -0.05, 0.25, head);
-  for (const sx of [-1, 1]) {
-    meshBox(0.08, 0.14, 0.05, c, sx * 0.1, 0.18, -0.05, head);
-    const brow = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.04, 0.02), mat(tan));   // «дөрвөн нүдтэй» хүрэн толбо
-    brow.position.set(sx * 0.08, 0.08, 0.165);
-    head.add(brow);
-  }
-  const tail = meshBox(0.1, 0.1, 0.45, c, 0, 0.78, -0.55, g);
-  tail.name = 'tail';
-  tail.rotation.x = -0.7;   // сүүл (дээш эргэсэн)
-  const legs = ([[-0.11, 0.3], [0.11, 0.3], [-0.11, -0.3], [0.11, -0.3]] as const).map(([x, z]) => limb(0.1, 0.45, c, x, 0.45, z, g));
-  head.name = 'head';
-  return { root: g, legs, arms: [], head, tail };
-}
-
-/**
- * V3.2: нохойн хэвтэх поз. t = 0 (зогссон) … 1 (хэвтсэн). Бие доошилж, урд хөл урагш,
- * хойд хөл хойш сунаж, толгой доош, сүүл газарт тэгшэрнэ. Хэмжээ → data/visuals.json dogRest.
- */
-export function poseDogLying(r: Rig, t: number, baseY = 0): void {
-  const dr = visualStyle.dogRest;
-  r.root.position.y = baseY - dr.bodyDrop * t;
-  const L = r.legs;
-  if (L.length === 4) {
-    const fold = (Math.PI / 2) * t;
-    L[0]!.rotation.x = L[1]!.rotation.x = -fold;   // урд хөл урагш
-    L[2]!.rotation.x = L[3]!.rotation.x = fold;    // хойд хөл хойш
-  }
-  if (r.head) r.head.rotation.x = dr.headDown * t;
-  if (r.tail) r.tail.rotation.x = -0.7 + (dr.tailFlat + 0.7) * t;
-}
-
-export function swingLegs(r: Rig, sw: number): void {
-  const L = r.legs;
-  if (L.length === 4) {
-    L[0]!.rotation.x = sw;
-    L[1]!.rotation.x = -sw;
-    L[2]!.rotation.x = -sw;
-    L[3]!.rotation.x = sw;
-  }
-}
+/** makeDog аль хэдийн хэвтсэн — нийцтэй байлгахын тулд хоосон */
+export function poseDogLying(_r: unknown, _t?: number, _baseY?: number): void {}
 
 /** Толгой дээрх «Хөөе!», «Хуу-хай!» бичиг */
 function makeBubble(text: string): THREE.Sprite {
@@ -146,17 +53,25 @@ function makeBubble(text: string): THREE.Sprite {
   return sp;
 }
 
+const SADDLE = saddleDims(animalLook.species.horse.d);
+/** Малчны ташааны өндөр үндэснээс (render/character/parts/leg.ts hip.y) */
+const HERDER_HIP = 0.85;
+
 export class CharactersView {
   readonly group = new THREE.Group();
   /** Чоно, нохой — зөвхөн гэрийн бууцанд харагдана (M4.6) */
   private campGroup = new THREE.Group();
   /** Үндсэн дүр: render/character (data/characters.json player) */
   private herder = buildCharacter(characterSpec('player'));
-  private horse = makeHorse(0x7a4a26);
-  private wolves = new Map<number, { rig: Rig; x: number; z: number; h: number; phase: number }>();
-  private dogs = new Map<number, { rig: Rig; x: number; z: number; h: number; phase: number; bark: THREE.Sprite; still: number; lie: number }>();
+  /** Унаа морь, нохой, чоно — render/animal/ (бүгд нэг ModelAnimals: хөнгөн/дэлгэрэнгүй, instance) */
+  private models: ModelAnimals;
+  private quality: Quality = activeQuality;
+  private wolves = new Map<number, { x: number; z: number; h: number; phase: number }>();
+  private dogs = new Map<number, { x: number; z: number; h: number; phase: number; bark: THREE.Sprite; still: number }>();
+  /** Эмээлийн суудлын дэлхийн байрлал (poseAnimal-ийн дараа): малчин энд суудаг */
+  private seat: { x: number; y: number; z: number } | null = null;
+  private horseSpeed = 0;
   private wolfCamp = '';
-  private horsePhase = 0;
   private horsePos = { x: 0, z: 0, h: 0, init: false };
   private lastPlayer = { x: 0, z: 0 };
   private bubbles: Record<'shout' | 'scare' | 'call', { sprite: THREE.Sprite; t: number }>;
@@ -169,13 +84,19 @@ export class CharactersView {
   private faceYaw: number | null = null;
 
   constructor() {
-    this.group.add(this.herder.root, this.horse.root, this.campGroup);
+    this.models = new ModelAnimals(this.group, this.quality);
+    this.group.add(this.herder.root, this.campGroup);
     this.bubbles = {
       shout: { sprite: makeBubble('Хөөе!'), t: 0 },
       scare: { sprite: makeBubble('Хуу-хай!'), t: 0 },
       call: { sprite: makeBubble('Чүү, нааш!'), t: 0 },
     };
     for (const b of Object.values(this.bubbles)) this.group.add(b.sprite);
+  }
+
+  setQuality(quality: Quality): void {
+    this.quality = quality;
+    this.models.setQuality(quality);
   }
 
   /** Малчны үйлдлийн дүрслэл (бичиг, гар өргөх) */
@@ -242,14 +163,14 @@ export class CharactersView {
     // M4.6: сумын төвд малчин (морьтой бол морь) харагдана, газрын зураг дээр 3D-д юу ч үгүй
     const shown = p.place !== 'map' && !state.move;
     this.herder.root.visible = shown;
-    this.horse.root.visible = shown && Boolean(ridingHorse(state)) && (p.place === 'camp' || p.mounted);
+    this.stepAnimals(state, heightAt, dt, speed, shown);
     this.campGroup.visible = p.place === 'camp';
     this.actionT = Math.max(0, this.actionT - dt);
     const H = this.herder;
     if (p.mounted) {
-      this.horsePhase += dt * speed * 0.9;
-      this.horsePos = { x: p.x, z: p.z, h: p.heading, init: true };
-      H.root.position.set(p.x, y + 1.05 + (speed > 0.5 ? Math.abs(Math.sin(this.horsePhase)) * 0.12 : 0), p.z);
+      const s = this.seat;   // эмээлийн суудал (ташааны эх цэг = суудлын орой); ташаа үндэснээс HIP м дээр
+      if (s) H.root.position.set(s.x, s.y - HERDER_HIP, s.z);
+      else H.root.position.set(p.x, y + 0.5, p.z);
     } else {
       H.root.position.set(p.x, y, p.z);
     }
@@ -268,6 +189,7 @@ export class CharactersView {
       uurga: p.holdingUurga,
       talk: talking,
       emotion: this.emotion(state, dt),
+      ...(p.mounted ? { seat: { side: SADDLE.side, drop: SADDLE.seat - SADDLE.stir - 0.006 } } : {}),
     });
     if (!p.mounted) H.root.position.y += bob;
     if (partner) {
@@ -287,48 +209,61 @@ export class CharactersView {
       sack.scale.set(k, k, k);
     }
 
-    // ---- унаа морь ----
-    const rh = ridingHorse(state);
-    if (rh) {
-      if (!p.mounted) {
-        if (!this.horsePos.init) this.horsePos = { x: rh.x, z: rh.z, h: rh.heading, init: true };
-        const k = Math.min(1, dt * 8);
-        const hx = this.horsePos.x + (rh.x - this.horsePos.x) * k;
-        const hz = this.horsePos.z + (rh.z - this.horsePos.z) * k;
-        const hs = dt > 0 ? Math.hypot(hx - this.horsePos.x, hz - this.horsePos.z) / dt : 0;
-        this.horsePhase += dt * hs * 0.9;
-        this.horsePos.h += angDiff(rh.heading, this.horsePos.h) * Math.min(1, dt * 6);
-        this.horsePos.x = hx;
-        this.horsePos.z = hz;
-        swingLegs(this.horse, hs > 0.5 ? Math.sin(this.horsePhase) * 0.7 : 0);
-      } else {
-        swingLegs(this.horse, speed > 0.5 ? Math.sin(this.horsePhase) * 0.7 : 0);
-      }
-      this.horse.root.position.set(this.horsePos.x, heightAt(this.horsePos.x, this.horsePos.z), this.horsePos.z);
-      this.horse.root.rotation.y = this.horsePos.h;
-      if (this.horse.tail) this.horse.tail.rotation.x = 0.35 + Math.sin(this.horsePhase * 0.65) * 0.12;
-    }
-
     // ---- бичиг ----
     for (const b of Object.values(this.bubbles)) {
       b.t = Math.max(0, b.t - dt);
       b.sprite.visible = b.t > 0 && p.place !== 'map';
-      b.sprite.position.set(p.x, y + (p.mounted ? 4.2 : 3.1) + (1.2 - b.t) * 0.3, p.z);
+      b.sprite.position.set(p.x, y + (p.mounted ? 3.7 : 3.1) + (1.2 - b.t) * 0.3, p.z);
     }
 
-    this.updateWolves(state, heightAt, dt);
-    this.updateDogs(state, heightAt, dt);
+  }
+
+  /**
+   * Унаа морь, нохой, чоно: байрлалыг бэлтгэж render/animal/-д өгч (add), кадрын төгсгөлд нэг дор зурна (flush).
+   * Морь эмээлтэй; poseAnimal-ийн дараа эмээлийн суудлын байрлалыг `seat`-д хадгална — update() малчныг тэнд суулгана.
+   */
+  private stepAnimals(state: GameState, heightAt: (x: number, z: number) => number, dt: number, speed: number, shown: boolean): void {
+    const p = state.player, look = animalLook.species;
+    this.seat = null;
+    const rh = ridingHorse(state);
+    if (rh && shown && (p.place === 'camp' || p.mounted)) {
+      if (p.mounted) {
+        this.horsePos = { x: p.x, z: p.z, h: p.heading, init: true };
+        this.horseSpeed = speed;
+      } else {   // уяанаас гэр рүү ойртож ирнэ, малчин дагуулж яваа үед
+        if (!this.horsePos.init) this.horsePos = { x: rh.x, z: rh.z, h: rh.heading, init: true };
+        const k = Math.min(1, dt * 8);
+        const hx = this.horsePos.x + (rh.x - this.horsePos.x) * k, hz = this.horsePos.z + (rh.z - this.horsePos.z) * k;
+        this.horseSpeed = dt > 0 ? Math.hypot(hx - this.horsePos.x, hz - this.horsePos.z) / dt : 0;
+        this.horsePos.h += angDiff(rh.heading, this.horsePos.h) * Math.min(1, dt * 6);
+        this.horsePos.x = hx;
+        this.horsePos.z = hz;
+      }
+      const hp = this.horsePos, sp = Math.min(this.horseSpeed, 20), v = new THREE.Vector3();
+      this.models.add({
+        id: rh.id, species: 'horse', male: rh.sex === 'm', age: Math.max(4, rh.age), old: false, sc: 1, fat: rh.condition, mark: false,
+        action: gaitFor(look.horse, sp), speed: sp, fast: sp > 5.3, saddled: true,
+        x: hp.x, y: heightAt(hp.x, hp.z), z: hp.z, heading: hp.h, dist: 0,
+        onPose: (rig) => { rig.saddle.localToWorld(v.set(0, SADDLE.seat, 0)); this.seat = { x: v.x, y: v.y, z: v.z }; },
+      });
+    }
+    if (p.place === 'camp') {
+      this.updateDogs(state, heightAt, dt);
+      this.updateWolves(state, heightAt, dt);
+    }
+    this.models.flush(dt, visualStyle.quality[this.quality].animalAnimationDistance);
   }
 
   private updateDogs(state: GameState, heightAt: (x: number, z: number) => number, dt: number): void {
     const alive = new Set<number>();
+    const pl = state.player, dl = animalLook.species.dog;
     for (const d of state.dogs as Dog[]) {
       alive.add(d.id);
       let v = this.dogs.get(d.id);
       if (!v) {
-        v = { rig: makeDog(), x: d.x, z: d.z, h: d.heading, phase: 0, bark: makeBubble('Хав хав!'), still: 0, lie: 0 };
+        v = { x: d.x, z: d.z, h: d.heading, phase: 0, bark: makeBubble('Хав хав!'), still: 0 };
         v.bark.scale.set(1.8, 0.7, 1);
-        this.campGroup.add(v.rig.root, v.bark);
+        this.campGroup.add(v.bark);
         this.dogs.set(d.id, v);
       }
       // Нүүх үед шууд шинэ байрлал руу
@@ -346,66 +281,61 @@ export class CharactersView {
       // V3.2: удаан хөдлөхгүй (хуцахгүй, хөөхгүй) бол хэвтэнэ
       const dr = visualStyle.dogRest;
       v.still = sp > 0.15 || d.barkT > 0 || d.mode === 'chase' ? 0 : v.still + dt;
-      const lieTarget = v.still > dr.lieAfterSec ? 1 : 0;
-      v.lie += Math.sign(lieTarget - v.lie) * Math.min(Math.abs(lieTarget - v.lie), dt * dr.blendPerSec * (lieTarget ? 1 : 3));
       const y = heightAt(v.x, v.z);
-      v.rig.root.rotation.y = v.h;
-      if (v.lie > 0.001) {
-        poseDogLying(v.rig, v.lie, y);
-        v.rig.root.position.x = v.x;
-        v.rig.root.position.z = v.z;
-        if (v.rig.tail) v.rig.tail.rotation.x += Math.sin(v.phase * 0.7 + d.id) * 0.05;
-      } else {
-        swingLegs(v.rig, sp > 0.15 ? Math.sin(v.phase) * 0.8 : 0);
-        v.rig.root.position.set(v.x, y + (sp > 0.2 ? Math.abs(Math.sin(v.phase)) * 0.045 : 0), v.z);
-        if (v.rig.head) v.rig.head.rotation.x = d.barkT > 0 ? -0.38 + Math.sin(v.phase * 2) * 0.06 : Math.sin(v.phase * 0.4) * 0.035;
-        if (v.rig.tail) v.rig.tail.rotation.x = -0.7 + Math.sin(v.phase * 0.7 + d.id) * 0.18;
-      }
+      const action: Action = v.still > dr.lieAfterSec ? 'lie' : d.barkT > 0 ? 'bark' : sp > 0.15 ? gaitFor(dl, sp) : 'stand';
+      this.models.add({
+        id: d.id, species: 'dog', male: true, age: 4, old: false, sc: 1, fat: 0.6, mark: false, action, speed: Math.min(sp, 12), fast: d.mode === 'chase',
+        x: v.x, y, z: v.z, heading: v.h, dist: Math.hypot(v.x - pl.x, v.z - pl.z),
+      });
       v.bark.visible = d.barkT > 0;
-      v.bark.position.set(v.x, y + 1.9 + Math.sin(v.phase * 2) * 0.05, v.z);
+      v.bark.position.set(v.x, y + 1.6 + Math.sin(v.phase * 2) * 0.05, v.z);
     }
     for (const [id, v] of this.dogs) if (!alive.has(id)) {
-      this.campGroup.remove(v.rig.root, v.bark);
+      this.campGroup.remove(v.bark);
       this.dogs.delete(id);
     }
   }
 
   private updateWolves(state: GameState, heightAt: (x: number, z: number) => number, dt: number): void {
-    const ws = state.wolves;
+    const ws = state.wolves, pl = state.player, wl = animalLook.species.wolf;
     if (ws.campId !== this.wolfCamp) {
-      for (const w of this.wolves.values()) this.campGroup.remove(w.rig.root);
       this.wolves.clear();
       this.wolfCamp = ws.campId;
     }
+    const hour = (state.time.minute / 60) % 24, night = hour < 5 || hour >= 21;
     const alive = new Set<number>();
     for (const w of ws.list as Wolf[]) {
       alive.add(w.id);
       let v = this.wolves.get(w.id);
       if (!v) {
-        v = { rig: makeWolf(), x: w.x, z: w.z, h: w.heading, phase: 0 };
-        this.campGroup.add(v.rig.root);
+        v = { x: w.x, z: w.z, h: w.heading, phase: 0 };
         this.wolves.set(w.id, v);
       }
       const k = Math.min(1, dt * (w.mode === 'flee' || w.mode === 'hunt' ? 10 : 5));
-      const prey = v.rig.root.getObjectByName('prey');
-      if (prey) prey.visible = w.mode === 'drag';
       const nx = v.x + (w.x - v.x) * k, nz = v.z + (w.z - v.z) * k;
       const sp = dt > 0 ? Math.hypot(nx - v.x, nz - v.z) / dt : 0;
       if (sp > 0.2) v.h += angDiff(Math.atan2(nx - v.x, nz - v.z), v.h) * Math.min(1, dt * 7);
       v.x = nx;
       v.z = nz;
-      v.phase += dt * sp * 2.2;
-      swingLegs(v.rig, sp > 0.2 ? Math.sin(v.phase) * 0.7 : 0);
-      const stalking = w.mode === 'hunt';
-      v.rig.root.position.set(v.x, heightAt(v.x, v.z) + (sp > 0.2 ? Math.abs(Math.sin(v.phase)) * 0.045 : 0) - (stalking ? 0.1 : 0), v.z);
-      v.rig.root.rotation.y = v.h;
-      if (v.rig.head) v.rig.head.rotation.x = stalking ? -0.24 : w.mode === 'drag' ? 0.12 : Math.sin(v.phase * 0.4) * 0.04;
-      if (v.rig.tail) v.rig.tail.rotation.x = (w.mode === 'flee' ? 1 : 0.6) + Math.sin(v.phase * 0.65 + w.id) * 0.16;
-      v.rig.root.visible = w.mode !== 'den';   // цадсан чоно үүрэндээ (B6) — харагдахгүй
+      v.phase += dt * 1;
+      if (w.mode === 'den') continue;   // цадсан чоно үүрэндээ (B6) — харагдахгүй
+      // Үйлдэл: сэм дөхөх (удаан), хөөх (хурдан), барих (зогсоод шүүрэх), чирэх (алхах), айж зугтах (гүйх), шөнө тайван улих
+      let action: Action;
+      if (w.mode === 'flee') action = 'run';
+      else if (w.mode === 'hunt') action = sp > 2.5 ? 'run' : sp > 0.12 ? 'stalk' : 'catch';
+      else if (w.mode === 'drag') action = 'walk';
+      else if (sp > 0.2) action = gaitFor(wl, sp);
+      else action = night && Math.sin(v.phase * 0.12 + w.id * 2.3) > 0.55 ? 'howl' : 'stand';
+      const y = heightAt(v.x, v.z), dist = Math.hypot(v.x - pl.x, v.z - pl.z);
+      this.models.add({
+        id: w.id, species: 'wolf', male: w.sex !== 'f', age: w.age ?? 4, old: false, sc: animalLook.age.growth[ageIdxOf(w.age ?? 4, false)] ?? 1, fat: 0.5,
+        mark: false, action, speed: Math.min(sp, 14), fast: w.mode === 'flee', x: v.x, y, z: v.z, heading: v.h, dist,
+      });
+      if (w.mode === 'drag') {   // барьсан мал (үүр лүүгээ чирэх): чоночны урд хэвтэнэ
+        const fx = v.x + Math.sin(v.h) * 1.15, fz = v.z + Math.cos(v.h) * 1.15;
+        this.models.add({ id: 900000 + w.id, species: 'sheep', male: false, age: 3, old: false, sc: 0.8, fat: 0.5, mark: false, action: 'lie', speed: 0, fast: false, x: fx, y: heightAt(fx, fz), z: fz, heading: v.h + 0.9, dist });
+      }
     }
-    for (const [id, v] of this.wolves) if (!alive.has(id)) {
-      this.campGroup.remove(v.rig.root);
-      this.wolves.delete(id);
-    }
+    for (const id of this.wolves.keys()) if (!alive.has(id)) this.wolves.delete(id);
   }
 }

@@ -110,6 +110,9 @@ export function udderGeo(d: DLook, w: number, h: number): THREE.BufferGeometry {
   return ellipsoid(u.r[0], u.r[1], u.r[2], [0, -d.body.R * u.y, u.z], w, h);
 }
 
+/** Эмээлийн хэмжээ (эмээлийн эх цэгээс): суудлын орой, дөрөөний ул, хажуугийн зай */
+export const saddleDims = (d: DLook): { seat: number; stir: number; side: number } => ({ seat: 0.085, stir: -d.saddle!.drop - 0.085, side: d.body.R * d.body.wide + 0.035 });
+
 /** Монгол эмээл (нурууны орой = эх цэг): тохом, бүүрэг, мөнгөн товруу, олом, дөрөө. Нэг геометр, оройн өнгөтэй (slot 0). Буцаах: geo, seat, stir, side */
 export function saddleGeo(d: DLook): { geo: THREE.BufferGeometry; seat: number; stir: number; side: number } {
   const R = d.body.R, W = d.body.wide, C = animalLook.saddle, parts: THREE.BufferGeometry[] = [];
