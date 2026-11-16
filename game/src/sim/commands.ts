@@ -19,6 +19,7 @@ import { startMove } from './systems/camps';
 import { worldLimit } from './systems/sumtown';
 import { enterBuilding, exitBuilding, moveInterior } from './systems/interior';
 import { buyHouse, donate, giveGift, repayBankLoan, repayZdtgLoan, setHouseMode, takeBankLoan, takeZdtgLoan, type GiftPlan, type HouseMode } from './systems/town';
+import { sleepUntil } from './systems/sleep';
 import { shout, toggleMount, toggleUurga } from './systems/herder';
 import { scareWolves } from './systems/wolves';
 import { newAnimal } from './state';
@@ -69,6 +70,7 @@ export type Command =
   | { type: 'bankLoan'; amount: number }
   | { type: 'bankRepay'; amount: number }
   | { type: 'gift'; relative: string; plan: GiftPlan }
+  | { type: 'sleep'; wake: number }   // хамаатны айлд унтах: wake = сэрэх цаг (өдрийн минут, 360 = 06:00)
   | { type: 'droveAnimals'; animalIds: number[] }   // морьтой: мал тууж явах
   | { type: 'takeFromStorage'; products: Partial<Record<ProductId, number>> }   // агуулахаас гартаа (зарахаар)
   | { type: 'neighborBull'; on: boolean }
@@ -349,6 +351,10 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
     case 'bankRepay': {
       const err = repayBankLoan(cfg, state, cmd.amount, proximity);
       return err ? fail(err) : ok(m('sim.loan_repaid'));
+    }
+    case 'sleep': {
+      const err = sleepUntil(sim, cmd.wake, proximity);
+      return err ? fail(err) : ok(m('sim.slept_woke_up', { x: `${String(Math.floor(cmd.wake / 60)).padStart(2, '0')}:${String(cmd.wake % 60).padStart(2, '0')}` }));
     }
     case 'gift': {
       const err = giveGift(cfg, state, cmd.relative, cmd.plan, proximity);

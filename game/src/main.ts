@@ -184,7 +184,7 @@ function start(boot?: Boot): void {
     },
     onFirstTap: () => touchUI?.enterLandscape(),
   });
-  const panels = new Panels(cfg, state, { dispatch: (cmd) => { const r = sim.command(cmd); if (r.ok && cmd.type === 'moveCamp') autosave?.request('move'); return r; }, toast, toggleZones: () => view.zones.toggle() });
+  const panels = new Panels(cfg, state, { dispatch: (cmd) => { const r = sim.command(cmd); if (r.ok && (cmd.type === 'moveCamp' || cmd.type === 'sleep')) autosave?.request('move'); return r; }, toast, toggleZones: () => view.zones.toggle() });
   const showReports = qs.get('report') !== '0';
   let huntToastT = 0;
   sim.on((e) => {

@@ -33,6 +33,7 @@ import {
   CAMP_HINT, SEASON_EMOJI, SEASON_NAME, PASTURE_NAME, PRODUCT_EMOJI, PROCESSOR_NAME, WATER_NAME, WOLF_LEVEL_NAME, expenseName, fmtMinutes, fmtMoney, fmtNum, productName, speciesEmoji, stageName, unitOf,
 } from './names';
 import { t } from '../../i18n/i18n';
+import { SleepPanel } from './sleepPanel';
 import { gerLadder, goalGerReached } from '../../sim/systems/gerLayout';
 import { sellableGers } from '../../sim/systems/ownGers';
 import { formatTime } from '../../sim/clock';
@@ -107,8 +108,10 @@ export class Panels {
   private muteReports = false;
   private pressing = false;
   private hv: HelperView = { mode: 'list', helper: 0, camp: '', counts: {} };
+  private sleep: SleepPanel;
 
   constructor(private cfg: GameConfig, private state: GameState, private hooks: UiHooks) {
+    this.sleep = new SleepPanel(cfg, state);
     this.root = document.getElementById('modal')!;
     this.box = document.getElementById('modalBox')!;
     // Утсанд товшиж байх үед цонхыг дахин зурвал товч «алга болж» дарагдахгүй — дарж байхад refresh хийхгүй
@@ -600,7 +603,7 @@ export class Panels {
         const have = sellableAtShop(state);
         const dairy = Object.entries(have).filter(([k, n]) => R.giftProducts.includes(k) && (n ?? 0) > 0).map(([k, n]) => `${PRODUCT_EMOJI[k as ProductId]} ${fmtNum(n ?? 0)}`).join(' ');
         const animals = sellableAnimals(state).length;
-        return t('ui.relatives_closeness_100_gifts', { close, x: fmtNum(r?.relation ?? 0), visitMinRelation: R.visitMinRelation, summerHelpMin: R.summerHelpMin, winterHayMin: R.winterHayMin, x2: dairy || t('ui.no_dairy'), animals, id: door.id, x3: dairy ? '' : 'disabled', id2: door.id, x4: animals ? '' : 'disabled' });
+        return t('ui.relatives_closeness_100_gifts', { close, x: fmtNum(r?.relation ?? 0), visitMinRelation: R.visitMinRelation, summerHelpMin: R.summerHelpMin, winterHayMin: R.winterHayMin, x2: dairy || t('ui.no_dairy'), animals, id: door.id, x3: dairy ? '' : 'disabled', id2: door.id, x4: animals ? '' : 'disabled' }) + this.sleep.html();
       }
     }
   }
@@ -853,6 +856,7 @@ export class Panels {
     const [cmd, arg = ''] = a.split(/:(.*)/s) as [string, string?];
     const d = this.draft;
     const { cfg, state } = this;
+    if (this.sleep.act(cmd, arg, { dispatch: this.hooks.dispatch, toast: this.hooks.toast, close: () => this.close(), rerender: () => this.render() })) return;
     switch (cmd) {
       case 'close':
         this.close();
