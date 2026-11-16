@@ -2060,11 +2060,11 @@ FILE docs/plan/M7.md 7.6KB 31L
 DOC docs/plan/M7.md:12-22 ## Блокууд
 DOC docs/plan/M7.md:23-27 ## Асуулга (10 асуулт)
 DOC docs/plan/M7.md:28-31 ## Эрсдэл
-FILE docs/plan/V.md 84.3KB 297L
+FILE docs/plan/V.md 84.6KB 299L
 DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
 DOC docs/plan/V.md:24-265 ## Блокууд ба чеклист (2026-11-15)
-DOC docs/plan/V.md:266-297 ## Зогссон цэг
+DOC docs/plan/V.md:266-299 ## Зогссон цэг
 FILE docs/plan/playtest.md 23.5KB 143L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
 DOC docs/plan/playtest.md:19-39 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
