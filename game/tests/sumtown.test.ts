@@ -41,6 +41,7 @@ describe('Сумын төв: Могод сум (V3.3)', () => {
     toSum(sim);
     const st = sim.state, p = st.player;
     st.money = 5_000_000;
+    st.time.minute = 12 * 60;   // ажлын цаг (data/shops.json)
     const lamb = { kind: 'animal' as const, species: 'sheep' as const, sex: 'f' as const, age: 1 };
     p.x = door('feed').x;
     p.z = door('feed').z;

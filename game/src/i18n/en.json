@@ -621,6 +621,7 @@
   "sim.roam_around_the_camp": "Roam around the camp",
   "sim.guard_the_herd": "Guard the herd",
   "sim.go_to_the_teahouse": "Go to the teahouse",
+  "sim.shop_closed": "Closed — opens at {time}",
   "sim.no_such_person": "No such person",
   "sim.a_single_helper_needs": "A single helper needs a bed — buy a helper tent/ger from the Trader",
   "sim.no_helper": "No helper",

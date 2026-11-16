@@ -27,6 +27,8 @@ import gerJson from '../../../data/ger.json';
 import difficultyJson from '../../../data/difficulty.json';
 import milestonesJson from '../../../data/milestones.json';
 import traderJson from '../../../data/trader.json';
+import shopsJson from '../../../data/shops.json';
+import { validateShops, type ShopsConfig } from './systems/shops';
 import { validateTrader, type TraderConfig } from './systems/trader';
 import { validateMilestones, type MilestonesConfig } from './systems/milestones';
 import type { StuckConfig } from './systems/safety';
@@ -284,6 +286,8 @@ export interface GameConfig {
   milestones: MilestonesConfig;
   /** M6.12: явуулын худалдаачин — data/trader.json */
   trader: TraderConfig;
+  /** Дэлгүүр, үйлчилгээний ажлын цаг — data/shops.json */
+  shops: ShopsConfig;
   /** Гэрийн загварын хэмжээс, тавилгын байрлал (data/ger.json — render/ger-тэй хуваалцана; хаалганы цэг, дотор саад) */
   ger: GerSimConfig;
   start: { camp: string; home: string; vehicles: string[]; storageLevel: number; animals: StartAnimal[] };
@@ -315,6 +319,7 @@ export function loadConfig(): GameConfig {
     difficulty: difficultyJson as unknown as DifficultyConfig,
     milestones: milestonesJson as unknown as MilestonesConfig,
     trader: traderJson as unknown as TraderConfig,
+    shops: shopsJson as unknown as ShopsConfig,
   };
   const errors = validateConfig(cfg);
   if (errors.length) {
@@ -383,6 +388,7 @@ export function validateConfig(cfg: GameConfig): string[] {
   e.push(...validateDifficultyConfig(cfg));
   e.push(...validateMilestones(cfg));
   e.push(...validateTrader(cfg));
+  try { validateShops(cfg.shops); } catch (x) { e.push((x as Error).message); }
   if (!cfg.storage.levels[cfg.start.storageLevel]) e.push('start.storageLevel: агуулахын түвшин алга');
   for (const a of cfg.start.animals) if (!cfg.animals.species[a.species]) e.push(`start.animals: "${a.species}" алга`);
   return e;
