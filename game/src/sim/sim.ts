@@ -28,6 +28,7 @@ import { checkMilestones, recordDay } from './systems/milestones';
 import { detectStuck } from './systems/safety';
 import { traderDaily, traderHour, type TraderEvent } from './systems/trader';
 import { refreshLeaders } from './systems/herding';
+import { addReport } from './systems/journal';
 import { townDaily, townMonthly, townSeason, type TownEvent } from './systems/town';
 import { wolvesDaily, wolvesStep, nightRaid, endRaid, type WolfEvent } from './systems/wolves';
 
@@ -254,6 +255,7 @@ export class Sim {
     for (const r of reached) this.emit({ type: 'milestone', id: r.id, kind: r.kind, ceremony: r.ceremony, day });
     state.dayStartMoney = state.money;
     state.today = emptyDayStats();
+    addReport(cfg, state, report);
     this.emit({ type: 'dayReport', report });
   }
 

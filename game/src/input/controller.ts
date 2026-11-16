@@ -23,7 +23,7 @@ export interface ControllerHooks {
   /** Командын үр дүн (мэдэгдэл, бичиг) */
   onAction: (kind: ActionKind, res: CommandResult) => void;
   onSpeed: (idx: number) => void;
-  onToggle: (what: 'heatmap' | 'help' | 'cheat' | 'storage' | 'trade' | 'dogs' | 'camps' | 'zones' | 'helpers' | 'photo') => void;
+  onToggle: (what: 'heatmap' | 'help' | 'cheat' | 'storage' | 'trade' | 'dogs' | 'camps' | 'zones' | 'helpers' | 'photo' | 'log') => void;
   /** Цонх нээлттэй үед удирдлага ажиллахгүй */
   blocked: (code?: string) => boolean;
   /** Одоогийн төлөв (E товчны үйлдлийг сонгоход) */
@@ -132,6 +132,9 @@ export class PlayerController {
         // Газрын зураг руу шууд гарах (M4.6)
         this.vSpeed = 0;
         this.hooks.onAction('map', this.hooks.dispatch({ type: 'quickMap' }));
+        break;
+      case 'KeyL':
+        this.hooks.onToggle('log');   // 📜 тэмдэглэл
         break;
       case 'KeyJ':
         this.hooks.onToggle('helpers');

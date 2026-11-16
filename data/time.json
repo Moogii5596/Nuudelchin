@@ -26,6 +26,11 @@
     "touchRenderEvery": 3,
     "zoneCheckMinutes": 10
   },
+  "journal": {
+    "_doc": "Тэмдэглэл (📜): хадгалах мэдэгдлийн тоо, өдрийн тайлангийн өдөр (sim/systems/journal.ts).",
+    "notes": 30,
+    "reportDays": 7
+  },
   "monthDays": 5,
   "animalYearDays": 50,
   "mapFastForward": 8

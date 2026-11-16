@@ -16,8 +16,9 @@ import type { Dog } from './systems/dogs';
 import { initFleetVehicle } from './systems/travel';
 import { newHelpersState, type HelpersState } from './systems/helpers';
 import { newTownState, type TownState } from './systems/town';
+import { newJournal, type JournalState } from './systems/journal';
 
-export const SAVE_VERSION = 20;   // 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих · 6: нохой, чонын дайралт, сүргийн нүүдэл (M4) · 7: шөнө, хотлох, өглөөний бүтээгдэхүүн, Портер/Амжиргаа, шөнийн чоно (M4.5) · 8: газрын зураг, тээвэр жолоодох, ачаа, Худалдаачин (M4.6) · 9: туслах малчид, цайны газар, отор, туслахын мал (M5) · 10: улирал, цас, боодол өвс, 4 бууц, отрын бүтээгдэхүүн (M5.5) · 11: сумын төвийн амьдрал — байшин, нэр хүнд, зээл, хамаатан (V3.4) · 12: орж болдог барилга — player.interior (V6.1) · 13: Sim-ийн нуугдмал төлөв state-д — dayStartMoney, flockCenters (M6.1) · 14: settings.difficulty — тайван тохиргооны гулсуурууд (M6.10) · 15: homeSize — гэрийн хэмжээ, BuyOrder ger.size (M6.13) · 16: stats, milestones, settings.showMilestones (M6.5) · 20: trader — явуулын худалдаачин (M6.12) · 19: leaders — сүргийн удирдагч (M6.9) · 18: stuckEvents, Animal.sn/sx/sz (M6.8) · 17: extraGers (олон гэр), BuyOrder gerAdd; helperGer/helperTent байр → гэр (M6.13)
+export const SAVE_VERSION = 21;   // 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих · 6: нохой, чонын дайралт, сүргийн нүүдэл (M4) · 7: шөнө, хотлох, өглөөний бүтээгдэхүүн, Портер/Амжиргаа, шөнийн чоно (M4.5) · 8: газрын зураг, тээвэр жолоодох, ачаа, Худалдаачин (M4.6) · 9: туслах малчид, цайны газар, отор, туслахын мал (M5) · 10: улирал, цас, боодол өвс, 4 бууц, отрын бүтээгдэхүүн (M5.5) · 11: сумын төвийн амьдрал — байшин, нэр хүнд, зээл, хамаатан (V3.4) · 12: орж болдог барилга — player.interior (V6.1) · 13: Sim-ийн нуугдмал төлөв state-д — dayStartMoney, flockCenters (M6.1) · 14: settings.difficulty — тайван тохиргооны гулсуурууд (M6.10) · 15: homeSize — гэрийн хэмжээ, BuyOrder ger.size (M6.13) · 16: stats, milestones, settings.showMilestones (M6.5) · 20: trader — явуулын худалдаачин (M6.12) · 19: leaders — сүргийн удирдагч (M6.9) · 18: stuckEvents, Animal.sn/sx/sz (M6.8) · 17: extraGers (олон гэр), BuyOrder gerAdd; helperGer/helperTent байр → гэр (M6.13)
 
 export type ProductId = 'milk' | 'tarag' | 'aaruul' | 'urum' | 'wool' | 'felt' | 'cashmere';
 export const PRODUCTS: readonly ProductId[] = ['milk', 'tarag', 'aaruul', 'urum', 'wool', 'felt', 'cashmere'];
@@ -196,6 +197,8 @@ export interface GameState {
   leaders: Record<string, number>;
   /** M6.12: явуулын худалдаачин (ченж): дараагийн ирэх өдөр, одоогийн айлчлал */
   trader: TraderState;
+  /** 📜 Тэмдэглэл: сүүлийн мэдэгдэл, өдрийн тайлангууд (v21) */
+  journal: JournalState;
   campId: string;
   camps: Record<string, CampState>;
   grass: GrassGrid;
@@ -298,6 +301,7 @@ export function createInitialState(cfg: GameConfig, seed: number): GameState {
     stuckEvents: 0,
     leaders: {},
     trader: newTraderState(cfg, seed),
+    journal: newJournal(),
     campId: cfg.start.camp,
     camps,
     grass,
@@ -336,6 +340,7 @@ export function createInitialState(cfg: GameConfig, seed: number): GameState {
  * 11 → 12: player.interior (хуучин хадгалалтад байхгүй → null) · 12 → 13: dayStartMoney, flockCenters.
  */
 export const MIGRATIONS: Record<number, (s: GameState) => void> = {
+  20: (s) => { s.journal ??= newJournal(); },
   11: (s) => { if (!s.player.interior) s.player.interior = null; },
   12: (s) => { s.dayStartMoney ??= null; s.flockCenters ??= []; },
   // 13 → 14: гулсуур байгаагүй үеийн тоглолт = бүгд ×1 (data/difficulty.json-ийн анхдагчтай тест тулгана)

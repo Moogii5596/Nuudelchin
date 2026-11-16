@@ -33,6 +33,18 @@
                color: #f4ead6; font-size: 14px; line-height: 1.5; pointer-events: none; box-shadow: 0 6px 24px rgba(30, 20, 12, 0.14); }
       #hud { top: 12px; left: 12px; }
       #hud b { color: #e8b64c; }
+      /* 📜 Тэмдэглэл: HUD-ийн баруун талд (байрлалыг main.ts тавина), уншаагүйн улаан тоо */
+      #logBtn { position: fixed; top: 12px; left: 12px; z-index: 6; }
+      body.touch #logBtn { top: max(6px, env(safe-area-inset-top)); }
+      body.photo-mode #logBtn { display: none !important; }
+      #logBtn i { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box; border-radius: 9px; background: #d9342b; color: #fff;
+                  font: 700 11px/18px system-ui, sans-serif; text-align: center; }
+      #logBtn i:empty { display: none; }
+      #modalBox .logtabs { display: flex; gap: 8px; margin: 0 0 10px; }
+      #modalBox .logtabs .btn { min-height: 44px; padding: 0 16px; }
+      #modalBox .lognav { display: flex; align-items: center; gap: 10px; }
+      #modalBox .lognav .btn { min-width: 44px; min-height: 44px; font-size: 18px; }
+      #modalBox .logwhen { white-space: nowrap; width: 1%; }
       #perf { top: 62px; right: 12px; font: 12px ui-monospace, monospace; white-space: pre-line; }
       #help { left: 50%; top: 50%; transform: translate(-50%, -50%); white-space: pre-line; max-width: 620px; display: none; font-size: 15px; }
       #help h3 { margin: 0 0 6px; color: #e8b64c; }
@@ -155,6 +167,7 @@
     <div id="app"></div>
     <div id="sceneFade"></div>
     <div id="hud" class="panel"></div>
+    <button id="logBtn" class="tbtn sm">📜<i></i></button>
     <div id="perf" class="panel"></div>
     <div id="help" class="panel"></div>
     <div id="prompt"></div>

@@ -851,5 +851,11 @@
   "ui.process_act": "Боловсруулах",
   "ui.cart_cargo_head": "<h2>🧺 Тэрэгт ачих <span class=\"close\" data-act=\"close\">✕</span></h2>\n      <p class=\"muted\">Агуулахаас тэрэг рүү ачна, тэрэгнээс буулгана, ачсан тэргээ жолоочоор сумын төв рүү явуулна.</p>",
   "ui.cart_send": "<p><button class=\"btn gold big\" data-act=\"doSend\" {x}>📦 Сум руу явуулах</button> <b>Нийт үнэ: ~{total}</b> <span class=\"muted\">{x2}</span></p>",
-  "ui.cart_send_no_driver": "Хөлсний жолооч хэрэгтэй (цайны газар)."
+  "ui.cart_send_no_driver": "Хөлсний жолооч хэрэгтэй (цайны газар).",
+  "log.title": "📜 Тэмдэглэл",
+  "log.tab_notes": "Мэдэгдэл",
+  "log.tab_report": "Өдрийн тайлан",
+  "log.no_notes": "Мэдэгдэл алга.",
+  "log.no_reports": "Өдрийн тайлан алга — эхнийх нь 20:00-д гарна.",
+  "log.report_ready": "📜 {day}-р өдрийн тайлан Тэмдэглэлд орлоо."
 }

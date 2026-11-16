@@ -41,13 +41,18 @@ import { MenuUI, takeIntent } from './render/ui/menu';
 import { TouchUI } from './input/touch';
 import { SkipRun, skipGoal, type SkipTarget } from './input/skip';
 import { TimeBar } from './render/ui/timebar';
-import type { DayReport } from './sim/sim';
+import { addNote } from './sim/systems/journal';
 import { registerServiceWorker, onConnectionChange } from './pwa';
 import { isTouch, touchKeys, quality, QUALITIES, QUALITY_NAME, QUALITY_SPEC, setQuality } from './device';
 
-function toast(message: string | Msg, kind: '' | 'good' | 'bad' = ''): void {
+/** 📜 Тэмдэглэлд бүртгэх (start() дотор тавигдана) */
+let noteSink: ((text: string, kind: '' | 'good' | 'bad') => void) | null = null;
+
+/** log=false: тэмдэглэлд бүртгэхгүй (автомат хадгалалт г.м. тоглоомын үйл явдал биш мэдэгдэл) */
+function toast(message: string | Msg, kind: '' | 'good' | 'bad' = '', log = true): void {
   let msg = tm(message);
   if (isTouch) msg = touchKeys(msg.replace(t('ui.with_the_mouse'), t('ui.with_your_finger')));
+  if (log && msg) noteSink?.(msg, kind);
   const box = document.getElementById('toasts')!;
   const d = document.createElement('div');
   d.className = 'toast ' + kind;
@@ -145,7 +150,18 @@ function start(boot?: Boot): void {
     document.body.classList.add('photo-mode');
   }
   if (qs.get('heatmap') === '1') view.toggleHeatmap(state);
+  noteSink = (text, kind) => addNote(cfg, state, text, kind);
   const hud = document.getElementById('hud')!;
+  // 📜 Тэмдэглэл: HUD-ийн хажууд, уншаагүй мэдэгдлийн улаан тоотой
+  const logBtn = document.getElementById('logBtn')!;
+  const logBadge = logBtn.querySelector('i')!;
+  logBtn.title = t('log.title');
+  logBtn.setAttribute('aria-label', t('log.title'));
+  logBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    controller.press('KeyL');
+  });
+  if (captureMode) logBtn.style.display = 'none';
   const perf = document.getElementById('perf')!;
   // FPS/draw/tris самбар: анхдагчаар нуугдсан. Cheat цэс (`) эсвэл утсанд ❓ цэснээс асаана (суулгасан апп-д ?stats нэмэх боломжгүй)
   const PERF_KEY = 'nuudel.showPerf';
@@ -167,7 +183,6 @@ function start(boot?: Boot): void {
   perf.style.display = showPerf ? '' : 'none';   // анхдагчаар нуугдсан: cheat цэс (`), ?stats, утсанд ❓ цэснээс асаана
   // Цаг алгасах (⏭): идэвхтэй гүйлт, алгасах үед хойшлуулсан өдрийн тайлан
   let skip: SkipRun | null = null;
-  let pendingReport: DayReport | null = null;
   const help = document.getElementById('help')!;
   const prompt = document.getElementById('prompt')!;
   help.innerHTML = t('ui.p_photo_mode_the', { x: t('help.title'), x2: isTouch ? t('help.touch') + '\n\n' + touchKeys(t('help.body')) : t('help.body') });
@@ -176,7 +191,7 @@ function start(boot?: Boot): void {
   // M6.2: автомат хадгалалт. Sim-ийн алхмын дунд бичихгүй — хүсэлт тэмдэглээд кадрын давталт алхмуудын дараа flush хийнэ
   const autosave = persistence?.store && boot?.state ? new Autosave({
     store: persistence.store, state: () => state, slot: () => persistence.slot,
-    onSaved: (reason) => { if (reason !== 'hidden') toast(t('save.done'), 'good'); },
+    onSaved: (reason) => { if (reason !== 'hidden') toast(t('save.done'), 'good', false); },
     onError: (err) => { console.error(err); toast(t('save.failed'), 'bad'); },
   }) : null;
   if (autosave) {
@@ -204,10 +219,8 @@ function start(boot?: Boot): void {
   const showReports = qs.get('report') !== '0';
   let huntToastT = 0;
   sim.on((e) => {
-    if (e.type === 'dayReport' && showReports) {
-      if (skip) pendingReport = e.report;   // алгасаж дуусахад харуулна
-      else panels.showReport(e.report);
-    }
+    // Өдрийн тайлан автоматаар гарахгүй: 📜 Тэмдэглэл → «Өдрийн тайлан» табд хадгалагдана (sim/systems/journal.ts)
+    if (e.type === 'dayReport' && showReports) toast(t('log.report_ready', { day: e.report.day }), '');
     else if (e.type === 'traderArrive') toast(t('trader.arrive', { kind: t('trader.kind.' + e.kind), until: formatTime({ day: state.time.day, minute: e.until }) }), 'good');
     else if (e.type === 'traderLeave') toast(t('trader.leave'), '');
     else if (e.type === 'milestone') toast(t(e.kind === 'stage' ? 'ms.reached' : 'ms.first_toast', { name: t((e.kind === 'stage' ? 'ms.stage.' : 'ms.first.') + e.id) }), 'good');
@@ -269,6 +282,7 @@ function start(boot?: Boot): void {
       else if (what === 'dogs') panels.open('dogs');
       else if (what === 'camps') panels.open('camps');
       else if (what === 'cheat') panels.open('cheat');
+      else if (what === 'log') panels.openLog();
       else if (what === 'zones') toast(view.zones.toggle() ? t('ui.protection_zones_are_visible') : t('ui.protection_zones_hidden'), 'good');
       else if (help.style.display === 'block') help.style.display = 'none';
       else menu.toggleGame();   // ❓ / F1 → тоглоомын цэс (M6.3); тусламж цэснээс
@@ -291,11 +305,6 @@ function start(boot?: Boot): void {
     else if (s.stop) {
       const why = { wolf: t('ui.skip_stop_wolf'), zone: t('ui.skip_stop_zone'), driver: t('ui.skip_stop_driver'), helper: t('ui.skip_stop_helper'), arrived: t('ui.skip_stop_arrived') }[s.stop];
       toast(why, s.stop === 'wolf' || s.stop === 'zone' ? 'bad' : 'good');
-    }
-    if (pendingReport) {
-      const r = pendingReport;
-      pendingReport = null;
-      panels.showReport(r);
     }
   };
   const startSkip = (target: SkipTarget): void => {
@@ -581,6 +590,10 @@ function start(boot?: Boot): void {
           (alert ? '<br>' + alert.replace(/<br>$/, '') : '')
         : touchKeys(full) + (isTouch ? t('ui.collapse') : '');
       const uiHidden = panels.isOpen || menu.isOpen || help.style.display === 'block';
+      const unread = state.journal.unread;
+      logBadge.textContent = unread ? String(unread) : '';
+      logBtn.style.display = uiHidden || photoMode ? 'none' : '';
+      logBtn.style.left = `${Math.round(hud.getBoundingClientRect().right + 6)}px`;
       bar?.update(uiHidden || photoMode);
       touchUI?.update(state, uiHidden);
       perf.textContent = qs.has('stats') || showPerf

@@ -13,6 +13,7 @@ import type { Animal, BuyOrder, GameState, ProcessorKind, ProductId, VehicleId }
 import { PRODUCTS } from '../../sim/state';
 import type { Command, CommandResult } from '../../sim/commands';
 import type { DayReport } from '../../sim/sim';
+import { markRead } from '../../sim/systems/journal';
 import * as storage from '../../sim/systems/storage';
 import { recipe } from '../../sim/systems/processing';
 import { animalSlots, bestTruck, orderPrice, productPrice } from '../../sim/systems/trip';
@@ -41,7 +42,7 @@ import { formatTime } from '../../sim/clock';
 import { nearTrader, traderBuyPrice, traderHayPrice, traderPresent } from '../../sim/systems/trader';
 import type { Msg } from '../../sim/msg';
 
-type Kind = 'storage' | 'cargo' | 'shop' | 'lot' | 'town' | 'arrive' | 'report' | 'dogs' | 'camps' | 'cheat' | 'teahouse' | 'helpers' | 'milestones' | 'ceremony' | 'trader';
+type Kind = 'storage' | 'cargo' | 'shop' | 'lot' | 'town' | 'arrive' | 'report' | 'dogs' | 'camps' | 'cheat' | 'teahouse' | 'helpers' | 'milestones' | 'ceremony' | 'trader' | 'log';
 
 /** Туслахуудын цонхны дэд хэсэг: жагсаалт, отор явуулах, малаар цалинжуулах */
 interface HelperView {
@@ -93,6 +94,9 @@ interface Draft {
   hay: number;                   // авах боодол өвс (M5.5)
 }
 
+/** Мэдэгдлийн текстийг HTML-д аюулгүй болгоно */
+const esc = (x: string): string => x.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
 export interface UiHooks {
   dispatch: (cmd: Command) => CommandResult;
   toast: (msg: string | Msg, kind?: '' | 'good' | 'bad') => void;
@@ -109,6 +113,9 @@ export class Panels {
   private draft: Draft | null = null;
   private report: DayReport | null = null;
   private reports: DayReport[] = [];
+  /** 📜 Тэмдэглэл: идэвхтэй таб, харж буй тайлангийн дугаар (journal.reports дотор) */
+  private logTab: 'notes' | 'report' = 'notes';
+  private logIdx = 0;
   private arriveCamp = '';
   private muteReports = false;
   private pressing = false;
@@ -237,6 +244,7 @@ export class Panels {
     else if (this.kind === 'town') html = this.townHtml();
     else if (this.kind === 'arrive') html = this.arriveHtml();
     else if (this.kind === 'report') html = this.reportHtml();
+    else if (this.kind === 'log') html = this.logHtml();
     else if (this.kind === 'dogs') html = this.dogsHtml();
     else if (this.kind === 'camps') html = this.campsHtml();
     else if (this.kind === 'cheat') html = this.cheatHtml();
@@ -685,6 +693,31 @@ export class Panels {
     return t('ui.snow_grass_camp_pasture', { x: t('camp.' + id), x2: CAMP_HINT[id] ?? '', x3: (cs.snow ?? 0) < 0.5 ? t('ui.no_snow') : t('ui.cm_grazing_access', { x: Math.round(cs.snow), x2: Math.round(campAccess(cfg, cs.snow) * 100) }), x4: Math.round((cs.grass ?? 0) * 100), shed, x5: (cs.hay ?? 0) > 0 ? t('ui.hay_bales', { x: fmtNum(cs.hay) }) : '', types, x6: WATER_NAME[c.water] ?? c.water, x7: WOLF_LEVEL_NAME[c.wolfLevel] ?? c.wolfLevel, x8: Math.round(cs.degrade * 100), x9: Math.round((1 - deg.growthPenalty * cs.degrade) * 100), x10: fmtMinutes(Math.round(hours * 60)), otor, x11: Math.round(kmh) });
   }
 
+  // ======================= 📜 тэмдэглэл: мэдэгдэл + өдрийн тайлан =======================
+  /** Тэмдэглэлийг нээх: анхдагчаар мэдэгдэл; tab='report' бол хамгийн сүүлийн (өчигдрийн) тайлан */
+  openLog(tab: 'notes' | 'report' = 'notes'): void {
+    this.logTab = tab;
+    this.logIdx = Math.max(0, this.state.journal.reports.length - 1);
+    this.open('log');
+  }
+
+  private logHtml(): string {
+    const j = this.state.journal;
+    const tabBtn = (id: 'notes' | 'report', label: string): string => `<button class="btn ${this.logTab === id ? 'gold' : ''}" data-act="logTab:${id}">${label}</button>`;
+    let html = `<h2>${t('log.title')} <span class="close" data-act="close">✕</span></h2><p class="logtabs">${tabBtn('notes', t('log.tab_notes'))} ${tabBtn('report', t('log.tab_report'))}</p>`;
+    if (this.logTab === 'notes') {
+      markRead(this.state);   // нээхэд уншсанд тооцогдоно
+      const rows = j.notes.slice().reverse().map((n) => `<tr><td class="muted logwhen">${t('hud.day', { day: n.day })} · ${formatTime({ day: n.day, minute: n.minute })}</td><td class="${n.kind}">${esc(n.text)}</td></tr>`).join('');
+      return html + (rows ? `<table class="lognotes">${rows}</table>` : `<p class="muted">${t('log.no_notes')}</p>`);
+    }
+    if (!j.reports.length) return html + `<p class="muted">${t('log.no_reports')}</p>`;
+    this.logIdx = Math.max(0, Math.min(j.reports.length - 1, this.logIdx));
+    this.report = j.reports[this.logIdx]!;
+    html += `<p class="lognav"><button class="btn" data-act="logPrev" ${this.logIdx > 0 ? '' : 'disabled'}>◀</button> <b>${t('hud.day', { day: this.report.day })}</b> <span class="muted">(${this.logIdx + 1}/${j.reports.length})</span> <button class="btn" data-act="logNext" ${this.logIdx < j.reports.length - 1 ? '' : 'disabled'}>▶</button></p>`;
+    // Тайлангийн «Маргааш өглөө ▶» хаах товч энд хэрэггүй
+    return html + this.reportHtml().replace(/<button[^>]*data-act="close"[^>]*>[^<]*<\/button>/g, '');
+  }
+
   // ======================= өдрийн тайлан =======================
   private reportHtml(): string {
     const r = this.report!;
@@ -948,6 +981,15 @@ export class Panels {
         if (r.ok) { this.close(); return; }
         break;
       }
+      case 'logTab':
+        this.logTab = arg === 'report' ? 'report' : 'notes';
+        break;
+      case 'logPrev':
+        this.logIdx--;
+        break;
+      case 'logNext':
+        this.logIdx++;
+        break;
       case 'doUnload': {
         if (!d || !d.vehicle) break;
         const r = this.hooks.dispatch({ type: 'unloadCargo', vehicle: d.vehicle });
