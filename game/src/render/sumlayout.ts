@@ -8,6 +8,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { doorPoint, plotHouse, sumHeight, type SumLayout, type SumBuildingSpec, type SumSpecialPlotSpec, type SumXZ } from '../sim/systems/sumtown';
 
 import type { CamSolids } from './camclip';
+import { wallRing, type WalkConfig, type WalkSolids } from '../sim/systems/sumwalk';
 import { TOWN, BUILDING_CONFIG as BC, appendAt, makePlot } from './building';
 import { TownBuilder, labModel, gerSlotLocal } from './building/town';
 import { GER } from './ger/config';
@@ -39,6 +40,8 @@ export interface SumCenterBuild {
   colliders: Rect[];
   /** Камерын мөргөлдөөн (V4.5 R7): барилга, гэрийн хайрцаг/цилиндр */
   solids: CamSolids;
+  /** Алхалтын саад: барилга, гэр, хашааны хана (тоглогч, NPC түлхэгдэнэ) */
+  walk: WalkSolids;
   /** V3.5: лабораторийн барилгууд (улирлаар нэг mesh-д угсарна) */
   town: TownBuilder;
   heightAt: (x: number, z: number) => number;
@@ -155,7 +158,7 @@ function rectNearPolyline(r: Rect, pts: XZ[], clearance: number) {
 }
 
 // ---------- Үндсэн бүтээгч ----------
-export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'low' | 'mid' | 'high' } = {}): SumCenterBuild {
+export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'low' | 'mid' | 'high'; walk: Pick<WalkConfig, 'fenceT' | 'plotGateW'> }): SumCenterBuild {
   const rand = rng(opts.seed ?? 1);
   const quality = opts.quality ?? 'high';
   const group = new THREE.Group();
@@ -163,6 +166,8 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
   const homes: HomeDoor[] = [];
   const colliders: Rect[] = [];
   const solids: CamSolids = { boxes: [], cyls: [] };
+  const walk: WalkSolids = { boxes: [], cyls: [] };
+  const WK = opts.walk;   // data/worldmap.json sum3d.walk
   const disposables: { dispose(): void }[] = [];
   const FH = L.floorHeight;
   const roadPts = L.roads.map(r => ({ r, pts: r.points as XZ[] }));
@@ -288,6 +293,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
       if (horiz) { B.box(a, h, t, sx + ca, y, sz, 0, color); B.box(b, h, t, sx + cb, y, sz, 0, color); }
       else { B.box(t, h, a, sx, y, sz + ca, 0, color); B.box(t, h, b, sx, y, sz + cb, 0, color); }
     };
+    wallRing(walk.boxes, x, z, w, d, gateSide, gate, gateOff, WK.fenceT);
     side(x, z - d / 2, w, true, gateSide === 'n');
     side(x, z + d / 2, w, true, gateSide === 's');
     side(x - w / 2, z, d, false, gateSide === 'w');
@@ -308,6 +314,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
   const gers: SumGer[] = [];
   const ger = (x: number, z: number, color = '#F3EDE2', r = 3.2) => {
     gers.push({ x, y: heightAt(x, z), z, color, r });
+    walk.cyls.push({ x, z, r: r + 0.2 });
     solids.cyls.push({ x, z, r: r + 0.3, y0: heightAt(x, z) - 2, y1: heightAt(x, z) + 3.4 });   // хаалга урагшаа (+z); загвар — sumcenter.ts (makeGer)
   };
 
@@ -336,6 +343,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
       for (const w of m.wheels ?? []) { const r = rotLocal(w.position.x, w.position.z, e.rot ?? 0); wheels.push({ geo: w.geo, x: o.x + r.x, y: y0 + w.position.y, z: o.z + r.z, yaw: phi, style: w.style }); }
     });
     colliders.push({ id: b.id, x: b.x, z: b.z, w: b.w, d: b.d });
+    walk.boxes.push({ x: b.x, z: b.z, hw, hd });
     solids.boxes.push({ x: b.x, z: b.z, hw, hd, rot: 0, y0: yMin - 2, y1: y0 + probe.dims.ridgeH });
     if (b.yard) {
       const yx = b.x + (b.yard.dx ?? 0), yz = b.z + (b.yard.dz ?? 0);
@@ -348,6 +356,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
   /** Нэг айлын хашаа (лабораторийн makePlot): хашааны төв (x, z), хаалганы чиглэл gate. Орчуулга: хашааны локал нүүр +Z */
   const plotLab = (o: { x: number; z: number; w: number; d: number; gate: 'n' | 's' | 'e' | 'w'; kind: string; seed: number; roofColor?: string; extras?: string[];
     path?: 'walk' | 'dirt'; trees?: 'full' | 'bush'; kennel?: boolean; fenceColor: string; gateColor: string; gerColor?: string }): HomeDoor => {
+    wallRing(walk.boxes, o.x, o.z, o.w, o.d, o.gate, WK.plotGateW, 0, WK.fenceT);   // айлын хашаа: хаалга төвд (building/yard.ts gateX = 0)
     const vertical = o.gate === 'e' || o.gate === 'w', lw = vertical ? o.d : o.w, ld = vertical ? o.w : o.d, phi = GATE_PHI[o.gate], y = heightAt(o.x, o.z);
     const c = Math.cos(phi), s = Math.sin(phi), toW = (lx: number, lz: number) => ({ x: o.x + lx * c + lz * s, z: o.z - lx * s + lz * c });
     town.add((season, out) => {
@@ -362,6 +371,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     }
     const base = BC.special[o.kind]?.base ?? o.kind, hf = houseFootprint(base), sl = houseSlot(lw, ld, hf.w, hf.d);
     const dw = toW(sl.x + hf.door.x, sl.z + hf.door.z), hc = toW(sl.x, sl.z);
+    walk.boxes.push({ x: hc.x, z: hc.z, hw: (vertical ? hf.d : hf.w) / 2, hd: (vertical ? hf.w : hf.d) / 2 });
     solids.boxes.push({ x: hc.x, z: hc.z, hw: (vertical ? hf.d : hf.w) / 2, hd: (vertical ? hf.w : hf.d) / 2, rot: 0, y0: y - 2, y1: y + houseTop(o.kind) });
     return { x: dw.x, y, z: dw.z };
   };
@@ -426,6 +436,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     B.box(horizDoor ? 1.6 : 0.16, 2.2, horizDoor ? 0.16 : 1.6, dx, base, dz, 0, '#5C3A24');
     if (b.chimney) B.cyl(0.8, 1.1, b.chimney.h, b.x + b.chimney.dx, base, b.z + b.chimney.dz, '#7A746C', 8);
     colliders.push({ id: b.id, x: b.x, z: b.z, w: b.w, d: b.d });
+    walk.boxes.push({ x: b.x, z: b.z, hw: b.w / 2, hd: b.d / 2 });
     solids.boxes.push({ x: b.x, z: b.z, hw: b.w / 2, hd: b.d / 2, rot, y0: yMin - 2, y1: base + h + (b.roof.type === 'pagoda' ? 6 : b.roof.type === 'flat' ? 1 : Math.min(b.w, b.d) * 0.4) });
     const dp = doorPoint(b);
     const door: HomeDoor = { x: dp.x, y: base, z: dp.z };
@@ -582,6 +593,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
       labAt(lp, p.x, p.z);
       const K = BC.fuel.kiosk, kw = BC.shop.types.fuelKiosk;
       colliders.push({ id: (p.id as string) ?? 'fuel', x: p.x + K.x, z: p.z + K.z, w: kw.w, d: kw.d });
+      walk.boxes.push({ x: p.x + K.x, z: p.z + K.z, hw: kw.w / 2, hd: kw.d / 2 });
       solids.boxes.push({ x: p.x + K.x, z: p.z + K.z, hw: kw.w / 2, hd: kw.d / 2, rot: 0, y0: y - 2, y1: y + kw.wallH + 1 });
       continue;
     }
@@ -836,6 +848,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     ground: terrainMesh,
     colliders,
     solids,
+    walk,
     town,
     heightAt,
     setLook,

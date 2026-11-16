@@ -148,9 +148,10 @@
     ]
   ],
   "sum3d": {
-    "_doc": "V3.3 (Могод сум): байршил data/sumcenter.json-д. radius = 3D-ийн хязгаар (м, хүрвэл газрын зураг); shopR = дэлгүүр/цайны газрын хаалганаас E дарах зай; lotR = машин худалдааны талбайд машин руу ойртох зай.",
+    "_doc": "V3.3 (Могод сум): байршил data/sumcenter.json-д. radius = 3D-ийн хязгаар (м, хүрвэл газрын зураг); shopR = дэлгүүр/цайны газрын хаалганаас E дарах зай; lotR = машин худалдааны талбайд машин руу ойртох зай. walk = явган/NPC-ийн мөргөлдөөн (sim/systems/sumwalk.ts): bodyR/mountedR/vehicleR/npcR биеийн радиус (м), plotGateW айлын хашааны хаалганы өргөн, fenceT хананы зузаан, stuckSec/stuckSpeed гацалт илрүүлэх (сек, м/с), unstickStep түлхэх алхам (м).",
     "radius": 420,
     "shopR": 6,
-    "lotR": 3.5
+    "lotR": 3.5,
+    "walk": { "bodyR": 0.35, "mountedR": 0.9, "vehicleR": 1.6, "npcR": 0.35, "plotGateW": 4.4, "fenceT": 0.3, "stuckSec": 1.0, "stuckSpeed": 0.3, "unstickStep": 0.8 }
   }
 }

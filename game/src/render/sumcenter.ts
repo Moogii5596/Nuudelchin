@@ -31,6 +31,7 @@ import { buildCharacter, showOutfit, type CharacterRig } from './character/rig';
 import { EmotionQueue, postTalkEvent, talkBus, turnToward } from './character/talk';
 import { t } from '../i18n/i18n';
 import { NpcView } from './npcs';
+import type { WalkSolids } from '../sim/systems/sumwalk';
 
 /**
  * Оршин суугчид (хөдөлгөөнгүй): render/character-ийн `crowd` хэлбэр — төрх (data/characters.json crowd.looks: preset ×
@@ -102,7 +103,7 @@ export class SumCenterView {
   constructor(cfg: GameConfig) {
     this.cfg = cfg;
     const L = cfg.sumcenter;
-    this.built = buildSumCenter(L, { seed: 7 });
+    this.built = buildSumCenter(L, { seed: 7, walk: cfg.worldmap.sum3d.walk });
     this.ground = this.built.ground;
     this.group.add(this.built.group);
     const H = this.built.heightAt;
@@ -193,6 +194,7 @@ export class SumCenterView {
     this.syncCrowd(Infinity, Infinity);
     this.group.add(people);
     this.npcs = new NpcView(cfg);
+    this.npcs.walk = this.built.walk;
     this.group.add(this.npcs.group);
 
     // V3.2: айлын үүдэнд хэвтэх нохой (байрлалын хэш) — хөдөлгөөнгүй тул бүгдийг материалаар нь нэгтгэнэ (bakeStatic)
@@ -287,6 +289,8 @@ export class SumCenterView {
   heightAt = (x: number, z: number): number => this.built.heightAt(x, z);
   /** Камерын мөргөлдөөний саад (барилга, гэр) */
   get solids(): CamSolids { return this.built.solids; }
+  /** Алхалтын саад (барилга, хашаа, гэр) — тоглогч ба NPC-ийн мөргөлдөөн */
+  get walk(): WalkSolids { return this.built.walk; }
 
   /** V3.4: худалдаж авсан байшингийн шошго (R7: сумын төвд кадр бүр дуудагддаг тул ярилцлагыг ч эндээс) */
   syncTown(state: GameState, night = 0): void {

@@ -12,6 +12,7 @@ import { nearLotSlot, worldLimit } from '../sim/systems/sumtown';
 import { atExit, currentRoom, interiorService, nearEnterDoor } from '../sim/systems/interior';
 import { m } from '../sim/msg';
 import { gerRadiusFor } from '../sim/systems/gerLayout';
+import { nearestFreeSpot, pushOut, stuckStep, type StuckState, type WalkSolids } from '../sim/systems/sumwalk';
 
 export type ActionKind = 'shout' | 'scare' | 'call' | 'mount' | 'uurga' | 'pickup' | 'deposit' | 'dog' | 'vehicle' | 'map' | 'interior';
 
@@ -41,6 +42,9 @@ export class PlayerController {
   private scareCd = 0;
   /** Жолоодож буй тээврийн хурд (м/с, урагш +) */
   vSpeed = 0;
+  /** Сумын төвийн алхалтын саад (render/sumcenter.ts) — барилга, хашаа, гэр. null бол мөргөлдөөнгүй */
+  walk: WalkSolids | null = null;
+  private stuck: StuckState = { t: 0 };
 
   constructor(private cfg: GameConfig, private hooks: ControllerHooks) {
     window.addEventListener('keydown', (e) => {
@@ -295,6 +299,17 @@ export class PlayerController {
       x = home.x + ((x - home.x) / (hd || 1)) * hr;
       z = home.z + ((z - home.z) / (hd || 1)) * hr;
     }
+    // Сумын төв: барилга, хашааг нэвтлэхгүй (саадыг дагаж гулсана); N сек хөдлөхгүй бол чөлөөт цэг рүү түлхэнэ
+    if (p.place === 'sum' && this.walk) {
+      const W = this.cfg.worldmap.sum3d.walk;
+      const r = p.mounted ? W.mountedR : W.bodyR, q = pushOut(this.walk, x, z, r);
+      x = q.x; z = q.z;
+      // гацалт: оролт байхад нүүхгүй мөртлөө биед нь саад давхцсан (булан, гэнэт гарч ирсэн саад) — ойрын чөлөөт цэг рүү
+      if (stuckStep(this.stuck, true, Math.hypot(x - p.x, z - p.z) / Math.max(dt, 1e-3), dt, W) && pushOut(this.walk, p.x, p.z, r * 0.9).hit) {
+        const f = nearestFreeSpot(this.walk, p.x, p.z, r, W.unstickStep);
+        x = f.x; z = f.z;
+      }
+    } else this.stuck.t = 0;
     // Газрын хязгаар. Морьтой хүрвэл газрын зураг руу гарна (sim — movePlayer)
     const R = Math.hypot(x, z);
     const lim = worldLimit(this.cfg, p.place);
@@ -348,6 +363,10 @@ export class PlayerController {
         z = home.z + ((z - home.z) / (hd || 1)) * hr;
         v *= 0.3;
       }
+    }
+    if (p.place === 'sum' && this.walk) {   // тээвэр барилга, хашаа мөргөхгүй
+      const q = pushOut(this.walk, x, z, this.cfg.worldmap.sum3d.walk.vehicleR);
+      if (q.hit) { x = q.x; z = q.z; v *= 0.3; }
     }
     if (heading > Math.PI) heading -= Math.PI * 2;
     if (heading < -Math.PI) heading += Math.PI * 2;

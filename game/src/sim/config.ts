@@ -33,6 +33,7 @@ import type { StuckConfig } from './systems/safety';
 import { validateDifficultyConfig, type DifficultyConfig } from './systems/difficulty';
 import { validateInteriors, type InteriorsConfig } from './systems/interior';
 import type { GerSimConfig } from './systems/gerLayout';
+import type { WalkConfig } from './systems/sumwalk';
 import { lotSlots, sumDoors, allBuildings, TRADE_ROLES, type SumLayout } from './systems/sumtown';
 
 export type Species = 'sheep' | 'goat' | 'cow' | 'horse';
@@ -240,6 +241,8 @@ export interface WorldMapConfig {
     shopR: number;
     /** Машин худалдааны талбайд машин руу ойртох зай (м) */
     lotR: number;
+    /** Явган/NPC-ийн мөргөлдөөн (sim/systems/sumwalk.ts) */
+    walk: WalkConfig;
   };
 }
 
@@ -279,11 +282,11 @@ export interface GameConfig {
   difficulty: DifficultyConfig;
   /** M6.5: замын тэмдэг — data/milestones.json */
   milestones: MilestonesConfig;
+  /** M6.12: явуулын худалдаачин — data/trader.json */
+  trader: TraderConfig;
   /** Гэрийн загварын хэмжээс, тавилгын байрлал (data/ger.json — render/ger-тэй хуваалцана; хаалганы цэг, дотор саад) */
   ger: GerSimConfig;
   start: { camp: string; home: string; vehicles: string[]; storageLevel: number; animals: StartAnimal[] };
-  /** M6.12: явуулын худалдаачин — data/trader.json */
-  trader: TraderConfig;
 }
 
 export function loadConfig(): GameConfig {
@@ -311,10 +314,10 @@ export function loadConfig(): GameConfig {
     ger: gerJson.ger as unknown as GerSimConfig,
     difficulty: difficultyJson as unknown as DifficultyConfig,
     milestones: milestonesJson as unknown as MilestonesConfig,
+    trader: traderJson as unknown as TraderConfig,
   };
   const errors = validateConfig(cfg);
   if (errors.length) {
-    trader: traderJson as unknown as TraderConfig,
     throw new Error('Тохиргооны алдаа (data/*.json):\n- ' + errors.join('\n- '));
   }
   return cfg;
@@ -379,10 +382,10 @@ export function validateConfig(cfg: GameConfig): string[] {
   e.push(...validateInteriors(cfg));
   e.push(...validateDifficultyConfig(cfg));
   e.push(...validateMilestones(cfg));
+  e.push(...validateTrader(cfg));
   if (!cfg.storage.levels[cfg.start.storageLevel]) e.push('start.storageLevel: агуулахын түвшин алга');
   for (const a of cfg.start.animals) if (!cfg.animals.species[a.species]) e.push(`start.animals: "${a.species}" алга`);
   return e;
-  e.push(...validateTrader(cfg));
 }
 
 /** V3.3: сумын төвийн байршил (data/sumcenter.json) ба worldmap.sum3d */
@@ -392,6 +395,8 @@ export function validateSumLayout(cfg: GameConfig): string[] {
   const S = cfg.worldmap.sum3d, L = cfg.sumcenter;
   if (!L || !S) return ['data/sumcenter.json, worldmap.sum3d хэрэгтэй'];
   if (!(S.radius > 50 && S.shopR > 0 && S.lotR > 0)) e.push('worldmap.sum3d: radius > 50, shopR > 0, lotR > 0');
+  const W = S.walk;
+  if (!W || !(W.bodyR > 0 && W.mountedR >= W.bodyR && W.vehicleR > 0 && W.npcR > 0 && W.plotGateW > 0 && W.fenceT > 0 && W.stuckSec > 0 && W.stuckSpeed >= 0 && W.unstickStep > 0)) e.push('worldmap.sum3d.walk: радиус, хаалга, зузаан, гацалтын утга эерэг');
   const [tw, td] = L.terrain.size;
   if (Math.min(tw, td) / 2 < S.radius) e.push('sumcenter.terrain.size: газар 3D-ийн хязгаарыг (radius) бүрхэх ёстой');
   if (Math.hypot(L.entry.x, L.entry.z) > S.radius - 6) e.push('sumcenter.entry: хязгаараас дотор байх ёстой');

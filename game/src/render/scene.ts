@@ -327,6 +327,7 @@ export class GameView {
     this.sum.group.visible = !camp;
     if (!camp) {
       this.sum.syncLot(state.vehicles);
+      this.sum.npcs.minuteFrac = Math.min(1, Math.max(0, alpha));   // NPC минут доторх алхалт жигд
       this.sum.syncTown(state, nightFactor(this.daylight));
       this.sum.syncLamps(nightFactor(this.daylight), this.cam.camera.position);
     }

@@ -11,6 +11,7 @@ import type { GameState } from '../sim/state';
 import { allBuildings, doorPoint, facingOf } from '../sim/systems/sumtown';
 import { npcAt, awayBuildings, type NpcDef, type NpcNow } from '../sim/systems/npc';
 import { seasonOf } from '../sim/systems/seasons';
+import { pushOut, type WalkSolids } from '../sim/systems/sumwalk';
 import { buildCharacter, showOutfit, type CharacterRig } from './character/rig';
 import { animateCharacter } from './character/animate';
 import { makeCrowdFar, type CrowdLook } from './character/crowd';
@@ -49,6 +50,10 @@ export class NpcView {
   private readonly maxLive = MAX_LIVE[quality] ?? 5;
   /** Камерын байрлал (scene тавина): камер дүрийн биед орвол тэр дүрийг нууна */
   camera: THREE.Vector3 | null = null;
+  /** Алхалтын саад (сумын төв) — гаднах NPC-ийг барилга, хашаанаас түлхэнэ */
+  walk: WalkSolids | null = null;
+  /** Одоогийн sim минутын дотор өнгөрсөн хувь 0–1 (scene.frame-ийн alpha) */
+  minuteFrac = 0;
 
   constructor(private readonly cfg: GameConfig) {
     this.group.name = 'npcs';
@@ -98,7 +103,8 @@ export class NpcView {
 
   // ---------- нийтлэг ----------
   private now(state: GameState): NpcNow[] {
-    return this.entries.map((e) => npcAt(this.cfg, e.def, state.time.day, state.time.minute));
+    // sim минутаар алхдаг (3 м/с × 0.33 с = 1 м үсрэлт) — кадрын хувиар (minuteFrac) минут доторх байрлалыг зөөлрүүлнэ
+    return this.entries.map((e) => npcAt(this.cfg, e.def, state.time.day, state.time.minute + this.minuteFrac));
   }
   private measure(e: Entry, x: number, z: number, dt: number): void {
     if (!e.placed) { e.placed = true; e.px = x; e.pz = z; e.speed = 0; return; }
@@ -117,6 +123,7 @@ export class NpcView {
     const kk = Math.min(1, dt * 7);
     e.ox += (tx - e.ox) * kk; e.oz += (tz - e.oz) * kk;
     x += e.ox; z += e.oz;
+    if (this.walk) { const q = pushOut(this.walk, x, z, this.cfg.worldmap.sum3d.walk.npcR); x = q.x; z = q.z; }   // барилга, хашааг нэвтлэхгүй
     this.measure(e, x, z, dt);
     const target = talking ? Math.atan2(playerX - x, playerZ - z) : n.heading;
     e.yaw = turnToward(e.yaw, target, talking ? characters.talk.turnRate : 8, dt);
