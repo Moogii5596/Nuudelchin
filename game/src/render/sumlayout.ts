@@ -166,7 +166,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
   const homes: HomeDoor[] = [];
   const colliders: Rect[] = [];
   const solids: CamSolids = { boxes: [], cyls: [] };
-  const walk: WalkSolids = { boxes: [], cyls: [] };
+  const walk: WalkSolids = { boxes: [], cyls: [], yards: [] };
   const WK = opts.walk;   // data/worldmap.json sum3d.walk
   const disposables: { dispose(): void }[] = [];
   const FH = L.floorHeight;
@@ -294,6 +294,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
       else { B.box(t, h, a, sx, y, sz + ca, 0, color); B.box(t, h, b, sx, y, sz + cb, 0, color); }
     };
     wallRing(walk.boxes, x, z, w, d, gateSide, gate, gateOff, WK.fenceT);
+    walk.yards!.push({ x, z, w, d, gate: gateSide, off: gateOff, gw: gate });
     side(x, z - d / 2, w, true, gateSide === 'n');
     side(x, z + d / 2, w, true, gateSide === 's');
     side(x - w / 2, z, d, false, gateSide === 'w');
@@ -357,6 +358,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
   const plotLab = (o: { x: number; z: number; w: number; d: number; gate: 'n' | 's' | 'e' | 'w'; kind: string; seed: number; roofColor?: string; extras?: string[];
     path?: 'walk' | 'dirt'; trees?: 'full' | 'bush'; kennel?: boolean; fenceColor: string; gateColor: string; gerColor?: string }): HomeDoor => {
     wallRing(walk.boxes, o.x, o.z, o.w, o.d, o.gate, WK.plotGateW, 0, WK.fenceT);   // айлын хашаа: хаалга төвд (building/yard.ts gateX = 0)
+    walk.yards!.push({ x: o.x, z: o.z, w: o.w, d: o.d, gate: o.gate, off: 0, gw: WK.plotGateW });
     const vertical = o.gate === 'e' || o.gate === 'w', lw = vertical ? o.d : o.w, ld = vertical ? o.w : o.d, phi = GATE_PHI[o.gate], y = heightAt(o.x, o.z);
     const c = Math.cos(phi), s = Math.sin(phi), toW = (lx: number, lz: number) => ({ x: o.x + lx * c + lz * s, z: o.z - lx * s + lz * c });
     town.add((season, out) => {

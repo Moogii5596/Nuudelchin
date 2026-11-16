@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { nearestFreeSpot, pushOut, stuckStep, wallRing, type WalkBox, type WalkSolids } from '../src/sim/systems/sumwalk';
+import { chaseVia, nearestFreeSpot, pushOut, stuckStep, wallRing, yardWaypoint, type WalkBox, type WalkSolids, type WalkYard } from '../src/sim/systems/sumwalk';
 
 const solids = (boxes: WalkBox[], cyls: WalkSolids['cyls'] = []): WalkSolids => ({ boxes, cyls });
 
@@ -87,5 +87,41 @@ describe('sumwalk: хаалганаас гарах зам хашаагаар х�
       if (!out) trapped.push(s.id);
     }
     expect(trapped).toEqual([]);
+  });
+});
+
+describe('sumwalk: хашааны хаалгаар дамжуулах (render NPC)', () => {
+  // 20×20 хашаа, хаалга урд (s, z=+10) талд, төвд (4.4 м нүх)
+  const y: WalkYard = { x: 0, z: 0, w: 20, d: 20, gate: 's', off: 0, gw: 4.4 };
+  const boxes: WalkBox[] = [];
+  wallRing(boxes, 0, 0, 20, 20, 's', 4.4, 0, 0.3);
+  const s = solids(boxes);
+  it('хашааны дотроос гадагш хана гатлах бол эхлээд хаалганы дотор цэг', () => {
+    const wp = yardWaypoint([y], { x: -6, z: 0 }, { x: -6, z: 14 });
+    expect(wp).not.toBeNull();
+    expect(Math.abs(wp!.x)).toBeLessThan(0.01);
+    expect(wp!.z).toBeLessThan(10);
+  });
+  it('хаалганы ойр байвал шууд гаднах цэг рүү; хоёулаа нэг талд бол null', () => {
+    const wp = yardWaypoint([y], { x: 0.5, z: 8.9 }, { x: 0, z: 16 });
+    expect(wp!.z).toBeGreaterThan(10);
+    expect(yardWaypoint([y], { x: -6, z: 0 }, { x: 5, z: 3 })).toBeNull();
+  });
+  it('chaseVia: хана хөндлөн гарсан зорилт руу хаалгаар явж, ханын нүхээр л орно', () => {
+    let p = { x: -6, z: 0 };
+    const to = { x: -6, z: 14 };
+    let crossedAtGap = false;
+    for (let i = 0; i < 400; i++) {
+      const q = chaseVia([y], p, to, 0.2, 40);
+      if (p.z < 10 && q.z >= 10) crossedAtGap = Math.abs(q.x) < 2.2;
+      p = q;
+      if (Math.hypot(p.x - to.x, p.z - to.z) < 1e-6) break;
+    }
+    expect(crossedAtGap).toBe(true);
+    expect(Math.hypot(p.x - to.x, p.z - to.z)).toBeLessThan(1e-6);
+    expect(pushOut(s, 0, 10, 0.35).hit).toBe(false);
+  });
+  it('хэт хол зөрвөл шууд очно (снап)', () => {
+    expect(chaseVia([y], { x: -6, z: 0 }, { x: 30, z: 30 }, 0.2)).toEqual({ x: 30, z: 30 });
   });
 });

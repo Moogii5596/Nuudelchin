@@ -5,7 +5,9 @@
  */
 export interface WalkBox { x: number; z: number; hw: number; hd: number }
 export interface WalkCyl { x: number; z: number; r: number }
-export interface WalkSolids { boxes: WalkBox[]; cyls: WalkCyl[] }
+/** Хаалгатай хашаа (wallRing-ийн бүртгэл): NPC хаалгаар орж гарахад зам заана. off — хаалганы нүхийн төвөөс зөөлт, gw — нүхний өргөн */
+export interface WalkYard { x: number; z: number; w: number; d: number; gate: 'n' | 's' | 'e' | 'w'; off: number; gw: number }
+export interface WalkSolids { boxes: WalkBox[]; cyls: WalkCyl[]; yards?: WalkYard[] }
 
 export interface WalkConfig {
   /** Явган хүний биеийн радиус (м) */ bodyR: number;
@@ -87,4 +89,81 @@ export function nearestFreeSpot(s: WalkSolids, x: number, z: number, r: number, 
     }
   }
   return { x, z };
+}
+
+// ======================= Хашааны хаалгаар дамжуулах (render) =======================
+const GATE_N: Record<WalkYard['gate'], { x: number; z: number }> = { n: { x: 0, z: -1 }, s: { x: 0, z: 1 }, w: { x: -1, z: 0 }, e: { x: 1, z: 0 } };
+
+/** Хашааны доторх эсэх (хананы төв шугамаар) */
+export const inYard = (y: WalkYard, x: number, z: number): boolean => Math.abs(x - y.x) < y.w / 2 && Math.abs(z - y.z) < y.d / 2;
+
+/** Хаалганы нүхний гаднах ба дотоох цэг (хананаас `reach` метр), хананд перпендикуляр зай (nrm, + гадагш), хаалганы төвөөс хажуугийн зай (lat) */
+export function yardGate(y: WalkYard, reach: number): { out: { x: number; z: number }; in: { x: number; z: number }; nrm: (x: number, z: number) => number; lat: (x: number, z: number) => number } {
+  const n = GATE_N[y.gate], horiz = y.gate === 'n' || y.gate === 's', half = horiz ? y.d / 2 : y.w / 2;
+  const cx = y.x + (horiz ? y.off : 0) + n.x * half, cz = y.z + (horiz ? 0 : y.off) + n.z * half;   // хаалганы төв (ханан дээр)
+  return {
+    out: { x: cx + n.x * reach, z: cz + n.z * reach },
+    in: { x: cx - n.x * reach, z: cz - n.z * reach },
+    nrm: (x, z) => (x - cx) * n.x + (z - cz) * n.z,
+    lat: (x, z) => (horiz ? x - cx : z - cz),
+  };
+}
+
+/**
+ * `from` → `to` шулуун хашааны хана огтлох (нэг тал хашааны дотор, нөгөө тал гадна) бол хаалганы дундуур орох дараагийн цэг; үгүй бол null.
+ * Төлөвгүй: хаалганы нүхний зэрэгцээ бүсэд байвал шууд нөгөө талын цэг рүү, үгүй бол ойрын талын цэг рүү.
+ */
+export function yardWaypoint(yards: WalkYard[] | undefined, from: { x: number; z: number }, to: { x: number; z: number }, reach = 1.2): { x: number; z: number } | null {
+  if (!yards) return null;
+  for (const y of yards) {
+    const fi = inYard(y, from.x, from.z), ti = inYard(y, to.x, to.z);
+    if (fi === ti) continue;
+    const g = yardGate(y, reach), nr = g.nrm(from.x, from.z), lt = Math.abs(g.lat(from.x, from.z)), okLat = lt < Math.max(0.2, y.gw / 2 - 0.45);
+    if (!fi) return okLat && nr > -0.4 && nr < reach + 0.6 ? g.in : g.out;
+    return okLat && nr < 0.4 && nr > -(reach + 0.6) ? g.out : g.in;
+  }
+  return null;
+}
+
+/** NPC-ийн харуулах байрлал `p` нь sim-ийн зорилт `to` руу хашааны хаалгаар дамжин хөөнө (алхам ≤ maxStep). Хол зөрвөл шууд очино */
+export function chaseVia(yards: WalkYard[] | undefined, p: { x: number; z: number }, to: { x: number; z: number }, maxStep: number, snapDist = 40): { x: number; z: number } {
+  if (Math.hypot(to.x - p.x, to.z - p.z) > snapDist) return { x: to.x, z: to.z };
+  const wp = yardWaypoint(yards, p, to) ?? yardDetour(yards, p, to), g = wp ?? to, dx = g.x - p.x, dz = g.z - p.z, d = Math.hypot(dx, dz);
+  if (!wp && d <= maxStep) return { x: to.x, z: to.z };
+  if (d <= maxStep || d < 1e-6) return { x: g.x, z: g.z };
+  return { x: p.x + (dx / d) * maxStep, z: p.z + (dz / d) * maxStep };
+}
+
+/** a→b шулуун тэгш өнцөгтийг (hw, hd, төв cx, cz) огтлох эсэх (slab) */
+function segHitsRect(a: { x: number; z: number }, b: { x: number; z: number }, cx: number, cz: number, hw: number, hd: number): boolean {
+  let t0 = 0, t1 = 1;
+  for (const [p, q, c, h] of [[a.x, b.x, cx, hw], [a.z, b.z, cz, hd]] as const) {
+    const d = q - p, lo = c - h - p, hi = c + h - p;
+    if (Math.abs(d) < 1e-9) { if (lo > 0 || hi < 0) return false; continue; }
+    let u0 = lo / d, u1 = hi / d;
+    if (u0 > u1) [u0, u1] = [u1, u0];
+    t0 = Math.max(t0, u0); t1 = Math.min(t1, u1);
+    if (t0 > t1) return false;
+  }
+  return true;
+}
+
+/** Хоёр цэг хоёулаа хашааны гадна, гэвч шулуун нь хашааг хөндлөн гатлах бол хашааны булангаар тойрох дараагийн цэг; үгүй бол null */
+export function yardDetour(yards: WalkYard[] | undefined, from: { x: number; z: number }, to: { x: number; z: number }, margin = 0.9): { x: number; z: number } | null {
+  if (!yards) return null;
+  for (const y of yards) {
+    const hw = y.w / 2 + margin, hd = y.d / 2 + margin;
+    if (Math.abs(from.x - y.x) < hw && Math.abs(from.z - y.z) < hd) continue;
+    if (Math.abs(to.x - y.x) < hw && Math.abs(to.z - y.z) < hd) continue;
+    if (!segHitsRect(from, to, y.x, y.z, hw - 0.05, hd - 0.05)) continue;
+    let best: { x: number; z: number } | null = null, bestC = Infinity;
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+      const c = { x: y.x + sx * hw, z: y.z + sz * hd };
+      if (segHitsRect(from, c, y.x, y.z, hw - 0.05, hd - 0.05)) continue;
+      const cost = Math.hypot(c.x - from.x, c.z - from.z) + Math.hypot(to.x - c.x, to.z - c.z) + (segHitsRect(c, to, y.x, y.z, hw - 0.05, hd - 0.05) ? 1000 : 0);
+      if (cost < bestC) { bestC = cost; best = c; }
+    }
+    if (best) return best;
+  }
+  return null;
 }

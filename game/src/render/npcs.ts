@@ -11,7 +11,7 @@ import type { GameState } from '../sim/state';
 import { allBuildings, doorPoint, facingOf } from '../sim/systems/sumtown';
 import { npcAt, awayBuildings, type NpcDef, type NpcNow } from '../sim/systems/npc';
 import { seasonOf } from '../sim/systems/seasons';
-import { pushOut, type WalkSolids } from '../sim/systems/sumwalk';
+import { chaseVia, pushOut, type WalkSolids } from '../sim/systems/sumwalk';
 import { buildCharacter, showOutfit, type CharacterRig } from './character/rig';
 import { animateCharacter } from './character/animate';
 import { makeCrowdFar, type CrowdLook } from './character/crowd';
@@ -34,11 +34,20 @@ interface Entry {
   yaw: number;
   px: number; pz: number; speed: number;
   placed: boolean;
+  /** Хашааны хаалгаар дамжуулсан харуулах байрлал (sim-ийн зорилтыг хөөнө) */
+  rx: number; rz: number;
   lineNo: number;
   scale: number;
   /** тоглогчийг тойрох зөөлөн шилжилт (м) */
   ox: number; oz: number;
+  /** render-ийн цагийн хазайлт (мин, id-аас тогтмол) */
+  shift: number;
+  /** sim-д гаднаас гарсан ч (орсон, алга болсон) хаалгаар тойрч очих сүүлийн sim байрлал, үлдсэн хугацаа (с) */
+  last: { x: number; z: number; h: number } | null; ling: number;
 }
+
+interface NpcRender { shiftMin: [number, number]; lingerSec: number }
+const idHash = (s: string): number => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967296; };
 
 export class NpcView {
   readonly group = new THREE.Group();
@@ -56,9 +65,16 @@ export class NpcView {
   /** Одоогийн sim минутын дотор өнгөрсөн хувь 0–1 (scene.frame-ийн alpha) */
   minuteFrac = 0;
 
+  private get rcfg(): NpcRender { return (this.cfg.npcs as unknown as { render: NpcRender }).render; }
+  /** NPC бүрийн тогтмол хазайлт: ±[min, max] минут (data/npcs.json render.shiftMin) */
+  private shiftOf(id: string): number {
+    const [a, b] = this.rcfg.shiftMin;
+    return (idHash(id + ":s") < 0.5 ? -1 : 1) * (a + idHash(id + ":m") * (b - a));
+  }
+
   constructor(private readonly cfg: GameConfig) {
     this.group.name = 'npcs';
-    this.entries = cfg.npcs.npcs.map((def) => ({ def, rig: null, far: null, yaw: 0, px: 0, pz: 0, speed: 0, placed: false, lineNo: 0, scale: def.look.figure?.stature ?? 1, ox: 0, oz: 0 }));
+    this.entries = cfg.npcs.npcs.map((def) => ({ def, rig: null, far: null, yaw: 0, px: 0, pz: 0, speed: 0, placed: false, lineNo: 0, scale: def.look.figure?.stature ?? 1, ox: 0, oz: 0, rx: 0, rz: 0, shift: this.shiftOf(def.id), last: null, ling: 0 }));
   }
 
   // ---------- төрх ----------
@@ -105,7 +121,7 @@ export class NpcView {
   // ---------- нийтлэг ----------
   private now(state: GameState): NpcNow[] {
     // sim минутаар алхдаг (3 м/с × 0.33 с = 1 м үсрэлт) — кадрын хувиар (minuteFrac) минут доторх байрлалыг зөөлрүүлнэ
-    return this.entries.map((e) => npcAt(this.cfg, e.def, state.time.day, state.time.minute + this.minuteFrac));
+    return this.entries.map((e) => npcAt(this.cfg, e.def, state.time.day, state.time.minute + this.minuteFrac - e.shift));
   }
   private measure(e: Entry, x: number, z: number, dt: number): void {
     if (!e.placed) { e.placed = true; e.px = x; e.pz = z; e.speed = 0; return; }
@@ -118,6 +134,11 @@ export class NpcView {
     const rig = this.ensureRig(e);
     if (!e.yaw && !e.placed) e.yaw = n.heading;
     // тоглогчийн биеэс (1.15 м) түлхэгдэж зөөлөн тойрно — тоглогчийн дэргэд, биед нь зогсохгүй
+    // sim-ийн зам хашааг мэддэггүй: хашааны хоёр талд байвал хаалганы дундуур хөөнө
+    if (this.walk?.yards) {
+      const q = e.placed ? chaseVia(this.walk.yards, { x: e.rx, z: e.rz }, { x, z }, e.def.speed * 2 * dt) : { x, z };
+      e.rx = q.x; e.rz = q.z; x = q.x; z = q.z;
+    }
     const dx = x - playerX, dz = z - playerZ, d = Math.hypot(dx, dz), MINP = 1.15;
     let tx = 0, tz = 0;
     if (d < MINP) { const nx = d > 1e-3 ? dx / d : Math.cos(n.heading + Math.PI / 2), nz = d > 1e-3 ? dz / d : -Math.sin(n.heading + Math.PI / 2); tx = nx * MINP - dx; tz = nz * MINP - dz; }
@@ -184,8 +205,13 @@ export class NpcView {
     const nows = this.now(state), R = characters.crowd.nearR;
     const cand: { e: Entry; n: NpcNow; d: number }[] = [];
     this.entries.forEach((e, i) => {
-      const n = nows[i]!;
-      if (n.mode !== 'out') { this.hideEntry(e); return; }
+      let n = nows[i]!;
+      if (n.mode === 'out') { e.last = { x: n.x, z: n.z, h: n.heading }; e.ling = this.rcfg.lingerSec; }
+      else if (e.last && e.placed && e.ling > 0 && Math.hypot(e.rx - e.last.x, e.rz - e.last.z) > 0.4) {
+        // sim-д орчихсон (гэрт, барилгад) ч хашааны хаалгаар тойрч яваа: очих газартаа хүрээд л алга болно
+        e.ling -= dt;
+        n = { ...n, mode: 'out', x: e.last.x, z: e.last.z, heading: e.last.h, moving: true };
+      } else { e.last = null; this.hideEntry(e); return; }
       cand.push({ e, n, d: Math.hypot(n.x - px, n.z - pz) });
     });
     cand.sort((a, b) => a.d - b.d);
@@ -205,6 +231,7 @@ export class NpcView {
         if (c.e.rig) c.e.rig.root.visible = false;
         const f = this.ensureFar(c.e);
         this.measure(c.e, c.n.x, c.n.z, dt);
+        c.e.rx = c.n.x; c.e.rz = c.n.z;
         c.e.yaw = c.n.heading;
         f.visible = true;
         f.position.set(c.n.x, y, c.n.z);
@@ -223,6 +250,7 @@ export class NpcView {
 
   /** Тоглогч сумын төвөөс гадна/барилга дотор: гаднах NPC-үүдийг нууна */
   hideOutdoor(): void {
+    for (const e of this.entries) e.last = null;
     this.group.visible = false;
     for (const e of this.entries) if (e.rig && e.rig.root.parent === this.group) e.rig.root.visible = false;
     this.talkWith = null;
@@ -256,6 +284,7 @@ export class NpcView {
 
   /** Дотроос гарсан: NPC-үүдийг гаднах бүлэгт буцаана (нуугдсан) */
   leaveIndoor(): void {
+    for (const e of this.entries) e.last = null;
     for (const e of this.entries) if (e.rig) { this.group.add(e.rig.root); e.rig.root.visible = false; e.placed = false; }
     this.talkWith = null;
     this.showSpeech(null);
