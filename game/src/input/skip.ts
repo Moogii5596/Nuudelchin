@@ -50,7 +50,7 @@ export class SkipRun {
     if (this.stop) return;
     if (e.type === 'wolfHunt' || e.type === 'wolfKill' || e.type === 'wolfRaid' || e.type === 'dogFight') this.stop = 'wolf';
     else if (e.type === 'helperTrip') this.stop = 'driver';
-    else if (e.type === 'helperQuit' || e.type === 'otorLoss') this.stop = 'helper';
+    else if (e.type === 'helperQuit' || e.type === 'helperWarn' || e.type === 'otorLoss') this.stop = 'helper';
     else if (e.type === 'arrived' || e.type === 'arriveCamp') this.stop = 'arrived';
   }
 

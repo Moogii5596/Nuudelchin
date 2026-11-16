@@ -731,7 +731,11 @@ export class Panels {
     const cap = storage.capacity(cfg, this.state);
     const goalSU = cfg.economy.goalSheepUnits, walls = cfg.economy.goalGerWalls;
     const profit = r.moneyEnd - r.moneyStart;
-    const html = t('ui.daily_report_year_money', { day: r.day, x: SEASON_EMOJI[r.season], x2: SEASON_NAME[r.season], x3: yearOf(cfg, r.day), x4: inc.map(([k, n]) => `<tr><td>${k === 'animals' ? t('ui.animals_sold') : k === 'rent' ? t('ui.house_rent') : k === 'loan' ? t('ui.bank_loan') : `${PRODUCT_EMOJI[k] ?? ''} ${productName(k)}`}</td><td class="num good">+${fmtMoney(n ?? 0)}</td></tr>`).join('') || t('ui.no_income_today'), x5: exp.map(([k, n]) => `<tr><td>${expenseName(k)}</td><td class="num bad">${fmtMoney(-(n ?? 0))}</td></tr>`).join(''), x6: profit >= 0 ? 'good' : 'bad', x7: profit >= 0 ? '+' : '', x8: fmtMoney(profit), x9: fmtMoney(r.moneyEnd), x10: fmtMoney(totalInc), x11: fmtMoney(totalExp), x12: prodRows || '<tr><td class="muted" colspan="4">—</td></tr>', x13: fmtNum(r.storageUsed), cap, animals: r.animals, x14: fmtNum(r.sheepUnits), x15: r.births ? t('ui.born', { births: r.births }) : '', x16: r.deaths ? t('ui.died', { deaths: r.deaths }) : '', x17: Math.round(r.avgCondition * 100), x18: Math.round(r.avgGutFill * 100), x19: fmtNum(Math.round(r.avgEweKg * 10) / 10), x20: this.wolfKillsHtml(r), x21: t('camp.' + this.state.campId), campDays: r.campDays, x22: r.snow >= 0.5 ? t('ui.snow_cm_grazing_access', { x: Math.round(r.snow), x2: Math.round(campAccess(cfg, r.snow) * 100) }) : '', x23: r.hayFed > 0 ? t('ui.hay_bales_fed_left', { x: fmtNum(Math.round(r.hayFed * 10) / 10), x2: fmtNum(Math.round(r.hay * 10) / 10) }) : r.season === 'winter' || r.season === 'spring' ? t('ui.hay_feed_bales', { x: r.hay > 0 ? '' : 'bad', x2: fmtNum(Math.round(r.hay * 10) / 10) }) : '', x24: r.coldHit > 0 ? t('ui.animals_lost_condition_sleeping', { coldHit: r.coldHit }) : '', x25: Math.round(r.grass * 100), x26: r.campDegrade > 0.3 ? 'bad' : '', x27: Math.round(r.campDegrade * 100), x28: r.regrowthMult < 0.8 ? 'bad' : '', x29: Math.round(r.regrowthMult * 100), x30: r.campDegrade > 0.6 ? t('ui.the_pasture_is_degraded') : r.campDegrade > 0.3 ? t('ui.time_to_change_camp') : '', x31: Object.entries(r.camps).filter(([id]) => id !== this.state.campId).map(([id, c]) => `${t('camp.' + id)} ${Math.round(c.degrade * 100)}%`).join(' · '), goalSU, walls, x32: Math.min(100, (r.sheepUnits / goalSU) * 100), x33: this.state.home === 'ger' ? t('ui.ger_progress', { mark: goalGerReached(cfg, this.state) ? '✅' : '⬜', label: t('ger.size.' + this.state.homeSize), have: cfg.ger.sizes[this.state.homeSize]!.walls, need: cfg.economy.goalGerWalls }) : t('ui.ger', { x: fmtMoney(cfg.ger.sizes[cfg.ger.home.size]!.price) }), x34: fmtNum(r.sheepUnits), goalSU2: goalSU, x35: r.goalReached ? t('ui.goal_reached') : '' });
+    // «Зарлага»: туслах бүрийн цалин тусдаа мөр, дараа нь бусад зардал, эцэст нийт
+    const expRow = ([k, n]: [string, number]): string => `<tr><td>${k.startsWith('wage:') ? t('ui.wage_of', { name: esc(k.slice(5)) }) : expenseName(k)}</td><td class="num bad">${fmtMoney(-(n ?? 0))}</td></tr>`;
+    const wageExp = exp.filter(([k]) => k.startsWith('wage:')), otherExp = exp.filter(([k]) => !k.startsWith('wage:'));
+    const expRows = exp.length ? t('ui.expenses_head') + wageExp.map(expRow).join('') + otherExp.map(expRow).join('') + t('ui.expenses_total', { x: fmtMoney(-totalExp) }) : '';
+    const html = t('ui.daily_report_year_money', { day: r.day, x: SEASON_EMOJI[r.season], x2: SEASON_NAME[r.season], x3: yearOf(cfg, r.day), x4: inc.map(([k, n]) => `<tr><td>${k === 'animals' ? t('ui.animals_sold') : k === 'rent' ? t('ui.house_rent') : k === 'loan' ? t('ui.bank_loan') : `${PRODUCT_EMOJI[k] ?? ''} ${productName(k)}`}</td><td class="num good">+${fmtMoney(n ?? 0)}</td></tr>`).join('') || t('ui.no_income_today'), x5: expRows, x6: profit >= 0 ? 'good' : 'bad', x7: profit >= 0 ? '+' : '', x8: fmtMoney(profit), x9: fmtMoney(r.moneyEnd), x10: fmtMoney(totalInc), x11: fmtMoney(totalExp), x12: prodRows || '<tr><td class="muted" colspan="4">—</td></tr>', x13: fmtNum(r.storageUsed), cap, animals: r.animals, x14: fmtNum(r.sheepUnits), x15: r.births ? t('ui.born', { births: r.births }) : '', x16: r.deaths ? t('ui.died', { deaths: r.deaths }) : '', x17: Math.round(r.avgCondition * 100), x18: Math.round(r.avgGutFill * 100), x19: fmtNum(Math.round(r.avgEweKg * 10) / 10), x20: this.wolfKillsHtml(r), x21: t('camp.' + this.state.campId), campDays: r.campDays, x22: r.snow >= 0.5 ? t('ui.snow_cm_grazing_access', { x: Math.round(r.snow), x2: Math.round(campAccess(cfg, r.snow) * 100) }) : '', x23: r.hayFed > 0 ? t('ui.hay_bales_fed_left', { x: fmtNum(Math.round(r.hayFed * 10) / 10), x2: fmtNum(Math.round(r.hay * 10) / 10) }) : r.season === 'winter' || r.season === 'spring' ? t('ui.hay_feed_bales', { x: r.hay > 0 ? '' : 'bad', x2: fmtNum(Math.round(r.hay * 10) / 10) }) : '', x24: r.coldHit > 0 ? t('ui.animals_lost_condition_sleeping', { coldHit: r.coldHit }) : '', x25: Math.round(r.grass * 100), x26: r.campDegrade > 0.3 ? 'bad' : '', x27: Math.round(r.campDegrade * 100), x28: r.regrowthMult < 0.8 ? 'bad' : '', x29: Math.round(r.regrowthMult * 100), x30: r.campDegrade > 0.6 ? t('ui.the_pasture_is_degraded') : r.campDegrade > 0.3 ? t('ui.time_to_change_camp') : '', x31: Object.entries(r.camps).filter(([id]) => id !== this.state.campId).map(([id, c]) => `${t('camp.' + id)} ${Math.round(c.degrade * 100)}%`).join(' · '), goalSU, walls, x32: Math.min(100, (r.sheepUnits / goalSU) * 100), x33: this.state.home === 'ger' ? t('ui.ger_progress', { mark: goalGerReached(cfg, this.state) ? '✅' : '⬜', label: t('ger.size.' + this.state.homeSize), have: cfg.ger.sizes[this.state.homeSize]!.walls, need: cfg.economy.goalGerWalls }) : t('ui.ger', { x: fmtMoney(cfg.ger.sizes[cfg.ger.home.size]!.price) }), x34: fmtNum(r.sheepUnits), goalSU2: goalSU, x35: r.goalReached ? t('ui.goal_reached') : '' });
     // M6.5: өдрийн онцлох мөр — энэ өдөр хүрсэн замын тэмдэг
     const hl = r.milestones.length ? `<p class="good">${t('ms.highlight', { x: r.milestones.map((id) => t(cfg.milestones.stages.some((s) => s.id === id) ? 'ms.stage.' + id : 'ms.first.' + id)).join(', ') })}</p>` : '';
     return html.replace('</h2>', '</h2>' + hl);
@@ -812,7 +816,6 @@ export class Panels {
     const { cfg, state } = this;
     const H = cfg.helpers;
     const near = nearTeahouse(cfg, state);
-    const per = H.payEveryDays;
     const beds = bedsTotal(cfg, state);
     const used = bedsUsed(state);
     const icon = (m: { kind: string; sex: string }) => (m.kind === 'child' ? '🧒' : m.sex === 'f' ? '👩' : '👨');
@@ -820,9 +823,9 @@ export class Panels {
       const who = c.members.map((m) => `${icon(m)} ${m.name}${m.kind === 'child' ? t('ui.child_collector') : ''}`).join('<br>');
       const type = c.family ? t('ui.family_comes_with_their') : t('ui.single_needs_a_bed');
       const noBed = !c.family && used + 1 > beds;
-      return t('ui.days_hire', { who, type, x: fmtMoney(c.wage * per), per, id: c.id, x2: near && !noBed ? '' : 'disabled', x3: noBed ? t('ui.no_bed') : '' });
+      return t('ui.days_hire', { who, type, x: t('ui.per_day', { x: fmtMoney(c.wage) }), id: c.id, x2: near && !noBed ? '' : 'disabled', x3: noBed ? t('ui.no_bed') : '' });
     }).join('');
-    return t('ui.teahouse_herders_looking_for', { used, beds, per, x: rows ? t('ui.person_wage', { rows }) : t('ui.nobody_is_looking_for'), x2: near ? '' : t('ui.step_inside_the_teahouse'), refreshDays: H.teahouse.refreshDays });
+    return t('ui.teahouse_herders_looking_for', { used, beds, x: rows ? t('ui.person_wage', { rows }) : t('ui.nobody_is_looking_for'), x2: near ? '' : t('ui.step_inside_the_teahouse'), refreshDays: H.teahouse.refreshDays });
   }
 
   // ======================= туслахууд (M5) =======================
@@ -831,14 +834,10 @@ export class Panels {
     if (this.hv.mode === 'pay') return this.payHtml();
     const { cfg, state } = this;
     const hs = state.helpers;
-    const per = cfg.helpers.payEveryDays;
     const head = t('ui.helpers');
     if (!hs.list.length)
       return head + t('ui.you_have_no_helpers');
-    const total = hs.list.reduce((s, h) => s + h.wage, 0) * per;
-    const md = cfg.time.monthDays;
-    const left = (md - (state.time.day % md)) % md;
-    const nextPay = left === 0 ? t('ui.today_at_20_00') : t('ui.in_days', { left });
+    const total = hs.list.reduce((s, h) => s + h.wage, 0);
     const owned = (h: Helper) => state.animals.filter((a) => a.ownerId === h.id).length + hs.otor.reduce((s, g) => s + g.animals.filter((a) => a.ownerId === h.id).length, 0);
     const icon = (h: Helper) => (h.kind === 'child' ? '🧒' : h.sex === 'f' ? '👩' : '👨');
     const herdBtn = (h: Helper, g: HerdGroup) => `<button class="btn sm ${h.task === 'herd' && h.herd === g ? 'gold' : ''}" data-act="task:${h.id}|herd|${g}">${HERD_NAME[g]}</button>`;
@@ -869,10 +868,10 @@ export class Panels {
       const pay = h.task === 'otor' || h.trip ? '' : t('ui.pay_in_animals_fire', { id: h.id, id2: h.id });
       const own = owned(h);
       return `<tr><td>${icon(h)} <b>${h.name}</b>${h.family ? t('ui.family') : ''}<br><span class="muted">${what}</span></td>
-        <td class="num">${fmtMoney(h.wage * per)}<br><span class="muted">${h.prepaid > 0 ? t('ui.advance', { x: fmtMoney(h.prepaid) }) : h.prepaid < 0 ? t('ui.debt', { x: fmtMoney(-h.prepaid) }) : ''}${own ? t('ui.animals', { own }) : ''}</span></td>
+        <td class="num">${t('ui.per_day', { x: fmtMoney(h.wage) })}<br><span class="muted">${h.prepaid > 0 ? t('ui.advance', { x: fmtMoney(h.prepaid) }) : (h.owed ?? 0) > 0 ? `<span class="bad">${t('ui.debt', { x: fmtMoney(h.owed ?? 0) })}</span>` : ''}${own ? t('ui.animals', { own }) : ''}</span></td>
         <td>${btns}<br>${pay}</td></tr>`;
     }).join('');
-    return head + t('ui.wages_every_days_total', { per, x: fmtMoney(total), nextPay, x2: bedsUsed(state), x3: bedsTotal(cfg, state), x4: spareTents(state), rows });
+    return head + t('ui.wages_every_days_total', { x: fmtMoney(total), x2: bedsUsed(state), x3: bedsTotal(cfg, state), x4: spareTents(state), rows });
   }
 
   private otorHtml(): string {
@@ -899,15 +898,14 @@ export class Panels {
     const { cfg, state } = this;
     const h = state.helpers.list.find((x) => x.id === this.hv.helper);
     if (!h) return '';
-    const per = cfg.helpers.payEveryDays;
     const fam = state.helpers.list.filter((x) => x.familyId === h.familyId);
-    const due = fam.reduce((s, x) => s + x.wage, 0) * per;
+    const due = fam.reduce((s, x) => s + x.wage, 0);
     const prepaid = fam.reduce((s, x) => s + x.prepaid, 0);
     const rows = this.animalGroups().map((g) => {
       const price = salePrice(g.list[0]!, cfg.animals);
       return t('ui.give_1', { label: g.label, length: g.list.length, x: fmtMoney(price), key: g.key });
     }).join('');
-    return t('ui.pay_in_animals_the', { name: h.name, per, x: fmtMoney(due), x2: fmtMoney(prepaid), x3: due ? Math.floor(prepaid / due) : 0, rows });
+    return t('ui.pay_in_animals_the', { name: h.name, x: fmtMoney(due), x2: fmtMoney(prepaid), x3: due ? Math.floor(prepaid / due) : 0, rows });
   }
 
   // ======================= үйлдлүүд =======================

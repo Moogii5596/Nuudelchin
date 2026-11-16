@@ -55,8 +55,12 @@ export interface Helper {
   family: boolean;       // айлаар хөлсөлсөн (өөрийн гэртэй)
   task: HelperTask;
   herd: HerdGroup;
-  wage: number;          // өдрийн цалин
+  wage: number;          // өдрийн цалин (₮, бүхэл) = сарын цалин / wageMonthDays
   prepaid: number;       // малаар урьдчилж төлсөн (₮)
+  /** Төлөгдөөгүй цалингийн өр (₮) — дараагийн өдрийн цалинтай хамт нэхэгдэнэ (v22) */
+  owed?: number;
+  /** Цалин бүрэн төлөгдөөгүй дараалсан өдөр (v22) */
+  unpaidDays?: number;
   x: number;
   z: number;
   heading: number;
@@ -121,6 +125,7 @@ export interface HelpersState {
 
 export type HelperEvent =
   | { type: 'helperQuit'; names: string[]; reason: 'wage' | 'fired' }
+  | { type: 'helperWarn'; names: string[] }   // цалингүй warnDays өдөр — явах гэж байна
   | { type: 'helperTrip'; name: string; income: number }
   | { type: 'otorLoss'; campId: string; species: Species };
 
@@ -169,7 +174,7 @@ export function refreshCandidates(cfg: GameConfig, state: GameState): void {
   if (hs.candidates.length && day - hs.candidatesDay < t.refreshDays) return;
   const rng = new Rng((state.seed ^ Math.imul(day + 17, 2654435761)) >>> 0);
   const n = rng.int(t.min, t.max);
-  const W = cfg.helpers.wage;
+  const W = cfg.helpers.wageMonthly;
   // Нэр давхардахгүй: ажиллаж буй туслахууд болон бусад нэр дэвшигчдийн нэрийг алгасна
   const used = new Set(hs.list.map((h) => h.name));
   const pick = (arr: string[]) => {
@@ -193,7 +198,7 @@ export function refreshCandidates(cfg: GameConfig, state: GameState): void {
       members.push({ name: pick(cfg.helpers.names[sex]), kind: 'adult', sex });
     }
     const sum = members.reduce((s, m) => s + W[m.kind], 0);
-    hs.candidates.push({ id: day * 10 + i, family, members, wage: Math.round((family ? sum * cfg.helpers.familyWageMult : sum) / 100) * 100 });
+    hs.candidates.push({ id: day * 10 + i, family, members, wage: dailyWage(cfg, family ? sum * cfg.helpers.familyWageMult : sum) });
   }
   hs.candidatesDay = day;
 }
@@ -212,7 +217,7 @@ export function hire(cfg: GameConfig, state: GameState, candidateId: number, pro
   const c = hs.candidates.find((x) => x.id === candidateId);
   if (!c) return m('sim.no_such_person');
   if (!c.family && bedsUsed(state) + 1 > bedsTotal(cfg, state)) return m('sim.a_single_helper_needs');
-  const W = cfg.helpers.wage;
+  const W = cfg.helpers.wageMonthly;
   const sum = c.members.reduce((s, m) => s + W[m.kind], 0);
   const familyId = hs.nextId;
   if (c.family) {
@@ -233,6 +238,8 @@ export function hire(cfg: GameConfig, state: GameState, candidateId: number, pro
       herd: !herdTaken('sheep') ? 'sheep' : !herdTaken('cow') ? 'cow' : 'horse',
       wage: Math.round((W[m.kind] / sum) * c.wage),
       prepaid: 0,
+      owed: 0,
+      unpaidDays: 0,
       x: 0,
       z: 0,
       heading: 0,
@@ -310,26 +317,56 @@ export function playerOwned(a: Animal): boolean {
   return a.ownerId === undefined;
 }
 
-/** Сар бүрийн цалин: эхлээд урьдчилж төлснөөс, дараа нь мөнгөөр. Хүрэхгүй бол айлаараа явна */
+/** Өдрийн цалин (₮, бүхэл): сарын цалин / wageMonthDays */
+export function dailyWage(cfg: GameConfig, monthly: number): number {
+  return Math.round(monthly / cfg.helpers.wageMonthDays);
+}
+
+/**
+ * Өдөр бүрийн цалин (өдрийн төгсгөлд, бусад зардалтай хамт): туслах бүрд өдрийн цалин + өмнөх өр.
+ * Эхлээд малаар өгсөн урьдчилгаанаас, дараа нь мөнгөөр. Мөнгө хүрэхгүй бол байгааг нь өгөх ёстой дүнгийн харьцаагаар
+ * хувааж төлөөд үлдэгдлийг өр (owed) болгоно. Айл бүрэн цалингүй warnDays дахь өдөр «явах гэж байна» мэдэгдэл,
+ * quitDays дахь өдөр айлаараа явна (аялал/отор дээр бол буцаж иртэл хүлээнэ).
+ * Тайланд туслах бүр тусдаа мөр: today.expenses['wage:<нэр>'].
+ */
 export function payWages(cfg: GameConfig, state: GameState): HelperEvent[] {
   const ev: HelperEvent[] = [];
-  const fams = [...new Set(state.helpers.list.map((h) => h.familyId))];
-  for (const fid of fams) {
-    const members = state.helpers.list.filter((h) => h.familyId === fid);
-    let due = members.reduce((s, m) => s + m.wage, 0) * cfg.helpers.payEveryDays;
-    for (const m of members) {
-      const use = Math.min(m.prepaid, due);
-      m.prepaid -= use;
-      due -= use;
+  const U = cfg.helpers.unpaid;
+  const list = state.helpers.list;
+  const due = new Map<Helper, number>();
+  for (const h of list) due.set(h, h.wage + (h.owed ?? 0));
+  // Малаар өгсөн урьдчилгаа айлын дундынх: айлын гишүүдийн цалинг эхлээд түүнээс хасна
+  for (const giver of list) {
+    for (const h of list) {
+      if (giver.prepaid <= 0) break;
+      if (h.familyId !== giver.familyId) continue;
+      const use = Math.min(giver.prepaid, due.get(h)!);
+      giver.prepaid -= use;
+      due.set(h, due.get(h)! - use);
     }
-    if (due <= 0) continue;
-    if (state.money >= due) {
-      state.money -= due;
-      state.today.expenses.wages = (state.today.expenses.wages ?? 0) + due;
-    } else if (members.some((m) => m.trip || m.task === 'otor')) {
-      // Аялал/отор дээр байгаа бол өрөнд үлдээнэ (дараа сар)
-      members[0]!.prepaid -= due;
-    } else ev.push({ type: 'helperQuit', names: leave(state, fid), reason: 'wage' });
+  }
+  const total = [...due.values()].reduce((a, n) => a + n, 0);
+  const avail = Math.max(0, Math.floor(state.money));
+  const share = total > avail ? avail / total : 1;
+  let paidAll = 0;
+  for (const h of list) {
+    const d = due.get(h)!;
+    const paid = share >= 1 ? d : Math.floor(d * share);
+    h.owed = d - paid;
+    paidAll += paid;
+    if (paid > 0) {
+      const key = 'wage:' + h.name;
+      state.today.expenses[key] = (state.today.expenses[key] ?? 0) + paid;
+    }
+  }
+  state.money -= paidAll;
+  for (const fid of [...new Set(list.map((h) => h.familyId))]) {
+    const members = state.helpers.list.filter((h) => h.familyId === fid);
+    const unpaid = members.some((m) => (m.owed ?? 0) > 0);
+    const days = unpaid ? Math.max(...members.map((m) => m.unpaidDays ?? 0)) + 1 : 0;
+    for (const m of members) m.unpaidDays = days;
+    if (days >= U.quitDays && !members.some((m) => m.trip || m.task === 'otor')) ev.push({ type: 'helperQuit', names: leave(state, fid), reason: 'wage' });
+    else if (days === U.warnDays) ev.push({ type: 'helperWarn', names: members.map((m) => m.name) });
   }
   return ev;
 }

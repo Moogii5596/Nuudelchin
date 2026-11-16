@@ -140,10 +140,7 @@ export class Sim {
     for (const ev of events) {
       if (ev.type === 'hour') for (const e2 of traderHour(state)) this.emit(e2);
       if (ev.type === 'dayEnd') this.endDay(ev.day);
-      else if (ev.type === 'monthEnd') {
-        for (const e2 of payWages(cfg, state)) this.emit(e2);
-        townMonthly(cfg, state);
-      }
+      else if (ev.type === 'monthEnd') townMonthly(cfg, state);
       else if (ev.type === 'nightStart') {
         sleepAll(state);
         state.today.coldHit += coldNight(cfg, state, (a) => atHome(cfg, a));
@@ -211,6 +208,8 @@ export class Sim {
     for (const e2 of town.events) this.emit(e2);
     if (!town.livingCovered) this.spend('living', cfg.economy.dailyLivingCost);
     if (state.dogs.length) this.spend('dogFood', state.dogs.length * cfg.dogs.foodPerDay);
+    // Туслахын өдрийн цалин — бусад өдрийн зардалтай хамт нэг удаа (тайланд туслах бүр тусдаа мөр)
+    const wageEvents = payWages(cfg, state);
     dogsDaily(cfg, state);
 
     // mvp-spec §10.2: гол замын тэмдэг = том гэр (≥ goalGerWalls ханат) + ≥ goalSheepUnits хонин толгой (эхлэл бага 4 ханат)
@@ -256,6 +255,7 @@ export class Sim {
     state.dayStartMoney = state.money;
     state.today = emptyDayStats();
     addReport(cfg, state, report);
+    for (const e2 of wageEvents) this.emit(e2);
     this.emit({ type: 'dayReport', report });
   }
 

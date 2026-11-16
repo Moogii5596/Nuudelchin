@@ -71,10 +71,10 @@ SYM game/src/input/touch.ts:266 method TouchUI.fullscreen
 SYM game/src/input/touch.ts:279 method TouchUI.paused
 SYM game/src/input/touch.ts:283 method TouchUI.portrait
 SYM game/src/input/touch.ts:288 method TouchUI.update
-FILE game/src/main.ts 38.1KB 645L
+FILE game/src/main.ts 38.2KB 646L
 SYM game/src/main.ts:52 fn toast
 SYM game/src/main.ts:77 fn start
-SYM game/src/main.ts:620 fn boot
+SYM game/src/main.ts:621 fn boot
 FILE game/src/persist/autosave.ts 4.7KB 102L exports: SaveReason,AutosaveDeps,Autosave,attachSimEvents,attachPageEvents
 SYM game/src/persist/autosave.ts:11 type SaveReason
 SYM game/src/persist/autosave.ts:13 interface AutosaveDeps
@@ -958,7 +958,7 @@ SYM game/src/render/ui/names.ts:101 const SEASON_EMOJI
 SYM game/src/render/ui/names.ts:103 const CAMP_HINT
 SYM game/src/render/ui/names.ts:110 const WATER_NAME
 SYM game/src/render/ui/names.ts:111 const WOLF_LEVEL_NAME
-FILE game/src/render/ui/panels.ts 77.1KB 1218L exports: UiHooks,Panels
+FILE game/src/render/ui/panels.ts 77.4KB 1216L exports: UiHooks,Panels
 SYM game/src/render/ui/panels.ts:98 fn esc
 SYM game/src/render/ui/panels.ts:100 interface UiHooks
 SYM game/src/render/ui/panels.ts:109 class Panels
@@ -989,15 +989,15 @@ SYM game/src/render/ui/panels.ts:671 method Panels.arriveHtml
 SYM game/src/render/ui/panels.ts:698 method Panels.openLog
 SYM game/src/render/ui/panels.ts:704 method Panels.logHtml
 SYM game/src/render/ui/panels.ts:722 method Panels.reportHtml
-SYM game/src/render/ui/panels.ts:740 method Panels.wolfKillsHtml
-SYM game/src/render/ui/panels.ts:747 method Panels.dogsHtml
-SYM game/src/render/ui/panels.ts:770 method Panels.campsHtml
-SYM game/src/render/ui/panels.ts:801 method Panels.cheatHtml
-SYM game/src/render/ui/panels.ts:811 method Panels.teahouseHtml
-SYM game/src/render/ui/panels.ts:829 method Panels.helpersHtml
-SYM game/src/render/ui/panels.ts:878 method Panels.otorHtml
-SYM game/src/render/ui/panels.ts:898 method Panels.payHtml
-SYM game/src/render/ui/panels.ts:914 method Panels.act
+SYM game/src/render/ui/panels.ts:744 method Panels.wolfKillsHtml
+SYM game/src/render/ui/panels.ts:751 method Panels.dogsHtml
+SYM game/src/render/ui/panels.ts:774 method Panels.campsHtml
+SYM game/src/render/ui/panels.ts:805 method Panels.cheatHtml
+SYM game/src/render/ui/panels.ts:815 method Panels.teahouseHtml
+SYM game/src/render/ui/panels.ts:832 method Panels.helpersHtml
+SYM game/src/render/ui/panels.ts:877 method Panels.otorHtml
+SYM game/src/render/ui/panels.ts:897 method Panels.payHtml
+SYM game/src/render/ui/panels.ts:912 method Panels.act
 FILE game/src/render/ui/sleepPanel.ts 2.4KB 49L exports: SleepCtx,SleepPanel
 SYM game/src/render/ui/sleepPanel.ts:12 interface SleepCtx
 SYM game/src/render/ui/sleepPanel.ts:19 fn hhmm
@@ -1152,7 +1152,7 @@ SYM game/src/sim/save.ts:90 fn isObj
 SYM game/src/sim/save.ts:91 fn fin
 SYM game/src/sim/save.ts:92 fn u32
 SYM game/src/sim/save.ts:97 fn validateState
-FILE game/src/sim/sim.ts 12.9KB 271L exports: DayReport,SimEvent,Sim
+FILE game/src/sim/sim.ts 13.1KB 271L exports: DayReport,SimEvent,Sim
 SYM game/src/sim/sim.ts:35 interface DayReport
 SYM game/src/sim/sim.ts:59 type SimEvent
 SYM game/src/sim/sim.ts:61 class Sim
@@ -1161,12 +1161,12 @@ SYM game/src/sim/sim.ts:89 method Sim.emit
 SYM game/src/sim/sim.ts:93 method Sim.command
 SYM game/src/sim/sim.ts:102 method Sim.emitTravel
 SYM game/src/sim/sim.ts:107 method Sim.step
-SYM game/src/sim/sim.ts:173 method Sim.refreshQuality
-SYM game/src/sim/sim.ts:178 method Sim.runDays
-SYM game/src/sim/sim.ts:183 method Sim.endDay
+SYM game/src/sim/sim.ts:170 method Sim.refreshQuality
+SYM game/src/sim/sim.ts:175 method Sim.runDays
+SYM game/src/sim/sim.ts:180 method Sim.endDay
 SYM game/src/sim/sim.ts:262 method Sim.spend
 SYM game/src/sim/sim.ts:268 method Sim.random
-FILE game/src/sim/state.ts 19.4KB 388L exports: SAVE_VERSION,ProductId,PRODUCTS,AnimalMode,Animal,GroundItem,Batch,ProcessorKind,ProcessorState,VehicleId,VEHICLES,BuyOrder,Place,InteriorState,+12
+FILE game/src/sim/state.ts 20.0KB 399L exports: SAVE_VERSION,ProductId,PRODUCTS,AnimalMode,Animal,GroundItem,Batch,ProcessorKind,ProcessorState,VehicleId,VEHICLES,BuyOrder,Place,InteriorState,+12
 SYM game/src/sim/state.ts:21 const SAVE_VERSION
 SYM game/src/sim/state.ts:23 type ProductId
 SYM game/src/sim/state.ts:24 const PRODUCTS
@@ -1191,8 +1191,8 @@ SYM game/src/sim/state.ts:236 fn emptyDayStats
 SYM game/src/sim/state.ts:240 fn newAnimal
 SYM game/src/sim/state.ts:273 fn createInitialState
 SYM game/src/sim/state.ts:342 const MIGRATIONS
-SYM game/src/sim/state.ts:376 const MIN_SAVE_VERSION
-SYM game/src/sim/state.ts:379 fn migrateState
+SYM game/src/sim/state.ts:387 const MIN_SAVE_VERSION
+SYM game/src/sim/state.ts:390 fn migrateState
 FILE game/src/sim/systems/animals.ts 5.2KB 123L exports: AnimalBody,frameKg,liveWeightKg,salePrice,buyPrice,sheepUnits,herdSheepUnits,grazingSheepUnits,dailyConditionDelta,dailyAnimals
 SYM game/src/sim/systems/animals.ts:8 interface AnimalBody
 SYM game/src/sim/systems/animals.ts:21 fn frameKg
@@ -1282,61 +1282,62 @@ SYM game/src/sim/systems/grazing.ts:132 fn moveToward
 SYM game/src/sim/systems/grazing.ts:155 fn grazingStep
 SYM game/src/sim/systems/grazing.ts:247 fn eat
 SYM game/src/sim/systems/grazing.ts:267 fn driveFlock
-FILE game/src/sim/systems/helpers.ts 45.7KB 937L exports: HelperKind,HelperTask,HerdGroup,HelperTrip,Helper,CandidateMember,Candidate,OtorGroup,Dwelling,HelpersState,HelperEvent,newHelpersState,bedsTotal,bedsUsed,+25
+FILE game/src/sim/systems/helpers.ts 47.9KB 974L exports: HelperKind,HelperTask,HerdGroup,HelperTrip,Helper,CandidateMember,Candidate,OtorGroup,Dwelling,HelpersState,HelperEvent,newHelpersState,bedsTotal,bedsUsed,+26
 SYM game/src/sim/systems/helpers.ts:36 type HelperKind
 SYM game/src/sim/systems/helpers.ts:37 type HelperTask
 SYM game/src/sim/systems/helpers.ts:38 type HerdGroup
 SYM game/src/sim/systems/helpers.ts:40 interface HelperTrip
 SYM game/src/sim/systems/helpers.ts:49 interface Helper
-SYM game/src/sim/systems/helpers.ts:75 interface CandidateMember
-SYM game/src/sim/systems/helpers.ts:81 interface Candidate
-SYM game/src/sim/systems/helpers.ts:88 interface OtorGroup
-SYM game/src/sim/systems/helpers.ts:100 interface Dwelling
-SYM game/src/sim/systems/helpers.ts:109 interface HelpersState
-SYM game/src/sim/systems/helpers.ts:122 type HelperEvent
-SYM game/src/sim/systems/helpers.ts:127 fn newHelpersState
-SYM game/src/sim/systems/helpers.ts:134 fn bedsTotal
-SYM game/src/sim/systems/helpers.ts:138 fn bedsUsed
-SYM game/src/sim/systems/helpers.ts:143 fn addDwelling
-SYM game/src/sim/systems/helpers.ts:149 fn spareTents
-SYM game/src/sim/systems/helpers.ts:155 fn homeOf
-SYM game/src/sim/systems/helpers.ts:165 fn refreshCandidates
-SYM game/src/sim/systems/helpers.ts:202 fn nearTeahouse
-SYM game/src/sim/systems/helpers.ts:208 fn hire
-SYM game/src/sim/systems/helpers.ts:257 fn familyOf
-SYM game/src/sim/systems/helpers.ts:262 fn leave
-SYM game/src/sim/systems/helpers.ts:272 fn fire
-SYM game/src/sim/systems/helpers.ts:283 fn setTask
-SYM game/src/sim/systems/helpers.ts:297 fn payWithAnimal
-SYM game/src/sim/systems/helpers.ts:309 fn playerOwned
-SYM game/src/sim/systems/helpers.ts:314 fn payWages
-SYM game/src/sim/systems/helpers.ts:339 fn moveToward
-SYM game/src/sim/systems/helpers.ts:353 fn groupOf
-SYM game/src/sim/systems/helpers.ts:359 fn flock
-SYM game/src/sim/systems/helpers.ts:369 fn driveAnimal
-SYM game/src/sim/systems/helpers.ts:377 fn bestPasture
-SYM game/src/sim/systems/helpers.ts:400 fn ensureHorseCamp
-SYM game/src/sim/systems/helpers.ts:427 fn helperGuardRadius
-SYM game/src/sim/systems/helpers.ts:432 fn areaScore
-SYM game/src/sim/systems/helpers.ts:439 fn herderPhase
-SYM game/src/sim/systems/helpers.ts:448 fn herderStep
-SYM game/src/sim/systems/helpers.ts:545 fn eveningSpot
-SYM game/src/sim/systems/helpers.ts:552 fn childStep
-SYM game/src/sim/systems/helpers.ts:604 fn tripCost
-SYM game/src/sim/systems/helpers.ts:612 fn startTrip
-SYM game/src/sim/systems/helpers.ts:625 fn idleDriver
-SYM game/src/sim/systems/helpers.ts:628 fn hasDriver
-SYM game/src/sim/systems/helpers.ts:633 fn sendDriver
-SYM game/src/sim/systems/helpers.ts:647 fn setAutoTrip
-SYM game/src/sim/systems/helpers.ts:652 fn driverStep
-SYM game/src/sim/systems/helpers.ts:726 fn helpersStep
-SYM game/src/sim/systems/helpers.ts:747 fn guardingHelpers
-SYM game/src/sim/systems/helpers.ts:754 fn sendOtor
-SYM game/src/sim/systems/helpers.ts:771 fn recallOtor
-SYM game/src/sim/systems/helpers.ts:794 fn setOtorCollector
-SYM game/src/sim/systems/helpers.ts:817 fn takeFromOtor
-SYM game/src/sim/systems/helpers.ts:848 fn dailyOtor
-SYM game/src/sim/systems/helpers.ts:930 fn relocateHelpers
+SYM game/src/sim/systems/helpers.ts:79 interface CandidateMember
+SYM game/src/sim/systems/helpers.ts:85 interface Candidate
+SYM game/src/sim/systems/helpers.ts:92 interface OtorGroup
+SYM game/src/sim/systems/helpers.ts:104 interface Dwelling
+SYM game/src/sim/systems/helpers.ts:113 interface HelpersState
+SYM game/src/sim/systems/helpers.ts:126 type HelperEvent
+SYM game/src/sim/systems/helpers.ts:132 fn newHelpersState
+SYM game/src/sim/systems/helpers.ts:139 fn bedsTotal
+SYM game/src/sim/systems/helpers.ts:143 fn bedsUsed
+SYM game/src/sim/systems/helpers.ts:148 fn addDwelling
+SYM game/src/sim/systems/helpers.ts:154 fn spareTents
+SYM game/src/sim/systems/helpers.ts:160 fn homeOf
+SYM game/src/sim/systems/helpers.ts:170 fn refreshCandidates
+SYM game/src/sim/systems/helpers.ts:207 fn nearTeahouse
+SYM game/src/sim/systems/helpers.ts:213 fn hire
+SYM game/src/sim/systems/helpers.ts:264 fn familyOf
+SYM game/src/sim/systems/helpers.ts:269 fn leave
+SYM game/src/sim/systems/helpers.ts:279 fn fire
+SYM game/src/sim/systems/helpers.ts:290 fn setTask
+SYM game/src/sim/systems/helpers.ts:304 fn payWithAnimal
+SYM game/src/sim/systems/helpers.ts:316 fn playerOwned
+SYM game/src/sim/systems/helpers.ts:321 fn dailyWage
+SYM game/src/sim/systems/helpers.ts:332 fn payWages
+SYM game/src/sim/systems/helpers.ts:376 fn moveToward
+SYM game/src/sim/systems/helpers.ts:390 fn groupOf
+SYM game/src/sim/systems/helpers.ts:396 fn flock
+SYM game/src/sim/systems/helpers.ts:406 fn driveAnimal
+SYM game/src/sim/systems/helpers.ts:414 fn bestPasture
+SYM game/src/sim/systems/helpers.ts:437 fn ensureHorseCamp
+SYM game/src/sim/systems/helpers.ts:464 fn helperGuardRadius
+SYM game/src/sim/systems/helpers.ts:469 fn areaScore
+SYM game/src/sim/systems/helpers.ts:476 fn herderPhase
+SYM game/src/sim/systems/helpers.ts:485 fn herderStep
+SYM game/src/sim/systems/helpers.ts:582 fn eveningSpot
+SYM game/src/sim/systems/helpers.ts:589 fn childStep
+SYM game/src/sim/systems/helpers.ts:641 fn tripCost
+SYM game/src/sim/systems/helpers.ts:649 fn startTrip
+SYM game/src/sim/systems/helpers.ts:662 fn idleDriver
+SYM game/src/sim/systems/helpers.ts:665 fn hasDriver
+SYM game/src/sim/systems/helpers.ts:670 fn sendDriver
+SYM game/src/sim/systems/helpers.ts:684 fn setAutoTrip
+SYM game/src/sim/systems/helpers.ts:689 fn driverStep
+SYM game/src/sim/systems/helpers.ts:763 fn helpersStep
+SYM game/src/sim/systems/helpers.ts:784 fn guardingHelpers
+SYM game/src/sim/systems/helpers.ts:791 fn sendOtor
+SYM game/src/sim/systems/helpers.ts:808 fn recallOtor
+SYM game/src/sim/systems/helpers.ts:831 fn setOtorCollector
+SYM game/src/sim/systems/helpers.ts:854 fn takeFromOtor
+SYM game/src/sim/systems/helpers.ts:885 fn dailyOtor
+SYM game/src/sim/systems/helpers.ts:967 fn relocateHelpers
 FILE game/src/sim/systems/herder.ts 5.8KB 140L exports: ridingHorse,herderStep,shout,toggleUurga,toggleMount
 SYM game/src/sim/systems/herder.ts:15 fn ridingHorse
 SYM game/src/sim/systems/herder.ts:20 fn herderStep
@@ -1759,7 +1760,7 @@ SYM game/src/sim/terrain.ts:22 fn waterDistance
 SYM game/src/sim/terrain.ts:28 fn baseHeightAt
 SYM game/src/sim/terrain.ts:54 fn heightAt
 SYM game/src/sim/terrain.ts:77 fn waterLevel
-FILE tools/balance_sim/run.ts 27.5KB 463L
+FILE tools/balance_sim/run.ts 27.6KB 463L
 SYM tools/balance_sim/run.ts:34 fn nextGerOrder
 SYM tools/balance_sim/run.ts:56 fn applyOverrides
 SYM tools/balance_sim/run.ts:77 fn escort
@@ -1828,13 +1829,13 @@ FILE game/tests/persist.test.ts 10.2KB 212L
 FILE game/tests/playthrough.test.ts 6.3KB 133L
 FILE game/tests/products.test.ts 3.0KB 56L
 FILE game/tests/rng.test.ts 0.8KB 26L
-FILE game/tests/save.test.ts 11.7KB 233L
+FILE game/tests/save.test.ts 12.5KB 243L
 FILE game/tests/seasons.test.ts 7.2KB 140L
 FILE game/tests/shops.test.ts 3.1KB 62L
 FILE game/tests/sim.test.ts 1.4KB 30L
 FILE game/tests/skip.test.ts 2.8KB 68L
 FILE game/tests/sleep.test.ts 5.6KB 124L
-FILE game/tests/staff.test.ts 13.5KB 248L
+FILE game/tests/staff.test.ts 16.0KB 292L
 FILE game/tests/stuck.test.ts 4.4KB 80L
 FILE game/tests/style.test.ts 8.9KB 165L
 FILE game/tests/sumtown.test.ts 4.6KB 91L
@@ -2047,11 +2048,11 @@ FILE docs/plan/M7.md 7.6KB 31L
 DOC docs/plan/M7.md:12-22 ## Блокууд
 DOC docs/plan/M7.md:23-27 ## Асуулга (10 асуулт)
 DOC docs/plan/M7.md:28-31 ## Эрсдэл
-FILE docs/plan/V.md 81.0KB 291L
+FILE docs/plan/V.md 81.9KB 293L
 DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
 DOC docs/plan/V.md:24-265 ## Блокууд ба чеклист (2026-11-15)
-DOC docs/plan/V.md:266-291 ## Зогссон цэг
+DOC docs/plan/V.md:266-293 ## Зогссон цэг
 FILE docs/plan/playtest.md 23.5KB 143L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
 DOC docs/plan/playtest.md:19-39 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])

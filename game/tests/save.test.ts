@@ -179,6 +179,16 @@ describe('Хуучин хувилбар → migrate; эвдэрсэн файл �
     return o;
   }
 
+  it('v21 (сарын цалин) → v22: өдрийн цалин болж хөрвөнө, өр/тоолуур нөхөгдөнө, алдаагүй ачаалагдана', () => {
+    const a = newSim(22);
+    const o = structuredClone(a.state) as unknown as { version: number; helpers: { list: Record<string, unknown>[] } };
+    o.version = 21;
+    o.helpers.list.push({ id: 1, name: 'Бат', kind: 'adult', sex: 'm', familyId: 1, family: false, task: 'herd', herd: 'sheep', wage: 30000, prepaid: -5000, x: 0, z: 0, heading: 0, tx: 0, tz: 0, mode: 'work' });
+    const st = deserialize(cfg, JSON.stringify(o));
+    expect(st.version).toBe(SAVE_VERSION);
+    expect(st.helpers.list[0]).toMatchObject({ wage: 5000, owed: 5000, prepaid: 0, unpaidDays: 0 });
+  });
+
   it('шилжүүлэх алхмын гинж бүрэн', () => {
     expect(migrationChainComplete()).toBe(true);
     expect(MIN_SAVE_VERSION).toBeLessThan(SAVE_VERSION);

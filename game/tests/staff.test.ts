@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { cfg, DAY, newSim, steps } from './helpers';
-import { bedsTotal, herderPhase, refreshCandidates, payWages, spareTents, type Candidate } from '../src/sim/systems/helpers';
+import { bedsTotal, dailyWage, herderPhase, refreshCandidates, payWages, spareTents, type Candidate } from '../src/sim/systems/helpers';
+import { SkipRun } from '../src/input/skip';
 import { herdSheepUnits } from '../src/sim/systems/animals';
 import { protectionZones, isProtected } from '../src/sim/systems/wolves';
 import { addVehicle } from '../src/sim/systems/travel';
@@ -37,10 +38,10 @@ describe('Туслах малчид (M5)', () => {
       single ??= sim.state.helpers.candidates.find((c) => !c.family);
     }
     expect(single!.members).toHaveLength(1);
-    expect(single!.wage).toBe(cfg.helpers.wage.adult);
+    expect(single!.wage).toBe(dailyWage(cfg, cfg.helpers.wageMonthly.adult));   // өдрийн цалин = сарын / 30
     expect(fam!.members.some((m) => m.kind === 'child')).toBe(true);
-    const sum = fam!.members.reduce((s, m) => s + cfg.helpers.wage[m.kind], 0);
-    expect(fam!.wage).toBeCloseTo(sum * cfg.helpers.familyWageMult, -3);
+    const sum = fam!.members.reduce((s, m) => s + cfg.helpers.wageMonthly[m.kind], 0);
+    expect(fam!.wage).toBe(dailyWage(cfg, sum * cfg.helpers.familyWageMult));
   });
 
   it('ганц бие туслахад байр хэрэгтэй; айл өөрийн гэртэй ирнэ', () => {
@@ -61,17 +62,60 @@ describe('Туслах малчид (M5)', () => {
     expect(sim.state.helpers.list.some((h) => h.kind === 'child' && h.task === 'collect')).toBe(true);
   });
 
-  it('цалин сар бүр; мөнгө хүрэхгүй бол айлаараа явна', () => {
+  it('(а) цалин өдөр бүр: 2 туслахтай 1 өдөр алгасахад зөв хасагдаж, тайланд туслах бүр тусдаа мөрөөр гарна', () => {
+    const sim = newSim(3);
+    sim.command({ type: 'cheat', action: 'wolvesPeaceful' });
+    sim.command({ type: 'cheat', action: 'money' });
+    hireOne(sim, true);
+    sim.state.dayStartMoney = sim.state.money;
+    const hs = sim.state.helpers.list.filter((h) => h.wage > 0);
+    expect(hs.length).toBeGreaterThanOrEqual(2);
+    const skip = new SkipRun(sim, 'morning');
+    while (skip.step()) { /* өглөө болтол */ }
+    skip.dispose();
+    const r = sim.state.journal.reports.at(-1)!;
+    for (const h of hs) expect(r.expenses['wage:' + h.name]).toBe(h.wage);
+    const other = Object.entries(r.expenses).filter(([k]) => !k.startsWith('wage:')).reduce((a, [, n]) => a + n, 0);
+    const wages = hs.reduce((a, h) => a + h.wage, 0);
+    const income = Object.values(r.income).reduce((a, n) => a + (n ?? 0), 0);
+    expect(r.moneyEnd).toBe(r.moneyStart + income - wages - other);
+    expect(sim.state.helpers.list.every((h) => !h.owed && !h.unpaidDays)).toBe(true);
+  });
+
+  it('мөнгө дутвал байгааг хувааж төлөөд үлдэгдэл өр болно; дараа нь өртэйгээ хамт төлөгдөнө', () => {
     const sim = newSim(3);
     hireOne(sim, true);
-    const wage = sim.state.helpers.list.reduce((s, h) => s + h.wage, 0) * cfg.helpers.payEveryDays;
-    sim.state.money = wage + 1000;
+    const hs = sim.state.helpers.list.filter((h) => h.wage > 0);
+    const total = hs.reduce((a, h) => a + h.wage, 0);
+    sim.state.money = Math.floor(total / 2);
+    expect(payWages(cfg, sim.state)).toEqual([]);
+    expect(sim.state.money).toBeLessThan(hs.length);   // бөөрөнхийллийн үлдэгдэл л
+    const owed = hs.reduce((a, h) => a + (h.owed ?? 0), 0);
+    expect(owed).toBe(total - Math.floor(total / 2) + sim.state.money);
+    expect(hs.every((h) => h.unpaidDays === 1)).toBe(true);
+    sim.state.money = 1_000_000;
     payWages(cfg, sim.state);
-    expect(sim.state.money).toBe(1000);
-    expect(sim.state.helpers.list.length).toBeGreaterThan(0);
-    const ev = payWages(cfg, sim.state);
-    expect(ev[0]?.type).toBe('helperQuit');
-    expect(sim.state.helpers.list).toHaveLength(0);
+    expect(sim.state.money).toBe(1_000_000 - total - owed);
+    expect(hs.every((h) => !h.owed && h.unpaidDays === 0)).toBe(true);
+  });
+
+  it('(б) мөнгө 0: 2 дахь өдөр «явах гэж байна» мэдэгдэл, 3 дахь өдөр туслах явна', () => {
+    const sim = newSim(3);
+    sim.command({ type: 'cheat', action: 'wolvesPeaceful' });
+    hireOne(sim, true);
+    const names = sim.state.helpers.list.map((h) => h.name);
+    const seen: string[] = [];
+    sim.on((e) => { if (e.type === 'helperWarn' || e.type === 'helperQuit') seen.push(`${e.type}@${sim.state.time.day}`); });
+    const day0 = sim.state.time.day;
+    for (let d = 0; d < 3; d++) {
+      sim.state.money = 0;
+      sim.state.dayStartMoney = 0;
+      const n = sim.state.helpers.list.length;
+      steps(sim, DAY);
+      if (d < 2) expect(sim.state.helpers.list.length).toBe(n);
+    }
+    expect(seen).toEqual([`helperWarn@${day0 + 1}`, `helperQuit@${day0 + 2}`]);
+    expect(sim.state.helpers.list.filter((h) => names.includes(h.name))).toHaveLength(0);
   });
 
   it('цалинг малаар: мал туслахынх болж, зорилгын тоонд орохгүй, сүү ноос нь тоглогчийнх; явахдаа авч явна', () => {

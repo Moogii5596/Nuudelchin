@@ -249,6 +249,7 @@ function start(boot?: Boot): void {
       };
       toast(msg[e.season] ?? '', 'good');
     } else if (e.type === 'helperQuit') toast(e.reason === 'wage' ? t('ui.not_enough_money_for', { x: e.names.join(', ') }) : t('ui.quit', { x: e.names.join(', ') }), 'bad');
+    else if (e.type === 'helperWarn') toast(t('ui.helper_warn', { x: e.names.join(', ') }), 'bad');
     else if (e.type === 'helperTrip') toast(t('ui.arrived_from_the_sum', { name: e.name, x: fmtMoney(e.income) }), 'good');
     else if (e.type === 'otorLoss') toast(t('ui.at_the_otor_a', { x: t('camp.' + e.campId), x2: t('species.' + e.species).toLowerCase() }), 'bad');
     else if (e.type === 'wolfRaid') toast(t('ui.tonight_heading_for_the', { x: e.n > 1 ? e.n + t('ui.wolves') : t('ui.a_wolf') }), 'bad');

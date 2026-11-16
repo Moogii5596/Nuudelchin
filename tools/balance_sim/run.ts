@@ -297,7 +297,7 @@ const manager: Strategy = {
       sim.command({ type: 'teahouse' }, false);
       const adults = hs.list.filter((h) => h.kind === 'adult').length;
       const wantAdults = state.fleet.length ? 2 : 1;
-      const monthly = (hs.list.reduce((a, h) => a + h.wage, 0) + 40_000) * cfg.helpers.payEveryDays;
+      const monthly = hs.list.reduce((a, h) => a + h.wage, 0) * cfg.time.monthDays + 200_000;   // 5 хоногийн цалин + нөөц
       if (adults < wantAdults && state.money > monthly * 2) {
         const fam = hs.candidates.find((c) => c.family) ?? (bedsUsed(state) < bedsTotal(cfg, state) && state.money > monthly * 6 ? hs.candidates[0] : undefined);   // M6.13: гол гэр 1 ор өгдөг — ганц бие туслахыг мөнгөний нөөцтэй үед л
         if (fam) sim.command({ type: 'hire', candidate: fam.id }, false);
@@ -370,7 +370,7 @@ function run(cfg: GameConfig, strat: Strategy, seed: number): RunResult {
       pendingTrip = null;
     }
   }
-  const wages = reports.reduce((a, r) => a + (r.expenses.wages ?? 0), 0);
+  const wages = reports.reduce((a, r) => a + Object.entries(r.expenses).reduce((b, [k, n]) => b + (k === 'wages' || k.startsWith('wage:') ? n : 0), 0), 0);
   const bySeason: RunResult['bySeason'] = {};
   for (const r of reports) {
     const b = (bySeason[r.season] ??= { inc: 0, days: 0, cond: 0, hay: 0, births: 0 });
