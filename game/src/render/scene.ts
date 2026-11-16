@@ -23,6 +23,7 @@ import { StaffView } from './staff';
 import { InteriorView } from './interior';
 import { seasonLook, seasonOf } from '../sim/systems/seasons';
 import { paletteHex, visualStyle, type TimeVisual } from './style';
+import { SpeedSmoother } from './character/talk';
 import { Q, quality as activeQuality, type Quality, type QualitySpec } from '../device';
 
 /** Цасны ширхгийн дугуй бүдэг бараг (canvas) */
@@ -375,7 +376,7 @@ export class GameView {
     const near = Math.hypot(c.x - x, c.y - y, c.z - z) < 1.5;
     if (near) { hv.visible = false; this.herderHid = true; } else if (this.herderHid) { hv.visible = true; this.herderHid = false; }
   }
-  private inPrev = { x: 0, z: 0 };
+  private inSpeed = new SpeedSmoother();   // барилга доторх ярианы хурд: гаднах (sumcenter) ижил EMA + hysteresis
   private campKey = '';
   private campSol: CamSolids = { boxes: [], cyls: [] };
   /** Бууцны камерын саад: өөрийн гэр/майхан, туслахын байр, айлын гэр (цөөн, өөрчлөгдвөл л дахин тооцно) */
@@ -420,9 +421,8 @@ export class GameView {
     this.interior.show(ip.room, ip.door, this.characters.herderObject, gerSizeOfDoor(state, ip.door));
     this.interior.update(dt, this.daylight);
     // V6.3: барилгын NPC-үүд өрөөнд (ажлын байрандаа); хамгийн ойр нь ярина
-    const ispeed = dt > 0 ? Math.hypot(ip.x - this.inPrev.x, ip.z - this.inPrev.z) / dt : 0;
-    this.inPrev = { x: ip.x, z: ip.z };
-    this.interior.placeNpcs(this.sum.npcs, state, dt, ip.door, ip.x, ip.z, Math.min(ispeed, 9));
+    const ispeed = this.inSpeed.step(ip.x, ip.z, dt);
+    this.interior.placeNpcs(this.sum.npcs, state, dt, ip.door, ip.x, ip.z, ispeed);
     this.cam.dist = Math.min(cc.maxDist, Math.max(cc.minDist, this.cam.dist));
     this.renderer.toneMappingExposure = 1;
     // Малчны загвар дотоод координатаар: байрлал, чиглэл нь өрөөний; бусад нь хэвээр
@@ -436,6 +436,7 @@ export class GameView {
   /** Дотроос гарсан: дүр зургийг чөлөөлж, камерыг сэргээнэ */
   private leaveInterior(): void {
     this.inside = false;
+    this.inSpeed.reset();
     this.interior.releaseNpcs(this.sum.npcs);
     this.interior.hide();
     if (this.camBefore) {
