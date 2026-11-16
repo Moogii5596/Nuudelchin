@@ -116,6 +116,9 @@ export class TouchUI {
     addAct('🐺', t('ui.scare'), 'KeyQ', (s) => camp(s) && wolfNear(s), () => 5);
     addAct('✋', t('ui.pick_up'), 'KeyE', (s) => camp(s) && !canSend(s) && canPick(s), () => 4);
     addAct('📦', t('ui.send_act'), 'KeyE', canSend, () => 4);
+    // Гэр/майхны гадаа (агуулахын ойр): 🥣 боловсруулах — агуулах, боловсруулалтын цонх (B)
+    const atHome = (s: GameState): boolean => camp(s) && dist(s.player, this.cfg.camps.home) <= this.cfg.camps.home.storageRadius * 2;
+    addAct('🥣', t('ui.process_act'), 'KeyB', atHome, () => 1);
     addAct('🧺', t('ui.load_act'), 'KeyT', (s) => !!campVehicle(s), (s) => (loaded(s) ? 0 : 3));
     addAct('🚪', t('ui.enter_act'), 'KeyE', (s) => camp(s) && !canSend(s) && !canPick(s) && !s.player.mounted && !!nearEnterDoor(this.cfg, s), () => 3);
     addAct('🏪', t('ui.trade'), 'KeyE', (s) => s.player.place === 'sum' && !s.player.driving && !s.player.interior, () => 3);

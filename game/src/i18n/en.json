@@ -847,5 +847,6 @@
   "ui.skip_too_late": "It is already evening.",
   "ui.enter_act": "Enter",
   "ui.perf_panel": "📊 FPS / draw calls panel: {x}",
-  "ui.load_act": "Load"
+  "ui.load_act": "Load",
+  "ui.process_act": "Process"
 }

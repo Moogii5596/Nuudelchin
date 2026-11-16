@@ -121,10 +121,11 @@
       .tbtn { font: inherit; border: 2px solid rgba(244, 234, 214, 0.5); background: rgba(30, 24, 18, 0.62); color: #f4ead6; border-radius: 14px;
               touch-action: none; -webkit-user-select: none; user-select: none; cursor: pointer; }
       .tbtn.act { width: 58px; height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0; }
+      .tbtn.act { min-width: 58px; width: auto; padding: 0 5px; box-sizing: border-box; }   /* урт шошго (Боловсруулах) багтана */
       .tbtn.act span { font-size: 24px; line-height: 1; }
       .tbtn.act small { font-size: 9.5px; margin-top: 2px; opacity: 0.9; }
       .tbtn.sm { min-width: 44px; height: 44px; font-size: 19px; padding: 0 6px; border-radius: 10px; touch-action: manipulation; }
-      .tbtn.act.prime { width: 70px; height: 70px; border-color: #e8b64c; background: rgba(120, 78, 12, 0.82); box-shadow: 0 0 0 3px rgba(232, 182, 76, 0.35), 0 4px 14px rgba(0, 0, 0, 0.35); }
+      .tbtn.act.prime { min-width: 70px; height: 70px; border-color: #e8b64c; background: rgba(120, 78, 12, 0.82); box-shadow: 0 0 0 3px rgba(232, 182, 76, 0.35), 0 4px 14px rgba(0, 0, 0, 0.35); }
       .tbtn.act.prime span { font-size: 29px; }
       .tbtn.act.prime small { font-size: 10.5px; font-weight: 700; opacity: 1; }
       .tbtn.on { background: rgba(232, 182, 76, 0.85); color: #2b1d14; }
@@ -147,7 +148,7 @@
       .tstart-box h1 { margin: 0 0 4px; font-size: 24px; color: #6b3d1e; }
       .tstart-box ul { margin: 8px 0 12px; padding-left: 4px; list-style: none; line-height: 1.6; }
       .tstart-box p { margin: 0; }
-      @media (max-height: 420px) { .joy { width: 112px; height: 112px; } .tbtn.act { width: 52px; height: 52px; } .tbtn.act span { font-size: 21px; } .tbtn.act.prime { width: 62px; height: 62px; } .acts { width: 236px; gap: 6px; } }
+      @media (max-height: 420px) { .joy { width: 112px; height: 112px; } .tbtn.act { min-width: 52px; height: 52px; } .tbtn.act span { font-size: 21px; } .tbtn.act.prime { min-width: 62px; height: 62px; } .acts { width: 236px; gap: 6px; } }
     </style>
   </head>
   <body>

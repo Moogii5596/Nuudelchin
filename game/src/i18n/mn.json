@@ -847,5 +847,6 @@
   "ui.skip_too_late": "Орой болсон байна.",
   "ui.enter_act": "Орох",
   "ui.perf_panel": "📊 FPS / draw call самбар: {x}",
-  "ui.load_act": "Ачих"
+  "ui.load_act": "Ачих",
+  "ui.process_act": "Боловсруулах"
 }
