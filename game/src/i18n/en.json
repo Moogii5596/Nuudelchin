@@ -776,5 +776,15 @@
   "ms.graph.money": "Money",
   "ms.continue": "▶ Continue",
   "menu.milestones": "Milestones",
-  "menu.showMilestones": "Milestone tracker"
+  "menu.showMilestones": "Milestone tracker",
+  "sim.go_to_the_ger_shop": "Go to the ger and tent shop door",
+  "sim.no_such_ger": "No such ger",
+  "sim.you_cannot_sell_the_last_ger": "You cannot sell your last ger",
+  "sim.ger_sold": "Ger sold — 50% of its price",
+  "ui.ger_add": "Extra ger: {x}",
+  "ui.ger_add_note": "{walls} walls · 1 bed for a single helper · placed at a free spot in the camp",
+  "ui.sell_gers": "Sell a ger (50% of its price)",
+  "ui.sell_ger_row": "{label} · {x}",
+  "ui.sell": "Sell",
+  "ui.main_ger": "main ger"
 }

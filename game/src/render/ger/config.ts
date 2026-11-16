@@ -37,7 +37,7 @@ export interface GerConfig {
   /** Тоглогчийн гэрийн хэмжээ (хэмжээний шат M6.13-д sim-ээс) */
   home: { size: string };
   /** Гэр сольж томсгох: одоогийн гэрийг буцаан тооцох хувь (M6.13) */
-  upgrade: { tradeIn: number };
+  upgrade: { tradeIn: number; sellRatio: number };
   /** Туслахын гэр: хуучирсан бүрээс, 2 бүслүүр, энгийн модон хаалга */
   helper: { size: string; coverColor: string; belts: number; doorMotif: string };
 }
@@ -97,6 +97,7 @@ export function gerConfigErrors(data: unknown): string[] {
   else for (const k of Object.keys(g.sizes)) for (const f of SIZE_NUM) check(errs, g.sizes, `${k}.${f}`, 'num');
   check(errs, g, 'home.size', 'str');
   check(errs, g, 'upgrade.tradeIn', 'num');
+  check(errs, g, 'upgrade.sellRatio', 'num');
   if (isObj(g.sizes) && isObj(g.home) && typeof g.home.size === 'string' && !(g.home.size in g.sizes)) errs.push(`home.size "${g.home.size}" sizes-д алга`);
   check(errs, g, 'helper.coverColor', 'hex');
   check(errs, g, 'helper.size', 'str');

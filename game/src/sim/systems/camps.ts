@@ -4,6 +4,7 @@
  * Газарт үлдсэн бүтээгдэхүүн хаягдана.
  */
 import { m, type Msg } from '../msg';
+import { moveMultSum } from './ownGers';
 import type { GameConfig } from '../config';
 import type { Rng } from '../rng';
 import type { GameState } from '../state';
@@ -18,7 +19,7 @@ import { relocateHelpers } from './helpers';
 export function moveHours(cfg: GameConfig, state: GameState, byTruck: boolean): number {
   const m = cfg.camps.move;
   const ger = state.home === 'ger';
-  const k = ger ? cfg.ger.sizes[state.homeSize]!.moveMult : 1;   // M6.13: ханын тоо ихсэх тусам нүүх удаан
+  const k = ger ? moveMultSum(cfg, state) : 1;   // M6.13: гэр бүрийн moveMult-ийн нийлбэр
   if (byTruck) return (ger ? Number(m.truckHoursGer) : Number(m.truckHoursTent)) * k;
   return (ger ? Number(m.cartHoursGer) : Number(m.cartHoursTent)) * k;
 }
@@ -35,7 +36,7 @@ export function startMove(cfg: GameConfig, state: GameState, to: string, fromMap
   const truck = bestTruck(cfg, state);
   const byTruck = truck !== null;
   if (truck) {
-    const trips = state.home === 'ger' ? Number(cfg.camps.move.truckTripsGer) * cfg.ger.sizes[state.homeSize]!.moveMult : Number(cfg.camps.move.truckTripsTent);
+    const trips = state.home === 'ger' ? Number(cfg.camps.move.truckTripsGer) * moveMultSum(cfg, state) : Number(cfg.camps.move.truckTripsTent);
     const liters = (cfg.vehicles.campDistanceKm * 2 * trips * cfg.vehicles[truck].fuelPer100km) / 100;
     const cost = liters * cfg.vehicles.fuelPricePerL;
     state.money -= cost;

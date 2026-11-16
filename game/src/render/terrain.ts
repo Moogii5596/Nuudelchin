@@ -150,6 +150,9 @@ export class TerrainView {
   private homeKind = '';
   /** M6.13: өөрийн гэрийн хэмжээ (state.homeSize) — өөрчлөгдвөл гэрийг дахин барина */
   private homeSizeKey: string = GER.home.size;
+  /** M6.13: нэмэлт гэрүүд (хотын сул цэгт, хаалга бууцны төв рүү) */
+  private extraBuilt: GerBuilt[] = [];
+  private extraKey = '';
   /** Гэр/майхны загвар (render/ger): өвөл/зун солигдоход дахин барина */
   private homeBuilt: GerBuilt | null = null;
   private homeWinter = false;
@@ -220,8 +223,28 @@ export class TerrainView {
       this.homeSizeKey = state.homeSize;
       this.buildHome(state.home);
     }
+    this.syncExtraGers(state);
     this.syncHay(state);
     return false;
+  }
+
+  /** Нэмэлт гэрүүдийг (state.extraGers) байрлуулна; жагсаалт, улирал өөрчлөгдвөл дахин барина */
+  private syncExtraGers(state: GameState): void {
+    const season = this.currentSeason === 'winter' ? 'winter' : 'summer';
+    const key = season + '|' + state.extraGers.map((g) => g.size + g.x + ',' + g.z).join(';');
+    if (key === this.extraKey) return;
+    this.extraKey = key;
+    for (const b of this.extraBuilt) {
+      this.group.remove(b.group);
+      b.dispose();
+    }
+    this.extraBuilt = state.extraGers.map((g, i) => {
+      const b = makeGer(g.size, { season, doorVariant: (i + 1) % GER.doors.length });
+      b.group.position.set(g.x, this.heightAt(g.x, g.z), g.z);
+      b.group.rotation.y = Math.atan2(-g.x, -g.z);   // хаалга (+z) бууцны төв рүү (sim/systems/interior.ts campEnterDoors-той ижил)
+      this.group.add(b.group);
+      return b;
+    });
   }
 
   private updateSeason(state: GameState): void {
@@ -253,7 +276,10 @@ export class TerrainView {
     this.buildMountains(new VisualRng(this.tuftSeed ^ 0x4d4f554e));
     this.homeKind = '';
     this.homeSizeKey = state.homeSize;
+    this.extraBuilt = [];   // бууц солигдоход бүлэг шинээр бүтэх тул нэмэлт гэрүүдийг дахин барина
+    this.extraKey = '';
     this.buildHome(state.home);
+    this.syncExtraGers(state);
     this.hayShown = -1;
     this.syncHay(state);
   }
@@ -345,6 +371,7 @@ export class TerrainView {
   /** night: 0 — өдөр … 1 — шөнө (гэр, майхны гэрэл) */
   updateVisualTime(dt: number, minute: number, skyColor: THREE.Color, waterIce: number, night = 0): void {
     this.homeBuilt?.setGlow(night);
+    for (const b of this.extraBuilt) b.setGlow(night);
     this.windTime += Math.max(0, dt);
     if (this.grassUniforms) this.grassUniforms.uWindTime.value = this.windTime;
     this.cloudTime += Math.max(0, dt);

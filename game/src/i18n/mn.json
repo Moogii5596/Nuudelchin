@@ -776,5 +776,15 @@
   "ms.graph.money": "Мөнгө",
   "ms.continue": "▶ Үргэлжлүүлэх",
   "menu.milestones": "Замын тэмдэг",
-  "menu.showMilestones": "Замын тэмдгийн самбар"
+  "menu.showMilestones": "Замын тэмдгийн самбар",
+  "sim.go_to_the_ger_shop": "Гэр, майхны дэлгүүрийн үүдэнд очно уу",
+  "sim.no_such_ger": "Ийм гэр алга",
+  "sim.you_cannot_sell_the_last_ger": "Сүүлийн гэрээ зарж болохгүй",
+  "sim.ger_sold": "Гэрээ зарлаа — үнийн 50%",
+  "ui.ger_add": "Нэмэлт гэр: {x}",
+  "ui.ger_add_note": "{walls} ханат · ганц бие туслахын 1 ор · хотын сул цэгт тавигдана",
+  "ui.sell_gers": "Гэр зарах (үнийн 50%)",
+  "ui.sell_ger_row": "{label} · {x}",
+  "ui.sell": "Зарах",
+  "ui.main_ger": "гол гэр"
 }

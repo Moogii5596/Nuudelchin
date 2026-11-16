@@ -3,11 +3,12 @@
  * mvp-spec.md §4.2. 1 л сүү = 1 кг ноос = 1 нэгж.
  */
 import type { GameConfig } from '../config';
+import { gerStorageBonus } from './ownGers';
 import type { Batch, GameState, ProductId } from '../state';
 
 export function capacity(cfg: GameConfig, state: GameState): number {
   // M6.13: томсгосон гэр багтаамж нэмнэ (data/ger.json sizes[k].storage)
-  return (cfg.storage.levels[state.storageLevel]?.capacity ?? 0) + (state.home === 'ger' ? cfg.ger.sizes[state.homeSize]?.storage ?? 0 : 0);
+  return (cfg.storage.levels[state.storageLevel]?.capacity ?? 0) + gerStorageBonus(cfg, state);
 }
 
 export function used(state: GameState): number {

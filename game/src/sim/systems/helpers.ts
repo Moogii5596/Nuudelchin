@@ -15,6 +15,7 @@
  *   зорилгын тоонд орохгүй, сүү ноос нь туслахынх. Мөнгө хүрэхгүй бол айлаараа, малтайгаа явна.
  */
 import { m, type Msg } from '../msg';
+import { freeDwellingSlot, gerCount } from './ownGers';
 import type { GameConfig, Species } from '../config';
 import { Rng } from '../rng';
 import type { Animal, GameState, ProductId, VehicleId } from '../state';
@@ -120,26 +121,18 @@ export function newHelpersState(): HelpersState {
   return { list: [], nextId: 1, candidates: [], candidatesDay: -999, otor: [], dwellings: [], otorTents: 0 };
 }
 
-/** Байршлын цэгүүд (хотын төвөөс, м): айлын гэр, туслахын майхан/гэр */
-const DWELLING_SLOTS: [number, number][] = [[-16, 12], [-18, -8], [-6, 22], [14, -30], [-28, 2], [4, 30]];
-
-function freeSlot(state: GameState): { x: number; z: number } {
-  const used = state.helpers.dwellings;
-  for (const [x, z] of DWELLING_SLOTS) if (!used.some((d) => Math.hypot(d.x - x, d.z - z) < 1)) return { x, z };
-  const k = used.length;
-  return { x: -30 + k * 6, z: 30 };
-}
+const freeSlot = freeDwellingSlot;   // айлын гэр, нэмэлт гэр нэг сул цэгийн жагсаалтыг хуваалцана
 
 /** Ганц бие туслахад авсан орны тоо ба эзэлсэн */
 export function bedsTotal(cfg: GameConfig, state: GameState): number {
-  const h = cfg.helpers.housing;
-  return state.helpers.dwellings.reduce((s, d) => s + (d.kind === 'helperTent' ? h.helperTent.beds : d.kind === 'helperGer' ? h.helperGer.beds : 0), 0);
+  // M6.13: гэр бүр (гол гэр ч) 1 ганц бие туслахын ор — хэмжээ нөлөөлөхгүй; айлын гэр тоонд ордоггүй
+  return gerCount(cfg, state);
 }
 export function bedsUsed(state: GameState): number {
   return state.helpers.list.filter((x) => !x.family).length;
 }
 
-/** Туслахын байр нэмэх (Худалдаачнаас авсан) */
+/** Хуучин (M6.13-аас өмнөх) туслахын байр — тест, хуучин хадгалалтын шилжүүлэлт. Шинэ тоглоомд нэмэлт гэр (ownGers.ts) */
 export function addDwelling(state: GameState, kind: 'helperTent' | 'helperGer'): void {
   const s = freeSlot(state);
   state.helpers.dwellings.push({ kind, x: s.x, z: s.z });

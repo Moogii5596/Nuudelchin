@@ -10,7 +10,7 @@ import { newAnimal, type BuyOrder, type GameState, type ProductId, type VehicleI
 import { buyPrice } from './animals';
 import { newDog } from './dogs';
 import { addVehicle } from './travel';
-import { addDwelling } from './helpers';
+import { addExtraGer, gerAddPrice } from './ownGers';
 
 export type VehicleSpec = GameConfig['vehicles']['porter'];
 
@@ -51,10 +51,8 @@ export function orderPrice(cfg: GameConfig, state: GameState, o: BuyOrder): numb
       return cfg.vehicles[o.id].price;
     case 'dog':
       return cfg.dogs.price;
-    case 'helperTent':
-      return cfg.helpers.housing.helperTent.price;
-    case 'helperGer':
-      return cfg.helpers.housing.helperGer.price;
+    case 'gerAdd':
+      return gerAddPrice(cfg, state, o.size);
     case 'otorTent':
       return cfg.helpers.otor.tentPrice;
     case 'hay':
@@ -91,9 +89,8 @@ export function deliver(cfg: GameConfig, state: GameState, rng: Rng, orders: Buy
       case 'vehicle':
         addVehicle(cfg, state, o.id);
         break;
-      case 'helperTent':
-      case 'helperGer':
-        addDwelling(state, o.kind);
+      case 'gerAdd':
+        addExtraGer(state, o.size);
         break;
       case 'otorTent':
         state.helpers.otorTents = (state.helpers.otorTents ?? 0) + 1;

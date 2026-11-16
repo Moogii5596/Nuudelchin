@@ -316,7 +316,7 @@ const manager: Strategy = {
     // Тоглогч 3 хоногт нэг удаа худалдан авалтаар сумын төв явна (тэрэг, гэр, тогоо, байр)
     if (hour === 10 && state.time.day % 3 === 0) {
       const orders = buyPlan(sim, 500_000, cfg.economy.goalSheepUnits, 1);
-      if (!hs.list.some((h) => h.family) && bedsTotal(cfg, state) === 0 && state.money > 1_500_000) orders.push({ kind: 'helperTent' });
+      if (!hs.list.some((h) => h.family) && bedsTotal(cfg, state) <= bedsUsed(state) && state.money > 6_500_000) orders.push({ kind: 'gerAdd', size: cfg.ger.home.size });
       tripIfUseful(sim, orders, 1, surplusMales(sim));
     }
   },

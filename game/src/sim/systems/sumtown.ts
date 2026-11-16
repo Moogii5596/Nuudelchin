@@ -181,8 +181,7 @@ export function orderAllowed(role: TradeRole, o: BuyOrder): boolean {
     case 'storage':
       return role === 'equipment';
     case 'ger':
-    case 'helperTent':
-    case 'helperGer':
+    case 'gerAdd':
     case 'otorTent':
       return role === 'ger_tent';
     case 'dog':

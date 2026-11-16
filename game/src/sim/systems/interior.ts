@@ -10,6 +10,7 @@ import { m, type Msg } from '../msg';
 import type { GameConfig } from '../config';
 import type { GameState, InteriorState } from '../state';
 import { allBuildings, facingOf, plotHouse, sumDoors, TRADE_ROLES, type Facing } from './sumtown';
+import { extraDoorId, gerSizeOfDoor } from './ownGers';
 import { houseRoom, clampToWalk, type WalkRect } from './houseLayout';
 import { publicBlockers } from './publicLayout';
 import { GATE_PHI } from './buildingSize';
@@ -132,6 +133,12 @@ export function campEnterDoors(cfg: GameConfig, state: GameState): EnterDoor[] {
   if (state.home === 'ger') {
     out.push({ id: 'home', room: I.gerRooms.home ?? '', place: 'camp', x: home.x, z: home.z + gerDoorOffset(cfg.ger, state.homeSize), outHeading: 0, service: null });
   }
+  // M6.13: нэмэлт гэрүүд — хаалга хот (бууцны төв) руу, `ger|<i>`; дотор өрөөний хэмжээ гэр бүрийнх (gerSizeOfDoor)
+  state.extraGers.forEach((g, i) => {
+    const len = Math.hypot(g.x, g.z) || 1;
+    const ux = -g.x / len, uz = -g.z / len, r = gerDoorOffset(cfg.ger, g.size);
+    out.push({ id: extraDoorId(i), room: I.gerRooms.home ?? '', place: 'camp', x: g.x + ux * r, z: g.z + uz * r, outHeading: Math.atan2(ux, uz), service: null });
+  });
   for (const d of state.helpers.dwellings) {
     const room = I.gerRooms[d.kind];
     if (!room) continue;   // майхан, адуучний майхан орохгүй

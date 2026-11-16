@@ -15,6 +15,7 @@ import { ItemsView } from './items';
 import { ZonesView } from './zones';
 import { VehiclesView, nightFactor } from './vehicles';
 import { roomSpec } from '../sim/systems/interior';
+import { gerSizeOfDoor } from '../sim/systems/ownGers';
 import { angDiff, VisualRng } from './util';
 import { SumCenterView } from './sumcenter';
 import { WorldMapView } from './worldmap';
@@ -374,7 +375,7 @@ export class GameView {
   /** Бууцны камерын саад: өөрийн гэр/майхан, туслахын байр, айлын гэр (цөөн, өөрчлөгдвөл л дахин тооцно) */
   private campSolids(state: GameState): CamSolids {
     const dw = state.helpers.dwellings;
-    const key = state.home + '|' + state.homeSize + '|' + dw.map((d) => d.kind + d.x + ',' + d.z).join(';');
+    const key = state.home + '|' + state.homeSize + '|' + state.extraGers.map((g) => g.size + g.x + ',' + g.z).join(';') + '|' + dw.map((d) => d.kind + d.x + ',' + d.z).join(';');
     if (key === this.campKey) return this.campSol;
     this.campKey = key;
     const cyls: CamSolids['cyls'] = [];
@@ -388,6 +389,7 @@ export class GameView {
       const y = this.heightAt(x, z);
       cyls.push({ x, z, r: Math.max(k.L, k.W) / 2 + TENT.ropeOut * 0.5 + 0.3, y0: y - 2, y1: y + k.H + 0.5 });
     };
+    for (const g of state.extraGers) gerAt(g.x, g.z, g.size);   // M6.13 нэмэлт гэрүүд
     const h = this.cfg.camps.home;
     if (state.home === 'ger') gerAt(h.x, h.z, state.homeSize); else tentAt(h.x, h.z, 'start');
     for (const d of dw) {
@@ -409,7 +411,7 @@ export class GameView {
       this.cam.dist = cc.dist;
       this.cam.pitch = cc.pitch;
     }
-    this.interior.show(ip.room, ip.door, this.characters.herderObject, state.homeSize);
+    this.interior.show(ip.room, ip.door, this.characters.herderObject, gerSizeOfDoor(state, ip.door));
     this.interior.update(dt, this.daylight);
     // V6.3: барилгын NPC-үүд өрөөнд (ажлын байрандаа); хамгийн ойр нь ярина
     const ispeed = dt > 0 ? Math.hypot(ip.x - this.inPrev.x, ip.z - this.inPrev.z) / dt : 0;

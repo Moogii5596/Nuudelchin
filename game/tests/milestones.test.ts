@@ -111,7 +111,7 @@ describe('«Анхны» мэдэгдлүүд, статистик', () => {
 
 describe('Хадгалалт: migrate 15 → 16', () => {
   it('v15 хадгалалт ачаалагдаж, stats/milestones хоосноор нөхөгдөнө', () => {
-    expect(SAVE_VERSION).toBe(16);
+    expect(SAVE_VERSION).toBeGreaterThanOrEqual(16);
     const sim = newSim(12);
     const old = JSON.parse(JSON.stringify(sim.state)) as Record<string, unknown> & { settings: Record<string, unknown>; version: number };
     delete old.stats; delete old.milestones; delete old.settings.showMilestones;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { cfg, DAY, newSim, steps } from './helpers';
-import { addDwelling, bedsTotal, herderPhase, refreshCandidates, payWages, spareTents, type Candidate } from '../src/sim/systems/helpers';
+import { bedsTotal, herderPhase, refreshCandidates, payWages, spareTents, type Candidate } from '../src/sim/systems/helpers';
 import { herdSheepUnits } from '../src/sim/systems/animals';
 import { protectionZones, isProtected } from '../src/sim/systems/wolves';
 import { addVehicle } from '../src/sim/systems/travel';
@@ -44,7 +44,7 @@ describe('Туслах малчид (M5)', () => {
   });
 
   it('ганц бие туслахад байр хэрэгтэй; айл өөрийн гэртэй ирнэ', () => {
-    const sim = newSim(2);
+    const sim = newSim(2, (s) => (s.home = 'tent'));   // майхантай: гэр ор өгөхгүй
     refreshCandidates(cfg, sim.state);
     let single = sim.state.helpers.candidates.find((c) => !c.family);
     for (let k = 0; !single && k < 20; k++) {
@@ -53,8 +53,8 @@ describe('Туслах малчид (M5)', () => {
       single = sim.state.helpers.candidates.find((c) => !c.family);
     }
     expect(sim.command({ type: 'hire', candidate: single!.id }, false).ok).toBe(false);
-    addDwelling(sim.state, 'helperTent');
-    expect(bedsTotal(cfg, sim.state)).toBe(2);
+    sim.state.home = 'ger';   // M6.13: гэр бүр (гол гэр ч) 1 ганц бие туслахын ор
+    expect(bedsTotal(cfg, sim.state)).toBe(1);
     expect(sim.command({ type: 'hire', candidate: single!.id }, false).ok).toBe(true);
     hireOne(sim, true);
     expect(sim.state.helpers.dwellings.some((d) => d.kind === 'familyGer')).toBe(true);

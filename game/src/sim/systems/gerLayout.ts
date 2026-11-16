@@ -10,7 +10,7 @@ export interface LayoutBox { x: number; z: number; hw: number; hd: number; phi: 
 export interface GerLayoutSource {
   sizes: Record<string, { walls: number; diameter: number; uni: number; doorW: number; wallH: number; topH: number; tonoD: number; price: number; storage: number; moveMult: number }>;
   /** Томсгохдоо одоогийн гэрийг буцаан тооцох хувь */
-  upgrade: { tradeIn: number };
+  upgrade: { tradeIn: number; sellRatio: number };
   /** Эхлэлийн (анхдагч) гэрийн хэмжээ */
   home: { size: string };
   shape: { frameOut: number; doorStandOff: number; chimneyOffR: number; chimneySector: number; spokes: number; tonoRingW: number; hayavchOut: number };

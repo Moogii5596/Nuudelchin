@@ -144,6 +144,7 @@ export function protectionZones(cfg: GameConfig, state: GameState): Zone[] {
     { kind: 'yard', x: home.cowYard.x, z: home.cowYard.z, r: home.cowYard.r + pr.pen },   // үхрийн хэвтэр (M4.5)
     { kind: 'home', x: home.x, z: home.z, r: state.home === 'ger' ? gerRadiusFor(cfg.ger, pr.ger, state.homeSize) : pr.tent },
   ];
+  for (const g of state.extraGers) zones.push({ kind: 'home', x: g.x, z: g.z, r: gerRadiusFor(cfg.ger, pr.ger, g.size) });   // M6.13 нэмэлт гэр
   const p = state.player;
   if (!p.away) zones.push({ kind: 'herder', x: p.x, z: p.z, r: p.mounted ? pr.herderMounted : pr.herder });
   const adult = cfg.animals.species.horse.adultAge;

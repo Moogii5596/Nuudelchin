@@ -34,6 +34,7 @@ import {
 } from './names';
 import { t } from '../../i18n/i18n';
 import { gerLadder, goalGerReached } from '../../sim/systems/gerLayout';
+import { sellableGers } from '../../sim/systems/ownGers';
 import type { Msg } from '../../sim/msg';
 
 type Kind = 'storage' | 'cargo' | 'shop' | 'lot' | 'town' | 'arrive' | 'report' | 'dogs' | 'camps' | 'cheat' | 'teahouse' | 'helpers' | 'milestones' | 'ceremony';
@@ -319,9 +320,7 @@ export class Panels {
     const ladder = gerLadder(cfg.ger), nextSize = ladder[state.home === 'ger' ? ladder.indexOf(state.homeSize) + 1 : 0];
     if (nextSize) out.push({ key: 'ger:' + nextSize, label: t('ui.ger_size', { x: t('ger.size.' + nextSize) }), note: t('ui.ger_size_note', { storage: cfg.ger.sizes[nextSize]!.storage, walls: cfg.ger.sizes[nextSize]!.walls }), order: { kind: 'ger', size: nextSize } });
     if (state.dogs.length < cfg.dogs.maxDogs) out.push({ key: 'dog', label: t('ui.dog_bankhar'), note: t('ui.10_m_protection_zone', { x: fmtMoney(cfg.dogs.foodPerDay) }), order: { kind: 'dog' } });
-    const H = cfg.helpers;
-    out.push({ key: 'helperTent', label: t('ui.helper_tent'), note: t('ui.bed_for_single_helper', { beds: H.housing.helperTent.beds, x: bedsUsed(state), x2: bedsTotal(cfg, state) }), order: { kind: 'helperTent' } });
-    out.push({ key: 'helperGer', label: t('ui.helper_ger'), note: t('ui.bed_for_single_helper_141', { beds: H.housing.helperGer.beds }), order: { kind: 'helperGer' } });
+    if (state.home === 'ger') for (const size of gerLadder(cfg.ger)) out.push({ key: 'gerAdd:' + size, label: t('ui.ger_add', { x: t('ger.size.' + size) }), note: t('ui.ger_add_note', { walls: cfg.ger.sizes[size]!.walls }), order: { kind: 'gerAdd', size } });   // M6.13: гэр бүр 1 ганц бие туслахын ор
     out.push({ key: 'otorTent', label: t('ui.otor_tent'), note: t('ui.sending_a_herder_to', { x: spareTents(state) }), order: { kind: 'otorTent' } });
     for (const id of ['horseCart', 'porter', 'amjirgaa'] as const) {
       if (state.vehicles.includes(id)) continue;
@@ -472,7 +471,14 @@ export class Panels {
     const animalSec = canSellAnimals(role)
       ? t('ui.buy_animals_price', { x: groups.length ? t('ui.sell_animals_price', { animalRows }) : '', buyAnimalRows, animalNote }) : '';
     const itemSec = itemRows ? t('ui.buy_goods_price', { itemRows }) : '';
-    return t('ui.money_income_expenses_after', { title, how, x: fmtMoney(state.money), x2: f ? ' · ' : '', x3: this.cargoList().replace(/^<p>|<\/p>$/g, ''), sellSec, animalSec, itemSec, x4: fmtMoney(income), x5: fmtMoney(cost), x6: after < 0 ? 'bad' : '', x7: fmtMoney(after), x8: !roomOk ? t('ui.the_animals_you_want') : '', x9: after < 0 ? t('ui.not_enough_money_items') : '', x10: empty || !near ? 'disabled' : '', x11: role === 'livestock' ? t('ui.use_the_neighbor_s', { x: state.neighborBull ? 'checked' : '', x2: fmtMoney(cfg.economy.neighborBullFee) }) : '' });
+    return t('ui.money_income_expenses_after', { title, how, x: fmtMoney(state.money), x2: f ? ' · ' : '', x3: this.cargoList().replace(/^<p>|<\/p>$/g, ''), sellSec, animalSec, itemSec: itemSec + (role === 'ger_tent' ? this.gerSellHtml() : ''), x4: fmtMoney(income), x5: fmtMoney(cost), x6: after < 0 ? 'bad' : '', x7: fmtMoney(after), x8: !roomOk ? t('ui.the_animals_you_want') : '', x9: after < 0 ? t('ui.not_enough_money_items') : '', x10: empty || !near ? 'disabled' : '', x11: role === 'livestock' ? t('ui.use_the_neighbor_s', { x: state.neighborBull ? 'checked' : '', x2: fmtMoney(cfg.economy.neighborBullFee) }) : '' });
+  }
+
+  /** Гэр зарах (M6.13): гэр/майхны дэлгүүрт үнийн 50%; сүүлийн гэрийг зарахгүй */
+  private gerSellHtml(): string {
+    const { cfg, state } = this;
+    const rows = sellableGers(cfg, state).map((g) => `<tr><td>🛖 ${t('ger.size.' + g.size)}${g.index === 0 ? ' <span class="muted">(' + t('ui.main_ger') + ')</span>' : ''}</td><td class="num">+${fmtMoney(g.price)}</td><td class="ctl"><button class="btn sm" data-act="sellGer:${g.index}">${t('ui.sell')}</button></td></tr>`).join('');
+    return rows ? `<h3>${t('ui.sell_gers')}</h3><table>${rows}</table>` : '';
   }
 
   // ======================= Сумын төвийн амьдрал (V3.4): дуган, ЗДТГ, банк, байшин, хамаатан =======================
@@ -899,6 +905,11 @@ export class Panels {
           this.close();
           return;
         }
+        break;
+      }
+      case 'sellGer': {
+        const r = this.hooks.dispatch({ type: 'sellGer', index: Number(arg) });
+        this.hooks.toast(r.msg ?? '', r.ok ? 'good' : 'bad');
         break;
       }
       case 'doTrade': {
