@@ -3,6 +3,7 @@
  * Нүүж дуусахад шинэ бууцны тор (тухайн бууцны доройтлоор) үүсч, мал шинэ бууцанд ирнэ.
  * Газарт үлдсэн бүтээгдэхүүн хаягдана.
  */
+import { m, type Msg } from '../msg';
 import type { GameConfig } from '../config';
 import type { Rng } from '../rng';
 import type { GameState } from '../state';
@@ -24,12 +25,12 @@ export function moveHours(cfg: GameConfig, state: GameState, byTruck: boolean): 
 /**
  * Нүүх эхлүүлэх. fromMap = газрын зураг дээр тэр бууцанд ирээд «Энд нүүх» (M4.6): гэр бүл, сүрэг араас нүүж ирнэ.
  */
-export function startMove(cfg: GameConfig, state: GameState, to: string, fromMap = false): string | null {
-  if (!cfg.camps.camps[to]) return 'Ийм бууц алга';
-  if (to === state.campId) return 'Аль хэдийн энэ бууцанд байна';
-  if (state.move) return 'Нүүж байна';
-  if (!fromMap && (state.player.away || state.player.driving)) return 'Малчин завгүй';
-  if (fromMap && state.player.place !== 'map') return 'Газрын зураг дээр биш байна';
+export function startMove(cfg: GameConfig, state: GameState, to: string, fromMap = false): Msg | null {
+  if (!cfg.camps.camps[to]) return m('sim.no_such_camp');
+  if (to === state.campId) return m('sim.you_are_already_at');
+  if (state.move) return m('sim.you_are_moving_camp');
+  if (!fromMap && (state.player.away || state.player.driving)) return m('sim.the_herder_is_busy_59');
+  if (fromMap && state.player.place !== 'map') return m('sim.you_are_not_on');
   const truck = bestTruck(cfg, state);
   const byTruck = truck !== null;
   if (truck) {

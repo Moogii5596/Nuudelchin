@@ -31,6 +31,8 @@ import { Panels } from './render/ui/panels';
 import { PRODUCT_EMOJI, SEASON_EMOJI, SEASON_NAME, fmtMinutes, fmtMoney, fmtNum } from './render/ui/names';
 import { PlayerController } from './input/controller';
 import { t, setLang } from './i18n/i18n';
+import { tm } from './i18n/msg';
+import type { Msg } from './sim/msg';
 import { SaveStore } from './persist/idb';
 import { Autosave, attachPageEvents, attachSimEvents } from './persist/autosave';
 import { MenuUI, storedLang, takeIntent } from './render/ui/menu';
@@ -38,7 +40,8 @@ import { TouchUI } from './input/touch';
 import { registerServiceWorker, onConnectionChange } from './pwa';
 import { isTouch, touchKeys, quality, QUALITIES, QUALITY_NAME, QUALITY_SPEC, setQuality } from './device';
 
-function toast(msg: string, kind: '' | 'good' | 'bad' = ''): void {
+function toast(message: string | Msg, kind: '' | 'good' | 'bad' = ''): void {
+  let msg = tm(message);
   if (isTouch) msg = touchKeys(msg.replace(t('ui.with_the_mouse'), t('ui.with_your_finger')));
   const box = document.getElementById('toasts')!;
   const d = document.createElement('div');
@@ -453,7 +456,7 @@ function start(boot?: Boot): void {
         alert = t('ui.wolf_attack_q', { x: a ? t('ui.m', { x: t('species.' + a.species).toLowerCase(), d }) : '' });
       }
       const dogsTxt = state.dogs.length
-        ? `🐕 ${state.dogs.map((d) => `${d.name}: ${d.mode === 'chase' ? t('ui.wolf_chasing') : DOG_ORDER_NAME[d.order].toLowerCase()}`).join(' · ')} <small>(K)</small><br>`
+        ? `🐕 ${state.dogs.map((d) => `${d.name}: ${d.mode === 'chase' ? t('ui.wolf_chasing') : tm(DOG_ORDER_NAME[d.order]).toLowerCase()}`).join(' · ')} <small>(K)</small><br>`
         : '';
       const hs = state.helpers;
       const helpersTxt = hs.list.length

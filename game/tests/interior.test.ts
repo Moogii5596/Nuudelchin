@@ -80,7 +80,7 @@ describe('Орж болдог барилга (V6.1)', () => {
     for (const { door } of sumEnterDoors(cfg)) {
       atSum(sim, door.x, door.z + 0.5);
       const r = sim.command({ type: 'enterBuilding', door: door.id });
-      expect(r.ok, `${door.id}: ${r.msg}`).toBe(true);
+      expect(r.ok, `${door.id}: ${r.msg?.key}`).toBe(true);
       expect(sim.state.player.interior?.room).toBe(door.room);
       expect(sim.command({ type: 'exitBuilding', force: true }).ok).toBe(true);
       expect(sim.state.player.interior).toBeNull();
@@ -99,7 +99,7 @@ describe('Орж болдог барилга (V6.1)', () => {
     sim.command({ type: 'exitBuilding', force: true });
     atSum(sim, rel.x, rel.z);
     sim.state.player.mounted = true;
-    expect(sim.command({ type: 'enterBuilding' }).msg).toContain('Морин');
+    expect(sim.command({ type: 'enterBuilding' }).msg?.key).toBe('sim.dismount');
     sim.state.player.mounted = false;
     expect(sim.command({ type: 'enterBuilding' }).ok).toBe(true);
   });

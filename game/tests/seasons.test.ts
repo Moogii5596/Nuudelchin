@@ -134,7 +134,7 @@ describe('Улирал ба бууцнууд (M5.5)', () => {
     sim.command({ type: 'mapGo', x: 0, z: 0, dest: 'valley' });
     for (let i = 0; i < 3000 && Math.hypot(s.map.x - cfg.worldmap.locations.valley!.x, s.map.z - cfg.worldmap.locations.valley!.z) > 0.01; i++) sim.step();
     const r = sim.command({ type: 'takeOtor', camp: 'valley' });
-    expect(r.ok, r.msg).toBe(true);
+    expect(r.ok, r.msg?.key).toBe(true);
     expect(s.player.carry.reduce((a, c) => a + c.amount, 0)).toBeGreaterThan(0);
   });
 });

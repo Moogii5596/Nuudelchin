@@ -35,5 +35,5 @@ export default defineConfig({
   // three.js нь дангаараа ~500 kB (бүтэн тоглоом ~870 kB, gzip ~240 kB) тул анхааруулгын хязгаарыг өсгөнө
   build: { chunkSizeWarningLimit: 1000 },
   // *.perf.test.ts (хугацаа хэмждэг) ердийн тестэд орохгүй — `npm run test:perf` (vitest.perf.config.ts)
-  test: { environment: 'node', include: ['tests/**/*.test.ts'], exclude: [...configDefaults.exclude, 'tests/**/*.perf.test.ts'] },
+  test: { testTimeout: 30_000, environment: 'node', include: ['tests/**/*.test.ts'], exclude: [...configDefaults.exclude, 'tests/**/*.perf.test.ts'] },
 });

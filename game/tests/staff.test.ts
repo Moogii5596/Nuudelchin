@@ -17,7 +17,7 @@ function hireOne(sim: Sim, family: boolean): Candidate {
     const c = s.helpers.candidates.find((x) => x.family === family);
     if (c) {
       const r = sim.command({ type: 'hire', candidate: c.id }, false);
-      expect(r.ok, r.msg).toBe(true);
+      expect(r.ok, r.msg?.key).toBe(true);
       return c;
     }
     s.helpers.candidatesDay -= 100;   // дахин шинэчлэх

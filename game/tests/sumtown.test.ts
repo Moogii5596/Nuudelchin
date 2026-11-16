@@ -69,7 +69,7 @@ describe('Сумын төв: Могод сум (V3.3)', () => {
     p.z = slot.z;
     const before = st.money;
     const r = sim.command({ type: 'buyLotVehicle', slot: slot.id });
-    expect(r.ok, r.msg).toBe(true);
+    expect(r.ok, r.msg?.key).toBe(true);
     expect(st.vehicles).toContain('porter');
     expect(p.driving).toBe('porter');
     expect(p.mounted).toBe(false);

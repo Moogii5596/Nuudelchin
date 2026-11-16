@@ -10,7 +10,7 @@ import type { Command, CommandResult } from '../sim/commands';
 import { riverZ } from '../sim/terrain';
 import { nearLotSlot, worldLimit } from '../sim/systems/sumtown';
 import { atExit, currentRoom, interiorService, nearEnterDoor } from '../sim/systems/interior';
-import { t } from '../i18n/i18n';
+import { m } from '../sim/msg';
 
 export type ActionKind = 'shout' | 'scare' | 'call' | 'mount' | 'uurga' | 'pickup' | 'deposit' | 'dog' | 'vehicle' | 'map' | 'interior';
 
@@ -169,7 +169,7 @@ export class PlayerController {
     if (p.interior) {
       if (atExit(cfg, st)) this.hooks.onAction('interior', this.hooks.dispatch({ type: 'exitBuilding' }));
       else if (interiorService(cfg, st)) this.hooks.onToggle('trade');
-      else this.hooks.onAction('interior', { ok: false, msg: t('interior.nothing') });
+      else this.hooks.onAction('interior', { ok: false, msg: m('interior.nothing') });
       return;
     }
     if (p.place === 'sum') {
@@ -193,14 +193,14 @@ export class PlayerController {
     const atStore = Math.hypot(p.x - home.x, p.z - home.z) <= home.storageRadius;
     if (atStore && p.carry.length) {
       const r = this.hooks.dispatch({ type: 'deposit' });
-      if (manual || r.ok || r.msg === 'Агуулах дүүрсэн' /* i18n-skip: sim-ийн мессеж */) this.hooks.onAction('deposit', r);
+      if (manual || r.ok || r.msg?.key === 'sim.storage_is_full') this.hooks.onAction('deposit', r);
       if (!manual && !r.ok) this.autoT = 4; // дүүрсэн бол дахин дахин мэдэгдэхгүй
       return;
     }
     const R = this.cfg.products.pickupRadius;
     const near = st.items.some((it) => Math.hypot(it.x - p.x, it.z - p.z) <= R);
     if (!near) {
-      if (manual) this.hooks.onAction('pickup', { ok: false, msg: atStore ? t('ui.nothing_in_your_hands') : t('ui.no_products_nearby') });
+      if (manual) this.hooks.onAction('pickup', { ok: false, msg: atStore ? m('ui.nothing_in_your_hands') : m('ui.no_products_nearby') });
       return;
     }
     const carried = p.carry.reduce((t, c) => t + c.amount, 0);

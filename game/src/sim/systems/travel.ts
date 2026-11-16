@@ -10,6 +10,7 @@
  * - Зарах бүтээгдэхүүн, малаа хотондоо тэрэг/машиндаа ачна (loadCargo). Худалдаачинд зарж, авсан бараагаа
  *   ачаад гэртээ буулгана (unloadCargo). Авсан машиныг худалдаачин гэрт хүргэнэ 🙋.
  */
+import { m, type Msg } from '../msg';
 import type { GameConfig } from '../config';
 import type { Rng } from '../rng';
 import { newAnimal, type Animal, type BuyOrder, type FleetVehicle, type GameState, type ProductId, type VehicleId } from '../state';
@@ -86,13 +87,13 @@ export function nearestVehicle(_cfg: GameConfig, state: GameState, maxD: number)
   return best;
 }
 
-export function enterVehicle(cfg: GameConfig, state: GameState): string | null {
+export function enterVehicle(cfg: GameConfig, state: GameState): Msg | null {
   const p = state.player;
-  if (p.driving) return 'Аль хэдийн жолоодож байна';
-  if (p.place === 'map') return 'Газрын зураг дээр байна';
-  if (p.mounted) return 'Эхлээд мориноосоо буу (F)';
+  if (p.driving) return m('sim.you_are_already_driving');
+  if (p.place === 'map') return m('sim.you_are_on_the');
+  if (p.mounted) return m('sim.dismount_first_f');
   const f = nearestVehicle(cfg, state, cfg.vehicles.road.enterRange);
-  if (!f) return 'Ойрхон тэрэг, машин алга';
+  if (!f) return m('sim.no_cart_or_vehicle_137');
   p.driving = f.id;
   p.x = f.x;
   p.z = f.z;
@@ -100,10 +101,10 @@ export function enterVehicle(cfg: GameConfig, state: GameState): string | null {
   return null;
 }
 
-export function exitVehicle(_cfg: GameConfig, state: GameState): string | null {
+export function exitVehicle(_cfg: GameConfig, state: GameState): Msg | null {
   const p = state.player;
-  if (!p.driving) return 'Жолоодоогүй байна';
-  if (p.place === 'map') return 'Газрын зураг дээр буух боломжгүй';
+  if (!p.driving) return m('sim.you_are_not_driving');
+  if (p.place === 'map') return m('sim.you_cannot_get_out');
   const f = fleetOf(state, p.driving);
   p.driving = null;
   if (f) {
@@ -138,10 +139,10 @@ export function boardBest(cfg: GameConfig, state: GameState): boolean {
 }
 
 /** Агуулахаас гартаа авах (сумын төвд зарахаар) — гарт carryUnits хүртэл */
-export function takeFromStorage(cfg: GameConfig, state: GameState, products: Partial<Record<ProductId, number>>, proximity: boolean): string | null {
+export function takeFromStorage(cfg: GameConfig, state: GameState, products: Partial<Record<ProductId, number>>, proximity: boolean): Msg | null {
   const p = state.player;
   const h = cfg.camps.home;
-  if (proximity && Math.hypot(p.x - h.x, p.z - h.z) > h.storageRadius * 2) return 'Агуулахаас хол байна';
+  if (proximity && Math.hypot(p.x - h.x, p.z - h.z) > h.storageRadius * 2) return m('sim.too_far_from_the');
   let carried = p.carry.reduce((s, c) => s + c.amount, 0);
   let took = 0;
   for (const [k, n] of Object.entries(products)) {
@@ -153,15 +154,15 @@ export function takeFromStorage(cfg: GameConfig, state: GameState, products: Par
     carried += got;
     took += got;
   }
-  return took > 0 ? null : 'Авах зүйл алга эсвэл гар дүүрсэн';
+  return took > 0 ? null : m('sim.nothing_to_take_or');
 }
 
 /** Морьтой үед сүргээс мал авч араасаа тууж явах (сумын төвд зарахаар) — газрын зураг дээр удаашруулна */
-export function droveAnimals(state: GameState, animalIds: number[]): string | null {
+export function droveAnimals(state: GameState, animalIds: number[]): Msg | null {
   const p = state.player;
-  if (!p.mounted || p.driving) return 'Морьтой үед л мал тууж явна';
+  if (!p.mounted || p.driving) return m('sim.you_can_only_drive');
   const list = state.animals.filter((a) => animalIds.includes(a.id) && !a.riding && a.ownerId === undefined);
-  if (!list.length) return 'Мал сонгоогүй';
+  if (!list.length) return m('sim.no_animals_selected');
   state.animals = state.animals.filter((a) => !list.includes(a));
   p.drove.push(...list);
   return null;
@@ -202,9 +203,9 @@ export function driveVehicle(cfg: GameConfig, state: GameState, x: number, z: nu
 }
 
 /** 3D-ээс газрын зураг руу (dirX, dirZ — гарсан зүг) */
-export function leaveToMap(cfg: GameConfig, state: GameState, dirX: number, dirZ: number): string | null {
+export function leaveToMap(cfg: GameConfig, state: GameState, dirX: number, dirZ: number): Msg | null {
   const p = state.player;
-  if (!canTravel(state)) return 'Морь унаж эсвэл тэрэг, машинтай газрын зураг руу гарна';
+  if (!canTravel(state)) return m('sim.ride_or_drive_a');
   const f = p.driving ? fleetOf(state, p.driving) : undefined;
   const o = originKm(cfg, state);
   const l = Math.hypot(dirX, dirZ) || 1;
@@ -217,12 +218,12 @@ export function leaveToMap(cfg: GameConfig, state: GameState, dirX: number, dirZ
 }
 
 /** Газрын зураг дээр очих газар (dest — байршлын түлхүүр, эсвэл зураг дээрх цэг) */
-export function mapGo(cfg: GameConfig, state: GameState, x: number, z: number, dest: string | null): string | null {
-  if (state.player.place !== 'map') return 'Газрын зураг дээр биш байна';
-  if (state.move) return 'Нүүж байна';
+export function mapGo(cfg: GameConfig, state: GameState, x: number, z: number, dest: string | null): Msg | null {
+  if (state.player.place !== 'map') return m('sim.you_are_not_on');
+  if (state.move) return m('sim.you_are_moving_camp');
   const b = cfg.worldmap.bounds;
   const l = dest ? cfg.worldmap.locations[dest] : null;
-  if (dest && !l) return 'Ийм газар алга';
+  if (dest && !l) return m('sim.no_such_place');
   state.map.tx = l ? l.x : Math.min(b.maxX, Math.max(b.minX, x));
   state.map.tz = l ? l.z : Math.min(b.maxZ, Math.max(b.minZ, z));
   state.map.dest = dest;
@@ -343,13 +344,13 @@ function arrive(cfg: GameConfig, state: GameState, dest: string, rng: Rng): Trav
 }
 
 /** Өөр бууцанд ирээд тэнд нүүх (гэр бүл, сүрэг нүүж ирнэ) */
-export function migrateHere(cfg: GameConfig, state: GameState): string | null {
+export function migrateHere(cfg: GameConfig, state: GameState): Msg | null {
   const p = state.player;
-  if (p.place !== 'map') return 'Газрын зураг дээр биш байна';
+  if (p.place !== 'map') return m('sim.you_are_not_on');
   const here = Object.entries(cfg.worldmap.locations).find(
     ([id, l]) => l.kind === 'camp' && id !== state.campId && Math.hypot(l.x - state.map.x, l.z - state.map.z) <= cfg.worldmap.arriveRadiusKm,
   );
-  if (!here) return 'Бууцанд хүрээгүй байна';
+  if (!here) return m('sim.you_have_not_reached');
   return startMove(cfg, state, here[0], true);
 }
 
@@ -367,17 +368,17 @@ export function loadCargo(
   products: Partial<Record<ProductId, number>>,
   animalIds: number[],
   proximity: boolean,
-): string | null {
+): Msg | null {
   const f = fleetOf(state, id);
-  if (!f) return 'Тээвэр алга';
-  if (f.place !== 'camp' || state.player.place !== 'camp') return 'Тээвэр хотонд байх ёстой';
-  if (proximity && !atLoadingSpot(cfg, state, f)) return 'Тээврээ майхны дэргэд авчир';
+  if (!f) return m('sim.no_vehicle');
+  if (f.place !== 'camp' || state.player.place !== 'camp') return m('sim.the_vehicle_must_be');
+  if (proximity && !atLoadingSpot(cfg, state, f)) return m('sim.bring_your_vehicle_next');
   const v = vehicleCfg(cfg, id);
   const units = Object.values(products).reduce((s, n) => s + (n ?? 0), 0);
-  if (cargoUnits(f) + units > v.capacity + 1e-9) return `Ачаа багтахгүй (${Math.round(cargoUnits(f) + units)}/${v.capacity})`;
+  if (cargoUnits(f) + units > v.capacity + 1e-9) return m('sim.cargo_does_not_fit', { x: Math.round(cargoUnits(f) + units), capacity: v.capacity });
   const animals = state.animals.filter((a) => animalIds.includes(a.id) && !a.riding && a.ownerId === undefined);
   const slots = animals.reduce((s, a) => s + animalSlots(cfg, id, a.species), 0);
-  if (cargoSlots(cfg, f) + slots > v.sheepSlots + 1e-9) return `Мал багтахгүй (${v.sheepSlots} хонь эсвэл ${v.cowSlots} үхэр)`;
+  if (cargoSlots(cfg, f) + slots > v.sheepSlots + 1e-9) return m('sim.animals_do_not_fit', { sheepSlots: v.sheepSlots, cowSlots: v.cowSlots });
   for (const [p, n] of Object.entries(products)) {
     const got = storage.take(state, p as ProductId, n ?? 0);
     if (got > 0) f.cargo[p as ProductId] = (f.cargo[p as ProductId] ?? 0) + got;
@@ -388,11 +389,11 @@ export function loadCargo(
 }
 
 /** Ачааг хотод буулгах: бүтээгдэхүүн агуулахад, мал тээврийн дэргэд, бараа хүргэгдэнэ */
-export function unloadCargo(cfg: GameConfig, state: GameState, rng: Rng, id: VehicleId, proximity: boolean): string | null {
+export function unloadCargo(cfg: GameConfig, state: GameState, rng: Rng, id: VehicleId, proximity: boolean): Msg | null {
   const f = fleetOf(state, id);
-  if (!f) return 'Тээвэр алга';
-  if (f.place !== 'camp') return 'Тээвэр хотонд байх ёстой';
-  if (proximity && !atLoadingSpot(cfg, state, f)) return 'Тээврээ майхны дэргэд авчир';
+  if (!f) return m('sim.no_vehicle');
+  if (f.place !== 'camp') return m('sim.the_vehicle_must_be');
+  if (proximity && !atLoadingSpot(cfg, state, f)) return m('sim.bring_your_vehicle_next');
   for (const [p, n] of Object.entries(f.cargo)) {
     const added = storage.add(cfg, state, p as ProductId, n ?? 0, 0);
     const left = (n ?? 0) - added;
@@ -410,7 +411,7 @@ export function unloadCargo(cfg: GameConfig, state: GameState, rng: Rng, id: Veh
   f.animals = [];
   deliver(cfg, state, rng, f.orders);
   f.orders = [];
-  return cargoUnits(f) > 1e-9 ? 'Агуулах дүүрсэн — зарим ачаа тэргэнд үлдлээ' : null;
+  return cargoUnits(f) > 1e-9 ? m('sim.storage_is_full_some') : null;
 }
 
 export interface TradePlan {
@@ -447,17 +448,17 @@ export function animalRoom(cfg: GameConfig, state: GameState): number {
  * малаас зарна. Авсан мал тээвэрт ачигдана (морьтой бол араасаа тууна), бараа гэртээ хүргэгдэнэ.
  * Буцаах: алдаа эсвэл null.
  */
-export function trade(cfg: GameConfig, state: GameState, rng: Rng, plan: TradePlan, proximity: boolean): string | null {
+export function trade(cfg: GameConfig, state: GameState, rng: Rng, plan: TradePlan, proximity: boolean): Msg | null {
   const p = state.player;
-  if (p.place !== 'sum') return 'Сумын төвд байх ёстой';
+  if (p.place !== 'sum') return m('sim.you_must_be_in');
   // V3.3: дэлгүүр бүр өөр үүрэгтэй — ойрын дэлгүүрт зөвхөн тэнд байдаг зүйлийг авч/зарна
   const door = proximity ? nearTradeDoor(cfg, state) : null;
-  if (proximity && !door) return 'Дэлгүүрийн үүдэнд (шар тойрог) оч';
+  if (proximity && !door) return m('sim.go_to_the_shop');
   if (door) {
     const selling = Object.values(plan.sell).some((n) => (n ?? 0) > 0);
-    if (selling && !canSellProducts(door.role)) return 'Сүү, ноосыг хүлээн авах цэгт зарна';
-    if (plan.sellAnimalIds.length && !canSellAnimals(door.role)) return 'Малыг малын зах дээр зарна';
-    if (plan.buy.some((o) => !orderAllowed(door.role, o))) return 'Энэ дэлгүүрт ийм бараа байхгүй';
+    if (selling && !canSellProducts(door.role)) return m('sim.milk_and_wool_are');
+    if (plan.sellAnimalIds.length && !canSellAnimals(door.role)) return m('sim.animals_are_sold_at');
+    if (plan.buy.some((o) => !orderAllowed(door.role, o))) return m('sim.this_shop_does_not');
   }
   const f = p.driving ? fleetOf(state, p.driving) : undefined;
   // Зарах: эхлээд тээврийн ачаанаас, дараа нь гарт барьснаас
@@ -496,26 +497,26 @@ export function trade(cfg: GameConfig, state: GameState, rng: Rng, plan: TradePl
   if (f) f.animals = f.animals.filter((a) => !sellA.includes(a));
   p.drove = p.drove.filter((a) => !sellA.includes(a));
   // Авах (мөнгө, байр хүрвэл)
-  const failed: string[] = [];
+  const failed: Msg[] = [];
   for (const o0 of plan.buy) {
     let o = o0;
     if (o.kind === 'hay') {
       const n = Math.min(o.n, hayRoom(cfg, state));
       if (n <= 0) {
-        failed.push('ачааны байр');
+        failed.push(m('sim.cargo_space'));
         continue;
       }
       o = { kind: 'hay', n };
     }
     const price = orderPrice(cfg, state, o);
     if (state.money < price) {
-      failed.push('мөнгө');
+      failed.push(m('sim.money'));
       continue;
     }
     if (o.kind === 'animal') {
       const need = f ? animalSlots(cfg, f.id, o.species) : 1;
       if (need > animalRoom(cfg, state) + 1e-9) {
-        failed.push('тэвшний байр');
+        failed.push(m('sim.trailer_space'));
         continue;
       }
       const a: Animal = newAnimal(cfg, rng, state.nextId++, { species: o.species, sex: o.sex, age: o.age, x: p.x, z: p.z });
@@ -527,7 +528,7 @@ export function trade(cfg: GameConfig, state: GameState, rng: Rng, plan: TradePl
     else p.orders.push(o);
     spend(state, 'buy_' + o.kind, price);
   }
-  if (failed.length) return `${failed.length} зүйл авч чадсангүй (${[...new Set(failed)].join(', ')} хүрэлцээгүй)`;
+  if (failed.length) return m('sim.could_not_get_item', { length: failed.length, x: [...new Map(failed.map((f) => [f.key, f])).values()] });
   return null;
 }
 
@@ -535,18 +536,18 @@ export function trade(cfg: GameConfig, state: GameState, rng: Rng, plan: TradePl
  * V3.3: Машин худалдааны талбай дээрх тээврийг худалдаж аваад шууд суух (хэрэглэгчийн шийдвэр 2026-11-15).
  * Морьтой ирсэн бол унаа морь гэртээ буцна.
  */
-export function buyLotVehicle(cfg: GameConfig, state: GameState, slotId: string, proximity: boolean): string | null {
+export function buyLotVehicle(cfg: GameConfig, state: GameState, slotId: string, proximity: boolean): Msg | null {
   const p = state.player;
-  if (p.place !== 'sum') return 'Сумын төвд байх ёстой';
-  if (p.driving) return 'Тэрэг/машинаас буу (V)';
+  if (p.place !== 'sum') return m('sim.you_must_be_in');
+  if (p.driving) return m('sim.get_out_of_the');
   const s = lotSlots(cfg).find((x) => x.id === slotId);
-  if (!s) return 'Ийм машин алга';
-  if (proximity && Math.hypot(p.x - s.x, p.z - s.z) > cfg.worldmap.sum3d.lotR) return 'Машин руу ойрт';
-  if (s.display || !(s.vehicle in cfg.vehicles)) return 'Удахгүй худалдаанд гарна';
+  if (!s) return m('sim.no_such_vehicle');
+  if (proximity && Math.hypot(p.x - s.x, p.z - s.z) > cfg.worldmap.sum3d.lotR) return m('sim.go_up_to_the');
+  if (s.display || !(s.vehicle in cfg.vehicles)) return m('sim.coming_on_sale_soon');
   const id = s.vehicle as VehicleId;
-  if (state.vehicles.includes(id)) return 'Танд аль хэдийн байгаа';
+  if (state.vehicles.includes(id)) return m('sim.you_already_have_it');
   const price = cfg.vehicles[id].price;
-  if (state.money < price) return 'Мөнгө хүрэхгүй';
+  if (state.money < price) return m('sim.not_enough_money');
   addVehicle(cfg, state, id);
   spend(state, 'buy_vehicle', price);
   const f = fleetOf(state, id)!;

@@ -17,6 +17,7 @@
  * Шархтай нохой (fight.chaseMinHealth-ээс доош) тулалдахгүй, barkRange-д хуцаж л үргээнэ.
  * Харуулын цэгээсээ (anchor) leash-ээс хол хөөхгүй, буцаж ирнэ.
  */
+import { m, type Msg } from '../msg';
 import type { GameConfig, Species } from '../config';
 import type { GameState } from '../state';
 import { flockKey, type Herd } from './herds';
@@ -56,12 +57,12 @@ export function newDog(cfg: GameConfig, state: GameState, x: number, z: number):
 }
 
 /** Командын нэр (UI, мэдэгдэл) */
-export const DOG_ORDER_NAME: Record<DogOrderKind, string> = {
-  follow: 'Намайг дага',
-  stay: 'Энд зогс',
-  patrol: 'Энд сэлгүүц',
-  patrolCamp: 'Хот орчимд сэлгүүц',
-  guardHerd: 'Сүргийг хамгаал',
+export const DOG_ORDER_NAME: Record<DogOrderKind, Msg> = {
+  follow: m('sim.follow_me'),
+  stay: m('sim.stay_here'),
+  patrol: m('sim.roam_here'),
+  patrolCamp: m('sim.roam_around_the_camp'),
+  guardHerd: m('sim.guard_the_herd'),
 };
 
 /** Командын үйлдэл. herdKey — guardHerd-д (өгөөгүй бол малчинд хамгийн ойр сүрэг) */

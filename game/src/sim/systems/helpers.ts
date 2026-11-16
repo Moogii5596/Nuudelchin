@@ -14,6 +14,7 @@
  * - Цалин сар бүр. Малаар урьдчилж төлж болно — тэр мал туслахынх болж (ownerId) өөр өнгөтэй, тоглогчийн
  *   зорилгын тоонд орохгүй, сүү ноос нь туслахынх. Мөнгө хүрэхгүй бол айлаараа, малтайгаа явна.
  */
+import { m, type Msg } from '../msg';
 import type { GameConfig, Species } from '../config';
 import { Rng } from '../rng';
 import type { Animal, GameState, ProductId, VehicleId } from '../state';
@@ -204,12 +205,12 @@ export function nearTeahouse(cfg: GameConfig, state: GameState): boolean {
 }
 
 /** Хөлслөх. Алдаа бол тайлбар */
-export function hire(cfg: GameConfig, state: GameState, candidateId: number, proximity: boolean): string | null {
+export function hire(cfg: GameConfig, state: GameState, candidateId: number, proximity: boolean): Msg | null {
   const hs = state.helpers;
-  if (proximity && !nearTeahouse(cfg, state)) return 'Цайны газарт оч';
+  if (proximity && !nearTeahouse(cfg, state)) return m('sim.go_to_the_teahouse');
   const c = hs.candidates.find((x) => x.id === candidateId);
-  if (!c) return 'Ийм хүн алга';
-  if (!c.family && bedsUsed(state) + 1 > bedsTotal(cfg, state)) return 'Ганц бие туслахад байр хэрэгтэй — Худалдаачнаас туслахын майхан/гэр ав';
+  if (!c) return m('sim.no_such_person');
+  if (!c.family && bedsUsed(state) + 1 > bedsTotal(cfg, state)) return m('sim.a_single_helper_needs');
   const W = cfg.helpers.wage;
   const sum = c.members.reduce((s, m) => s + W[m.kind], 0);
   const familyId = hs.nextId;
@@ -267,36 +268,36 @@ function leave(state: GameState, familyId: number): string[] {
   return members.map((m) => m.name);
 }
 
-export function fire(state: GameState, helperId: number): string | null {
+export function fire(state: GameState, helperId: number): Msg | null {
   const h = state.helpers.list.find((x) => x.id === helperId);
-  if (!h) return 'Туслах алга';
+  if (!h) return m('sim.no_helper');
   const fam = familyOf(state, h);
-  if (fam.some((x) => x.trip)) return 'Жолооч сумын төвөөс ирээгүй байна';
-  if (fam.some((x) => x.task === 'otor')) return 'Эхлээд отроос буцаа';
+  if (fam.some((x) => x.trip)) return m('sim.the_driver_has_not');
+  if (fam.some((x) => x.task === 'otor')) return m('sim.recall_from_the_otor');
   leave(state, h.familyId);
   return null;
 }
 
 /** Үүрэг өгөх (насанд хүрсэн малчинд) */
-export function setTask(state: GameState, helperId: number, task: HelperTask, herd?: HerdGroup): string | null {
+export function setTask(state: GameState, helperId: number, task: HelperTask, herd?: HerdGroup): Msg | null {
   const h = state.helpers.list.find((x) => x.id === helperId);
-  if (!h) return 'Туслах алга';
-  if (h.kind === 'child') return 'Хүүхэд цуглуулагч л байна';
-  if (h.trip) return 'Сумын төвөөс ирээгүй байна';
-  if (h.task === 'otor') return 'Отор дээр байна — эхлээд буцаа';
-  if (task === 'otor' || task === 'collect') return 'Энэ үүргийг ингэж өгөхгүй';
-  if (task === 'drive' && !state.fleet.length) return 'Тэрэг, машин алга';
+  if (!h) return m('sim.no_helper');
+  if (h.kind === 'child') return m('sim.only_a_child_can');
+  if (h.trip) return m('sim.has_not_come_back');
+  if (h.task === 'otor') return m('sim.at_the_otor_recall');
+  if (task === 'otor' || task === 'collect') return m('sim.this_task_cannot_be');
+  if (task === 'drive' && !state.fleet.length) return m('sim.no_cart_or_vehicle');
   h.task = task;
   if (herd) h.herd = herd;
   return null;
 }
 
 /** Цалинг малаар урьдчилж төлөх: мал туслахынх болно */
-export function payWithAnimal(cfg: GameConfig, state: GameState, helperId: number, animalId: number): string | null {
+export function payWithAnimal(cfg: GameConfig, state: GameState, helperId: number, animalId: number): Msg | null {
   const h = state.helpers.list.find((x) => x.id === helperId);
-  if (!h) return 'Туслах алга';
+  if (!h) return m('sim.no_helper');
   const a = state.animals.find((x) => x.id === animalId);
-  if (!a || a.riding || a.ownerId !== undefined) return 'Ийм мал алга';
+  if (!a || a.riding || a.ownerId !== undefined) return m('sim.no_such_animal');
   a.ownerId = h.id;
   const v = salePrice(a, cfg.animals);
   h.prepaid += v;
@@ -698,14 +699,14 @@ export function guardingHelpers(state: GameState): Helper[] {
 // ======================= Отор =======================
 
 /** Отор: малчинтай хамт сонгосон малыг өөр бууц руу явуулна (тоглогч гэртэй байх ёстой) */
-export function sendOtor(cfg: GameConfig, state: GameState, helperId: number, animalIds: number[], campId: string): string | null {
+export function sendOtor(cfg: GameConfig, state: GameState, helperId: number, animalIds: number[], campId: string): Msg | null {
   const h = state.helpers.list.find((x) => x.id === helperId);
-  if (!h || h.kind !== 'adult') return 'Малчин алга';
-  if (h.trip || h.task === 'otor') return 'Малчин завгүй';
-  if (spareTents(state) <= 0) return 'Отор явуулахад илүү майхан хэрэгтэй (гэртэй болох эсвэл Худалдаачнаас отрын майхан авах)';
-  if (!cfg.camps.camps[campId] || campId === state.campId) return 'Өөр бууц сонго';
+  if (!h || h.kind !== 'adult') return m('sim.no_herder');
+  if (h.trip || h.task === 'otor') return m('sim.the_herder_is_busy_59');
+  if (spareTents(state) <= 0) return m('sim.sending_an_otor_needs');
+  if (!cfg.camps.camps[campId] || campId === state.campId) return m('sim.choose_another_camp');
   const animals = state.animals.filter((a) => animalIds.includes(a.id) && !a.riding);
-  if (!animals.length) return 'Мал сонгоогүй';
+  if (!animals.length) return m('sim.no_animals_selected');
   state.animals = state.animals.filter((a) => !animals.includes(a));
   for (const a of animals) a.mode = 'graze';
   state.helpers.otor.push({ helperId, campId, animals, days: 0 });
@@ -715,10 +716,10 @@ export function sendOtor(cfg: GameConfig, state: GameState, helperId: number, an
 }
 
 /** Отроос буцаах: мал хотын ойролцоо ирнэ */
-export function recallOtor(cfg: GameConfig, state: GameState, helperId: number, rng: Rng): string | null {
+export function recallOtor(cfg: GameConfig, state: GameState, helperId: number, rng: Rng): Msg | null {
   const g = state.helpers.otor.find((x) => x.helperId === helperId);
   const h = state.helpers.list.find((x) => x.id === helperId);
-  if (!g || !h) return 'Отор алга';
+  if (!g || !h) return m('sim.no_otor');
   const home = cfg.camps.home;
   for (const a of g.animals) {
     a.x = a.tx = home.x + 30 + rng.range(-8, 8);
@@ -738,9 +739,9 @@ export function recallOtor(cfg: GameConfig, state: GameState, helperId: number, 
 }
 
 /** Хүүхдийг отор руу цуглуулагчаар явуулах (campId) эсвэл гэрт буцаах (null) */
-export function setOtorCollector(state: GameState, childId: number, campId: string | null): string | null {
+export function setOtorCollector(state: GameState, childId: number, campId: string | null): Msg | null {
   const c = state.helpers.list.find((x) => x.id === childId);
-  if (!c || c.kind !== 'child') return 'Хүүхэд алга';
+  if (!c || c.kind !== 'child') return m('sim.no_child');
   for (const g of state.helpers.otor) if (g.collectorId === childId) g.collectorId = undefined;
   if (campId === null) {
     c.task = 'collect';
@@ -751,8 +752,8 @@ export function setOtorCollector(state: GameState, childId: number, campId: stri
     return null;
   }
   const g = state.helpers.otor.find((x) => x.campId === campId);
-  if (!g) return 'Тэр бууцанд отор алга';
-  if (g.collectorId !== undefined) return 'Тэр отор цуглуулагчтай';
+  if (!g) return m('sim.no_otor_at_that');
+  if (g.collectorId !== undefined) return m('sim.that_otor_already_has');
   g.collectorId = childId;
   c.task = 'otor';
   c.mode = 'away';
@@ -761,12 +762,12 @@ export function setOtorCollector(state: GameState, childId: number, campId: stri
 }
 
 /** Отор дээрх бүтээгдэхүүнийг авах (тоглогч газрын зураг дээр тэр бууцанд ирсэн байх): тээвэрт эсвэл гартаа */
-export function takeFromOtor(cfg: GameConfig, state: GameState, campId: string): { took: number; err: string | null } {
+export function takeFromOtor(cfg: GameConfig, state: GameState, campId: string): { took: number; err: Msg | null } {
   const p = state.player;
   const g = state.helpers.otor.find((x) => x.campId === campId);
-  if (!g) return { took: 0, err: 'Тэр бууцанд отор алга' };
+  if (!g) return { took: 0, err: m('sim.no_otor_at_that') };
   const loc = cfg.worldmap.locations[campId];
-  if (p.place !== 'map' || !loc || Math.hypot(state.map.x - loc.x, state.map.z - loc.z) > cfg.worldmap.arriveRadiusKm + 1e-6) return { took: 0, err: 'Отор дээр очих хэрэгтэй (газрын зураг дээр тэр бууцанд)' };
+  if (p.place !== 'map' || !loc || Math.hypot(state.map.x - loc.x, state.map.z - loc.z) > cfg.worldmap.arriveRadiusKm + 1e-6) return { took: 0, err: m('sim.go_to_the_otor') };
   const f = p.driving ? state.fleet.find((x) => x.id === p.driving) : undefined;
   let room = f
     ? cfg.vehicles[f.id].capacity - Object.values(f.cargo).reduce((s, n) => s + (n ?? 0), 0) - f.orders.reduce((s, o) => s + (o.kind === 'hay' ? o.n : 0), 0)
@@ -787,7 +788,7 @@ export function takeFromOtor(cfg: GameConfig, state: GameState, campId: string):
     took += n;
   }
   g.items = (g.items ?? []).filter((it) => it.amount > 1e-9);
-  if (!took) return { took, err: (g.items.length ? 'Ачих байр алга' : 'Авах бүтээгдэхүүн алга') };
+  if (!took) return { took, err: (g.items.length ? m('sim.no_space_to_load') : m('sim.no_products_to_take')) };
   return { took, err: null };
 }
 

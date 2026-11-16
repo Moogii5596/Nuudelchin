@@ -6,6 +6,7 @@
  * - Морь унах/буух, морь дуудах.
  * Малчны байрлалыг input бодит цагаар тооцож `movePlayer` командаар өгнө.
  */
+import { m, type Msg } from '../msg';
 import type { GameConfig } from '../config';
 import type { Rng } from '../rng';
 import type { Animal, GameState } from '../state';
@@ -105,10 +106,10 @@ export function toggleUurga(state: GameState): boolean {
 }
 
 /** Морь унах / буух. Алдаа бол мессеж */
-export function toggleMount(cfg: GameConfig, state: GameState): string | null {
+export function toggleMount(cfg: GameConfig, state: GameState): Msg | null {
   const p = state.player;
   const horse = ridingHorse(state);
-  if (!horse) return 'Унаа морь алга';
+  if (!horse) return m('sim.no_riding_horse');
   if (p.mounted) {
     p.mounted = false;
     // Морь малчны хажууд зогсоно
@@ -117,7 +118,7 @@ export function toggleMount(cfg: GameConfig, state: GameState): string | null {
     horse.z = horse.tz = p.z + oz;
     return null;
   }
-  if (Math.hypot(horse.x - p.x, horse.z - p.z) > cfg.player.mountRange) return 'Морь хол байна — дэргэд нь оч (H — морь дуудах)';
+  if (Math.hypot(horse.x - p.x, horse.z - p.z) > cfg.player.mountRange) return m('sim.the_horse_is_far');
   p.mounted = true;
   p.horseCalled = false;
   p.x = horse.x;

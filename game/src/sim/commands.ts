@@ -5,6 +5,7 @@
  * proximity=true үед (3D тоглолт) малчин бүтээгдэхүүн, агуулахын ойролцоо байх ёстой.
  * 3D-гүй симуляторт proximity=false: алхах хугацааг тооцохгүй (гараар тоглолтын дээд хязгаар).
  */
+import { m, raw, type Msg } from './msg';
 import type { Species } from './config';
 import type { BuyOrder, ProcessorKind, ProductId, VehicleId } from './state';
 import type { Sim } from './sim';
@@ -80,7 +81,7 @@ export type Command =
 
 export interface CommandResult {
   ok: boolean;
-  msg?: string;
+  msg?: Msg;
 }
 
 /** Малчин майхан/агуулахын дэргэд байгаа эсэх (тэрэг, тогоо тэнд байна) */
@@ -96,17 +97,17 @@ const NOT_DRIVING = new Set<Command['type']>(['toggleMount', 'callHorse', 'picku
 /** Гаднах ертөнцөд гарч хийх үйлдлүүд: барилга дотор байвал эхлээд гаргана */
 const LEAVES_BUILDING = new Set<Command['type']>(['movePlayer', 'shout', 'scareWolves', 'toggleMount', 'callHorse', 'pickup', 'deposit', 'drive', 'process', 'toggleVehicle', 'boardBest', 'driveVehicle', 'leaveToMap', 'quickMap', 'mapGo', 'migrateHere', 'moveCamp', 'loadCargo', 'unloadCargo', 'takeFromStorage', 'droveAnimals', 'buyLotVehicle']);
 
-const ok = (msg?: string): CommandResult => ({ ok: true, msg });
-const fail = (msg: string): CommandResult => ({ ok: false, msg });
+const ok = (msg?: Msg): CommandResult => ({ ok: true, msg });
+const fail = (msg: Msg): CommandResult => ({ ok: false, msg });
 
 export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandResult {
   const { cfg, state } = sim;
   const p = state.player;
   // Зөвхөн гэрийн бууцанд, явганаар/мориор хийх ажлууд
-  if (CAMP_ONLY.has(cmd.type) && p.away) return fail('Малчин завгүй (гэрээсээ хол эсвэл нүүж байна)');
-  if (NOT_DRIVING.has(cmd.type) && p.driving) return fail('Тэрэг/машинаас буу (V)');
-  if (cmd.type === 'toggleMount' && p.place === 'map') return fail('Газрын зураг дээр байна');
-  if (state.move && cmd.type !== 'neighborBull' && cmd.type !== 'debugAddAnimals' && cmd.type !== 'cheat') return fail('Нүүж байна');
+  if (CAMP_ONLY.has(cmd.type) && p.away) return fail(m('sim.the_herder_is_busy'));
+  if (NOT_DRIVING.has(cmd.type) && p.driving) return fail(m('sim.get_out_of_the'));
+  if (cmd.type === 'toggleMount' && p.place === 'map') return fail(m('sim.you_are_on_the'));
+  if (state.move && cmd.type !== 'neighborBull' && cmd.type !== 'debugAddAnimals' && cmd.type !== 'cheat') return fail(m('sim.you_are_moving_camp'));
 
   if (p.interior && LEAVES_BUILDING.has(cmd.type)) exitBuilding(cfg, state, true);
 
@@ -125,7 +126,7 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
     }
 
     case 'movePlayer': {
-      if (p.driving || p.place === 'map') return fail('Жолоодож байна');
+      if (p.driving || p.place === 'map') return fail(m('sim.you_are_driving'));
       // Морьтой 3D-ийн хязгаарт хүрвэл газрын зураг руу гарна (M4.6)
       const R = Math.hypot(cmd.x, cmd.z);
       if (p.mounted && R >= worldLimit(cfg, p.place) - 0.05) {
@@ -143,26 +144,26 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
 
     case 'shout': {
       const n = shout(cfg, state, sim.random);
-      return n ? ok(`Хөөе! ${n} мал туугдлаа`) : fail('Ойрхон мал алга');
+      return n ? ok(m('sim.hoy_herded_animals', { n })) : fail(m('sim.no_animals_nearby'));
     }
 
     case 'toggleMount': {
       const err = toggleMount(cfg, state);
       if (err) return fail(err);
-      return ok(p.mounted ? 'Морь унлаа' : 'Мориноосоо буулаа');
+      return ok(p.mounted ? m('sim.you_mounted_the_horse') : m('sim.you_dismounted'));
     }
 
     case 'toggleUurga':
-      return ok(toggleUurga(state) ? 'Уургаа барилаа — мал танаас айж туугдана' : 'Уургаа тавилаа — мал зөвхөн «Хөөе!»-гээр туугдана');
+      return ok(toggleUurga(state) ? m('sim.you_hold_the_urga') : m('sim.you_put_the_urga'));
     case 'callHorse': {
-      if (p.mounted) return fail('Та мориндоо сууж байна');
+      if (p.mounted) return fail(m('sim.you_are_on_your'));
       p.horseCalled = true;
-      return ok('Чүү, нааш! Морь давхиж ирж байна');
+      return ok(m('sim.chuu_come_here_the'));
     }
 
     case 'scareWolves': {
       const n = scareWolves(cfg, state);
-      return n ? ok(`Хуу-хай! ${n} чоно үүр лүүгээ зугтлаа`) : fail('Ойрхон чоно алга');
+      return n ? ok(m('sim.huu_hai_wolves_fled', { n })) : fail(m('sim.no_wolves_nearby'));
     }
 
     case 'setDifficulty': {
@@ -186,7 +187,7 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
           z: cz + Math.sin(ang) * r,
         }));
       }
-      return ok(`${cmd.n} мал нэмлээ`);
+      return ok(m('sim.added_animals', { n: cmd.n }));
     }
 
     case 'pickup': {
@@ -202,14 +203,14 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
         carried += it.amount;
         picked.push(it.id);
       }
-      if (!picked.length) return fail(carried >= cap ? 'Гар дүүрсэн' : 'Ойролцоо бүтээгдэхүүн алга');
+      if (!picked.length) return fail(carried >= cap ? m('sim.your_hands_are_full') : m('sim.no_products_nearby'));
       state.items = state.items.filter((it) => !picked.includes(it.id));
-      return ok(`${picked.length} ширхэг авлаа`);
+      return ok(m('sim.picked_up_item_s', { length: picked.length }));
     }
 
     case 'deposit': {
       const h = cfg.camps.home;
-      if (proximity && Math.hypot(p.x - h.x, p.z - h.z) > h.storageRadius) return fail('Агуулахаас хол байна');
+      if (proximity && Math.hypot(p.x - h.x, p.z - h.z) > h.storageRadius) return fail(m('sim.too_far_from_the'));
       const left: typeof p.carry = [];
       for (const c of p.carry) {
         const added = storage.add(cfg, state, c.product as ProductId, c.amount, 0);
@@ -217,18 +218,18 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
         if (c.amount - added > 1e-9) left.push({ ...c, amount: c.amount - added });
       }
       p.carry = left;
-      return left.length ? fail('Агуулах дүүрсэн') : ok();
+      return left.length ? fail(m('sim.storage_is_full')) : ok();
     }
 
     case 'drive': {
       const n = driveFlock(cfg, state, sim.random, cmd.species, cmd.x, cmd.z);
-      return n ? ok(`${n} мал туулаа`) : fail('Мал алга');
+      return n ? ok(m('sim.herded_animals', { n })) : fail(m('sim.no_animals'));
     }
 
     case 'process': {
-      if (proximity && !nearHome(cfg, p)) return fail('Майхандаа очиж боловсруулна');
+      if (proximity && !nearHome(cfg, p)) return fail(m('sim.go_to_your_tent'));
       const pr = state.processors.find((x) => x.kind === cmd.kind && processing.canStart(cfg, state, x));
-      if (!pr) return fail('Төхөөрөмж завгүй эсвэл түүхий эд дутуу');
+      if (!pr) return fail(m('sim.the_equipment_is_busy'));
       processing.start(cfg, state, pr);
       return ok();
     }
@@ -236,27 +237,27 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
     case 'toggleVehicle': {
       if (p.driving) {
         const err = exitVehicle(cfg, state);
-        return err ? fail(err) : ok('Тэрэг/машинаас буулаа');
+        return err ? fail(err) : ok(m('sim.you_got_out_of'));
       }
       const err = enterVehicle(cfg, state);
-      return err ? fail(err) : ok(`${cfg.vehicles[p.driving!].emoji} ${cfg.vehicles[p.driving!].name}-д суулаа — WASD жолоодох, газрын хязгаарт хүрвэл газрын зураг`);
+      return err ? fail(err) : ok(m('sim.you_boarded_the_wasd', { x: cfg.vehicles[p.driving!].emoji, x2: cfg.vehicles[p.driving!].name }));
     }
     case 'boardBest':
-      return boardBest(cfg, state) ? ok() : fail('Тээвэр алга');
+      return boardBest(cfg, state) ? ok() : fail(m('sim.no_vehicle'));
     case 'driveVehicle': {
       const ev = driveVehicle(cfg, state, cmd.x, cmd.z, cmd.heading);
       if (ev) sim.emitTravel(ev);
       return ok();
     }
     case 'quickMap': {
-      if (p.place === 'map') return fail('Газрын зураг дээр байна');
+      if (p.place === 'map') return fail(m('sim.you_are_on_the'));
       if (!canTravel(state)) {
         // Явган бол унаа мориндоо мордоно, морьгүй бол тэрэг/машиндаа сууна
         const horse = state.animals.find((a) => a.riding);
         if (horse) {
           p.mounted = true;
           p.horseCalled = false;
-        } else if (!boardBest(cfg, state)) return fail('Унаа морь, тэрэг машин алга');
+        } else if (!boardBest(cfg, state)) return fail(m('sim.you_have_no_riding'));
       }
       const R = Math.hypot(p.x, p.z);
       const err = R > 5 ? leaveToMap(cfg, state, p.x, p.z) : leaveToMap(cfg, state, Math.sin(p.heading), Math.cos(p.heading));
@@ -275,63 +276,63 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
     case 'migrateHere': {
       const err = migrateHere(cfg, state);
       if (!err) sim.refreshQuality();
-      return err ? fail(err) : ok('Гэр бүл, сүрэг тань энэ бууц руу нүүж байна');
+      return err ? fail(err) : ok(m('sim.your_household_and_herd'));
     }
     case 'loadCargo': {
       const err = loadCargo(cfg, state, cmd.vehicle, cmd.products, cmd.animalIds, proximity);
-      return err ? fail(err) : ok('Ачлаа');
+      return err ? fail(err) : ok(m('sim.loaded'));
     }
     case 'unloadCargo': {
       const err = unloadCargo(cfg, state, sim.random, cmd.vehicle, proximity);
-      return err ? fail(err) : ok('Буулгалаа');
+      return err ? fail(err) : ok(m('sim.unloaded'));
     }
     case 'droveAnimals': {
       const err = droveAnimals(state, cmd.animalIds);
-      return err ? fail(err) : ok('Мал араасаа тууж явна');
+      return err ? fail(err) : ok(m('sim.the_animals_follow_behind'));
     }
     case 'takeFromStorage': {
       const err = takeFromStorage(cfg, state, cmd.products, proximity);
-      return err ? fail(err) : ok('Гартаа авлаа');
+      return err ? fail(err) : ok(m('sim.taken_in_hand'));
     }
     case 'trade': {
       const err = trade(cfg, state, sim.random, cmd.plan, proximity);
-      return err ? fail(err) : ok('Арилжаа хийлээ');
+      return err ? fail(err) : ok(m('sim.trade_done'));
     }
     case 'buyHouse': {
       const err = buyHouse(cfg, state, cmd.plot, proximity);
-      return err ? fail(err) : ok('🏠 Хашаа байшин худалдаж авлаа — түрээслүүлж болно');
+      return err ? fail(err) : ok(m('sim.yard_house_bought_you'));
     }
     case 'houseMode': {
       const err = setHouseMode(cfg, state, cmd.plot, cmd.mode);
-      return err ? fail(err) : ok(cmd.mode === 'rent' ? 'Түрээслүүллээ — өдөр бүр түрээс орно' : 'Байшин хоосон');
+      return err ? fail(err) : ok(cmd.mode === 'rent' ? m('sim.rented_out_rent_comes') : m('sim.the_house_is_empty'));
     }
     case 'donate': {
       const err = donate(cfg, state, cmd.amount, proximity);
-      return err ? fail(err) : ok('🙏 Хандив өглөө — нэр хүнд өслөө');
+      return err ? fail(err) : ok(m('sim.donated_your_reputation_rose'));
     }
     case 'zdtgLoan': {
       const err = takeZdtgLoan(cfg, state, sim.random, cmd.pkg, proximity);
-      return err ? fail(err) : ok('🏛 Малын зээл авлаа — мал араас тань тууж/тэвшинд ачигдлаа');
+      return err ? fail(err) : ok(m('sim.livestock_loan_taken_the'));
     }
     case 'zdtgRepay': {
       const err = repayZdtgLoan(cfg, state, cmd.mode, proximity);
-      return err ? fail(err) : ok('🏛 Малын зээлээ төллөө');
+      return err ? fail(err) : ok(m('sim.livestock_loan_repaid'));
     }
     case 'bankLoan': {
       const err = takeBankLoan(cfg, state, cmd.amount, proximity);
-      return err ? fail(err) : ok('🏦 Зээл авлаа');
+      return err ? fail(err) : ok(m('sim.loan_taken'));
     }
     case 'bankRepay': {
       const err = repayBankLoan(cfg, state, cmd.amount, proximity);
-      return err ? fail(err) : ok('🏦 Зээл төллөө');
+      return err ? fail(err) : ok(m('sim.loan_repaid'));
     }
     case 'gift': {
       const err = giveGift(cfg, state, cmd.relative, cmd.plan, proximity);
-      return err ? fail(err) : ok('🎁 Бэлэг өглөө — хамаатантайгаа илүү дотно боллоо');
+      return err ? fail(err) : ok(m('sim.gift_given_you_grew'));
     }
     case 'buyLotVehicle': {
       const err = buyLotVehicle(cfg, state, cmd.slot, proximity);
-      return err ? fail(err) : ok(`${cfg.vehicles[p.driving!].emoji} ${cfg.vehicles[p.driving!].name} худалдаж авлаа — WASD жолоодох`);
+      return err ? fail(err) : ok(m('sim.bought_the_wasd_to', { x: cfg.vehicles[p.driving!].emoji, x2: cfg.vehicles[p.driving!].name }));
     }
 
     case 'neighborBull':
@@ -340,14 +341,14 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
 
     case 'dogOrder': {
       const dogs = cmd.dog === 'all' ? state.dogs : state.dogs.filter((d) => d.id === cmd.dog);
-      if (!dogs.length) return fail(state.dogs.length ? 'Ийм нохой алга' : 'Нохой алга — сумын төвөөс авна (T)');
+      if (!dogs.length) return fail(state.dogs.length ? m('sim.no_such_dog') : m('sim.you_have_no_dogs'));
       for (const d of dogs) orderDog(cfg, state, d, cmd.order, cmd.herd);
-      const who = cmd.dog === 'all' ? (dogs.length > 1 ? 'Бүх нохой' : dogs[0]!.name) : dogs[0]!.name;
-      return ok(`🐕 ${who}: ${DOG_ORDER_NAME[cmd.order]}`);
+      const who = cmd.dog === 'all' ? (dogs.length > 1 ? m('sim.all_dogs') : dogs[0]!.name) : dogs[0]!.name;
+      return ok(m('sim.dog_order', { who, order: DOG_ORDER_NAME[cmd.order] }));
     }
 
     case 'cheat':
-      return ok(applyCheat(sim, cmd.action));
+      return ok(raw(applyCheat(sim, cmd.action)));
 
     case 'teahouse':
       refreshCandidates(cfg, state);
@@ -355,11 +356,11 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
     case 'hire': {
       refreshCandidates(cfg, state);
       const err = hire(cfg, state, cmd.candidate, proximity);
-      return err ? fail(err) : ok('Туслах хөлсөллөө — таны бууц руу явлаа');
+      return err ? fail(err) : ok(m('sim.helper_hired_heading_to'));
     }
     case 'fireHelper': {
       const err = fire(state, cmd.helper);
-      return err ? fail(err) : ok('Туслах ажлаас гарлаа');
+      return err ? fail(err) : ok(m('sim.the_helper_quit'));
     }
     case 'helperTask': {
       const err = setTask(state, cmd.helper, cmd.task, cmd.herd);
@@ -367,31 +368,31 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
     }
     case 'payWithAnimal': {
       const err = payWithAnimal(cfg, state, cmd.helper, cmd.animal);
-      return err ? fail(err) : ok('Цалинг малаар өглөө');
+      return err ? fail(err) : ok(m('sim.paid_wages_in_animals'));
     }
     case 'sendOtor': {
       const err = sendOtor(cfg, state, cmd.helper, cmd.animalIds, cmd.camp);
-      return err ? fail(err) : ok('Отор явлаа');
+      return err ? fail(err) : ok(m('sim.otor_sent_off'));
     }
     case 'otorCollector': {
       const err = setOtorCollector(state, cmd.helper, cmd.camp);
-      return err ? fail(err) : ok(cmd.camp ? 'Цуглуулагч отор руу явлаа' : 'Цуглуулагч гэртээ ирлээ');
+      return err ? fail(err) : ok(cmd.camp ? m('sim.the_collector_went_to') : m('sim.the_collector_came_home'));
     }
     case 'takeOtor': {
       const r = takeFromOtor(cfg, state, cmd.camp);
-      return r.err ? fail(r.err) : ok(`Отроос ${Math.round(r.took * 10) / 10} нэгж бүтээгдэхүүн авлаа`);
+      return r.err ? fail(r.err) : ok(m('sim.collected_units_of_products', { x: Math.round(r.took * 10) / 10 }));
     }
     case 'recallOtor': {
       const err = recallOtor(cfg, state, cmd.helper, sim.random);
-      return err ? fail(err) : ok('Отроос буцлаа');
+      return err ? fail(err) : ok(m('sim.recalled_from_the_otor'));
     }
 
     case 'moveCamp': {
-      if (proximity && !nearHome(cfg, p)) return fail('Нүүхийн тулд майхандаа оч (ачаа бараагаа ачина)');
+      if (proximity && !nearHome(cfg, p)) return fail(m('sim.go_to_your_tent_56'));
       const err = startMove(cfg, state, cmd.to);
       if (err) return fail(err);
       // Шинэ бууцны чанарыг Sim дахин тооцно
-      return ok('Нүүж байна');
+      return ok(m('sim.you_are_moving_camp'));
     }
   }
 }

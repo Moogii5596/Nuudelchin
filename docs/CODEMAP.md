@@ -56,10 +56,10 @@ SYM game/src/input/touch.ts:235 method TouchUI.fullscreen
 SYM game/src/input/touch.ts:248 method TouchUI.paused
 SYM game/src/input/touch.ts:252 method TouchUI.portrait
 SYM game/src/input/touch.ts:257 method TouchUI.update
-FILE game/src/main.ts 31.0KB 537L
-SYM game/src/main.ts:41 fn toast
-SYM game/src/main.ts:64 fn start
-SYM game/src/main.ts:510 fn boot
+FILE game/src/main.ts 31.1KB 540L
+SYM game/src/main.ts:43 fn toast
+SYM game/src/main.ts:67 fn start
+SYM game/src/main.ts:513 fn boot
 FILE game/src/persist/autosave.ts 4.7KB 102L exports: SaveReason,AutosaveDeps,Autosave,attachSimEvents,attachPageEvents
 SYM game/src/persist/autosave.ts:11 type SaveReason
 SYM game/src/persist/autosave.ts:13 interface AutosaveDeps
@@ -249,16 +249,16 @@ SYM game/src/render/building/civic.ts:211 fn buildMarket
 SYM game/src/render/building/civic.ts:237 fn floodlight
 SYM game/src/render/building/civic.ts:245 fn buildStadium
 SYM game/src/render/building/civic.ts:276 fn buildWrestle
-FILE game/src/render/building/config.ts 8.0KB 105L exports: BuildingConfig,TownEntry,TownConfig,buildingConfigErrors,validateBuildingData,BUILDING_CONFIG,TOWN
+FILE game/src/render/building/config.ts 8.4KB 108L exports: BuildingConfig,TownEntry,TownConfig,buildingConfigErrors,validateBuildingData,BUILDING_CONFIG,TOWN
 SYM game/src/render/building/config.ts:9 fn isObj
 SYM game/src/render/building/config.ts:14 type BuildingConfig
 SYM game/src/render/building/config.ts:16 interface TownEntry
 SYM game/src/render/building/config.ts:31 interface TownConfig
-SYM game/src/render/building/config.ts:45 fn collectErrors
-SYM game/src/render/building/config.ts:96 fn buildingConfigErrors
-SYM game/src/render/building/config.ts:98 fn validateBuildingData
-SYM game/src/render/building/config.ts:104 const BUILDING_CONFIG
-SYM game/src/render/building/config.ts:105 const TOWN
+SYM game/src/render/building/config.ts:47 fn collectErrors
+SYM game/src/render/building/config.ts:99 fn buildingConfigErrors
+SYM game/src/render/building/config.ts:101 fn validateBuildingData
+SYM game/src/render/building/config.ts:107 const BUILDING_CONFIG
+SYM game/src/render/building/config.ts:108 const TOWN
 FILE game/src/render/building/core.ts 26.4KB 260L exports: sc,px2uv,rot,buildingAtlas,bandV,wallQuad,slab,panel,shadeDown,SIGN_KEYS,signDef,signRect,hCyl,groundQuad,+2
 SYM game/src/render/building/core.ts:7 const sc
 SYM game/src/render/building/core.ts:8 const px2uv
@@ -698,18 +698,19 @@ SYM game/src/render/style.ts:285 fn parseOutfits
 SYM game/src/render/style.ts:315 fn validateVisualStyle
 SYM game/src/render/style.ts:609 const visualStyle
 SYM game/src/render/style.ts:611 fn paletteHex
-FILE game/src/render/sumcenter.ts 20.2KB 369L exports: SumCenterView
-SYM game/src/render/sumcenter.ts:40 fn residentMatrix
-SYM game/src/render/sumcenter.ts:44 fn residents
-SYM game/src/render/sumcenter.ts:69 class SumCenterView
-SYM game/src/render/sumcenter.ts:223 method SumCenterView.syncTown
-SYM game/src/render/sumcenter.ts:238 method SumCenterView.buildGers
-SYM game/src/render/sumcenter.ts:276 method SumCenterView.syncTalk
-SYM game/src/render/sumcenter.ts:317 method SumCenterView.syncCrowd
-SYM game/src/render/sumcenter.ts:342 method SumCenterView.takeLive
-SYM game/src/render/sumcenter.ts:359 method SumCenterView.releaseLive
-SYM game/src/render/sumcenter.ts:366 method SumCenterView.syncLot
-FILE game/src/render/sumlayout.ts 42.8KB 803L exports: Rect,VehicleSlotView,HomeDoor,SumPlotView,SumGer,SumCenterBuild,buildSumCenter
+FILE game/src/render/sumcenter.ts 22.0KB 397L exports: SumCenterView
+SYM game/src/render/sumcenter.ts:41 fn residentMatrix
+SYM game/src/render/sumcenter.ts:45 fn residents
+SYM game/src/render/sumcenter.ts:70 class SumCenterView
+SYM game/src/render/sumcenter.ts:228 method SumCenterView.syncTown
+SYM game/src/render/sumcenter.ts:241 method SumCenterView.buildTown
+SYM game/src/render/sumcenter.ts:266 method SumCenterView.buildGers
+SYM game/src/render/sumcenter.ts:304 method SumCenterView.syncTalk
+SYM game/src/render/sumcenter.ts:345 method SumCenterView.syncCrowd
+SYM game/src/render/sumcenter.ts:370 method SumCenterView.takeLive
+SYM game/src/render/sumcenter.ts:387 method SumCenterView.releaseLive
+SYM game/src/render/sumcenter.ts:394 method SumCenterView.syncLot
+FILE game/src/render/sumlayout.ts 43.5KB 803L exports: Rect,VehicleSlotView,HomeDoor,SumPlotView,SumGer,SumCenterBuild,buildSumCenter
 SYM game/src/render/sumlayout.ts:18 interface Rect
 SYM game/src/render/sumlayout.ts:20 interface VehicleSlotView
 SYM game/src/render/sumlayout.ts:22 interface HomeDoor
@@ -818,37 +819,37 @@ SYM game/src/render/ui/names.ts:101 const SEASON_EMOJI
 SYM game/src/render/ui/names.ts:103 const CAMP_HINT
 SYM game/src/render/ui/names.ts:110 const WATER_NAME
 SYM game/src/render/ui/names.ts:111 const WOLF_LEVEL_NAME
-FILE game/src/render/ui/panels.ts 62.6KB 1031L exports: UiHooks,Panels
-SYM game/src/render/ui/panels.ts:87 interface UiHooks
-SYM game/src/render/ui/panels.ts:94 class Panels
-SYM game/src/render/ui/panels.ts:135 method Panels.isOpen
-SYM game/src/render/ui/panels.ts:139 method Panels.open
-SYM game/src/render/ui/panels.ts:162 method Panels.close
-SYM game/src/render/ui/panels.ts:176 method Panels.showReport
-SYM game/src/render/ui/panels.ts:188 method Panels.refresh
-SYM game/src/render/ui/panels.ts:194 method Panels.showArrive
-SYM game/src/render/ui/panels.ts:200 method Panels.render
-SYM game/src/render/ui/panels.ts:220 method Panels.storageHtml
-SYM game/src/render/ui/panels.ts:274 method Panels.buyItems
-SYM game/src/render/ui/panels.ts:298 method Panels.vehicleButtons
-SYM game/src/render/ui/panels.ts:306 method Panels.cargoList
-SYM game/src/render/ui/panels.ts:320 method Panels.cargoHtml
-SYM game/src/render/ui/panels.ts:376 method Panels.selectedAnimals
-SYM game/src/render/ui/panels.ts:384 method Panels.shopHtml
-SYM game/src/render/ui/panels.ts:442 method Panels.townCommand
-SYM game/src/render/ui/panels.ts:472 method Panels.townHtml
-SYM game/src/render/ui/panels.ts:534 method Panels.lotHtml
-SYM game/src/render/ui/panels.ts:562 method Panels.arriveHtml
-SYM game/src/render/ui/panels.ts:588 method Panels.reportHtml
-SYM game/src/render/ui/panels.ts:603 method Panels.wolfKillsHtml
-SYM game/src/render/ui/panels.ts:610 method Panels.dogsHtml
-SYM game/src/render/ui/panels.ts:633 method Panels.campsHtml
-SYM game/src/render/ui/panels.ts:664 method Panels.cheatHtml
-SYM game/src/render/ui/panels.ts:673 method Panels.teahouseHtml
-SYM game/src/render/ui/panels.ts:691 method Panels.helpersHtml
-SYM game/src/render/ui/panels.ts:738 method Panels.otorHtml
-SYM game/src/render/ui/panels.ts:758 method Panels.payHtml
-SYM game/src/render/ui/panels.ts:774 method Panels.act
+FILE game/src/render/ui/panels.ts 62.6KB 1032L exports: UiHooks,Panels
+SYM game/src/render/ui/panels.ts:88 interface UiHooks
+SYM game/src/render/ui/panels.ts:95 class Panels
+SYM game/src/render/ui/panels.ts:136 method Panels.isOpen
+SYM game/src/render/ui/panels.ts:140 method Panels.open
+SYM game/src/render/ui/panels.ts:163 method Panels.close
+SYM game/src/render/ui/panels.ts:177 method Panels.showReport
+SYM game/src/render/ui/panels.ts:189 method Panels.refresh
+SYM game/src/render/ui/panels.ts:195 method Panels.showArrive
+SYM game/src/render/ui/panels.ts:201 method Panels.render
+SYM game/src/render/ui/panels.ts:221 method Panels.storageHtml
+SYM game/src/render/ui/panels.ts:275 method Panels.buyItems
+SYM game/src/render/ui/panels.ts:299 method Panels.vehicleButtons
+SYM game/src/render/ui/panels.ts:307 method Panels.cargoList
+SYM game/src/render/ui/panels.ts:321 method Panels.cargoHtml
+SYM game/src/render/ui/panels.ts:377 method Panels.selectedAnimals
+SYM game/src/render/ui/panels.ts:385 method Panels.shopHtml
+SYM game/src/render/ui/panels.ts:443 method Panels.townCommand
+SYM game/src/render/ui/panels.ts:473 method Panels.townHtml
+SYM game/src/render/ui/panels.ts:535 method Panels.lotHtml
+SYM game/src/render/ui/panels.ts:563 method Panels.arriveHtml
+SYM game/src/render/ui/panels.ts:589 method Panels.reportHtml
+SYM game/src/render/ui/panels.ts:604 method Panels.wolfKillsHtml
+SYM game/src/render/ui/panels.ts:611 method Panels.dogsHtml
+SYM game/src/render/ui/panels.ts:634 method Panels.campsHtml
+SYM game/src/render/ui/panels.ts:665 method Panels.cheatHtml
+SYM game/src/render/ui/panels.ts:674 method Panels.teahouseHtml
+SYM game/src/render/ui/panels.ts:692 method Panels.helpersHtml
+SYM game/src/render/ui/panels.ts:739 method Panels.otorHtml
+SYM game/src/render/ui/panels.ts:759 method Panels.payHtml
+SYM game/src/render/ui/panels.ts:775 method Panels.act
 FILE game/src/render/util.ts 4.3KB 123L exports: VisualRng,strSeed,clamp,angDiff,mat,boxGeo,merge,meshBox,limb,batchStatic
 SYM game/src/render/util.ts:8 class VisualRng
 SYM game/src/render/util.ts:13 method VisualRng.next
@@ -1488,7 +1489,7 @@ FILE game/tests/grazing.test.ts 2.3KB 46L
 FILE game/tests/helpers.ts 0.8KB 20L
 FILE game/tests/herder.test.ts 6.3KB 139L
 FILE game/tests/herds.test.ts 5.1KB 112L
-FILE game/tests/i18n.test.ts 6.4KB 134L
+FILE game/tests/i18n.test.ts 8.0KB 158L
 FILE game/tests/interior.test.ts 10.1KB 200L
 FILE game/tests/night.test.ts 6.5KB 127L
 FILE game/tests/npcs.test.ts 8.1KB 137L
@@ -1508,15 +1509,15 @@ FILE game/tests/town.test.ts 6.1KB 127L
 FILE game/tests/transfer.test.ts 14.2KB 255L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 23.1KB 114L
+FILE docs/CONTEXT.md 23.9KB 116L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-29 ## 2. Стек ба командууд
-DOC docs/CONTEXT.md:30-88 ## 3. Файлын зураглал (`game/src/`)
-DOC docs/CONTEXT.md:89-91 ## 4. `data/*.json` → аль файл хэрэглэдэг
-DOC docs/CONTEXT.md:92-100 ## 5. Архитектурын дүрэм ([[architecture]])
-DOC docs/CONTEXT.md:101-104 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
-DOC docs/CONTEXT.md:105-107 ## 7. Нээлттэй асуултууд
-DOC docs/CONTEXT.md:108-114 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
+DOC docs/CONTEXT.md:30-90 ## 3. Файлын зураглал (`game/src/`)
+DOC docs/CONTEXT.md:91-93 ## 4. `data/*.json` → аль файл хэрэглэдэг
+DOC docs/CONTEXT.md:94-102 ## 5. Архитектурын дүрэм ([[architecture]])
+DOC docs/CONTEXT.md:103-106 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
+DOC docs/CONTEXT.md:107-109 ## 7. Нээлттэй асуултууд
+DOC docs/CONTEXT.md:110-116 ## 8. Баримтын хэсгийн индекс (мөрийн муж)
 FILE docs/INDEX.md 13.9KB 135L
 DOC docs/INDEX.md:16-30 ## 1. Унших дараалал ба давуу эрх
 DOC docs/INDEX.md:31-106 ## 2. Баримтууд
@@ -1708,7 +1709,7 @@ DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
 DOC docs/plan/V.md:24-172 ## Блокууд ба чеклист (2026-11-15)
 DOC docs/plan/V.md:173-184 ## Зогссон цэг
-FILE docs/plan/playtest.md 13.7KB 85L
+FILE docs/plan/playtest.md 13.8KB 85L
 DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
 DOC docs/plan/playtest.md:19-39 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
 DOC docs/plan/playtest.md:40-82 ## C. Мэдрэмж, үе шат бүрээр

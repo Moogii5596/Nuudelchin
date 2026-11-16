@@ -43,7 +43,7 @@ export class AutoTrip {
         const ids = this.plan.sellAnimalIds;
         if (p.driving) {
           const r = sim.command({ type: 'loadCargo', vehicle: p.driving, products: this.plan.sell, animalIds: ids }, false);
-          if (!r.ok) return this.fail(r.msg ?? 'Ачиж чадсангүй');
+          if (!r.ok) return this.fail(r.msg?.key ?? 'Ачиж чадсангүй');
         } else {
           // Морьтой: гартаа (10 нэгж хүртэл), малаа араасаа тууна
           sim.command({ type: 'deposit' }, false);
@@ -53,7 +53,7 @@ export class AutoTrip {
         const road = cfg.camps.camps[state.campId]!.road;
         const end = road[road.length - 1]!;
         const r = sim.command({ type: 'leaveToMap', dirX: end[0], dirZ: end[1] }, false);
-        if (!r.ok) return this.fail(r.msg ?? '');
+        if (!r.ok) return this.fail(r.msg?.key ?? '');
         sim.command({ type: 'mapGo', x: 0, z: 0, dest: sumId(cfg) }, false);
         this.phase = 'toSum';
         return false;
@@ -64,7 +64,7 @@ export class AutoTrip {
           type: 'trade',
           plan: { sell: sellableAtShop(state), sellAnimalIds: sellableAnimals(state).map((a) => a.id), buy: this.plan.buy },
         }, false);
-        if (!r.ok) this.error = r.msg ?? null;   // зарим зүйл авагдаагүй ч үргэлжилнэ
+        if (!r.ok) this.error = r.msg?.key ?? null;   // зарим зүйл авагдаагүй ч үргэлжилнэ
         const ex = cfg.sumcenter.entry.exit;
         sim.command({ type: 'leaveToMap', dirX: ex[0], dirZ: ex[1] }, false);
         sim.command({ type: 'mapGo', x: 0, z: 0, dest: state.campId }, false);

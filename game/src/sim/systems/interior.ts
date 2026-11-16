@@ -1,3 +1,4 @@
+import { m, type Msg } from '../msg';
 ﻿/**
  * V6.1: орж болдог барилга (sim талд). Three.js, DOM-гүй.
  *
@@ -215,16 +216,16 @@ export function clampToRoom(cfg: GameConfig, room: RoomSpec, x: number, z: numbe
 // ======================= Орох, гарах, хөдлөх =======================
 
 /** Барилгад орно. doorId өгөөгүй бол ойрын хаалга. Алдаа бол тайлбар */
-export function enterBuilding(cfg: GameConfig, state: GameState, doorId?: string): string | null {
+export function enterBuilding(cfg: GameConfig, state: GameState, doorId?: string): Msg | null {
   const p = state.player;
-  if (p.interior) return 'Аль хэдийн дотор байна';
-  if (p.place === 'map' || state.move) return 'Энд орох барилга алга';
-  if (p.driving) return 'Тээвэрээсээ буу';
-  if (p.mounted) return 'Мориноосоо буу';
+  if (p.interior) return m('sim.you_are_already_inside');
+  if (p.place === 'map' || state.move) return m('sim.no_building_to_enter');
+  if (p.driving) return m('sim.get_out_of_the_93');
+  if (p.mounted) return m('sim.dismount');
   const door = doorId ? enterDoors(cfg, state).find((d) => d.id === doorId) : nearEnterDoor(cfg, state);
-  if (!door) return 'Ойролцоо орох хаалга алга';
+  if (!door) return m('sim.no_door_nearby_to');
   const room = roomSpec(cfg, door.room);
-  if (!room) return 'Дотор тал бэлэн биш';
+  if (!room) return m('sim.the_interior_is_not');
   p.x = door.x;
   p.z = door.z;
   p.interior = { door: door.id, room: door.room, x: room.entry[0], z: room.entry[1], heading: Math.PI };
@@ -239,10 +240,10 @@ export function atExit(cfg: GameConfig, state: GameState): boolean {
 }
 
 /** Барилгаас гарна (force — бот, тест, нүүх/газрын зураг гэх мэт өөр үйлдэл хаалганы дэргэд биш байхад). Алдаа бол тайлбар */
-export function exitBuilding(cfg: GameConfig, state: GameState, force = false): string | null {
+export function exitBuilding(cfg: GameConfig, state: GameState, force = false): Msg | null {
   const p = state.player, it = p.interior;
-  if (!it) return 'Барилга дотор биш байна';
-  if (!force && !atExit(cfg, state)) return 'Хаалганы дэргэд очно уу';
+  if (!it) return m('sim.you_are_not_inside');
+  if (!force && !atExit(cfg, state)) return m('sim.go_to_the_door');
   const door = enterDoors(cfg, state).find((d) => d.id === it.door);
   if (door) {
     p.x = door.x;
@@ -254,9 +255,9 @@ export function exitBuilding(cfg: GameConfig, state: GameState, force = false): 
 }
 
 /** Дотор алхах: өрөөний хана хүртэл */
-export function moveInterior(cfg: GameConfig, state: GameState, x: number, z: number, heading?: number): string | null {
+export function moveInterior(cfg: GameConfig, state: GameState, x: number, z: number, heading?: number): Msg | null {
   const it = state.player.interior, room = currentRoom(cfg, state);
-  if (!it || !room) return 'Барилга дотор биш байна';
+  if (!it || !room) return m('sim.you_are_not_inside');
   const c = clampToRoom(cfg, room, x, z);
   it.x = c.x;
   it.z = c.z;

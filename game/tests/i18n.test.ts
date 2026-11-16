@@ -1,6 +1,6 @@
 /**
  * M6.7 Англи хэл: mn.json ба en.json түлхүүр, placeholder адил; UI кодод кирилл string literal үлдээгүй; кодод хэрэглэсэн
- * түлхүүр бүр хоёр хэлэнд байгаа. (sim/-ийн мессеж — CommandResult.msg, үйл явдал — одоогоор Монгол: M6.7-ийн үргэлжлэл.)
+ * түлхүүр бүр хоёр хэлэнд байгаа. sim/ хэрэглэгчид харагдах мессежээ Msg { key, params }-аар буцаана (M6.7b) — DEV_FILES-ээс бусад sim/ файлд кирилл литерал байхгүй.
  */
 import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -13,7 +13,9 @@ const json = (n: string): Record<string, string> => JSON.parse(read(join(SRC, 'i
 const ph = (s: string): string => (s.match(/\{[A-Za-z_]\w*\}/g) ?? []).sort().join(',');
 
 /** i18n шаардлагатай (хэрэглэгчид харагдах текстийн) файлууд */
-const UI_FILES = ['main.ts', 'pwa.ts', 'device.ts', 'render/worldmap.ts', 'render/ui', 'input'];
+const UI_FILES = ['main.ts', 'pwa.ts', 'device.ts', 'render/worldmap.ts', 'render/ui', 'input', 'sim'];
+/** sim/-ийн хөгжүүлэгчийн/оношлогооны файлууд (хэрэглэгчид харагдахгүй: тохиргооны шалгагч, хадгалалтын шалгагч, туршилтын цэс, бот) */
+const DEV_FILES = ['sim/config.ts', 'sim/save.ts', 'sim/autotrip.ts', 'sim/systems/cheats.ts', 'sim/systems/difficulty.ts'];
 function walk(p: string): string[] {
   if (!existsSync(p)) return [];
   if (statSync(p).isFile()) return p.endsWith('.ts') ? [p] : [];
@@ -96,6 +98,7 @@ describe('i18n: кодын хэрэглээ', () => {
   it('UI кодод кирилл string literal үлдээгүй (комментоос гадуур; i18n-skip, Error/console, хэлний нэр хориглоогүй)', () => {
     const bad: string[] = [];
     for (const f of files) {
+      if (DEV_FILES.includes(relative(SRC, f).split('\\').join('/'))) continue;
       const src = read(f);
       for (const [text, at] of literals(src)) {
         if (!CYR.test(text)) continue;
@@ -103,7 +106,7 @@ describe('i18n: кодын хэрэглээ', () => {
         const lineEnd = src.indexOf('\n', at);
         const line = src.slice(lineStart, lineEnd < 0 ? undefined : lineEnd);
         if (line.includes('i18n-skip')) continue;
-        if (/(new\s+\w*Error|console\.\w+)\s*\(/.test(src.slice(Math.max(0, at - 80), at))) continue;   // хөгжүүлэгчийн алдаа
+        if (/(new\s+\w*Error|console\.\w+|\b(e|errs|errors|problems)\.push|return\s*\[)\s*\(?\s*$/.test(src.slice(Math.max(0, at - 80), at))) continue;   // хөгжүүлэгчийн алдаа, data шалгагч
         if (text === 'Монгол') continue;   // хэлний сонголтын товч — өөрийн хэл дээр
         bad.push(`${relative(SRC, f)}:${src.slice(0, at).split('\n').length} «${text.slice(0, 50)}»`);
       }
@@ -116,7 +119,7 @@ describe('i18n: кодын хэрэглээ', () => {
     const npcMn = existsSync(join(SRC, 'i18n', 'npc.mn.json')) ? json('npc.mn.json') : {};
     const missing: string[] = [];
     for (const f of walk(SRC)) {
-      for (const m of read(f).matchAll(/\bt\(\s*'([A-Za-z0-9_.\-]+)'/g)) {
+      for (const m of read(f).matchAll(/\b[tm]\(\s*'([A-Za-z0-9_.\-]+)'/g)) {
         const k = m[1]!;
         if (k.endsWith('.')) continue;   // динамик түлхүүр t('camp.' + id)
         if (!(k in mn) && !(k in npcMn)) missing.push(`${relative(SRC, f)}: ${k}`);
@@ -130,5 +133,26 @@ describe('i18n: кодын хэрэглээ', () => {
     const { getLang, t } = await import('../src/i18n/i18n');
     expect(getLang()).toBe('mn');
     expect(t('menu.continue')).toBe('Үргэлжлүүлэх');
+  });
+});
+
+describe('sim мессеж (Msg → tm)', () => {
+  it('tm: параметр, дотор Msg, жагсаалт; хэл солиход орчуулагдана', async () => {
+    const { tm } = await import('../src/i18n/msg');
+    const { setLang } = await import('../src/i18n/i18n');
+    const { m, raw } = await import('../src/sim/msg');
+    try {
+      setLang('mn');
+      expect(tm(m('sim.dismount'))).toBe('Мориноосоо буу');
+      setLang('en');
+      expect(tm(m('sim.dismount'))).toBe('Dismount');
+      expect(tm(m('sim.herded_animals', { n: 3 }))).toBe('Herded 3 animals');
+      expect(tm(m('sim.dog_order', { who: 'Bor', order: m('sim.follow_me') }))).toBe('🐕 Bor: Follow me');
+      expect(tm(m('sim.could_not_get_item', { length: 2, x: [m('sim.money'), m('sim.cargo_space')] }))).toBe('Could not get 2 item(s) (not enough money, cargo space)');
+      expect(tm(raw('debug'))).toBe('debug');
+      expect(tm(undefined)).toBe('');
+    } finally {
+      setLang('mn');
+    }
   });
 });

@@ -4,6 +4,7 @@
  * мөнгө зээлэх, хамаатан айлд бэлэг (сүү, цагаан идээ, мал) авч очих — хариуд нь хотонд зочлох, зун хүүхдүүд
  * нь ирж туслах, өвөл тэжээл авчрах. Three.js, DOM-гүй. Тоонууд data/town.json (🙋 түр утга).
  */
+import { m, type Msg } from '../msg';
 import type { GameConfig, Sex, Species } from '../config';
 import type { Animal, GameState, ProductId } from '../state';
 import { newAnimal } from '../state';
@@ -31,7 +32,7 @@ export interface TownState {
   summerKids: number[];
 }
 
-export type TownEvent = { type: 'town'; msg: string; good: boolean };
+export type TownEvent = { type: 'town'; msg: Msg; good: boolean };
 
 export function newTownState(cfg: GameConfig): TownState {
   const relatives: Record<string, RelativeState> = {};
@@ -96,32 +97,32 @@ export function housePrice(cfg: GameConfig, plotId: string): { price: number; re
   return (cfg.town.houses as Record<string, { price: number; rentPerDay: number } | undefined>)[plotId] ?? null;
 }
 
-export function buyHouse(cfg: GameConfig, state: GameState, plotId: string, proximity: boolean): string | null {
+export function buyHouse(cfg: GameConfig, state: GameState, plotId: string, proximity: boolean): Msg | null {
   const h = housePrice(cfg, plotId);
-  if (!h) return 'Энэ байшин зарагдахгүй';
-  if (proximity && !near(cfg, state, 'house', plotId)) return 'Байшингийн үүдэнд оч';
-  if (state.town.houses[plotId]) return 'Танд аль хэдийн байгаа';
-  if (state.money < h.price) return 'Мөнгө хүрэхгүй';
+  if (!h) return m('sim.this_house_is_not');
+  if (proximity && !near(cfg, state, 'house', plotId)) return m('sim.go_to_the_house');
+  if (state.town.houses[plotId]) return m('sim.you_already_have_it');
+  if (state.money < h.price) return m('sim.not_enough_money');
   spend(state, 'buy_house', h.price);
   state.town.houses[plotId] = { mode: 'empty' };
   return null;
 }
 
 /** Түрээслүүлэх / хоосон / хүүхдээ байлгах (хүүхэд — үе удмын систем V1+ 🙋) */
-export function setHouseMode(_cfg: GameConfig, state: GameState, plotId: string, mode: HouseMode): string | null {
+export function setHouseMode(_cfg: GameConfig, state: GameState, plotId: string, mode: HouseMode): Msg | null {
   const h = state.town.houses[plotId];
-  if (!h) return 'Таны байшин биш';
-  if (mode === 'child') return 'Хүүхэдтэй болсны дараа (үе удам — дараагийн хувилбар)';
+  if (!h) return m('sim.not_your_house');
+  if (mode === 'child') return m('sim.after_you_have_a');
   h.mode = mode;
   return null;
 }
 
 // ======================= Дуган: хандив, нэр хүнд =======================
 
-export function donate(cfg: GameConfig, state: GameState, amount: number, proximity: boolean): string | null {
-  if (!cfg.town.temple.donations.includes(amount)) return 'Ийм хэмжээгээр хандивлахгүй';
-  if (proximity && !near(cfg, state, 'temple')) return 'Дуганд оч';
-  if (state.money < amount) return 'Мөнгө хүрэхгүй';
+export function donate(cfg: GameConfig, state: GameState, amount: number, proximity: boolean): Msg | null {
+  if (!cfg.town.temple.donations.includes(amount)) return m('sim.this_amount_cannot_be');
+  if (proximity && !near(cfg, state, 'temple')) return m('sim.go_to_the_temple');
+  if (state.money < amount) return m('sim.not_enough_money');
   spend(state, 'donation', amount);
   repUp(cfg, state, (amount / 10000) * cfg.town.temple.reputationPer10k);
   return null;
@@ -134,13 +135,13 @@ export function zdtgPackages(cfg: GameConfig): { id: string; species: Species; s
 }
 
 /** Малаар зээл авах: мал араасаа тууж/тээвэрт ачигдана; termDays дотор ижил тооны насанд хүрсэн эм малаар буцаана */
-export function takeZdtgLoan(cfg: GameConfig, state: GameState, rng: Rng, pkgId: string, proximity: boolean): string | null {
+export function takeZdtgLoan(cfg: GameConfig, state: GameState, rng: Rng, pkgId: string, proximity: boolean): Msg | null {
   const Z = cfg.town.zdtgLoan;
-  if (proximity && !near(cfg, state, 'zdtg')) return 'Засаг даргын тамгын газарт оч';
-  if (state.town.zdtgLoan) return 'Өмнөх малын зээлээ төлөөгүй байна';
-  if (state.town.reputation < Z.minReputation) return `Нэр хүнд ${Z.minReputation}-аас дээш байх ёстой (дуганд хандив өг)`;
+  if (proximity && !near(cfg, state, 'zdtg')) return m('sim.go_to_the_administration');
+  if (state.town.zdtgLoan) return m('sim.you_have_not_repaid');
+  if (state.town.reputation < Z.minReputation) return m('sim.reputation_must_be_above', { minReputation: Z.minReputation });
   const pkg = zdtgPackages(cfg).find((x) => x.id === pkgId);
-  if (!pkg) return 'Ийм багц алга';
+  if (!pkg) return m('sim.no_such_package');
   const p = state.player;
   const f = p.driving ? fleetOf(state, p.driving) : undefined;
   let value = 0;
@@ -162,18 +163,18 @@ export function zdtgRepayable(cfg: GameConfig, state: GameState): Animal[] {
   return state.animals.filter((a) => a.species === L.species && a.sex === L.sex && a.age >= adult && !a.riding && a.ownerId === undefined).sort((a, b) => a.age - b.age);
 }
 
-export function repayZdtgLoan(cfg: GameConfig, state: GameState, mode: 'animals' | 'money', proximity: boolean): string | null {
+export function repayZdtgLoan(cfg: GameConfig, state: GameState, mode: 'animals' | 'money', proximity: boolean): Msg | null {
   const L = state.town.zdtgLoan;
-  if (!L) return 'Малын зээл алга';
-  if (proximity && !near(cfg, state, 'zdtg')) return 'Засаг даргын тамгын газарт оч';
+  if (!L) return m('sim.no_livestock_loan');
+  if (proximity && !near(cfg, state, 'zdtg')) return m('sim.go_to_the_administration');
   if (mode === 'animals') {
     const list = zdtgRepayable(cfg, state).slice(0, L.n);
-    if (list.length < L.n) return `Насанд хүрсэн ${L.n} мал хэрэгтэй (одоо ${list.length})`;
+    if (list.length < L.n) return m('sim.you_need_adult_animals', { n: L.n, length: list.length });
     const ids = new Set(list.map((a) => a.id));
     state.animals = state.animals.filter((a) => !ids.has(a.id));
   } else {
     const cost = Math.round(L.value * cfg.town.zdtgLoan.moneyMult);
-    if (state.money < cost) return 'Мөнгө хүрэхгүй';
+    if (state.money < cost) return m('sim.not_enough_money');
     spend(state, 'zdtgLoan', cost);
   }
   if (!L.overdue) repUp(cfg, state, cfg.town.zdtgLoan.onTimeReputation);
@@ -196,24 +197,24 @@ export function bankLimit(cfg: GameConfig, state: GameState): number {
   return Math.floor((herd * B.animalLtv + houses * B.houseLtv) / 10000) * 10000;
 }
 
-export function takeBankLoan(cfg: GameConfig, state: GameState, amount: number, proximity: boolean): string | null {
+export function takeBankLoan(cfg: GameConfig, state: GameState, amount: number, proximity: boolean): Msg | null {
   const B = cfg.town.bankLoan;
-  if (proximity && !near(cfg, state, 'bank')) return 'Банкинд оч';
-  if (state.town.bankLoan) return 'Өмнөх зээлээ төлөөгүй байна';
-  if (!(amount >= B.minAmount)) return `Хамгийн багадаа ${B.minAmount}₮`;
-  if (amount > bankLimit(cfg, state)) return 'Барьцаа хүрэлцэхгүй';
+  if (proximity && !near(cfg, state, 'bank')) return m('sim.go_to_the_bank');
+  if (state.town.bankLoan) return m('sim.you_have_not_repaid_116');
+  if (!(amount >= B.minAmount)) return m('sim.at_least', { minAmount: B.minAmount });
+  if (amount > bankLimit(cfg, state)) return m('sim.not_enough_collateral');
   earn(state, 'loan', amount);
   state.town.bankLoan = { owed: amount, principal: amount, dueDay: state.time.day + B.termDays };
   return null;
 }
 
-export function repayBankLoan(cfg: GameConfig, state: GameState, amount: number, proximity: boolean): string | null {
+export function repayBankLoan(cfg: GameConfig, state: GameState, amount: number, proximity: boolean): Msg | null {
   const L = state.town.bankLoan;
-  if (!L) return 'Зээл алга';
-  if (proximity && !near(cfg, state, 'bank')) return 'Банкинд оч';
+  if (!L) return m('sim.no_loan');
+  if (proximity && !near(cfg, state, 'bank')) return m('sim.go_to_the_bank');
   const pay = Math.min(amount, L.owed);
-  if (!(pay > 0)) return 'Төлөх дүн 0';
-  if (state.money < pay) return 'Мөнгө хүрэхгүй';
+  if (!(pay > 0)) return m('sim.amount_to_pay_is');
+  if (state.money < pay) return m('sim.not_enough_money');
   spend(state, 'bankLoan', pay);
   L.owed -= pay;
   if (L.owed <= 0.5) {
@@ -228,11 +229,11 @@ export function repayBankLoan(cfg: GameConfig, state: GameState, amount: number,
 export interface GiftPlan { products: Partial<Record<ProductId, number>>; animalIds: number[] }
 
 /** Бэлэг: гартаа/тээвэртээ барьсан сүү, цагаан идээ, тууж/ачиж ирсэн мал. Харилцаа үнэ цэнээр өснө */
-export function giveGift(cfg: GameConfig, state: GameState, relId: string, plan: GiftPlan, proximity: boolean): string | null {
+export function giveGift(cfg: GameConfig, state: GameState, relId: string, plan: GiftPlan, proximity: boolean): Msg | null {
   const R = cfg.town.relatives;
   const rel = state.town.relatives[relId];
-  if (!rel) return 'Ийм хамаатан алга';
-  if (proximity && !near(cfg, state, 'relative', relId)) return 'Хамаатныхаа үүдэнд оч';
+  if (!rel) return m('sim.no_such_relative');
+  if (proximity && !near(cfg, state, 'relative', relId)) return m('sim.go_to_your_relatives');
   const p = state.player;
   const f = p.driving ? fleetOf(state, p.driving) : undefined;
   let value = 0;
@@ -264,7 +265,7 @@ export function giveGift(cfg: GameConfig, state: GameState, relId: string, plan:
   for (const a of give) value += salePrice(a, cfg.animals);
   if (f) f.animals = f.animals.filter((a) => !give.includes(a));
   p.drove = p.drove.filter((a) => !give.includes(a));
-  if (value <= 0) return 'Бэлэг алга — сүү, цагаан идээ гартаа/тэргэндээ барих эсвэл мал тууж ир';
+  if (value <= 0) return m('sim.no_gift_hold_milk');
   rel.relation = Math.min(100, rel.relation + (value / 10000) * R.relationPer10k);
   rel.lastGiftDay = state.time.day;
   return null;
@@ -282,18 +283,18 @@ export function townDaily(cfg: GameConfig, state: GameState): { events: TownEven
   if (Z && !Z.overdue && day > Z.dueDay) {
     Z.overdue = true;
     repUp(cfg, state, -cfg.town.zdtgLoan.lateReputation);
-    events.push({ type: 'town', msg: '🏛 Малын зээлийн хугацаа хэтэрлээ — нэр хүнд буурлаа. ЗДТГ-т малаар эсвэл мөнгөөр төл', good: false });
+    events.push({ type: 'town', msg: m('sim.the_livestock_loan_is'), good: false });
   }
   // Банкны зээл хугацаа хэтэрсэн → барьцаа хураана
   const B = T.bankLoan;
   if (B && day > B.dueDay) {
     let owed = B.owed;
-    const seized: string[] = [];
+    const seized: Msg[] = [];
     for (const id of bankCollateralHouses(state)) {
       if (owed <= 0) break;
       owed -= (housePrice(cfg, id)?.price ?? 0) * cfg.town.bankLoan.houseLtv;
       delete T.houses[id];
-      seized.push('байшин');
+      seized.push(m('sim.house'));
     }
     if (owed > 0) {
       const herd = state.animals.filter((a) => !a.riding && a.ownerId === undefined).sort((a, b) => salePrice(b, cfg.animals) - salePrice(a, cfg.animals));
@@ -304,11 +305,11 @@ export function townDaily(cfg: GameConfig, state: GameState): { events: TownEven
         take.add(a.id);
       }
       state.animals = state.animals.filter((a) => !take.has(a.id));
-      if (take.size) seized.push(`${take.size} мал`);
+      if (take.size) seized.push(m('sim.animals', { size: take.size }));
     }
     T.bankLoan = null;
     repUp(cfg, state, -cfg.town.bankLoan.lateReputation);
-    events.push({ type: 'town', msg: `🏦 Банкны зээлийн хугацаа хэтэрч барьцаа хураагдлаа: ${seized.join(', ') || 'юу ч үгүй'}`, good: false });
+    events.push({ type: 'town', msg: m('sim.the_bank_loan_is', { x: seized.length ? seized : m('sim.nothing') }), good: false });
   }
   // Хамаатан: харилцаа аажим суларна; ойр дотно бол хотонд айлчилж хоол авчирна
   const R = cfg.town.relatives;
@@ -320,7 +321,7 @@ export function townDaily(cfg: GameConfig, state: GameState): { events: TownEven
     if (r.relation >= R.visitMinRelation && state.player.place === 'camp' && day - r.lastVisitDay >= gap) {
       r.lastVisitDay = day;
       livingCovered = true;
-      events.push({ type: 'town', msg: `👪 Хамаатан айл (${id === 'plot_rel_1' ? 'сумын төвийнх' : 'захынх'}) хотонд айлчиллаа — өнөөдрийн хоол хүнсийг авчирлаа`, good: true });
+      events.push({ type: 'town', msg: m('sim.relatives_visited_the_camp', { x: id === 'plot_rel_1' ? m('sim.the_sum_center_one') : m('sim.the_outskirts_one') }), good: true });
     }
   }
   return { events, livingCovered };
@@ -342,7 +343,7 @@ export function townSeason(cfg: GameConfig, state: GameState, nextHelperId: () =
     state.helpers.list = state.helpers.list.filter((h) => !fam.has(h.familyId));
     state.helpers.dwellings = state.helpers.dwellings.filter((d) => d.familyId === undefined || !fam.has(d.familyId));
     T.summerKids = [];
-    events.push({ type: 'town', msg: '👦 Хамаатны хүүхдүүд зуны амралтаа дуусгаад буцлаа', good: true });
+    events.push({ type: 'town', msg: m('sim.the_relatives_children_finished'), good: true });
   }
   for (const r of Object.values(T.relatives)) {
     if (season === 'summer' && r.relation >= R.summerHelpMin) {
@@ -355,14 +356,14 @@ export function townSeason(cfg: GameConfig, state: GameState, nextHelperId: () =
       };
       state.helpers.list.push(kid);
       T.summerKids.push(familyId);
-      events.push({ type: 'town', msg: `👦 Хамаатны хүүхэд ${kid.name} зуны амралтаараа ирж сүү, ноос цуглуулж тусална (цалингүй)`, good: true });
+      events.push({ type: 'town', msg: m('sim.the_relatives_child_came', { name: kid.name }), good: true });
     }
     if (season === 'winter' && r.relation >= R.winterHayMin) {
       const bales = Math.round((r.relation / 10) * R.winterHayPer10);
       const c = state.camps[state.campId];
       if (c && bales > 0) {
         c.hay = (c.hay ?? 0) + bales;
-        events.push({ type: 'town', msg: `🌾 Хамаатан айл ${bales} боодол өвс авчирч өглөө`, good: true });
+        events.push({ type: 'town', msg: m('sim.relatives_brought_hay_bales', { bales }), good: true });
       }
     }
   }

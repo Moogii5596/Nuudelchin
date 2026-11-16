@@ -100,7 +100,7 @@ describe('Сумын төвийн амьдрал (V3.4)', () => {
     const summerDay = 1;
     st.time.day = summerDay;
     const ev = townSeason(cfg, st, () => st.helpers.nextId++);
-    expect(ev.some((e) => e.msg.includes('хүүхэд'))).toBe(true);
+    expect(ev.some((e) => e.msg.key === 'sim.the_relatives_child_came')).toBe(true);
     const kids = st.helpers.list.filter((h) => h.wage === 0 && h.kind === 'child');
     expect(kids.length).toBeGreaterThan(0);
     // Өвөл: хүүхдүүд буцаж, өвс авчирна
@@ -118,7 +118,7 @@ describe('Сумын төвийн амьдрал (V3.4)', () => {
     let living = 0, visits = 0;
     sim.on((e) => {
       if (e.type === 'dayReport') living += e.report.expenses.living ?? 0;
-      if (e.type === 'town' && e.msg.includes('айлчиллаа')) visits++;
+      if (e.type === 'town' && e.msg.key === 'sim.relatives_visited_the_camp') visits++;
     });
     steps(sim, DAY * 6);
     expect(visits).toBeGreaterThan(0);

@@ -33,6 +33,7 @@ import {
   CAMP_HINT, SEASON_EMOJI, SEASON_NAME, PASTURE_NAME, PRODUCT_EMOJI, PROCESSOR_NAME, WATER_NAME, WOLF_LEVEL_NAME, expenseName, fmtMinutes, fmtMoney, fmtNum, productName, speciesEmoji, stageName, unitOf,
 } from './names';
 import { t } from '../../i18n/i18n';
+import type { Msg } from '../../sim/msg';
 
 type Kind = 'storage' | 'cargo' | 'shop' | 'lot' | 'town' | 'arrive' | 'report' | 'dogs' | 'camps' | 'cheat' | 'teahouse' | 'helpers';
 
@@ -86,7 +87,7 @@ interface Draft {
 
 export interface UiHooks {
   dispatch: (cmd: Command) => CommandResult;
-  toast: (msg: string, kind?: '' | 'good' | 'bad') => void;
+  toast: (msg: string | Msg, kind?: '' | 'good' | 'bad') => void;
   /** Хамгаалалтын бүс харуулах (Z) — cheat цэснээс */
   toggleZones?: () => boolean;
 }
