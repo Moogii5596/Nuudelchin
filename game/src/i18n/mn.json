@@ -645,6 +645,7 @@
   "sim.no_space_to_load": "Ачих байр алга",
   "sim.no_products_to_take": "Авах бүтээгдэхүүн алга",
   "sim.no_riding_horse": "Унаа морь алга",
+  "sim.horse_not_here": "Морь энд алга — буусан газраасаа л дууд",
   "sim.the_horse_is_far": "Морь хол байна — дэргэд нь оч (H — морь дуудах)",
   "sim.you_are_already_inside": "Аль хэдийн дотор байна",
   "sim.no_building_to_enter": "Энд орох барилга алга",

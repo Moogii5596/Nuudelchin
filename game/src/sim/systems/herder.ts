@@ -16,6 +16,12 @@ export function ridingHorse(state: GameState): Animal | undefined {
   return state.animals.find((a) => a.riding);
 }
 
+/** Унаа морь тоглогчтой нэг ачаалагдсан орон зайд байна уу (дуудах same-scene дүрэм) */
+export function horseInScene(state: GameState): boolean {
+  const horse = ridingHorse(state);
+  return horse !== undefined && (horse.place ?? 'camp') === state.player.place;
+}
+
 /** Нэг тоглоомын минут: морь дагах/ирэх, мал малчнаас айх */
 export function herderStep(cfg: GameConfig, state: GameState): void {
   const p = state.player;
@@ -29,7 +35,7 @@ export function herderStep(cfg: GameConfig, state: GameState): void {
       horse.z = horse.tz = p.z;
       horse.heading = p.heading;
       p.horseCalled = false;
-    } else if (p.horseCalled && !p.away) {
+    } else if (p.horseCalled && horseInScene(state)) {
       const dx = p.x - horse.x, dz = p.z - horse.z;
       const d = Math.hypot(dx, dz);
       const stop = cfg.player.mountRange * 0.6;
@@ -123,6 +129,7 @@ export function toggleMount(cfg: GameConfig, state: GameState): Msg | null {
   if (!horse) return m('sim.no_riding_horse');
   if (p.mounted) {
     p.mounted = false;
+    if (p.place === 'camp') delete horse.place; else horse.place = p.place;
     // Морь малчны хажууд зогсоно
     const ox = Math.cos(p.heading) * 1.2, oz = -Math.sin(p.heading) * 1.2;
     horse.x = horse.tx = p.x + ox;
@@ -133,6 +140,7 @@ export function toggleMount(cfg: GameConfig, state: GameState): Msg | null {
   }
   if (Math.hypot(horse.x - p.x, horse.z - p.z) > cfg.player.mountRange) return m('sim.the_horse_is_far');
   p.mounted = true;
+  delete horse.place;
   p.horseCalled = false;
   p.x = horse.x;
   p.z = horse.z;
