@@ -31,7 +31,7 @@ tags: [plan, board, agents, lead]
 | 7 | Шөнийн гэрэл, хүрд | T-16 ✅ нэгтгэсэн (T-19) `d770b4b` | `feat/nightlights` | чөлөөтэй; салбар/worktree дараа цэвэрлэнэ |
 | 2 | Гэр/майхан | T-02 ✅ `419f043` | `feat/ger-belts` (`../wt-ger-belts`) | чөлөөтэй (session хаах) |
 | 3 | Баримт засагч | T-01 ✅ `6804213` | `feat/docs-fix` (`../wt-docs-fix`) | чөлөөтэй (session хаах) |
-| 8 | CI (GitHub Actions) | T-20 | `feat/ci` (`../wt-ci`) | хуваарилсан |
+| 8 | CI (GitHub Actions) | T-20 ✅ `5c62595` | `feat/ci` (`../wt-ci`) | чөлөөтэй; main-д нэгтгэхийг хүлээж |
 | 9 | Event тодорхойлолт: Шинэ жил, Цагаан сар | T-22 | `feat/ev-a` (`../wt-ev-a`) | хуваарилсан |
 | 10 | Event тодорхойлолт: Наадам, Айраг, Хадлан | T-23 | `feat/ev-b` (`../wt-ev-b`) | хуваарилсан |
 | 11 | `winter-prep` хураангуй | T-24 | `feat/ev-wp` (`../wt-ev-wp`) | хуваарилсан |
@@ -89,7 +89,7 @@ Session дугаарыг хадгалж үргэлжлүүлнэ; агент д�
 `feat/errcatch`, `feat/nightlights`, `feat/grazing`-г main-д merge (нийтлэг файл `main.ts` жижиг), `npm run codemap`, tsc, `npm test`, build, `test:perf`, `npm run balance -- --seeds 12 --days 220` (T-13-ын өмнөх/дараах: `grazeStride` 1 vs 2 — менежер стратеги ТЭНЦСЭН хэвээр, сүйрсэн seed 0, зорилгод хүрсэн seed-ийн тоо, медиан өдөр). Push ХИЙХГҮЙ (хэрэглэгч шийднэ). Салбар/worktree цэвэрлэхгүй, дараа нь. Тайлан ≤ 10 мөр.
 
 ## Карт — Давалгаа C (шийдвэр гарсан, 11-17; түүхээс хамааралгүй)
-### T-20 CI — Агент 8 · Sonnet
+### T-20 ✅ `5c62595` CI — Агент 8 · Sonnet
 `.github/workflows/ci.yml`: push/PR дээр `game/`-д `npm ci`, `npm run typecheck`, `npm test`, `npm run build` (Node 22, npm cache). `test:perf` ОРУУЛАХГҮЙ. Файл: зөвхөн `.github/**`; README-д 1 мөр badge/тайлбар нэмж болно. Push хийхгүй; нэгтгэгч push хийсний дараа ажиллахыг хэрэглэгч шалгана.
 ### T-21 ✅ T-13 тэнцвэрийн шалгалт — Агент 1 · Sonnet (T-19-ийн тоо ашигласан: менежер stride 1→2 хүрсэн 10→9/12, медиан 153→153, сүйрсэн 0→0; `grazeStride` 2 хэвээр)
 `npm run balance -- --seeds 12 --days 220`-ыг `grazeStride` 1 ба 2-оор (data/pasture.json-ыг түр өөрчилж, дараа нь 2 болгож сэргээнэ) ажиллуул. Тайлан: хоёр тохиргоонд менежер стратегийн дүн, сүйрсэн seed, зорилгод хүрсэн seed, медиан өдөр. Зөрүү чухал бол (сүйрэл нэмэгдсэн) `grazeStride`-г 1 болгож commit. Push хийхгүй. Тайлан ≤ 8 мөр.
