@@ -82,11 +82,8 @@ Session дугаарыг хадгалж үргэлжлүүлнэ; агент д�
 | Карт | Агуулга | Файл (давхцал) | Эрэмбэ |
 |---|---|---|---|
 | T-11 ⏸ | **ТҮҮХИЙН ДАРАА** (хэрэглэгч түүхийг шинээр бичнэ, 11-17): M7.1 өвөө эмээ утсаар чиглүүлэх, 6 даалгавар, 📖 тэмдэглэл (D7) | `sim/systems/advisor.ts`, `render/ui/notebook.ts`, `panels.ts`, i18n | MVP-д гол |
-| T-12 | M7.4 `window.onerror`, санал илгээх линк, алдаа→хадгалалт (D9); M7.3 `audio/bus.ts` суурь | `main.ts`, `persist/*`, `audio/bus.ts` (`main.ts` хуваалцана → нэг агент) | MVP-д гол |
-| T-13 | M7.2 grazing хурдасгах (1000 мал < 50 мс), Opus | `sim/systems/grazing.ts`, `herds.ts` | гүйцэтгэл |
 | T-14 | V6.2 дэлгүүр, цайны газрын тавилгыг тоглоомд оруулах + V6.3 NPC spot | `render/building/publicInterior.ts`, `data/interiors.json`, `npcs.json` | **хэрэглэгч лабд батлах хүлээнэ** |
 | T-15 | M6.9 HA5 алхах/давхих дүрслэл + M6.12 ченжийн машин, жолоочийн «хотоос гарах» 3D | `render/characters.ts`, `render/sumcenter.ts`, `render/vehicles.ts` | дараа |
-| T-16 | V3.5 шөнийн PointLight (цэнгэлдэх, бөхийн дэвжээ), эргэдэг хүрд | `render/building/civic.ts` | жижиг |
 | T-17 | V5.1 bloom/LUT/AA/AO, V5.4 улирлын шилжилт — **S25 FPS хэмжилт (U-2)-ийн ДАРАА** | `render/scene.ts`, `style.ts`, `device.ts`, `data/visuals.json` | U-2 хүлээнэ |
 | T-18 | M6.8 render: тээвэр, мал байшин/хашаа мөргөх (D11 дүрслэл) | `render/*`, `sim/systems/safety.ts` | дараа |
 
