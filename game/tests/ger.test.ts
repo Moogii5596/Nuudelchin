@@ -46,12 +46,12 @@ describe('makeGer / makeTent (render/ger)', () => {
     }
   });
 
-  it('туслахын гэр: хуучирсан бүрээс, 2 бүслүүр, энгийн модон хаалга — нэг API', () => {
+  it('туслахын гэр: хуучирсан бүрээс, 3 бүслүүр, энгийн модон хаалга — нэг API', () => {
     const doorVariant = GER.doors.findIndex((d) => d.motif === GER.helper.doorMotif);
     expect(doorVariant).toBeGreaterThanOrEqual(0);
     const h = makeGer(GER.helper.size, { doorVariant, coverColor: GER.helper.coverColor, belts: GER.helper.belts });
     const g = makeGer(GER.helper.size);
-    expect(h.dims.belts).toBe(2);
+    expect(h.dims.belts).toBe(3);
     expect(g.dims.belts).toBe(3);
     expect(h.stats.drawCalls).toBeLessThanOrEqual(3);
   });
