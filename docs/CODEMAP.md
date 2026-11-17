@@ -1940,19 +1940,20 @@ DOC docs/character-design.md:148-157 ## 5. Нээлттэй шийдвэр 🙋
 FILE docs/decisions.md 23.8KB 144L
 DOC docs/decisions.md:16-137 ## 0. Хэрэглэгчийн шийдвэрийн түүх
 DOC docs/decisions.md:138-144 ## 13. MVP-ийн хүрээ хаагдсан (2026-11-15)
-FILE docs/events/winter-prep.md 22.8KB 243L
+FILE docs/events/winter-prep.md 29.8KB 311L
 DOC docs/events/winter-prep.md:13-31 ## 1. Тойм
-DOC docs/events/winter-prep.md:32-45 ## 2. Эхлэлийн өв (санал)
+DOC docs/events/winter-prep.md:32-45 ## 2. Эхлэлийн өв (B батлагдсан)
 DOC docs/events/winter-prep.md:46-63 ## 3. Бэлтгэлийн томьёо
-DOC docs/events/winter-prep.md:64-79 ## 4. Өвлийн мөчлөг: бэлчээр ба тэжээл
-DOC docs/events/winter-prep.md:80-98 ## 5. Цаг агаар ба температур (ШИНЭ)
-DOC docs/events/winter-prep.md:99-114 ## 6. Утас (ШИНЭ) — event-ийн нүүр
-DOC docs/events/winter-prep.md:115-132 ## 7. Дуудлага, хөрш, садан (ШИНЭ)
-DOC docs/events/winter-prep.md:133-138 ## 8. Камер (ШИНЭ)
-DOC docs/events/winter-prep.md:139-209 ## 9. Үе шат бүрийн нарийвчлал
-DOC docs/events/winter-prep.md:210-223 ## 10. ШИНЭ механикийн жагсаалт
-DOC docs/events/winter-prep.md:224-233 ## 11. Хэрэгтэй data утга (санал)
-DOC docs/events/winter-prep.md:234-243 ## 12. Нээлттэй асуулт
+DOC docs/events/winter-prep.md:64-117 ## 3a. Хүнс, махны нөөц (Survival)
+DOC docs/events/winter-prep.md:118-133 ## 4. Өвлийн мөчлөг: бэлчээр ба тэжээл
+DOC docs/events/winter-prep.md:134-152 ## 5. Цаг агаар ба температур (ШИНЭ)
+DOC docs/events/winter-prep.md:153-168 ## 6. Утас (ШИНЭ) — event-ийн нүүр
+DOC docs/events/winter-prep.md:169-186 ## 7. Дуудлага, хөрш, садан (ШИНЭ)
+DOC docs/events/winter-prep.md:187-192 ## 8. Камер (ШИНЭ)
+DOC docs/events/winter-prep.md:193-272 ## 9. Үе шат бүрийн нарийвчлал
+DOC docs/events/winter-prep.md:273-289 ## 10. ШИНЭ механикийн жагсаалт
+DOC docs/events/winter-prep.md:290-300 ## 11. Хэрэгтэй data утга (санал)
+DOC docs/events/winter-prep.md:301-311 ## 12. Нээлттэй асуулт
 FILE docs/grazing-livestock.md 27.4KB 316L
 DOC docs/grazing-livestock.md:17-125 ## 1. Малын үзүүлэлтүүд
 DOC docs/grazing-livestock.md:126-146 ## 2. Үнэ = амьдын жин × кг-ын үнэ
