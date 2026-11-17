@@ -38,7 +38,7 @@ TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `gam
 - `render/building/` сумын төвийн барилга: `index.ts`, `core.ts`, `civic.ts`, `shops.ts`, `houses.ts`, `yard.ts`, `town.ts`, `config.ts`, `interior.ts`, `interiorData.ts`, `publicInterior.ts`.
 - `render/character/` хүний дүрийн сан: `spec.ts`, `materials.ts`, `geom.ts`, `face.ts`, `bake.ts`, `rig.ts`, `animate.ts`, `crowd.ts`, `talk.ts`, `lab.ts`, `labShots.ts` (dev); `parts/`: `head.ts`, `torso.ts`, `arm.ts`, `leg.ts`, `hats.ts`.
 - `render/ger/` гэр, майхан: `ger.ts`, `tent.ts`, `gerInterior.ts`, `config.ts`, `geo.ts`, `atlas.ts`.
-- `render/ui/` цонх, HUD: `panels.ts`, `menu.ts`, `timebar.ts`, `sleepPanel.ts`, `names.ts`, `errorBanner.ts` (алдааны туг).
+- `render/ui/` цонх, HUD: `panels.ts`, `menu.ts`, `timebar.ts`, `sleepPanel.ts`, `names.ts`, `panelCtx.ts` (дундын контекст), `panelHerd.ts`, `panelReport.ts`, `panelStorage.ts`, `panelTown.ts`, `panelTrade.ts` (panels.ts-ээс хуваагдсан цонхнууд), `errorBanner.ts` (алдааны туг).
 ### Бусад
 - `src/` үндэс: `main.ts`, `device.ts` (чанар low/mid/high), `pwa.ts`, `animalPreview.ts` (dev), `feedback.ts` (санал илгээх линк, `data/feedback.json`).
 - `input/`: `controller.ts` (`moveTo` — товшиж явах), `touch.ts` (утасны хөвөгч джойстик, контекстуал `.prime` гол товч; салбарын `primaryAction` хаясан — [[decisions]] 2026-11-17), `skip.ts`.

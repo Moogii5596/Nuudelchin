@@ -1000,48 +1000,61 @@ SYM game/src/render/ui/names.ts:101 const SEASON_EMOJI
 SYM game/src/render/ui/names.ts:103 const CAMP_HINT
 SYM game/src/render/ui/names.ts:110 const WATER_NAME
 SYM game/src/render/ui/names.ts:111 const WOLF_LEVEL_NAME
-FILE game/src/render/ui/panels.ts 82.1KB 1281L exports: UiHooks,Panels
-SYM game/src/render/ui/panels.ts:98 fn esc
-SYM game/src/render/ui/panels.ts:100 interface UiHooks
-SYM game/src/render/ui/panels.ts:109 class Panels
-SYM game/src/render/ui/panels.ts:158 method Panels.current
-SYM game/src/render/ui/panels.ts:162 method Panels.isOpen
-SYM game/src/render/ui/panels.ts:166 method Panels.open
-SYM game/src/render/ui/panels.ts:198 method Panels.closedShop
-SYM game/src/render/ui/panels.ts:205 method Panels.close
-SYM game/src/render/ui/panels.ts:220 method Panels.showReport
-SYM game/src/render/ui/panels.ts:232 method Panels.refresh
-SYM game/src/render/ui/panels.ts:238 method Panels.showArrive
-SYM game/src/render/ui/panels.ts:244 method Panels.render
-SYM game/src/render/ui/panels.ts:268 method Panels.milestonesHtml
-SYM game/src/render/ui/panels.ts:279 method Panels.spark
-SYM game/src/render/ui/panels.ts:287 method Panels.ceremonyHtml
-SYM game/src/render/ui/panels.ts:298 method Panels.storageHtml
-SYM game/src/render/ui/panels.ts:352 method Panels.buyItems
-SYM game/src/render/ui/panels.ts:376 method Panels.vehicleButtons
-SYM game/src/render/ui/panels.ts:384 method Panels.cargoList
-SYM game/src/render/ui/panels.ts:398 method Panels.cargoHtml
-SYM game/src/render/ui/panels.ts:460 method Panels.selectedAnimals
-SYM game/src/render/ui/panels.ts:468 method Panels.shopHtml
-SYM game/src/render/ui/panels.ts:528 method Panels.traderHtml
-SYM game/src/render/ui/panels.ts:551 method Panels.gerSellHtml
-SYM game/src/render/ui/panels.ts:558 method Panels.townCommand
-SYM game/src/render/ui/panels.ts:588 method Panels.townHtml
-SYM game/src/render/ui/panels.ts:657 method Panels.lotHtml
-SYM game/src/render/ui/panels.ts:685 method Panels.arriveHtml
-SYM game/src/render/ui/panels.ts:712 method Panels.openLog
-SYM game/src/render/ui/panels.ts:718 method Panels.logHtml
-SYM game/src/render/ui/panels.ts:736 method Panels.reportHtml
-SYM game/src/render/ui/panels.ts:759 method Panels.reportDetailHtml
-SYM game/src/render/ui/panels.ts:803 method Panels.wolfKillsHtml
-SYM game/src/render/ui/panels.ts:810 method Panels.dogsHtml
-SYM game/src/render/ui/panels.ts:833 method Panels.campsHtml
-SYM game/src/render/ui/panels.ts:864 method Panels.cheatHtml
-SYM game/src/render/ui/panels.ts:874 method Panels.teahouseHtml
-SYM game/src/render/ui/panels.ts:891 method Panels.helpersHtml
-SYM game/src/render/ui/panels.ts:936 method Panels.otorHtml
-SYM game/src/render/ui/panels.ts:956 method Panels.payHtml
-SYM game/src/render/ui/panels.ts:971 method Panels.act
+FILE game/src/render/ui/panelCtx.ts 3.8KB 84L exports: Kind,HelperView,Draft,esc,UiHooks,PanelCtx,animalGroups,selectedAnimals
+SYM game/src/render/ui/panelCtx.ts:11 type Kind
+SYM game/src/render/ui/panelCtx.ts:14 interface HelperView
+SYM game/src/render/ui/panelCtx.ts:21 interface Draft
+SYM game/src/render/ui/panelCtx.ts:34 const esc
+SYM game/src/render/ui/panelCtx.ts:36 interface UiHooks
+SYM game/src/render/ui/panelCtx.ts:45 interface PanelCtx
+SYM game/src/render/ui/panelCtx.ts:61 fn animalGroups
+SYM game/src/render/ui/panelCtx.ts:79 fn selectedAnimals
+FILE game/src/render/ui/panelHerd.ts 13.8KB 187L exports: dogsHtml,campsHtml,cheatHtml,teahouseHtml,helpersHtml,otorHtml,payHtml
+SYM game/src/render/ui/panelHerd.ts:29 fn dogsHtml
+SYM game/src/render/ui/panelHerd.ts:52 fn campsHtml
+SYM game/src/render/ui/panelHerd.ts:83 fn cheatHtml
+SYM game/src/render/ui/panelHerd.ts:93 fn teahouseHtml
+SYM game/src/render/ui/panelHerd.ts:110 fn helpersHtml
+SYM game/src/render/ui/panelHerd.ts:155 fn otorHtml
+SYM game/src/render/ui/panelHerd.ts:175 fn payHtml
+FILE game/src/render/ui/panelReport.ts 12.9KB 134L exports: milestonesHtml,spark,ceremonyHtml,logHtml,reportHtml,reportDetailHtml,wolfKillsHtml
+SYM game/src/render/ui/panelReport.ts:15 fn milestonesHtml
+SYM game/src/render/ui/panelReport.ts:26 fn spark
+SYM game/src/render/ui/panelReport.ts:34 fn ceremonyHtml
+SYM game/src/render/ui/panelReport.ts:45 fn logHtml
+SYM game/src/render/ui/panelReport.ts:63 fn reportHtml
+SYM game/src/render/ui/panelReport.ts:86 fn reportDetailHtml
+SYM game/src/render/ui/panelReport.ts:130 fn wolfKillsHtml
+FILE game/src/render/ui/panelStorage.ts 3.2KB 45L exports: storageHtml
+SYM game/src/render/ui/panelStorage.ts:11 fn storageHtml
+FILE game/src/render/ui/panelTown.ts 10.9KB 152L exports: townCommand,townHtml,lotHtml,arriveHtml
+SYM game/src/render/ui/panelTown.ts:14 fn townCommand
+SYM game/src/render/ui/panelTown.ts:44 fn townHtml
+SYM game/src/render/ui/panelTown.ts:113 fn lotHtml
+SYM game/src/render/ui/panelTown.ts:129 fn arriveHtml
+FILE game/src/render/ui/panelTrade.ts 18.9KB 247L exports: BuyItem,buyItems,vehicleButtons,cargoList,cargoHtml,shopHtml,traderHtml,gerSellHtml,shopPlan
+SYM game/src/render/ui/panelTrade.ts:18 interface BuyItem
+SYM game/src/render/ui/panelTrade.ts:35 fn buyItems
+SYM game/src/render/ui/panelTrade.ts:59 fn vehicleButtons
+SYM game/src/render/ui/panelTrade.ts:67 fn cargoList
+SYM game/src/render/ui/panelTrade.ts:82 fn cargoHtml
+SYM game/src/render/ui/panelTrade.ts:146 fn shopHtml
+SYM game/src/render/ui/panelTrade.ts:206 fn traderHtml
+SYM game/src/render/ui/panelTrade.ts:229 fn gerSellHtml
+SYM game/src/render/ui/panelTrade.ts:236 fn shopPlan
+FILE game/src/render/ui/panels.ts 21.7KB 518L exports: Panels
+SYM game/src/render/ui/panels.ts:40 class Panels
+SYM game/src/render/ui/panels.ts:90 method Panels.current
+SYM game/src/render/ui/panels.ts:94 method Panels.isOpen
+SYM game/src/render/ui/panels.ts:98 method Panels.open
+SYM game/src/render/ui/panels.ts:130 method Panels.closedShop
+SYM game/src/render/ui/panels.ts:137 method Panels.close
+SYM game/src/render/ui/panels.ts:152 method Panels.showReport
+SYM game/src/render/ui/panels.ts:164 method Panels.refresh
+SYM game/src/render/ui/panels.ts:170 method Panels.showArrive
+SYM game/src/render/ui/panels.ts:176 method Panels.render
+SYM game/src/render/ui/panels.ts:201 method Panels.openLog
+SYM game/src/render/ui/panels.ts:208 method Panels.act
 FILE game/src/render/ui/sleepPanel.ts 2.4KB 49L exports: SleepCtx,SleepPanel
 SYM game/src/render/ui/sleepPanel.ts:12 interface SleepCtx
 SYM game/src/render/ui/sleepPanel.ts:19 fn hhmm
@@ -1906,7 +1919,7 @@ FILE game/tests/trader.test.ts 8.4KB 164L
 FILE game/tests/transfer.test.ts 14.2KB 255L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 10.6KB 72L
+FILE docs/CONTEXT.md 10.8KB 72L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-29 ## 2. Стек ба командууд
 DOC docs/CONTEXT.md:30-49 ## 3. Файлын зураглал (`game/src/`)
@@ -1914,12 +1927,12 @@ DOC docs/CONTEXT.md:50-52 ## 4. `data/*.json` → аль файл хэрэглэ
 DOC docs/CONTEXT.md:53-61 ## 5. Архитектурын дүрэм ([[architecture]])
 DOC docs/CONTEXT.md:62-65 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
 DOC docs/CONTEXT.md:66-72 ## 7. Баримтын хэсгийн индекс (мөрийн муж)
-FILE docs/INDEX.md 16.1KB 150L
+FILE docs/INDEX.md 17.4KB 161L
 DOC docs/INDEX.md:16-30 ## 1. Унших дараалал ба давуу эрх
-DOC docs/INDEX.md:31-121 ## 2. Баримтууд
-DOC docs/INDEX.md:122-125 ## 3. Гол тоо
-DOC docs/INDEX.md:126-144 ## 4. Нэр томьёо
-DOC docs/INDEX.md:145-150 ## 5. Баримт засах дүрэм
+DOC docs/INDEX.md:31-132 ## 2. Баримтууд
+DOC docs/INDEX.md:133-136 ## 3. Гол тоо
+DOC docs/INDEX.md:137-155 ## 4. Нэр томьёо
+DOC docs/INDEX.md:156-161 ## 5. Баримт засах дүрэм
 FILE docs/architecture.md 20.3KB 236L
 DOC docs/architecture.md:16-29 ## 1. Технологи
 DOC docs/architecture.md:30-68 ## 2. Хавтасны бүтэц
@@ -1940,26 +1953,82 @@ DOC docs/character-design.md:148-157 ## 5. Нээлттэй шийдвэр 🙋
 FILE docs/decisions.md 24.7KB 147L
 DOC docs/decisions.md:16-137 ## 0. Хэрэглэгчийн шийдвэрийн түүх
 DOC docs/decisions.md:138-147 ## 13. MVP-ийн хүрээ хаагдсан (2026-11-15)
-FILE docs/events/winter-prep.md 55.7KB 489L
+FILE docs/events/airag.md 6.0KB 83L
+DOC docs/events/airag.md:13-19 ## 1. Тойм
+DOC docs/events/airag.md:20-32 ## 2. Ажлын механик
+DOC docs/events/airag.md:33-46 ## 3. Ачаалал (өдөр 41–49, 4 гүү, цаг/өдөр)
+DOC docs/events/airag.md:47-55 ## 4. Давхцлын шийдэл ([[haymaking]]-тай)
+DOC docs/events/airag.md:56-71 ## 5. Data (санал)
+DOC docs/events/airag.md:72-78 ## 6. Шалгуур
+DOC docs/events/airag.md:79-83 ## 7. Нээлттэй 🙋
+FILE docs/events/haymaking.md 5.7KB 93L
+DOC docs/events/haymaking.md:13-19 ## 1. Тойм
+DOC docs/events/haymaking.md:20-31 ## 2. Ажлын шат
+DOC docs/events/haymaking.md:32-41 ## 3. Хүн ажил ба өртөг
+DOC docs/events/haymaking.md:42-66 ## 4. Давхцлын шийдэл ([[airag]]-тай)
+DOC docs/events/haymaking.md:67-82 ## 5. Data (санал)
+DOC docs/events/haymaking.md:83-89 ## 6. Шалгуур
+DOC docs/events/haymaking.md:90-93 ## 7. Нээлттэй 🙋
+FILE docs/events/naadam.md 5.4KB 70L
+DOC docs/events/naadam.md:13-19 ## 1. Тойм
+DOC docs/events/naadam.md:20-29 ## 2. Тоглогчийн сонголт (аль нэг, эсвэл хоёулаа)
+DOC docs/events/naadam.md:30-44 ## 3. Өдрийн хуваарь ба ачаалал
+DOC docs/events/naadam.md:45-59 ## 4. Data (санал)
+DOC docs/events/naadam.md:60-66 ## 5. Шалгуур (баталгаажуулалт)
+DOC docs/events/naadam.md:67-70 ## 6. Нээлттэй 🙋
+FILE docs/events/new-year.md 14.8KB 149L
+DOC docs/events/new-year.md:13-26 ## 1. Тойм
+DOC docs/events/new-year.md:27-40 ## 2. Урсгал A — Шинэ жилийн оройн зоог (өдөр 12)
+DOC docs/events/new-year.md:41-65 ## 3. Урсгал B — Чонын ан (өдөр 13–19)
+DOC docs/events/new-year.md:66-80 ## 4. Урсгал C — Өвчлөх (өдөр 15–17, 2-р жилд 65–67)
+DOC docs/events/new-year.md:81-88 ## 5. Урсгал D — Хүйтрэлт
+DOC docs/events/new-year.md:89-94 ## 6. Өдөр 20 — Өвлийн тооллого
+DOC docs/events/new-year.md:95-102 ## 7. Өвөөгийн түүхүүд (давтагдахгүй, дэвтэрт)
+DOC docs/events/new-year.md:103-115 ## 8. Харилцаа (`relations`) — энэ event-ийн өөрчлөлт
+DOC docs/events/new-year.md:116-126 ## 9. Data (санал, тоо хатуу кодонд бичихгүй)
+DOC docs/events/new-year.md:127-133 ## 10. Command, sim, UI
+DOC docs/events/new-year.md:134-143 ## 11. Шалгуур (тест)
+DOC docs/events/new-year.md:144-149 ## 12. Нээлттэй асуулт 🙋
+FILE docs/events/tsagaan-sar.md 12.8KB 147L
+DOC docs/events/tsagaan-sar.md:13-19 ## 1. Тойм
+DOC docs/events/tsagaan-sar.md:20-56 ## 2. 1-р жил (өдөр 21) — сумын төвд золгох
+DOC docs/events/tsagaan-sar.md:57-79 ## 3. 2-р жил (өдөр 71) — танайд золгоно
+DOC docs/events/tsagaan-sar.md:80-92 ## 4. Нөөц, бэлтгэл (хоёр жил)
+DOC docs/events/tsagaan-sar.md:93-104 ## 5. Харилцаа (`relations`) — энэ event-ийн өөрчлөлт
+DOC docs/events/tsagaan-sar.md:105-113 ## 6. Үгс
+DOC docs/events/tsagaan-sar.md:114-125 ## 7. Data (санал, тоо хатуу кодонд бичихгүй)
+DOC docs/events/tsagaan-sar.md:126-132 ## 8. Command, sim, UI
+DOC docs/events/tsagaan-sar.md:133-141 ## 9. Шалгуур (тест)
+DOC docs/events/tsagaan-sar.md:142-147 ## 10. Нээлттэй асуулт 🙋
+FILE docs/events/winter-prep-data.md 6.5KB 69L
+DOC docs/events/winter-prep-data.md:13-35 ## 10. ШИНЭ механикийн жагсаалт
+DOC docs/events/winter-prep-data.md:36-50 ## 11. Хэрэгтэй data утга (санал)
+DOC docs/events/winter-prep-data.md:51-69 ## 12. Нээлттэй асуулт
+FILE docs/events/winter-prep-market.md 9.0KB 78L
+DOC docs/events/winter-prep-market.md:13-41 ## 3c. Зах зээлийн үнэ: өдөр бүр хэлбэлзэнэ
+DOC docs/events/winter-prep-market.md:42-53 ## 3d. Утсаар захиалга (хүргэлт)
+DOC docs/events/winter-prep-market.md:54-67 ## 3e. Өвөлжөөгөө сонгох (бууц ба нөөц)
+DOC docs/events/winter-prep-market.md:68-78 ## 3f. Хадлан (сонголтоор)
+FILE docs/events/winter-prep-phone.md 5.2KB 53L
+DOC docs/events/winter-prep-phone.md:13-28 ## 6. Утас (ШИНЭ) — event-ийн нүүр
+DOC docs/events/winter-prep-phone.md:29-46 ## 7. Дуудлага, хөрш, садан (ШИНЭ)
+DOC docs/events/winter-prep-phone.md:47-53 ## 8. Камер (ШИНЭ)
+FILE docs/events/winter-prep-stages.md 13.1KB 131L
+DOC docs/events/winter-prep-stages.md:13-131 ## 9. Үе шат бүрийн нарийвчлал
+FILE docs/events/winter-prep-stock.md 11.8KB 112L
+DOC docs/events/winter-prep-stock.md:13-62 ## 3a. Хүнс, махны нөөц (Survival)
+DOC docs/events/winter-prep-stock.md:63-112 ## 3b. Түлш ба түлшний овоо
+FILE docs/events/winter-prep.md 14.9KB 130L
 DOC docs/events/winter-prep.md:13-31 ## 1. Тойм
 DOC docs/events/winter-prep.md:32-45 ## 2. Эхлэлийн өв (B батлагдсан)
-DOC docs/events/winter-prep.md:46-63 ## 3. Бэлтгэлийн томьёо
-DOC docs/events/winter-prep.md:64-113 ## 3a. Хүнс, махны нөөц (Survival)
-DOC docs/events/winter-prep.md:114-162 ## 3b. Түлш ба түлшний овоо
-DOC docs/events/winter-prep.md:163-191 ## 3c. Зах зээлийн үнэ: өдөр бүр хэлбэлзэнэ
-DOC docs/events/winter-prep.md:192-203 ## 3d. Утсаар захиалга (хүргэлт)
-DOC docs/events/winter-prep.md:204-217 ## 3e. Өвөлжөөгөө сонгох (бууц ба нөөц)
-DOC docs/events/winter-prep.md:218-227 ## 3f. Хадлан (сонголтоор)
-DOC docs/events/winter-prep.md:228-243 ## 4. Өвлийн мөчлөг: бэлчээр ба тэжээл
-DOC docs/events/winter-prep.md:244-262 ## 5. Цаг агаар ба температур (ШИНЭ)
-DOC docs/events/winter-prep.md:263-278 ## 6. Утас (ШИНЭ) — event-ийн нүүр
-DOC docs/events/winter-prep.md:279-296 ## 7. Дуудлага, хөрш, садан (ШИНЭ)
-DOC docs/events/winter-prep.md:297-302 ## 8. Камер (ШИНЭ)
-DOC docs/events/winter-prep.md:303-420 ## 9. Үе шат бүрийн нарийвчлал
-DOC docs/events/winter-prep.md:421-443 ## 10. ШИНЭ механикийн жагсаалт
-DOC docs/events/winter-prep.md:444-458 ## 11. Хэрэгтэй data утга (санал)
-DOC docs/events/winter-prep.md:459-477 ## 12. Нээлттэй асуулт
-DOC docs/events/winter-prep.md:478-489 ## 13. Түүхийн чат руу хураангуй (10 мөр)
+DOC docs/events/winter-prep.md:46-64 ## 3. Бэлтгэлийн томьёо
+DOC docs/events/winter-prep.md:65-72 ## 3a–3f. Хүнс, түлш, зах зээл, захиалга, өвөлжөө, хадлан → дэд файл
+DOC docs/events/winter-prep.md:73-87 ## 4. Өвлийн мөчлөг: бэлчээр ба тэжээл
+DOC docs/events/winter-prep.md:88-98 ## 5. Цаг агаар ба температур (ШИНЭ)
+DOC docs/events/winter-prep.md:99-102 ## 6–8. Утас, хөрш, камер → [[winter-prep-phone]]
+DOC docs/events/winter-prep.md:103-114 ## 9. Үе шат S1–S5 → [[winter-prep-stages]]
+DOC docs/events/winter-prep.md:115-118 ## 10–12. Механикийн жагсаалт, data утга, нээлттэй асуулт → [[winter-prep-data]]
+DOC docs/events/winter-prep.md:119-130 ## 13. Түүхийн чат руу хураангуй (10 мөр)
 FILE docs/grazing-livestock.md 27.4KB 316L
 DOC docs/grazing-livestock.md:17-125 ## 1. Малын үзүүлэлтүүд
 DOC docs/grazing-livestock.md:126-146 ## 2. Үнэ = амьдын жин × кг-ын үнэ
@@ -1999,18 +2068,18 @@ DOC docs/night-transport.md:45-68 ## 3. Сүү, ноос хоносон газр
 DOC docs/night-transport.md:69-87 ## 4. Шөнийн чоно (хэрэглэгчийн дүрэм)
 DOC docs/night-transport.md:88-103 ## 5. Тээвэр
 DOC docs/night-transport.md:104-106 ## 6. Хэрэглэгчийн шийдвэр 🙋
-FILE docs/plan/BOARD.md 23.9KB 129L
+FILE docs/plan/BOARD.md 24.8KB 131L
 DOC docs/plan/BOARD.md:14-24 ## MVP «дууссан» (D-шалгуур, дэлгэрэнгүй [[M6]])
 DOC docs/plan/BOARD.md:25-42 ## Агентын бүртгэл (дугаар = нэр; шинэ агент → дараагийн дугаар)
 DOC docs/plan/BOARD.md:43-61 ## Карт — Давалгаа A (шийдвэр гарсан, 11-17)
 DOC docs/plan/BOARD.md:62-66 ## Карт — Давалгаа A-ийн дараа (шийдвэр: зөвшөөрсөн)
 DOC docs/plan/BOARD.md:67-90 ## Давалгаа B — СУУРЬ, түүхээс хамааралгүй (⏳ хэрэглэгч батлахыг хүлээж байна)
 DOC docs/plan/BOARD.md:91-96 ## Карт — Давалгаа C (шийдвэр гарсан, 11-17; түүхээс хамааралгүй)
-DOC docs/plan/BOARD.md:97-107 ## Карт — Давалгаа D: түүхийн бэлтгэл (шийдвэр гарсан, 11-17; [[story]] Approved)
-DOC docs/plan/BOARD.md:108-117 ## Санал, Давалгаа C+ (⏳ ШИЙДВЭР ХҮЛЭЭЖ БАЙНА — ахлах агентад хувиарлахгүй)
-DOC docs/plan/BOARD.md:118-124 ## Түүх ба тэнцвэр (хэрэглэгч, шинэ чат; суурийн дараа)
-DOC docs/plan/BOARD.md:125-127 ## Хэрэглэгчийн ажил (агент хийж чадахгүй)
-DOC docs/plan/BOARD.md:128-129 ## Ахлахын мөчлөг (хурдан)
+DOC docs/plan/BOARD.md:97-109 ## Карт — Давалгаа D: түүхийн бэлтгэл (шийдвэр гарсан, 11-17; [[story]] Approved)
+DOC docs/plan/BOARD.md:110-119 ## Санал, Давалгаа C+ (⏳ ШИЙДВЭР ХҮЛЭЭЖ БАЙНА — ахлах агентад хувиарлахгүй)
+DOC docs/plan/BOARD.md:120-126 ## Түүх ба тэнцвэр (хэрэглэгч, шинэ чат; суурийн дараа)
+DOC docs/plan/BOARD.md:127-129 ## Хэрэглэгчийн ажил (агент хийж чадахгүй)
+DOC docs/plan/BOARD.md:130-131 ## Ахлахын мөчлөг (хурдан)
 FILE docs/plan/LEAD.md 4.5KB 48L
 DOC docs/plan/LEAD.md:12-31 ## A. Тогтвортой (ховор өөрчлөгдөнө)
 DOC docs/plan/LEAD.md:32-48 ## B. Хувирах төлөв (→ [[BOARD]], [[PROGRESS]])
@@ -2079,6 +2148,13 @@ FILE docs/summary.md 2.9KB 26L
 DOC docs/summary.md:12-20 ## 0. Гол 7 дүгнэлт
 DOC docs/summary.md:21-24 ## 3. Сэдвүүд (дэлгэрэнгүй → [[summary-full]] §3)
 DOC docs/summary.md:25-26 ## 6–7. Зах зээл, ялгарах байр суурь
+FILE docs/ui/handoff-1-menu-settings.md 7.0KB 68L
+DOC docs/ui/handoff-1-menu-settings.md:5-11 ## 0. Шийдвэр
+DOC docs/ui/handoff-1-menu-settings.md:12-29 ## 1. Токен
+DOC docs/ui/handoff-1-menu-settings.md:30-38 ## 2. Мэню (844×390)
+DOC docs/ui/handoff-1-menu-settings.md:39-61 ## 3. Тохиргоо (844×390)
+DOC docs/ui/handoff-1-menu-settings.md:62-64 ## 4. Босоо байрлал
+DOC docs/ui/handoff-1-menu-settings.md:65-68 ## 5. Хөгжүүлэгчид
 FILE docs/visuals-plan.md 28.3KB 277L
 DOC docs/visuals-plan.md:19-31 ## 1. Зорилго
 DOC docs/visuals-plan.md:32-40 ## 2. Зарчим
