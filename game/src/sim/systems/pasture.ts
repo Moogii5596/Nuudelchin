@@ -64,6 +64,23 @@ export function cellIndex(g: GrassGrid, x: number, z: number): number {
   return iz * g.n + ix;
 }
 
+export interface GrassTable { ids: string[]; maxBiomass: Float64Array; maxBiomassOr1: Float64Array; heightCm: Float64Array }
+const tableCache = new WeakMap<GrassGrid, { types: object; t: GrassTable }>();
+/** Нүдний төрлийн (индексээр) maxBiomass/heightCm хүснэгт — халуун гогцоонд мөрний хайлтгүй. Тохиргоо солигдвол дахин үүсгэнэ */
+export function grassTable(cfg: GameConfig, g: GrassGrid): GrassTable {
+  const hit = tableCache.get(g);
+  if (hit && hit.types === cfg.pasture.types) return hit.t;
+  const ids = g.typeIds.map((id) => id ?? 'steppe');
+  const t: GrassTable = {
+    ids,
+    maxBiomass: Float64Array.from(ids, (id) => cfg.pasture.types[id]?.maxBiomass ?? 0),
+    maxBiomassOr1: Float64Array.from(ids, (id) => cfg.pasture.types[id]?.maxBiomass ?? 1),
+    heightCm: Float64Array.from(ids, (id) => cfg.pasture.types[id]?.heightCm ?? 0),
+  };
+  tableCache.set(g, { types: cfg.pasture.types, t });
+  return t;
+}
+
 export function typeIdOf(g: GrassGrid, i: number): string {
   return g.typeIds[g.type[i] ?? 0] ?? 'steppe';
 }

@@ -44,7 +44,7 @@ export function waterDepthAt(cfg: GameConfig, campId: string, x: number, z: numb
 
 /** Дэлхийн хилийн дотор уу (мал хилээс гарахгүй) */
 export function inBounds(cfg: GameConfig, x: number, z: number): boolean {
-  return Math.hypot(x, z) <= cfg.player.worldRadius - 4;
+  return Math.sqrt((x) * (x) + (z) * (z)) <= cfg.player.worldRadius - 4;
 }
 
 /**
@@ -58,7 +58,7 @@ export function isWalkable(cfg: GameConfig, state: GameState, x: number, z: numb
 /** Чонын үүрний нутаг (радиус + margin) дотор уу */
 export function nearDen(cfg: GameConfig, state: GameState, x: number, z: number): boolean {
   const m = stuckCfg(cfg).denMargin;
-  for (const d of state.wolves.dens) if (Math.hypot(x - d.x, z - d.z) < d.r + m) return true;
+  for (const d of state.wolves.dens) if (Math.sqrt((x - d.x) * (x - d.x) + (z - d.z) * (z - d.z)) < d.r + m) return true;
   return false;
 }
 
@@ -110,8 +110,9 @@ export function detectStuck(cfg: GameConfig, state: GameState): number {
   let n = 0;
   for (const a of state.animals) {
     if (a.riding || !MOVING.has(a.mode)) { if (a.sn) a.sn = 0; continue; }
-    if (Math.hypot(a.tx - a.x, a.tz - a.z) <= c.minGoal) { a.sn = 0; a.sx = a.x; a.sz = a.z; continue; }
-    if (a.sx === undefined || a.sz === undefined || Math.hypot(a.x - a.sx, a.z - a.sz) >= c.minMove) {
+    const gx = a.tx - a.x, gz = a.tz - a.z;
+    if (gx * gx + gz * gz <= c.minGoal * c.minGoal) { a.sn = 0; a.sx = a.x; a.sz = a.z; continue; }
+    if (a.sx === undefined || a.sz === undefined || (a.x - a.sx) * (a.x - a.sx) + (a.z - a.sz) * (a.z - a.sz) >= c.minMove * c.minMove) {
       a.sx = a.x; a.sz = a.z; a.sn = 0;
       continue;
     }

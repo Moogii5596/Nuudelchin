@@ -192,6 +192,7 @@
     "imaxPerMinute": 0.0031,
     "biomassPerGut": 0.4,
     "decisionEverySteps": 10,
+    "grazeStride": 2,
     "samples": 6,
     "sampleRadius": {
       "sheep": 6,
