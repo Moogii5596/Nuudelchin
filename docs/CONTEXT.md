@@ -41,13 +41,13 @@ TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `gam
 - `render/ui/` цонх, HUD: `panels.ts`, `menu.ts`, `timebar.ts`, `sleepPanel.ts`, `names.ts`.
 ### Бусад
 - `src/` үндэс: `main.ts`, `device.ts` (чанар low/mid/high), `pwa.ts`, `animalPreview.ts` (dev).
-- `input/`: `controller.ts`, `touch.ts`, `skip.ts`.
+- `input/`: `controller.ts` (`moveTo` — товшиж явах), `touch.ts` (утасны хөвөгч джойстик, контекстуал `.prime` гол товч; салбарын `primaryAction` хаясан — [[decisions]] 2026-11-17), `skip.ts`.
 - `persist/`: `idb.ts`, `autosave.ts`, `file.ts`, `transfer.ts`, `transferCode.ts` (шилжүүлэх код; сервер `api/transfer.ts`).
 - `i18n/`: `i18n.ts`, `msg.ts`, `npcStrings.ts`; `mn.json`, `en.json`, `npc.mn.json`, `npc.en.json`.
 - `game/tests/<сэдэв>.test.ts` (дундын `helpers.ts`); `tools/`: `codemap.ts`, `balance_sim/run.ts`, `character-lab/`, `shots/`.
 
 ## 4. `data/*.json` → аль файл хэрэглэдэг
-`sim/config.ts` бүгдийг ачаална (`loadConfig`, `validateConfig`). Render шууд уншдаг: `visuals.json` → `render/style.ts`; `characters.json` → `render/character/spec.ts`; `ger.json`, `buildings.json`, `house-interiors.json`, `animals-look.json` → тухайн хавтасны `config.ts`. Түлхүүрийг хэн ашигладгийг грепээр: `grep -rln 'cfg\.camps' game/src`. Жагсаалт: `ls data`.
+`sim/config.ts` бүгдийг ачаална (`loadConfig`, `validateConfig`). Render шууд уншдаг: `visuals.json` → `render/style.ts`; `characters.json` → `render/character/spec.ts`; `ger.json`, `buildings.json`, `house-interiors.json`, `animals-look.json` → тухайн хавтасны `config.ts`. Түлхүүрийг хэн ашигладгийг грепээр: `grep -rln 'cfg\.camps' game/src`. Жагсаалт: `ls data`. Сүүлд нэмэгдсэн: `sleep.json` → `sim/systems/sleep.ts` (хамаатны айлд унтах, сэрэх цонх 04:00–10:00); `shops.json` → `sim/systems/shops.ts` (`isOpen`, дэлгүүр 09–19, цайны газар 08–21); `difficulty.json` → `sim/systems/difficulty.ts` (тайван тохиргооны гулсуурууд); `trader.json` → `sim/systems/trader.ts` (явуулын худалдаачин).
 
 ## 5. Архитектурын дүрэм ([[architecture]])
 - **sim/render салгах:** `sim/` Three.js, DOM, `window` импортлохгүй. `render/` зөвхөн GameState уншина, логик бичихгүй.
