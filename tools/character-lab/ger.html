@@ -869,7 +869,7 @@ const state = { size: 'small4', season: 'summer', night: false, smoke: true, doo
 const HELPER = { coverColor: '#E2D9C4', belts: 2 };   // туслахын гэр: хуучирсан бүрээс, 2 бүслүүр, энгийн модон хаалга
 let curCut = 'none';
 let doorK = 0;
-let ger = null, interior = null;
+let ger = null, interior = null, extras = [];   // extras — «зэрэгцүүлэх» үеийн нэмэлт обьект (адуучин, отрын майхан)
 
 function applyEnv() {
   const w = state.season === 'winter', n = state.night;
@@ -889,12 +889,14 @@ function applyEnv() {
 function rebuild() {
   if (ger) { scene.remove(ger.group); ger.dispose(); }
   if (interior) { scene.remove(interior.group); interior.dispose(); interior = null; }
-  const isTent = state.kind.startsWith('tent'), helper = state.kind === 'helper', dv = helper ? GER_CONFIG.doors.findIndex(d => d.motif === 'plain') : state.door;
+  for (const x of extras) { scene.remove(x.group); x.dispose(); } extras = [];
+  const compare = state.kind === 'compare', isTent = state.kind.startsWith('tent'), helper = state.kind === 'helper' || compare, dv = helper ? GER_CONFIG.doors.findIndex(d => d.motif === 'plain') : state.door;
   const cut = curCut = isTent ? 'none' : state.inside, lipY = GER_CONFIG.sizes[state.size].wallH - GER_CONFIG.shape.eaveDrop;
   const planes = cut === 'half' ? [new THREE.Plane(new THREE.Vector3(-1, 0, 0), 0.62)] : cut === 'roof' ? [new THREE.Plane(new THREE.Vector3(0, -1, 0), lipY + 0.03)] : null;
   ger = isTent ? makeTent(state.kind.slice(5), { season: state.season, outline: state.outline })
     : makeGer(state.size, { season: state.season, doorVariant: dv, outline: state.outline, interior: cut !== 'none', clippingPlanes: planes, doorOpen: doorK, ...(helper ? HELPER : {}) });
   scene.add(ger.group);
+  if (compare) for (const [k, x] of [['horse', 5.6], ['otor', -5.0]]) { const t = makeTent(k, { season: state.season, outline: state.outline }); t.group.position.x = x; t.setGlow(state.night ? 1.6 : 0); scene.add(t.group); extras.push(t); }
   if (cut !== 'none') { interior = makeGerInterior(state.size, { season: state.season, doorVariant: dv, outline: state.outline, clippingPlanes: planes }); scene.add(interior.group); }
   inLight.position.set(0.35, 1.5, 0.75);
   const R = ger.dims.diameter / 2;
@@ -931,8 +933,8 @@ function seg(id, items, get, set) {
   paint();
 }
 const eq = k => v => state[k] === v, put = k => v => { state[k] = v; };
-const frameCam = () => { if (orbit.d > 2.5) orbit.d = Math.max(6, 11.5 * (ger ? 1 : 1) * (state.kind.startsWith('tent') ? 0.62 : GER_CONFIG.sizes[state.size].diameter / 4.4)); };
-seg('g-kind', [{ v: 'ger', label: 'Гэр' }, { v: 'helper', label: 'Туслахын гэр' }, { v: 'tent-horse', label: 'Адуучны майхан' }, { v: 'tent-otor', label: 'Отрын майхан' }, { v: 'tent-start', label: 'Эхлэлийн майхан' }],
+const frameCam = () => { if (orbit.d > 2.5) orbit.d = Math.max(6, 11.5 * (ger ? 1 : 1) * (state.kind === 'compare' ? 1.5 : state.kind.startsWith('tent') ? 0.62 : GER_CONFIG.sizes[state.size].diameter / 4.4)); };
+seg('g-kind', [{ v: 'ger', label: 'Гэр' }, { v: 'compare', label: 'Зэрэгцүүлэх (3)' },{ v: 'helper', label: 'Туслахын гэр' }, { v: 'tent-horse', label: 'Адуучны майхан' }, { v: 'tent-otor', label: 'Отрын майхан' }, { v: 'tent-start', label: 'Эхлэлийн майхан' }],
   eq('kind'), v => { state.kind = v; frameCam(); });
 seg('g-size', Object.entries(GER_CONFIG.sizes).map(([k, z]) => ({ v: k, label: z.label })), eq('size'), v => { state.size = v; frameCam(); });
 seg('g-season', [{ v: 'summer', label: 'Зун' }, { v: 'winter', label: 'Өвөл' }], eq('season'), put('season'));
