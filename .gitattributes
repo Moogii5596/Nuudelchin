@@ -1,0 +1,8 @@
+# Мөр төгсгөлийг бүх орчинд LF болгоно (Windows CRLF-ийн хуурамч "modified" зөрүүг арилгана)
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.glb binary
+*.woff2 binary
