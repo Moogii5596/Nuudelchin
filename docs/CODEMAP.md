@@ -1101,7 +1101,7 @@ SYM game/src/sim/clock.ts:56 fn tick
 SYM game/src/sim/clock.ts:77 fn realSecondsPerMinute
 SYM game/src/sim/clock.ts:83 fn realSecondsPerDay
 SYM game/src/sim/clock.ts:89 fn formatTime
-FILE game/src/sim/commands.ts 21.7KB 440L exports: Command,CommandResult,nearHome,applyCommand
+FILE game/src/sim/commands.ts 21.7KB 441L exports: Command,CommandResult,nearHome,applyCommand
 SYM game/src/sim/commands.ts:32 type Command
 SYM game/src/sim/commands.ts:92 interface CommandResult
 SYM game/src/sim/commands.ts:98 fn nearHome
@@ -1173,37 +1173,37 @@ SYM game/src/sim/sim.ts:181 method Sim.runDays
 SYM game/src/sim/sim.ts:186 method Sim.endDay
 SYM game/src/sim/sim.ts:270 method Sim.spend
 SYM game/src/sim/sim.ts:276 method Sim.random
-FILE game/src/sim/state.ts 22.1KB 428L exports: SAVE_VERSION,ProductId,PRODUCTS,AnimalMode,Animal,GroundItem,Batch,ProcessorKind,ProcessorState,VehicleId,VEHICLES,BuyOrder,Place,InteriorState,+16
+FILE game/src/sim/state.ts 22.3KB 430L exports: SAVE_VERSION,ProductId,PRODUCTS,AnimalMode,Animal,GroundItem,Batch,ProcessorKind,ProcessorState,VehicleId,VEHICLES,BuyOrder,Place,InteriorState,+16
 SYM game/src/sim/state.ts:21 const SAVE_VERSION
 SYM game/src/sim/state.ts:23 type ProductId
 SYM game/src/sim/state.ts:24 const PRODUCTS
 SYM game/src/sim/state.ts:28 type AnimalMode
 SYM game/src/sim/state.ts:30 interface Animal
-SYM game/src/sim/state.ts:65 interface GroundItem
-SYM game/src/sim/state.ts:74 interface Batch
-SYM game/src/sim/state.ts:80 type ProcessorKind
-SYM game/src/sim/state.ts:82 interface ProcessorState
-SYM game/src/sim/state.ts:88 type VehicleId
-SYM game/src/sim/state.ts:89 const VEHICLES
-SYM game/src/sim/state.ts:91 type BuyOrder
-SYM game/src/sim/state.ts:104 type Place
-SYM game/src/sim/state.ts:110 interface InteriorState
-SYM game/src/sim/state.ts:122 interface FleetVehicle
-SYM game/src/sim/state.ts:134 interface MapState
-SYM game/src/sim/state.ts:142 interface CampState
-SYM game/src/sim/state.ts:150 interface DayStats
-SYM game/src/sim/state.ts:177 type YieldSpecies
-SYM game/src/sim/state.ts:178 type WolfWhere
-SYM game/src/sim/state.ts:179 type DeathCause
-SYM game/src/sim/state.ts:181 interface YieldNote
-SYM game/src/sim/state.ts:192 interface PlayerState
-SYM game/src/sim/state.ts:211 interface GameState
-SYM game/src/sim/state.ts:265 fn emptyDayStats
-SYM game/src/sim/state.ts:269 fn newAnimal
-SYM game/src/sim/state.ts:302 fn createInitialState
-SYM game/src/sim/state.ts:371 const MIGRATIONS
-SYM game/src/sim/state.ts:416 const MIN_SAVE_VERSION
-SYM game/src/sim/state.ts:419 fn migrateState
+SYM game/src/sim/state.ts:67 interface GroundItem
+SYM game/src/sim/state.ts:76 interface Batch
+SYM game/src/sim/state.ts:82 type ProcessorKind
+SYM game/src/sim/state.ts:84 interface ProcessorState
+SYM game/src/sim/state.ts:90 type VehicleId
+SYM game/src/sim/state.ts:91 const VEHICLES
+SYM game/src/sim/state.ts:93 type BuyOrder
+SYM game/src/sim/state.ts:106 type Place
+SYM game/src/sim/state.ts:112 interface InteriorState
+SYM game/src/sim/state.ts:124 interface FleetVehicle
+SYM game/src/sim/state.ts:136 interface MapState
+SYM game/src/sim/state.ts:144 interface CampState
+SYM game/src/sim/state.ts:152 interface DayStats
+SYM game/src/sim/state.ts:179 type YieldSpecies
+SYM game/src/sim/state.ts:180 type WolfWhere
+SYM game/src/sim/state.ts:181 type DeathCause
+SYM game/src/sim/state.ts:183 interface YieldNote
+SYM game/src/sim/state.ts:194 interface PlayerState
+SYM game/src/sim/state.ts:213 interface GameState
+SYM game/src/sim/state.ts:267 fn emptyDayStats
+SYM game/src/sim/state.ts:271 fn newAnimal
+SYM game/src/sim/state.ts:304 fn createInitialState
+SYM game/src/sim/state.ts:373 const MIGRATIONS
+SYM game/src/sim/state.ts:418 const MIN_SAVE_VERSION
+SYM game/src/sim/state.ts:421 fn migrateState
 FILE game/src/sim/systems/animals.ts 5.6KB 130L exports: AnimalBody,frameKg,liveWeightKg,salePrice,buyPrice,sheepUnits,herdSheepUnits,grazingSheepUnits,dailyConditionDelta,dailyAnimals
 SYM game/src/sim/systems/animals.ts:8 interface AnimalBody
 SYM game/src/sim/systems/animals.ts:21 fn frameKg
@@ -1351,12 +1351,13 @@ SYM game/src/sim/systems/helpers.ts:831 fn setOtorCollector
 SYM game/src/sim/systems/helpers.ts:854 fn takeFromOtor
 SYM game/src/sim/systems/helpers.ts:885 fn dailyOtor
 SYM game/src/sim/systems/helpers.ts:969 fn relocateHelpers
-FILE game/src/sim/systems/herder.ts 5.8KB 140L exports: ridingHorse,herderStep,shout,toggleUurga,toggleMount
+FILE game/src/sim/systems/herder.ts 6.2KB 148L exports: ridingHorse,horseInScene,herderStep,shout,toggleUurga,toggleMount
 SYM game/src/sim/systems/herder.ts:15 fn ridingHorse
-SYM game/src/sim/systems/herder.ts:20 fn herderStep
-SYM game/src/sim/systems/herder.ts:80 fn shout
-SYM game/src/sim/systems/herder.ts:114 fn toggleUurga
-SYM game/src/sim/systems/herder.ts:120 fn toggleMount
+SYM game/src/sim/systems/herder.ts:20 fn horseInScene
+SYM game/src/sim/systems/herder.ts:26 fn herderStep
+SYM game/src/sim/systems/herder.ts:86 fn shout
+SYM game/src/sim/systems/herder.ts:120 fn toggleUurga
+SYM game/src/sim/systems/herder.ts:126 fn toggleMount
 FILE game/src/sim/systems/herding.ts 6.1KB 109L exports: refreshLeaders,leaderOf,followLeaders,followHerder,horseGrazeStep
 SYM game/src/sim/systems/herding.ts:18 fn flockOf
 SYM game/src/sim/systems/herding.ts:21 fn pickLeader
@@ -1692,7 +1693,7 @@ SYM game/src/sim/systems/trader.ts:107 interface TraderPlan
 SYM game/src/sim/systems/trader.ts:113 fn traderBuyPrice
 SYM game/src/sim/systems/trader.ts:116 fn traderHayPrice
 SYM game/src/sim/systems/trader.ts:121 fn traderTrade
-FILE game/src/sim/systems/travel.ts 25.4KB 577L exports: TravelEvent,fleetOf,initFleetVehicle,addVehicle,syncAway,cargoUnits,hayInOrders,hayRoom,cargoSlots,nearestVehicle,enterVehicle,exitVehicle,boardBest,takeFromStorage,+20
+FILE game/src/sim/systems/travel.ts 25.7KB 585L exports: TravelEvent,fleetOf,initFleetVehicle,addVehicle,syncAway,cargoUnits,hayInOrders,hayRoom,cargoSlots,nearestVehicle,enterVehicle,exitVehicle,boardBest,takeFromStorage,+20
 SYM game/src/sim/systems/travel.ts:24 type TravelEvent
 SYM game/src/sim/systems/travel.ts:29 fn fleetOf
 SYM game/src/sim/systems/travel.ts:34 fn initFleetVehicle
@@ -1706,30 +1707,30 @@ SYM game/src/sim/systems/travel.ts:77 fn nearestVehicle
 SYM game/src/sim/systems/travel.ts:91 fn enterVehicle
 SYM game/src/sim/systems/travel.ts:105 fn exitVehicle
 SYM game/src/sim/systems/travel.ts:123 fn boardBest
-SYM game/src/sim/systems/travel.ts:143 fn takeFromStorage
-SYM game/src/sim/systems/travel.ts:162 fn droveAnimals
-SYM game/src/sim/systems/travel.ts:173 fn canTravel
-SYM game/src/sim/systems/travel.ts:178 fn originKm
-SYM game/src/sim/systems/travel.ts:184 fn sumId
-SYM game/src/sim/systems/travel.ts:189 fn driveVehicle
-SYM game/src/sim/systems/travel.ts:207 fn leaveToMap
-SYM game/src/sim/systems/travel.ts:222 fn mapGo
-SYM game/src/sim/systems/travel.ts:235 fn mapSpeedKmPerMin
-SYM game/src/sim/systems/travel.ts:245 fn droveSlows
-SYM game/src/sim/systems/travel.ts:251 fn partySpeedKmPerMin
-SYM game/src/sim/systems/travel.ts:257 fn mapStep
-SYM game/src/sim/systems/travel.ts:276 fn spend
-SYM game/src/sim/systems/travel.ts:282 fn arrive
-SYM game/src/sim/systems/travel.ts:348 fn migrateHere
-SYM game/src/sim/systems/travel.ts:359 fn atLoadingSpot
-SYM game/src/sim/systems/travel.ts:365 fn loadCargo
-SYM game/src/sim/systems/travel.ts:393 fn unloadCargo
-SYM game/src/sim/systems/travel.ts:418 interface TradePlan
-SYM game/src/sim/systems/travel.ts:425 fn sellableAtShop
-SYM game/src/sim/systems/travel.ts:434 fn sellableAnimals
-SYM game/src/sim/systems/travel.ts:440 fn animalRoom
-SYM game/src/sim/systems/travel.ts:452 fn trade
-SYM game/src/sim/systems/travel.ts:543 fn buyLotVehicle
+SYM game/src/sim/systems/travel.ts:144 fn takeFromStorage
+SYM game/src/sim/systems/travel.ts:163 fn droveAnimals
+SYM game/src/sim/systems/travel.ts:174 fn canTravel
+SYM game/src/sim/systems/travel.ts:179 fn originKm
+SYM game/src/sim/systems/travel.ts:185 fn sumId
+SYM game/src/sim/systems/travel.ts:190 fn driveVehicle
+SYM game/src/sim/systems/travel.ts:208 fn leaveToMap
+SYM game/src/sim/systems/travel.ts:223 fn mapGo
+SYM game/src/sim/systems/travel.ts:236 fn mapSpeedKmPerMin
+SYM game/src/sim/systems/travel.ts:246 fn droveSlows
+SYM game/src/sim/systems/travel.ts:252 fn partySpeedKmPerMin
+SYM game/src/sim/systems/travel.ts:258 fn mapStep
+SYM game/src/sim/systems/travel.ts:277 fn spend
+SYM game/src/sim/systems/travel.ts:283 fn arrive
+SYM game/src/sim/systems/travel.ts:355 fn migrateHere
+SYM game/src/sim/systems/travel.ts:366 fn atLoadingSpot
+SYM game/src/sim/systems/travel.ts:372 fn loadCargo
+SYM game/src/sim/systems/travel.ts:400 fn unloadCargo
+SYM game/src/sim/systems/travel.ts:425 interface TradePlan
+SYM game/src/sim/systems/travel.ts:432 fn sellableAtShop
+SYM game/src/sim/systems/travel.ts:441 fn sellableAnimals
+SYM game/src/sim/systems/travel.ts:447 fn animalRoom
+SYM game/src/sim/systems/travel.ts:459 fn trade
+SYM game/src/sim/systems/travel.ts:550 fn buyLotVehicle
 FILE game/src/sim/systems/trip.ts 4.3KB 108L exports: VehicleSpec,vehicleCfg,bestTruck,parkingSpot,productPrice,orderPrice,animalSlots,deliver
 SYM game/src/sim/systems/trip.ts:15 type VehicleSpec
 SYM game/src/sim/systems/trip.ts:17 fn vehicleCfg
@@ -1813,6 +1814,7 @@ FILE game/tests/animalLook.test.ts 11.0KB 192L
 FILE game/tests/animals.test.ts 2.3KB 39L
 FILE game/tests/breeding.test.ts 1.4KB 33L
 FILE game/tests/buildings.test.ts 18.9KB 250L
+FILE game/tests/callHorse.test.ts 2.5KB 65L
 FILE game/tests/camclip.test.ts 3.9KB 68L
 FILE game/tests/characters.test.ts 30.1KB 507L
 FILE game/tests/clock.test.ts 2.7KB 52L
@@ -1861,7 +1863,7 @@ FILE game/tests/trader.test.ts 8.4KB 164L
 FILE game/tests/transfer.test.ts 14.2KB 255L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 9.7KB 71L
+FILE docs/CONTEXT.md 10.3KB 71L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-29 ## 2. Стек ба командууд
 DOC docs/CONTEXT.md:30-48 ## 3. Файлын зураглал (`game/src/`)
@@ -1869,12 +1871,12 @@ DOC docs/CONTEXT.md:49-51 ## 4. `data/*.json` → аль файл хэрэглэ
 DOC docs/CONTEXT.md:52-60 ## 5. Архитектурын дүрэм ([[architecture]])
 DOC docs/CONTEXT.md:61-64 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
 DOC docs/CONTEXT.md:65-71 ## 7. Баримтын хэсгийн индекс (мөрийн муж)
-FILE docs/INDEX.md 14.9KB 139L
+FILE docs/INDEX.md 15.2KB 141L
 DOC docs/INDEX.md:16-30 ## 1. Унших дараалал ба давуу эрх
-DOC docs/INDEX.md:31-110 ## 2. Баримтууд
-DOC docs/INDEX.md:111-114 ## 3. Гол тоо
-DOC docs/INDEX.md:115-133 ## 4. Нэр томьёо
-DOC docs/INDEX.md:134-139 ## 5. Баримт засах дүрэм
+DOC docs/INDEX.md:31-112 ## 2. Баримтууд
+DOC docs/INDEX.md:113-116 ## 3. Гол тоо
+DOC docs/INDEX.md:117-135 ## 4. Нэр томьёо
+DOC docs/INDEX.md:136-141 ## 5. Баримт засах дүрэм
 FILE docs/architecture.md 20.3KB 236L
 DOC docs/architecture.md:16-29 ## 1. Технологи
 DOC docs/architecture.md:30-68 ## 2. Хавтасны бүтэц
@@ -1892,9 +1894,9 @@ DOC docs/character-design.md:28-52 ## 2. Үндсэн дүр — хэрэгжи�
 DOC docs/character-design.md:53-61 ## 3. NPC-үүд одоо
 DOC docs/character-design.md:62-147 ## 4. Нэг кодын сан: дүр бүрийг тохиргооноос угсрах (V4.5)
 DOC docs/character-design.md:148-157 ## 5. Нээлттэй шийдвэр 🙋
-FILE docs/decisions.md 22.3KB 139L
-DOC docs/decisions.md:16-134 ## 0. Хэрэглэгчийн шийдвэрийн түүх
-DOC docs/decisions.md:135-139 ## 13. MVP-ийн хүрээ хаагдсан (2026-11-15)
+FILE docs/decisions.md 23.8KB 144L
+DOC docs/decisions.md:16-137 ## 0. Хэрэглэгчийн шийдвэрийн түүх
+DOC docs/decisions.md:138-144 ## 13. MVP-ийн хүрээ хаагдсан (2026-11-15)
 FILE docs/grazing-livestock.md 27.4KB 316L
 DOC docs/grazing-livestock.md:17-125 ## 1. Малын үзүүлэлтүүд
 DOC docs/grazing-livestock.md:126-146 ## 2. Үнэ = амьдын жин × кг-ын үнэ
@@ -1909,9 +1911,9 @@ DOC docs/helpers-m5.md:14-32 ## 1. Хэрэглэгчийн шийдвэрүүд
 DOC docs/helpers-m5.md:33-44 ## 2. Код
 DOC docs/helpers-m5.md:45-55 ## 3. Тэнцвэр (улиралгүй үед; 6 seed × 200 өдөр, `--only Менежер,Залхуу`)
 DOC docs/helpers-m5.md:56-61 ## 4. Хязгаарлалт / 🙋
-FILE docs/milestones.md 8.9KB 45L
+FILE docs/milestones.md 9.0KB 45L
 DOC docs/milestones.md:39-45 ## Эрсдэл
-FILE docs/mvp-spec.md 54.4KB 470L
+FILE docs/mvp-spec.md 54.0KB 470L
 DOC docs/mvp-spec.md:17-24 ## 0. Хэрэглэгчийн шийдвэрийн түүх
 DOC docs/mvp-spec.md:25-52 ## 1. Хүрээ
 DOC docs/mvp-spec.md:53-71 ## 2. Цаг (M4.5, M5.5)
@@ -1934,38 +1936,42 @@ DOC docs/night-transport.md:45-68 ## 3. Сүү, ноос хоносон газр
 DOC docs/night-transport.md:69-87 ## 4. Шөнийн чоно (хэрэглэгчийн дүрэм)
 DOC docs/night-transport.md:88-103 ## 5. Тээвэр
 DOC docs/night-transport.md:104-106 ## 6. Хэрэглэгчийн шийдвэр 🙋
-FILE docs/plan/LEAD.md 9.7KB 54L
-DOC docs/plan/LEAD.md:12-16 ## 1. Ажлын загвар
-DOC docs/plan/LEAD.md:17-25 ## 2. Хийгдсэн (2026-11-15 19:00 → 11-16 15:00, ~60 commit, push хийгээгүй)
-DOC docs/plan/LEAD.md:26-32 ## 3. Явж буй ажил (энэ тэмдэглэлийн үед)
-DOC docs/plan/LEAD.md:33-45 ## 4. Хэрэглэгчийн шийдвэр хүлээж буй
-DOC docs/plan/LEAD.md:46-50 ## 5. Дараагийн алхам
-DOC docs/plan/LEAD.md:51-54 ## 6. Контекст хэмнэх (2026-11-16)
-FILE docs/plan/M6.md 6.7KB 51L
+FILE docs/plan/BOARD.md 11.1KB 74L
+DOC docs/plan/BOARD.md:14-24 ## MVP «дууссан» (D-шалгуур, дэлгэрэнгүй [[M6]])
+DOC docs/plan/BOARD.md:25-34 ## Агентын бүртгэл (дугаар = нэр; шинэ агент → дараагийн дугаар)
+DOC docs/plan/BOARD.md:35-53 ## Карт — Давалгаа A (шийдвэр гарсан, 11-17)
+DOC docs/plan/BOARD.md:54-57 ## Карт — Давалгаа A-ийн дараа (шийдвэр: зөвшөөрсөн)
+DOC docs/plan/BOARD.md:58-69 ## Санал (⏳ ШИЙДВЭР ХҮЛЭЭЖ БАЙНА — ахлах агентад хувиарлахгүй)
+DOC docs/plan/BOARD.md:70-72 ## Хэрэглэгчийн ажил (агент хийж чадахгүй)
+DOC docs/plan/BOARD.md:73-74 ## Ахлахын мөчлөг (хурдан)
+FILE docs/plan/LEAD.md 4.5KB 48L
+DOC docs/plan/LEAD.md:12-31 ## A. Тогтвортой (ховор өөрчлөгдөнө)
+DOC docs/plan/LEAD.md:32-48 ## B. Хувирах төлөв (→ [[BOARD]], [[PROGRESS]])
+FILE docs/plan/M6.md 5.8KB 50L
 DOC docs/plan/M6.md:15-17 ## Зорилго
 DOC docs/plan/M6.md:18-34 ## MVP «дууссан» шалгуур (D1–D10 — M6 ба M7-ийн нийт)
-DOC docs/plan/M6.md:35-47 ## Нээлттэй ажил
-DOC docs/plan/M6.md:48-51 ## Зогссон цэг
-FILE docs/plan/M7.md 7.7KB 34L
+DOC docs/plan/M6.md:35-46 ## Нээлттэй ажил
+DOC docs/plan/M6.md:47-50 ## Зогссон цэг
+FILE docs/plan/M7.md 7.9KB 34L
 DOC docs/plan/M7.md:12-22 ## Блокууд
 DOC docs/plan/M7.md:23-27 ## Асуулга (10 асуулт)
 DOC docs/plan/M7.md:28-32 ## Эрсдэл
 DOC docs/plan/M7.md:33-34 ## Зогссон цэг
-FILE docs/plan/V.md 6.2KB 50L
+FILE docs/plan/V.md 4.1KB 36L
 DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
-DOC docs/plan/V.md:24-44 ## Нээлттэй ажил
-DOC docs/plan/V.md:45-50 ## Зогссон цэг
-FILE docs/plan/playtest.md 23.5KB 143L
-DOC docs/plan/playtest.md:13-18 ## A. FPS ба төхөөрөмж
-DOC docs/plan/playtest.md:19-39 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
-DOC docs/plan/playtest.md:40-113 ## C. Мэдрэмж, үе шат бүрээр
-DOC docs/plan/playtest.md:114-117 ## V4.6 хонь, ямаа (🧑 мэдрэмж)
-DOC docs/plan/playtest.md:118-123 ## V4.6 S2 үхэр, адуу, нохой, чоно (🧑 мэдрэмж)
-DOC docs/plan/playtest.md:124-126 ## Хүний масштаб 1.7 м (characters.json scale 0.70) (🧑 мэдрэмж)
-DOC docs/plan/playtest.md:127-133 ## Сумын төвийн NPC жигд алхалт ба мөргөлдөөн (🧑 мэдрэмж, 2026-11-16)
-DOC docs/plan/playtest.md:134-137 ## Мэдэгдэж буй дутагдал: NPC хашаа гаталгах (sumwalk, 2026-11-16)
-DOC docs/plan/playtest.md:138-143 ## Утасны HUD, удирдлага (2026-11-16)
+DOC docs/plan/V.md:24-32 ## Нээлттэй ажил
+DOC docs/plan/V.md:33-36 ## Зогссон цэг
+FILE docs/plan/playtest.md 23.7KB 145L
+DOC docs/plan/playtest.md:15-20 ## A. FPS ба төхөөрөмж
+DOC docs/plan/playtest.md:21-41 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
+DOC docs/plan/playtest.md:42-115 ## C. Мэдрэмж, үе шат бүрээр
+DOC docs/plan/playtest.md:116-119 ## V4.6 хонь, ямаа (🧑 мэдрэмж)
+DOC docs/plan/playtest.md:120-125 ## V4.6 S2 үхэр, адуу, нохой, чоно (🧑 мэдрэмж)
+DOC docs/plan/playtest.md:126-128 ## Хүний масштаб 1.7 м (characters.json scale 0.70) (🧑 мэдрэмж)
+DOC docs/plan/playtest.md:129-135 ## Сумын төвийн NPC жигд алхалт ба мөргөлдөөн (🧑 мэдрэмж, 2026-11-16)
+DOC docs/plan/playtest.md:136-139 ## Мэдэгдэж буй дутагдал: NPC хашаа гаталгах (sumwalk, 2026-11-16)
+DOC docs/plan/playtest.md:140-145 ## Утасны HUD, удирдлага (2026-11-16)
 FILE docs/seasons-camps.md 10.2KB 104L
 DOC docs/seasons-camps.md:17-40 ## 1. Хэрэглэгчийн шийдвэрүүд
 DOC docs/seasons-camps.md:41-54 ## 2. Улирал
