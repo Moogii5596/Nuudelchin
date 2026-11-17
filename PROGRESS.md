@@ -1,2 +1,2 @@
 # PROGRESS
-Төлөв: хүлээгдэж байна (2026-11-16) · үе шат V → `docs/plan/V.md` · wave 1 нэгтгэгдсэн, гар шалгалт хүлээгдэж байна. Session, шийдвэр → `docs/plan/LEAD.md`.
+Төлөв: wave 2 нэгтгэгдсэн, push хүлээгдэж байна (2026-11-17) · үе шат V → `docs/plan/V.md`. Session, шийдвэр → `docs/plan/LEAD.md`.
