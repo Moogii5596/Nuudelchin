@@ -20,6 +20,7 @@ import { TransferError, createTransfer, redeemTransfer } from '../../persist/tra
 import { normalizeCode } from '../../persist/transferCode';
 import { pwa } from '../../pwa';
 import { QUALITIES, QUALITY_NAME, type Quality } from '../../device';
+import { feedbackEnabled, openFeedback } from '../../feedback';
 import { SEASON_EMOJI, SEASON_NAME, fmtMoney } from './names';
 
 export type Intent = { kind: 'new'; slot: number; difficulty: Difficulty; seed: number } | { kind: 'slot'; slot: number };
@@ -179,6 +180,11 @@ export class MenuUI {
     this.el.innerHTML = `<div class="mbox ${this.screen === 'new' ? 'wide' : ''}">${h}</div>`;
   }
 
+  /** «💬 Санал» — data/feedback.json-ийн url хоосон бол нуугдана */
+  private feedbackBtn(): string {
+    return feedbackEnabled() ? `<button class="mb" data-a="feedback">💬 ${t('menu.feedback')}</button>` : '';
+  }
+
   private ver(): string {
     return `<div class="ver">${t('menu.version', { v: pkg.version, save: SAVE_VERSION })}</div>`;
   }
@@ -260,6 +266,7 @@ export class MenuUI {
         <button class="mb" data-a="settings">⚙ ${t('menu.settings')}</button>
         <button class="mb" data-a="ms">🏆 ${t('menu.milestones')}</button>
         <button class="mb" data-a="help">❓ ${t('menu.help')}</button>
+        ${this.feedbackBtn()}
         <button class="mb" data-a="main">🏠 ${t('menu.mainMenu')}</button>
       </div>
       <div class="hint">${t('menu.slotNow', { n: this.d.getSlot() })}</div>${this.ver()}`;
@@ -437,6 +444,7 @@ export class MenuUI {
       case 'new': this.draft = null; this.go('new'); return;
       case 'slots': case 'file': case 'settings': this.go(a); return;
       case 'help': this.close(); this.d.openHelp(); return;
+      case 'feedback': openFeedback(this.d.state.time.day, this.d.getQuality()); return;
       case 'ms': this.close(); this.d.openMilestones(); return;
       case 'showMs': this.d.dispatch({ type: 'setShowMilestones', on: v === '1' }); this.render(); return;
       case 'install':
