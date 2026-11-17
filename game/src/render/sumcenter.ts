@@ -123,6 +123,10 @@ export class SumCenterView {
   private townMats: BuildingMaterials | null = null;
   private lampGlow: THREE.Points | null = null;
   private lampLights: THREE.PointLight[] = [];
+  /** V3.5 цэнгэлдэх, бөхийн талбайн прожекторын PointLight (чанараар; low=0) */
+  private floodLights: THREE.PointLight[] = [];
+  /** V3.5 эргэдэг хүрд: mesh бүрийн суурь yaw, одоогийн өнцөг, үлдсэн хугацаа (с) */
+  private wheelSpins: { mesh: THREE.Mesh; base: number; angle: number; left: number }[] = [];
   /** V6.3: хуваарьтай NPC-үүд (гадаа; дотор нь render/interior.ts-ээр) */
   readonly npcs: NpcView;
   private liveRigs = new Map<number, CharacterRig>();
@@ -262,6 +266,59 @@ export class SumCenterView {
     }
     for (const m of staticMeshes(bakeStatic(hills), false)) { m.name = 'hills'; this.group.add(m); }
     this.buildLamps();
+    this.buildFloodLights();
+  }
+
+  private buildFloodLights(): void {
+    const F = visualStyle.night.floodlight;
+    for (let i = 0; i < Math.min(F.pointLights[quality], this.built.floodLamps.length); i++) {
+      const l = new THREE.PointLight(F.color, 0, F.distance, F.decay);
+      this.floodLights.push(l);
+      this.group.add(l);
+    }
+  }
+
+  /** Шөнө (0–1): камерт хамгийн ойрын прожекторууд PointLight авна (нийт ≤ floodlight.pointLights[чанар]) */
+  private syncFloodLights(night: number, cam: THREE.Vector3): void {
+    if (this.floodLights.length === 0) return;
+    const F = visualStyle.night.floodlight;
+    for (const l of this.floodLights) l.intensity = 0;
+    if (night <= 0.02) return;
+    const d2 = (p: { x: number; z: number }): number => (p.x - cam.x) ** 2 + (p.z - cam.z) ** 2;
+    const near = this.built.floodLamps.slice().sort((a, b) => d2(a) - d2(b));
+    this.floodLights.forEach((l, i) => {
+      const p = near[i];
+      if (!p) return;
+      l.position.set(p.x, p.y, p.z);
+      l.intensity = F.intensity * night;
+    });
+  }
+
+  /** Хүрдийг товшсон ray-ээр эргүүлнэ (ray-д ойр, хамгийн ойрхон хүрд). Олдвол true */
+  spinWheelAt(ray: THREE.Raycaster): boolean {
+    let best: (typeof this.wheelSpins)[number] | null = null, bestD = 0.8 * 0.8;
+    const c = new THREE.Vector3();
+    for (const w of this.wheelSpins) {
+      c.copy(w.mesh.position); c.y += 0.3;
+      const d = ray.ray.distanceSqToPoint(c);
+      if (d < bestD && c.distanceToSquared(ray.ray.origin) < 60 * 60) { best = w; bestD = d; }
+    }
+    if (!best) return false;
+    best.left = visualStyle.night.wheelSpin.seconds;
+    return true;
+  }
+
+  /** Эргэж буй хүрд: хурд 0 хүртэл шугаман удааширна; бусад үед статик */
+  updateWheels(dt: number): void {
+    const W = visualStyle.night.wheelSpin;
+    for (const w of this.wheelSpins) {
+      if (w.left <= 0) continue;
+      const step = Math.min(dt, w.left);
+      const omega0 = W.speed * (w.left / W.seconds), omega1 = W.speed * ((w.left - step) / W.seconds);
+      w.angle += W.dir * 0.5 * (omega0 + omega1) * step;
+      w.left -= step;
+      w.mesh.rotation.y = w.base + w.angle;
+    }
   }
 
   /** Шөнийн гудамжны гэрэл: камерт ойрын N шонд glow (1 draw call, Points) + чанараар хязгаарлагдсан цөөн PointLight (low=0) */
@@ -299,6 +356,7 @@ export class SumCenterView {
 
   /** Шөнө (0–1) ба камерын байрлалаар ойрын шонгуудыг асаана */
   syncLamps(night: number, cam: THREE.Vector3): void {
+    this.syncFloodLights(night, cam);
     const glow = this.lampGlow;
     if (!glow) return;
     const NL = visualStyle.night.streetLamp;
@@ -421,6 +479,7 @@ export class SumCenterView {
     this.townWinter = winter;
     for (const m of this.townObjs) { this.group.remove(m); if (m.userData.own) m.geometry.dispose(); }
     this.townObjs = [];
+    this.wheelSpins = [];
     const part = this.built.town.build(winter ? 'winter' : 'summer');
     const mats = (this.townMats ??= darkWindowMaterials());
     const geometry = part.geo.build();
@@ -433,6 +492,7 @@ export class SumCenterView {
       const m = new THREE.Mesh(w.geo.build(), mats.mat);
       m.name = 'town:wheel'; m.position.set(w.x, w.y, w.z); m.rotation.y = w.yaw; m.castShadow = true; m.userData.own = true;
       this.townObjs.push(m);
+      this.wheelSpins.push({ mesh: m, base: w.yaw, angle: 0, left: 0 });
     }
     for (const m of this.townObjs) this.group.add(m);
   }

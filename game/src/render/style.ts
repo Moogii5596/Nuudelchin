@@ -201,6 +201,10 @@ export interface NightVisual {
     /** чанарын түвшин тус бүрт PointLight-ийн тоо (low=0: зөвхөн glow sprite) ба glow-той шонгийн дээд тоо */
     pointLights: Record<Quality, number>; glowCount: Record<Quality, number>;
   };
+  /** V3.5 цэнгэлдэх, бөхийн талбайн прожектор: чанар тус бүрт PointLight-ийн тоо (≤ 4) */
+  floodlight: { color: string; intensity: number; distance: number; decay: number; pointLights: Record<Quality, number> };
+  /** V3.5 хүрд товшиход эргэх: эхний хурд (рад/с), зогсох хүртэлх хугацаа (с), чиглэл ±1 */
+  wheelSpin: { speed: number; seconds: number; dir: number };
 }
 
 export interface VisualStyle {
@@ -367,12 +371,18 @@ function parseNight(n: Record<string, unknown>): NightVisual {
   if (!isColor(l.color)) fail('streetLamp.color');
   for (const k of ['bulbRadius', 'glowSize', 'lightIntensity', 'lightDistance', 'lightDecay', 'lightHeight'] as const) if (!isPositive(l[k])) fail(`streetLamp.${k}`);
   if (typeof l.glowOpacity !== 'number' || l.glowOpacity < 0 || l.glowOpacity > 1) fail('streetLamp.glowOpacity');
-  const perTier = (key: 'pointLights' | 'glowCount'): Record<Quality, number> => {
-    const r = l[key];
+  const f = n.floodlight, ws = n.wheelSpin;
+  if (!isRecord(f) || !isRecord(ws)) return fail('floodlight/wheelSpin');
+  if (!isColor(f.color)) fail('floodlight.color');
+  for (const k of ['intensity', 'distance', 'decay'] as const) if (!isPositive(f[k])) fail(`floodlight.${k}`);
+  for (const k of ['speed', 'seconds'] as const) if (!isPositive(ws[k])) fail(`wheelSpin.${k}`);
+  if (ws.dir !== 1 && ws.dir !== -1) fail('wheelSpin.dir');
+  const perTier = (key: 'pointLights' | 'glowCount', src: Record<string, unknown> = l): Record<Quality, number> => {
+    const r = src[key];
     const out = {} as Record<Quality, number>;
     for (const q of ['low', 'mid', 'high'] as const) {
       const v = isRecord(r) ? r[q] : undefined;
-      if (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v > 64) fail(`streetLamp.${key}.${q}`);
+      if (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v > 64) fail(`${src === l ? 'streetLamp' : 'floodlight'}.${key}.${q}`);
       out[q] = v as number;
     }
     return out;
@@ -381,6 +391,8 @@ function parseNight(n: Record<string, unknown>): NightVisual {
     moon: m as unknown as NightVisual['moon'],
     hemiFloor: n.hemiFloor as number,
     streetLamp: { ...(l as unknown as NightVisual['streetLamp']), pointLights: perTier('pointLights'), glowCount: perTier('glowCount') },
+    floodlight: { color: f.color as string, intensity: f.intensity as number, distance: f.distance as number, decay: f.decay as number, pointLights: perTier('pointLights', f) },
+    wheelSpin: { speed: ws.speed as number, seconds: ws.seconds as number, dir: ws.dir as number },
   };
 }
 

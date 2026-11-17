@@ -41,7 +41,13 @@
       "lightIntensity": 14, "lightDistance": 26, "lightDecay": 1.6, "lightHeight": 6.6,
       "pointLights": { "low": 0, "mid": 3, "high": 6 },
       "glowCount": { "low": 10, "mid": 24, "high": 48 }
-    }
+    },
+    "floodlight": {
+      "_doc": "Цэнгэлдэх, бөхийн талбайн шөнийн прожектор (V3.5). pointLights — чанараар (low=0: зөвхөн emissive), камерт хамгийн ойрын N прожектор л PointLight авна (нийт ≤ 4).",
+      "color": "#FFF1D0", "intensity": 30, "distance": 42, "decay": 1.5,
+      "pointLights": { "low": 0, "mid": 2, "high": 4 }
+    },
+    "wheelSpin": { "_doc": "Хүрд товшиход: эхний хурд (рад/с), удааширч зогсох хугацаа (с), чиглэл (-1 = цагийн зүүн, дээрээс харахад).", "speed": 7, "seconds": 3, "dir": -1 }
   },
   "timeOfDay": [
     { "minute": 0, "skyTop": "#101a38", "skyHorizon": "#36405a", "ground": "#302d3b", "sun": "#91a4dd", "sunIntensity": 0.08, "hemiIntensity": 0.28, "fogDistance": 125, "exposure": 0.72 },
