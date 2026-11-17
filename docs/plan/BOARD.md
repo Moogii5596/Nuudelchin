@@ -18,7 +18,7 @@ tags: [plan, board, agents, lead]
 | D2/D6 төхөөрөмж, FPS (S25) | 🧑 хүлээгдэж | U-2 |
 | D3 хадгалалт ✅ код · D4 шилжүүлэх код | 🧑 deploy дараа | T-10, U-3 |
 | D5/D10 тэнцвэр | ✅ менежер 12 seed (11-17); чухал биш | — |
-| D7 анхан шатны заавар | ⏳ | T-11 |
+| D7 анхан шатны заавар | ⏸ түүх шинээр бичигдсэний дараа | T-11 |
 | D8 i18n ✅ · D9 алдаа 0 | ⏳ | T-12 |
 | D11 гацсан мал 0 | ✅ код; M6.8 render ⏳ | T-18 |
 
@@ -56,9 +56,10 @@ Session дугаарыг хадгалж үргэлжлүүлнэ; агент д�
 Салбарууд: `feat/docs-fix` (5 commit), `feat/ger-belts`, `feat/callhorse` — файл давхцахгүй (шалгасан). Merge → `npm run codemap` (`docs.test.ts` CODEMAP/CONTEXT индекс хоцорсныг засна), `npx tsc --noEmit`, `npm test`, `npm run build`, `npm run test:perf` → `git push origin main` → origin-ийн 3 `claude/*` салбар устга → Vercel deploy → `/api/transfer` (код үүсгэж татах, татсаны дараа устах) шалга → `playtest.md`-д «Deploy: огноо, commit» → PROGRESS «push хийгдсэн, утсаар playtest хүлээгдэж байна». Тайлан ≤ 10 мөр.
 
 ## Санал (⏳ ШИЙДВЭР ХҮЛЭЭЖ БАЙНА — ахлах агентад хувиарлахгүй)
+**Чиглэл (хэрэглэгч, 11-17):** түүхийг дараа шинээр бичнэ → эхлээд СУУРЬ (гүйцэтгэл, тогтвортой байдал, алдаа барилт, дүрслэлийн/тээврийн үлдэгдэл). Түүхээс хамаарах зүйл (T-11, M7.5 туршилт) түүхийн дараа.
 | Карт | Агуулга | Файл (давхцал) | Эрэмбэ |
 |---|---|---|---|
-| T-11 | M7.1 өвөө эмээ утсаар чиглүүлэх, 6 даалгавар, 📖 тэмдэглэл (D7) | `sim/systems/advisor.ts`, `render/ui/notebook.ts`, `panels.ts`, i18n | MVP-д гол |
+| T-11 ⏸ | **ТҮҮХИЙН ДАРАА** (хэрэглэгч түүхийг шинээр бичнэ, 11-17): M7.1 өвөө эмээ утсаар чиглүүлэх, 6 даалгавар, 📖 тэмдэглэл (D7) | `sim/systems/advisor.ts`, `render/ui/notebook.ts`, `panels.ts`, i18n | MVP-д гол |
 | T-12 | M7.4 `window.onerror`, санал илгээх линк, алдаа→хадгалалт (D9); M7.3 `audio/bus.ts` суурь | `main.ts`, `persist/*`, `audio/bus.ts` (`main.ts` хуваалцана → нэг агент) | MVP-д гол |
 | T-13 | M7.2 grazing хурдасгах (1000 мал < 50 мс), Opus | `sim/systems/grazing.ts`, `herds.ts` | гүйцэтгэл |
 | T-14 | V6.2 дэлгүүр, цайны газрын тавилгыг тоглоомд оруулах + V6.3 NPC spot | `render/building/publicInterior.ts`, `data/interiors.json`, `npcs.json` | **хэрэглэгч лабд батлах хүлээнэ** |
