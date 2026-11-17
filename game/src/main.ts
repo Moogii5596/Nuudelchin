@@ -432,6 +432,7 @@ function start(boot?: Boot): void {
       return;
     }
     if (state.player.driving) return;
+    if (view.spinWheel(nx, ny)) return;   // V3.5: хүрд товшвол эргэнэ
     const g = view.pickGround(nx, ny);
     if (g) controller.moveTo(g.x, g.z, dbl);
   };

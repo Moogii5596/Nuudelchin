@@ -154,6 +154,17 @@ describe('visual style configuration', () => {
     expect(() => validateVisualStyle(bad)).toThrow(/outfits\.seasons\.winter/);
   });
 
+  it('validates stadium floodlights and wheel spin (T-16)', () => {
+    const { floodlight, wheelSpin } = validateVisualStyle(visualsJson).night;
+    expect(floodlight.pointLights.low).toBe(0);
+    expect(floodlight.pointLights.high).toBeLessThanOrEqual(4);
+    expect(floodlight.pointLights.mid).toBeLessThanOrEqual(floodlight.pointLights.high);
+    expect(Math.abs(wheelSpin.dir)).toBe(1);
+    const bad: Record<string, unknown> = JSON.parse(JSON.stringify(visualsJson));
+    ((bad.night as Record<string, Record<string, unknown>>).floodlight!).pointLights = { low: 0, mid: 2, high: 99 };
+    expect(() => validateVisualStyle(bad)).toThrow(/floodlight.pointLights.high/);
+  });
+
   it('validates vehicle dust and night lights (V4.2)', async () => {
     const style = validateVisualStyle(visualsJson);
     expect(style.vehicleFx.lights.nightFull).toBeLessThan(style.vehicleFx.lights.nightBelow);

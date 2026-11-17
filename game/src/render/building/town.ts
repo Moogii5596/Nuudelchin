@@ -23,13 +23,13 @@ export class TownBuilder {
   }
 }
 
-export interface LabModel { geo: Geo; dims: { w: number; d: number; ridgeH: number }; wheels?: BuildingWheel[] }
+export interface LabModel { geo: Geo; dims: { w: number; d: number; ridgeH: number }; wheels?: BuildingWheel[]; lamps?: { x: number; y: number; z: number }[] }
 /** town.byId / compounds / fields / props-ийн бичлэгээс загвар */
 export function labModel(e: TownEntry, season: Season): LabModel {
   if (e.type === 'woolStore') return buildWoolStore({ season }) as LabModel;
   const kind = e.type === 'public' || e.type === 'shop' ? e.kind! : e.type;
   const m: BuiltBuilding = makeBuilding(kind, { season, roofColor: e.roofColor });
-  return { geo: m.geo, dims: m.dims, wheels: m.wheels };
+  return { geo: m.geo, dims: m.dims, wheels: m.wheels, lamps: m.lamps };
 }
 
 /** Хашааны ger суудлын байрлал (хашааны локал) — khashaa.gerSlot, R = гэрийн радиус */

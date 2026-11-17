@@ -294,6 +294,14 @@ export class GameView {
     return hit ? { x: hit.point.x, z: hit.point.z } : null;
   }
 
+  /** Дэлгэцийн цэг хүрдэнд тусвал хүрд эргэнэ (зөвхөн сумын төв). Эргүүлсэн бол true */
+  spinWheel(ndcX: number, ndcY: number): boolean {
+    if (this.inside || this.place !== 'sum') return false;
+    this.ndc.set(ndcX, ndcY);
+    this.ray.setFromCamera(this.ndc, this.cam.camera);
+    return this.sum.spinWheelAt(this.ray);
+  }
+
   toggleHeatmap(state: GameState): void {
     this.heatmap = !this.heatmap;
     this.terrain.updateGrass(state, this.heatmap);
@@ -335,6 +343,7 @@ export class GameView {
       this.sum.npcs.minuteFrac = Math.min(1, Math.max(0, alpha));   // NPC минут доторх алхалт жигд
       this.sum.syncTown(state, nightFactor(this.daylight));
       this.sum.syncLamps(nightFactor(this.daylight), this.cam.camera.position);
+      this.sum.updateWheels(dt);
     }
     this.homeLight.visible = camp;
     if (camp) {

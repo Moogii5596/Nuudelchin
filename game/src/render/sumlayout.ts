@@ -54,6 +54,8 @@ export interface SumCenterBuild {
   gers: SumGer[];
   /** Гудамжны гэрлийн шонгийн суурь (y — газрын өндөр); шөнийн гэрлийг sumcenter.ts асаана */
   lamps: { x: number; y: number; z: number }[];
+  /** V3.5 цэнгэлдэх, бөхийн талбайн прожекторын байрлал (дэлхийн координат); PointLight-ийг sumcenter.ts чанараар асаана */
+  floodLamps: { x: number; y: number; z: number }[];
   colliders: Rect[];
   /** Камерын мөргөлдөөн (V4.5 R7): барилга, гэрийн хайрцаг/цилиндр */
   solids: CamSolids;
@@ -239,6 +241,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
   }
 
   const B = new Batch();     // зам, хашлага, жижиг зүйл, хуучин хайрцаг барилга — нэг mesh
+  const floodLamps: { x: number; y: number; z: number }[] = [];
   const town = new TownBuilder();   // V3.5: лабораторийн барилга, хашаа байшин — улирал бүрт нэг mesh (render/building)
   const ribbon = (pts: XZ[], width: number, color: string, lift: number, T: Batch = B) => {
     const c = new THREE.Color(color);
@@ -343,6 +346,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
   /** Нийлмэл талбай: (x, z)-д лабораторийн загвар, rot градус */
   const labAt = (e: TownEntry, x: number, z: number): { top: number } => {
     const phi = -((e.rot ?? 0) * Math.PI) / 180, y = heightAt(x, z), probe = labModel(e, 'summer');
+    for (const l of probe.lamps ?? []) { const r = rotLocal(l.x, l.z, e.rot ?? 0); floodLamps.push({ x: x + r.x, y: y + l.y, z: z + r.z }); }
     town.add((season, out, wheels) => {
       const m = labModel(e, season);
       appendAt(out, m.geo, phi, x, y, z);
@@ -880,6 +884,7 @@ export function buildSumCenter(L: SumLayout, opts: { seed?: number; quality?: 'l
     homes,
     gers,
     lamps,
+    floodLamps,
     ground: terrainMesh,
     colliders,
     solids,
