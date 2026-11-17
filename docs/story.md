@@ -1,7 +1,7 @@
 ---
 title: Түүх — өвөө, эмээгийн нутаг (MVP)
 type: Spec
-status: Draft
+status: Approved
 last_updated: 2026-11-17
 tags: [story, balance]
 ---
