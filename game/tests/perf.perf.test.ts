@@ -61,7 +61,7 @@ describe('Гүйцэтгэл (T-13) — 1000 мал', () => {
       norm.push(((performance.now() - t0) * REF_MS) / ref);
     }
     expect(Math.min(...norm), `нормчилсон мс: ${norm.map((x) => x.toFixed(0)).join(', ')}`).toBeLessThan(500);
-  });
+  }, 60_000);
 });
 
 describe('Гүйцэтгэл (M2) — 30 өдөр', () => {

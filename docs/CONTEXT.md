@@ -38,11 +38,12 @@ TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `gam
 - `render/building/` сумын төвийн барилга: `index.ts`, `core.ts`, `civic.ts`, `shops.ts`, `houses.ts`, `yard.ts`, `town.ts`, `config.ts`, `interior.ts`, `interiorData.ts`, `publicInterior.ts`.
 - `render/character/` хүний дүрийн сан: `spec.ts`, `materials.ts`, `geom.ts`, `face.ts`, `bake.ts`, `rig.ts`, `animate.ts`, `crowd.ts`, `talk.ts`, `lab.ts`, `labShots.ts` (dev); `parts/`: `head.ts`, `torso.ts`, `arm.ts`, `leg.ts`, `hats.ts`.
 - `render/ger/` гэр, майхан: `ger.ts`, `tent.ts`, `gerInterior.ts`, `config.ts`, `geo.ts`, `atlas.ts`.
-- `render/ui/` цонх, HUD: `panels.ts`, `menu.ts`, `timebar.ts`, `sleepPanel.ts`, `names.ts`.
+- `render/ui/` цонх, HUD: `panels.ts`, `menu.ts`, `timebar.ts`, `sleepPanel.ts`, `names.ts`, `errorBanner.ts` (алдааны туг).
 ### Бусад
-- `src/` үндэс: `main.ts`, `device.ts` (чанар low/mid/high), `pwa.ts`, `animalPreview.ts` (dev).
+- `src/` үндэс: `main.ts`, `device.ts` (чанар low/mid/high), `pwa.ts`, `animalPreview.ts` (dev), `feedback.ts` (санал илгээх линк, `data/feedback.json`).
 - `input/`: `controller.ts` (`moveTo` — товшиж явах), `touch.ts` (утасны хөвөгч джойстик, контекстуал `.prime` гол товч; салбарын `primaryAction` хаясан — [[decisions]] 2026-11-17), `skip.ts`.
-- `persist/`: `idb.ts`, `autosave.ts`, `file.ts`, `transfer.ts`, `transferCode.ts` (шилжүүлэх код; сервер `api/transfer.ts`).
+- `persist/`: `idb.ts`, `autosave.ts`, `file.ts`, `transfer.ts`, `transferCode.ts` (шилжүүлэх код; сервер `api/transfer.ts`), `errorGuard.ts` (`window.onerror` → алдаа барих, хадгалалт).
+- `audio/`: `bus.ts` (дууны суваг, суурь), `watch.ts`.
 - `i18n/`: `i18n.ts`, `msg.ts`, `npcStrings.ts`; `mn.json`, `en.json`, `npc.mn.json`, `npc.en.json`.
 - `game/tests/<сэдэв>.test.ts` (дундын `helpers.ts`); `tools/`: `codemap.ts`, `balance_sim/run.ts`, `character-lab/`, `shots/`.
 
