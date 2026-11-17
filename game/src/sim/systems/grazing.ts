@@ -13,7 +13,7 @@ import type { GameConfig, Species } from '../config';
 import { inBounds, isWalkable, nearestWalkable, waterDepthAt } from './safety';
 import type { Rng } from '../rng';
 import type { Animal, GameState } from '../state';
-import { absBiomass, cellIndex, grassHeightCm, typeIdOf } from './pasture';
+import { cellIndex, grassTable, type GrassGrid } from './pasture';
 import { sheepUnits } from './animals';
 import { drinkPoint, type FlockCenter } from './herds';
 
@@ -95,6 +95,35 @@ function decide(cfg: GameConfig, state: GameState, rng: Rng, a: Animal, quality:
   a.tz = bz;
 }
 
+const maskCache = new WeakMap<GrassGrid, { camp: string; r: object; mask: Uint8Array }>();
+/** Бэлчихгүй нүдний маск (ус дотор/эрэг). Бууц (camp) эсвэл тохиргоо солигдвол дахин тооцно */
+function waterMask(cfg: GameConfig, state: GameState): Uint8Array {
+  const gr = state.grass;
+  const hit = maskCache.get(gr);
+  if (hit && hit.camp === state.campId && hit.r === cfg.pasture) return hit.mask;
+  const mask = new Uint8Array(gr.n * gr.n);
+  const w = cfg.camps.camps[state.campId]?.waterShape;
+  if (w) {
+    const lim = w.kind === 'lineZ' ? cfg.pasture.grazing.herd.drinkBankOffset - 0.7 : w.r;
+    for (let iz = 0; iz < gr.n; iz++) for (let ix = 0; ix < gr.n; ix++) {
+      if (waterDistance(w, (ix + 0.5) * gr.cell - gr.half, (iz + 0.5) * gr.cell - gr.half) < lim) mask[iz * gr.n + ix] = 1;
+    }
+  }
+  maskCache.set(gr, { camp: state.campId, r: cfg.pasture, mask });
+  return mask;
+}
+
+const qpCache = new WeakMap<Record<string, number>, { exp: number; ids: string[]; qp: Float64Array }>();
+/** чанар^qualityExponent төрөл тус бүрт (quality объект өөрчлөгдөхөд шинэ объект болдог) */
+function qualityPow(cfg: GameConfig, gr: GrassGrid, quality: Record<string, number>): Float64Array {
+  const exp = cfg.pasture.grazing.qualityExponent;
+  const hit = qpCache.get(quality);
+  if (hit && hit.exp === exp && hit.ids === gr.typeIds) return hit.qp;
+  const qp = Float64Array.from(gr.typeIds, (id) => Math.pow(quality[id ?? 'steppe'] ?? 0, exp));
+  qpCache.set(quality, { exp, ids: gr.typeIds, qp });
+  return qp;
+}
+
 function scoreAt(
   cfg: GameConfig,
   state: GameState,
@@ -109,21 +138,21 @@ function scoreAt(
   const gr = state.grass;
   const i = cellIndex(gr, x, z);
   if (i < 0) return -1e9;
-  // Гол, булаг дотор бэлчихгүй
-  const w = cfg.camps.camps[state.campId]?.waterShape;
-  if (w && waterDistance(w, x, z) < (w.kind === 'lineZ' ? cfg.pasture.grazing.herd.drinkBankOffset - 0.7 : w.r)) return -1e9;
-  const minH = cfg.animals.species[a.species].minGrassCm;
-  const b = absBiomass(cfg, gr, i);
-  const edible = grassHeightCm(cfg, gr, i) >= minH ? b : 0;
-  const q = quality[typeIdOf(gr, i)] ?? 0;
-  let s = Math.pow(q, cfg.pasture.grazing.qualityExponent) * edible;
+  // Гол, булаг дотор бэлчихгүй (нүдний төвөөр урьдчилан тооцсон маск — T-13)
+  if (waterMask(cfg, state)[i]) return -1e9;
+  const ti = gr.type[i] ?? 0;
+  const tb = grassTable(cfg, gr);
+  const edible = (gr.biomass[i] ?? 0) * tb.heightCm[ti]! >= cfg.animals.species[a.species].minGrassCm
+    ? (gr.biomass[i] ?? 0) * tb.maxBiomass[ti]! * (gr.access ? gr.access[ti] ?? 1 : 1)
+    : 0;
+  let s = qualityPow(cfg, gr, quality)[ti]! * edible;
   if (center && center.n > 1) {
-    const d = Math.hypot(x - center.x, z - center.z);
+    const d = Math.sqrt((x - center.x) * (x - center.x) + (z - center.z) * (z - center.z));
     if (d > spread / 2) s -= cohesion * (d - spread / 2);
   }
   // Үхэр хотоосоо хол явдаггүй (herd.maxHomeDistance)
   const maxD = cfg.pasture.grazing.herd.maxHomeDistance[a.species];
-  const hd = Math.hypot(x, z);
+  const hd = Math.sqrt((x) * (x) + (z) * (z));
   if (maxD && hd > maxD) s -= (hd - maxD) * 0.05;
   return s;
 }
@@ -131,23 +160,29 @@ function scoreAt(
 /** Алхмын чиглэлийг гүн ус, хилээс (ok) зайлуулж тойруулна (±0.7, ±1.4 рад); бүх чиглэл хаалттай бол байрандаа (гацалт илрүүлэгч шийднэ) */
 function moveToward(a: Animal, speed: number, ok?: (x: number, z: number) => boolean): boolean {
   const dx = a.tx - a.x, dz = a.tz - a.z;
-  const d = Math.hypot(dx, dz);
+  const d = Math.sqrt(dx * dx + dz * dz);
   if (d <= speed) {
     a.x = a.tx;
     a.z = a.tz;
     return true;
   }
-  let ang = Math.atan2(dx, dz);
-  if (ok && !ok(a.x + Math.sin(ang) * speed, a.z + Math.cos(ang) * speed)) {
+  // sin(atan2(dx,dz)) = dx/d, cos = dz/d: чөлөөтэй үед тригонометргүй
+  const ux = dx / d, uz = dz / d;
+  if (ok && !ok(a.x + ux * speed, a.z + uz * speed)) {
+    let ang = Math.atan2(dx, dz);
     let found = false;
     for (const t of [0.7, -0.7, 1.4, -1.4]) {
       if (ok(a.x + Math.sin(ang + t) * speed, a.z + Math.cos(ang + t) * speed)) { ang += t; found = true; break; }
     }
     if (!found) return false;
+    a.x += Math.sin(ang) * speed;
+    a.z += Math.cos(ang) * speed;
+    a.heading = ang;
+    return false;
   }
-  a.x += Math.sin(ang) * speed;
-  a.z += Math.cos(ang) * speed;
-  a.heading = ang;
+  a.x += ux * speed;
+  a.z += uz * speed;
+  a.heading = Math.atan2(dx, dz);
   return false;
 }
 
@@ -167,6 +202,10 @@ export function grazingStep(
   const ok = (x: number, z: number): boolean => inBounds(cfg, x, z);   // M6.8: хилээс гарахгүй (голыг гатлан алхаж болно)
   const okFlee = (x: number, z: number): boolean => isWalkable(cfg, state, x, z);   // айсан мал гүн усыг тойрно
 
+  const thirstInc: Record<string, number> = {};
+  for (const [id, spc] of Object.entries(cfg.animals.species)) thirstInc[id] = 100 / (spc.thirstDaysToFull * minutesPerDay);
+  const decEvery = g.decisionEverySteps;
+  const stride = Math.max(1, Math.floor(g.grazeStride ?? 1));
   for (const a of state.animals) {
     if (a.riding) continue; // унаа морь уяан дээр (тэжээгдсэн гэж үзнэ)
 
@@ -183,12 +222,17 @@ export function grazingStep(
       continue;
     }
 
+    // Гүйцэтгэл (T-13): тайван мал (бэлчих/амрах) stride алхам тутам нэг удаа, stride дахин их хэмжээгээр шинэчлэгдэнэ (мал бүр өөр алхамд)
+    let k = 1;
+    if (stride > 1 && (a.mode === 'graze' || a.mode === 'rest')) {
+      if ((state.step + a.id) % stride !== 0) continue;
+      k = stride;
+    }
     // Цангалт
-    const sp = cfg.animals.species[a.species];
-    a.thirst = Math.min(100, a.thirst + 100 / (sp.thirstDaysToFull * minutesPerDay));
+    a.thirst = Math.min(100, a.thirst + thirstInc[a.species]! * k);
     if (a.thirst >= 100) a.thirstMaxedToday = true;
 
-    if ((state.step + a.id) % g.decisionEverySteps === 0) decide(cfg, state, rng, a, quality, centers);
+    if ((state.step + a.id) % decEvery === 0) decide(cfg, state, rng, a, quality, centers);
 
     switch (a.mode) {
       case 'driven': {
@@ -223,7 +267,7 @@ export function grazingStep(
       }
       case 'drink': {
         moveToward(a, g.travelSpeed, ok);
-        if (Math.hypot(a.x - a.tx, a.z - a.tz) <= g.drinkRadius || waterDepthAt(cfg, state.campId, a.x, a.z) >= g.stuck.drinkDepth) {   // M6.8: эрэгт хүрмэгц ууна, гүн рүү орохгүй
+        if (Math.sqrt((a.x - a.tx) * (a.x - a.tx) + (a.z - a.tz) * (a.z - a.tz)) <= g.drinkRadius || waterDepthAt(cfg, state.campId, a.x, a.z) >= g.stuck.drinkDepth) {   // M6.8: эрэгт хүрмэгц ууна, гүн рүү орохгүй
           a.thirst = 0;
           a.mode = 'graze';
         }
@@ -238,30 +282,32 @@ export function grazingStep(
       case 'sleep':
         break;
       case 'graze': {
-        const dist = Math.hypot(a.tx - a.x, a.tz - a.z);
-        moveToward(a, dist > g.sampleRadius[a.species] ? g.roamSpeed : g.grazeSpeed, ok);
-        eat(cfg, grid, a, quality, th);
+        const dist = Math.sqrt((a.tx - a.x) * (a.tx - a.x) + (a.tz - a.z) * (a.tz - a.z));
+        moveToward(a, (dist > g.sampleRadius[a.species] ? g.roamSpeed : g.grazeSpeed) * k, ok);
+        eat(cfg, grid, a, quality, th, k);
         break;
       }
     }
   }
 }
 
-function eat(cfg: GameConfig, grid: GameState['grass'], a: Animal, quality: Record<string, number>, th: Record<string, number>): void {
+function eat(cfg: GameConfig, grid: GameState['grass'], a: Animal, quality: Record<string, number>, th: Record<string, number>, stride = 1): void {
   if (a.gutFill >= 1) return;
   const i = cellIndex(grid, a.x, a.z);
   if (i < 0) return;
-  if (grassHeightCm(cfg, grid, i) < cfg.animals.species[a.species].minGrassCm) return;
+  const tb = grassTable(cfg, grid);
+  const ti = grid.type[i] ?? 0;
+  if ((grid.biomass[i] ?? 0) * tb.heightCm[ti]! < cfg.animals.species[a.species].minGrassCm) return;
   const g = cfg.pasture.grazing;
-  const b = absBiomass(cfg, grid, i);
-  let intake = g.imaxPerMinute * (b / (b + cfg.pasture.intakeHalfBiomass));
+  const b = (grid.biomass[i] ?? 0) * tb.maxBiomass[ti]! * (grid.access ? grid.access[ti] ?? 1 : 1);
+  let intake = g.imaxPerMinute * stride * (b / (b + cfg.pasture.intakeHalfBiomass));
   if (a.thirst >= (th.eatSlowAt ?? 75)) intake *= th.eatSlowMult ?? 0.7;
   intake = Math.min(intake, 1 - a.gutFill);
   if (intake <= 0) return;
   a.gutFill += intake;
-  a.dietSum += intake * (quality[typeIdOf(grid, i)] ?? 0);
+  a.dietSum += intake * (quality[tb.ids[ti]!] ?? 0);
   // Нүднээс өвс хасах: biomassPerGut = 1 хонин толгой бүтэн цадахад идэх бодит өвс (үхэр 6 дахин их иднэ)
-  const maxB = cfg.pasture.types[typeIdOf(grid, i)]?.maxBiomass ?? 1;
+  const maxB = tb.maxBiomassOr1[ti]!;
   const removed = (intake * g.biomassPerGut * sheepUnits(a, cfg.animals)) / Math.max(maxB, 0.05);
   grid.biomass[i] = Math.max(0, (grid.biomass[i] ?? 0) - removed);
 }

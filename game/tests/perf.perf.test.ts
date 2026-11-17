@@ -46,6 +46,24 @@ describe('Гүйцэтгэл (M2)', () => {
   });
 });
 
+describe('Гүйцэтгэл (T-13) — 1000 мал', () => {
+  // Зорилт < 50 мс/өдөр (BOARD T-13) хараахан биш: одоо ~300–350 мс (wolves, detectStuck, decide үлдсэн). Босго нь буцалтаас хамгаална (өмнө ~600 мс).
+  it('1000 малтай 1 өдөр < 500 мс (ачаалалд нормчилсон)', () => {
+    const sim = newSim(14);
+    sim.command({ type: 'debugAddAnimals', n: 1000 - sim.state.animals.length });
+    sim.runDays(1);
+    referenceLoop();
+    const norm: number[] = [];
+    for (let i = 0; i < 5; i++) {
+      const ref = referenceLoop();
+      const t0 = performance.now();
+      sim.runDays(1);
+      norm.push(((performance.now() - t0) * REF_MS) / ref);
+    }
+    expect(Math.min(...norm), `нормчилсон мс: ${norm.map((x) => x.toFixed(0)).join(', ')}`).toBeLessThan(500);
+  });
+});
+
 describe('Гүйцэтгэл (M2) — 30 өдөр', () => {
   it('30 өдрийг хурдан гүйлгэнэ (< 5 сек)', () => {
     const c = loadConfig();

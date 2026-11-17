@@ -133,6 +133,8 @@ export interface GrazingConfig {
   /** Бэлчээрийн цэг сонголтын санамсаргүй хэлбэлзэл (B11) */
   choiceNoise?: number;
   decisionEverySteps: number;
+  /** Бэлчих горимын мал stride алхам тутам (мал бүр өөр алхамд) stride дахин их хурд/идэлтээр шинэчлэгдэнэ (гүйцэтгэл, T-13); 1 = алхам бүр */
+  grazeStride?: number;
   samples: number;
   sampleRadius: Record<Species, number>;
   grazeSpeed: number;
@@ -359,6 +361,7 @@ export function validateConfig(cfg: GameConfig): string[] {
   if (cfg.animals.growthCurve.length !== 5) e.push('animals.growthCurve: 5 утгатай (0–4 нас)');
   const g = cfg.pasture.grazing;
   if (!(g.imaxPerMinute > 0 && g.biomassPerGut > 0 && g.decisionEverySteps >= 1)) e.push('pasture.grazing: эерэг утга');
+  if (g.grazeStride !== undefined && !(Number.isInteger(g.grazeStride) && g.grazeStride >= 1)) e.push('pasture.grazing.grazeStride: бүхэл ≥ 1');
   for (const sp of SPECIES) if (!(g.sampleRadius[sp] > 0)) e.push(`pasture.grazing.sampleRadius.${sp} алга`);
   const sk = g.stuck;
   if (!sk || !(sk.steps >= 1 && sk.minMove > 0 && sk.minGoal > 0 && sk.deepWater >= 0 && sk.drinkDepth > 0 && sk.searchStep > 0 && sk.searchMax >= sk.searchStep && sk.denMargin >= 0 && Array.isArray(sk.fleeTurns) && sk.fleeTurns.length > 0)) e.push('pasture.grazing.stuck: steps, minMove, minGoal, deepWater, searchStep, searchMax, fleeTurns[], denMargin');

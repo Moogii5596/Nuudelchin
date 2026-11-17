@@ -21,13 +21,13 @@ export function riverZ(shape: WaterShape, x: number): number {
 /** Ус хүртэлх хэвтээ зай (гол бол шугам хүртэл, булаг бол цэг хүртэл) */
 export function waterDistance(shape: WaterShape, x: number, z: number): number {
   if (shape.kind === 'lineZ') return Math.abs(z - riverZ(shape, x));
-  return Math.hypot(x - shape.x, z - shape.z);
+  return Math.sqrt((x - shape.x) * (x - shape.x) + (z - shape.z) * (z - shape.z));
 }
 
 /** Усгүй газрын өндөр (булаг/голын хонхоргүй) */
 export function baseHeightAt(camp: CampConfig, x: number, z: number): number {
   const t = camp.terrain;
-  const r = Math.hypot(x, z);
+  const r = Math.sqrt((x) * (x) + (z) * (z));
   const n = Math.sin(x * 0.045) * 1.2 + Math.cos(z * 0.038) * 1.0 + Math.sin((x + z) * 0.021) * 1.6 + Math.sin(x * 0.13 + z * 0.07) * 0.3;
   // Бууцны төв (r < 22) бараг тэгш, гадагшаа долгионтой
   let h = n * 0.22 + n * smoothstep(22, 48, r) * t.noiseAmp;
@@ -64,7 +64,7 @@ export function heightAt(camp: CampConfig, x: number, z: number): number {
     }
   } else if (w.kind === 'point' && t.pondDepth) {
     const R = w.r * 3;
-    const d = Math.hypot(x - w.x, z - w.z);
+    const d = Math.sqrt((x - w.x) * (x - w.x) + (z - w.z) * (z - w.z));
     if (d < R) {
       const k = 1 - d / R;
       h -= k * k * t.pondDepth;
