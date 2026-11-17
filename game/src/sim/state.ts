@@ -48,6 +48,8 @@ export interface Animal {
   /** M6.9: уяагүй унаа морины бэлчээрийн төв (буусан газар) */
   hx?: number;
   hz?: number;
+  /** Унаа морь буусан орон зай (undefined = гэрийн бууц). Дуудлага зөвхөн тоглогчтой нэг орон зайд (same-scene) */
+  place?: Place;
   /** M6.8 гацалт илрүүлэгч: хөдлөөгүй дараалсан алхам, суурь байрлал (systems/safety.ts) */
   sn?: number;
   sx?: number;

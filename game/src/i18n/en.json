@@ -645,6 +645,7 @@
   "sim.no_space_to_load": "No space to load",
   "sim.no_products_to_take": "No products to take",
   "sim.no_riding_horse": "No riding horse",
+  "sim.horse_not_here": "Your horse isn't here — you can only call it where you left it",
   "sim.the_horse_is_far": "The horse is far away — go next to it (H — call the horse)",
   "sim.you_are_already_inside": "You are already inside",
   "sim.no_building_to_enter": "No building to enter here",

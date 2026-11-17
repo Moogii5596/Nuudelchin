@@ -128,6 +128,7 @@ export function boardBest(cfg: GameConfig, state: GameState): boolean {
     const horse = state.animals.find((a) => a.riding);
     if (!horse) return false;
     p.mounted = true;
+    delete horse.place;
     p.horseCalled = false;
     return true;
   }
@@ -337,6 +338,12 @@ function arrive(cfg: GameConfig, state: GameState, dest: string, rng: Rng): Trav
       state.animals.push(a);
     }
     p.drove = [];
+    const stray = state.animals.find((a) => a.riding && a.place);
+    if (stray && !p.mounted) {   // өөр газар үлдсэн морь гэрийн бууцанд буцна
+      stray.x = stray.tx = cfg.camps.home.x + 3;
+      stray.z = stray.tz = cfg.camps.home.z + 3;
+      delete stray.place;
+    }
     deliver(cfg, state, rng, p.orders);
     p.orders = [];
   }
@@ -566,6 +573,7 @@ export function buyLotVehicle(cfg: GameConfig, state: GameState, slotId: string,
       const home = cfg.camps.home;
       horse.x = horse.tx = home.x + 3;
       horse.z = horse.tz = home.z + 3;
+      delete horse.place;
     }
   }
   p.driving = id;

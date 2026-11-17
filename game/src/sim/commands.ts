@@ -20,7 +20,7 @@ import { worldLimit } from './systems/sumtown';
 import { enterBuilding, exitBuilding, moveInterior } from './systems/interior';
 import { buyHouse, donate, giveGift, repayBankLoan, repayZdtgLoan, setHouseMode, takeBankLoan, takeZdtgLoan, type GiftPlan, type HouseMode } from './systems/town';
 import { sleepUntil } from './systems/sleep';
-import { shout, toggleMount, toggleUurga } from './systems/herder';
+import { horseInScene, shout, toggleMount, toggleUurga } from './systems/herder';
 import { scareWolves } from './systems/wolves';
 import { newAnimal } from './state';
 import { SPECIES } from './config';
@@ -100,7 +100,7 @@ export function nearHome(cfg: { camps: { home: { x: number; z: number; storageRa
   return Math.hypot(p.x - h.x, p.z - h.z) <= h.storageRadius * 2;
 }
 
-const CAMP_ONLY = new Set<Command['type']>(['payWithAnimal', 'sendDriver', 'sendOtor', 'recallOtor', 'shout', 'callHorse', 'scareWolves', 'pickup', 'deposit', 'drive', 'process', 'moveCamp', 'dogOrder', 'loadCargo', 'unloadCargo', 'takeFromStorage', 'droveAnimals']);
+const CAMP_ONLY = new Set<Command['type']>(['payWithAnimal', 'sendDriver', 'sendOtor', 'recallOtor', 'shout', 'scareWolves', 'pickup', 'deposit', 'drive', 'process', 'moveCamp', 'dogOrder', 'loadCargo', 'unloadCargo', 'takeFromStorage', 'droveAnimals']);
 /** Тэрэг/машин жолоодож байхад хийхгүй ажлууд */
 const NOT_DRIVING = new Set<Command['type']>(['toggleMount', 'sendDriver', 'callHorse', 'pickup', 'deposit', 'drive', 'process', 'moveCamp', 'dogOrder', 'takeFromStorage']);
 
@@ -167,6 +167,7 @@ export function applyCommand(sim: Sim, cmd: Command, proximity = true): CommandR
       return ok(toggleUurga(state) ? m('sim.you_hold_the_urga') : m('sim.you_put_the_urga'));
     case 'callHorse': {
       if (p.mounted) return fail(m('sim.you_are_on_your'));
+      if (!horseInScene(state)) return fail(m('sim.horse_not_here'));
       p.horseCalled = true;
       return ok(m('sim.chuu_come_here_the'));
     }
