@@ -25,15 +25,15 @@ tags: [plan, board, agents, lead]
 ## Агентын бүртгэл (дугаар = нэр; шинэ агент → дараагийн дугаар)
 | Агент | Үүрэг | Карт | Салбар / worktree | Төлөв |
 |---|---|---|---|---|
-| 1 | Нэгтгэгч (merge, codemap, бүтэн тест, push) | T-10 | main | 11-17 wave 2 нэгтгэсэн; T-10 хүлээж |
-| 2 | Гэр/майхан | T-02 | `feat/ger-belts` (`../wt-ger-belts`) | V3.5 лаб батлагдсан; T-02 хүлээж |
-| 3 | Баримт засагч | T-01 | `feat/docs-fix` (`../wt-docs-fix`) | аудит ✅ → T-01 хүлээж |
-| 4 | Sim (морь дуудах) | T-03 | `feat/callhorse` (`../wt-callhorse`) | T-03 хүлээж |
+| 1 | Нэгтгэгч (merge, codemap, бүтэн тест, push) | T-10 | main | A давалгаа ✅ → T-10 ажиллаж байна |
+| 2 | Гэр/майхан | T-02 ✅ `419f043` | `feat/ger-belts` (`../wt-ger-belts`) | чөлөөтэй (session хаах) |
+| 3 | Баримт засагч | T-01 ✅ `6804213` | `feat/docs-fix` (`../wt-docs-fix`) | чөлөөтэй (session хаах) |
+| 4 | Sim (морь дуудах) | T-03 ✅ `adbd2c7` | `feat/callhorse` (`../wt-callhorse`) | чөлөөтэй (session хаах) |
 
 Session дугаарыг хадгалж үргэлжлүүлнэ; агент дуусмагц session хаана (AGENTS §13).
 
 ## Карт — Давалгаа A (шийдвэр гарсан, 11-17)
-### T-01 Баримт засах — Агент 3 · Sonnet
+### T-01 ✅ `6804213` Баримт засах — Агент 3 · Sonnet
 Үр дүн: [[reconcile-2026-11-17]]-ийн A, B, C зөрүүг засна (D-г хөндөхгүй). Файл эзэмшил: `docs/**`, `CHANGELOG.md`, `PROGRESS.md`, `docs/plan/LEAD.md`; код, `data/`, `AGENTS.md`, `docs/plan/BOARD.md`-д хүрэхгүй; CODEMAP-д хүрэхгүй.
 1. `docs/CHANGELOG.md` (0 байт) устга (хэрэглэгч зөвшөөрсөн); `[[CHANGELOG]]`, INDEX-д root-ыг заа. Root CHANGELOG-д wave 2 + M6 + V4.6/V6.x-ийн дутуу бичлэгийг нэг мөрөөр нөхөх (аудит §3 хүснэгт).
 2. `V.md`: V3.5 мөр ✅ (худалдаж авсан `a65d51c`; worktree-ийн uncommitted `[x]` засвар аль хэдийн байгаа, давхар хийхгүй); V4.5 herder.html → лаб ✅ `8a55224`, батлах 🧑; V6.2 → зөвхөн «spots ✅, тавилгын загвар лаб-д» (дэлгүүр, цайны газар, хэрэглэгч лабт батална); «Зогссон цэг»-ийг wave 2-оор.
@@ -45,15 +45,15 @@ Session дугаарыг хадгалж үргэлжлүүлнэ; агент д�
 8. `CONTEXT.md`: `data/sleep|shops|difficulty|trader.json` нэр, хөвөгч джойстик, `.prime` шийдвэр нэм; `mvp-spec.md` §12-г 3 мөр болгож `[[milestones]]`-г заа; `milestones.md` M6-д «🟡 код бэлэн, гар шалгалт хүлээгдэж»; `INDEX.md`-д BOARD, reconcile нэм.
 Шалгалт: `cd game && npx vitest run tests/docs.test.ts --reporter=dot`. Commit: нэг-нэг сэдвээр (git add нэрээр). Тайлан ≤ 12 мөр.
 
-### T-02 Туслахын гэр 3 бүс — Агент 2 · Sonnet
+### T-02 ✅ `419f043` Туслахын гэр 3 бүс — Агент 2 · Sonnet
 Шийдвэр: 2026-11-15 «3 бүс бүх хэмжээнд» → `data/ger.json` туслахын гэр (`GER.helper`, small4) `belts` 2 → 3. Файл: `data/ger.json`, `render/ger/*`, холбоотой тест. Docs, V.md-д хүрэхгүй (Агент 3). `grep -rn belts game/src game/tests data` — 2 хатуу бичсэн, helper-тэй тест байвал засна. `npx vitest run tests/<ger|staff>` ногоон; `tools/shots/ger/`-д 1 зураг. Commit өөрийн салбарт, push үгүй. Тайлан ≤ 8 мөр.
 
-### T-03 Морь дуудах same-scene — Агент 4 · Sonnet
+### T-03 ✅ `adbd2c7` Морь дуудах same-scene — Агент 4 · Sonnet
 Шийдвэр (LEAD §4.6): `F` морь дуудах хязгаар `CAMP_ONLY` → «нэг ачаалагдсан 3D орон зай» (same-scene). Тоглогч тухайн орон зайд (жишээ нь бууц) байгаа бол морийг газраас үл хамааран дуудна; харин машинаар (өөр тээврээр) сумын төвд ирсэн бол бууцны морийг дуудахгүй — өөр байршлын teleport хориотой. Файл: `sim/commands.ts` (:103, :117), `sim/state.ts` (шаардлагатай бол), `tests/` (шинэ `callHorse.test.ts`). Тайлан/docs-д хүрэхгүй (Агент 3 decisions-д бичнэ). Тест: бууцнаас дуудна ✓, сумын төвд машинаар ирээд дуудахгүй ✓, морьтой ирсэн (морь хажууд) ✓, хадгалалтын шилжилт (`SAVE_VERSION`) өөрчлөгдөхгүй. Тайлан ≤ 8 мөр.
 
 ## Карт — Давалгаа A-ийн дараа (шийдвэр: зөвшөөрсөн)
-### T-10 Нэгтгэл + push — Агент 1 · Sonnet
-Давалгаа A дууссаны дараа: 3 салбарыг main-д merge → `npm run codemap`, `npx tsc --noEmit`, `npm test`, `npm run build`, `npm run test:perf` → `git push origin main` → origin-ийн 3 `claude/*` салбар устга → Vercel deploy → `/api/transfer` (код үүсгэж татах, татсаны дараа устах) шалга → `playtest.md`-д «Deploy: огноо, commit» → PROGRESS «push хийгдсэн, утсаар playtest хүлээгдэж байна». Тайлан ≤ 10 мөр.
+### T-10 Нэгтгэл + push — Агент 1 · Sonnet (ажиллаж байна)
+Салбарууд: `feat/docs-fix` (5 commit), `feat/ger-belts`, `feat/callhorse` — файл давхцахгүй (шалгасан). Merge → `npm run codemap` (`docs.test.ts` CODEMAP/CONTEXT индекс хоцорсныг засна), `npx tsc --noEmit`, `npm test`, `npm run build`, `npm run test:perf` → `git push origin main` → origin-ийн 3 `claude/*` салбар устга → Vercel deploy → `/api/transfer` (код үүсгэж татах, татсаны дараа устах) шалга → `playtest.md`-д «Deploy: огноо, commit» → PROGRESS «push хийгдсэн, утсаар playtest хүлээгдэж байна». Тайлан ≤ 10 мөр.
 
 ## Санал (⏳ ШИЙДВЭР ХҮЛЭЭЖ БАЙНА — ахлах агентад хувиарлахгүй)
 | Карт | Агуулга | Файл (давхцал) | Эрэмбэ |
@@ -64,6 +64,7 @@ Session дугаарыг хадгалж үргэлжлүүлнэ; агент д�
 | T-14 | V6.2 дэлгүүр, цайны газрын тавилгыг тоглоомд оруулах + V6.3 NPC spot | `render/building/publicInterior.ts`, `data/interiors.json`, `npcs.json` | **хэрэглэгч лабд батлах хүлээнэ** |
 | T-15 | M6.9 HA5 алхах/давхих дүрслэл + M6.12 ченжийн машин, жолоочийн «хотоос гарах» 3D | `render/characters.ts`, `render/sumcenter.ts`, `render/vehicles.ts` | дараа |
 | T-16 | V3.5 шөнийн PointLight (цэнгэлдэх, бөхийн дэвжээ), эргэдэг хүрд | `render/building/civic.ts` | жижиг |
+| T-17 | V5.1 bloom/LUT/AA/AO, V5.4 улирлын шилжилт — **S25 FPS хэмжилт (U-2)-ийн ДАРАА** | `render/scene.ts`, `style.ts`, `device.ts`, `data/visuals.json` | U-2 хүлээнэ |
 | T-18 | M6.8 render: тээвэр, мал байшин/хашаа мөргөх (D11 дүрслэл) | `render/*`, `sim/systems/safety.ts` | дараа |
 
 ## Хэрэглэгчийн ажил (агент хийж чадахгүй)
