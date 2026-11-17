@@ -38,6 +38,11 @@ import { nearTrader } from './sim/systems/trader';
 import type { Msg } from './sim/msg';
 import { SaveStore } from './persist/idb';
 import { Autosave, attachPageEvents, attachSimEvents } from './persist/autosave';
+import { ErrorGuard, installErrorGuard } from './persist/errorGuard';
+import { downloadFile } from './persist/file';
+import { showErrorBanner } from './render/ui/errorBanner';
+import { audio } from './audio/bus';
+import { AudioWatcher } from './audio/watch';
 import { MenuUI, takeIntent } from './render/ui/menu';
 import { TouchUI } from './input/touch';
 import { SkipRun, skipGoal, type SkipTarget } from './input/skip';
@@ -79,6 +84,14 @@ interface Boot {
   /** start = эхлэлийн дэлгэц, intro = шинэ тоглоомын оршил, none = шууд тоглоно */
   screen: 'start' | 'intro' | 'none';
 }
+
+/** T-12: алдаа барилт. Тоглоом эхэлмэгц start() ctx-ийг бөглөнө; тэр хүртэл хадгалах зүйлгүй */
+const guardCtx: { autosave: Autosave | null; state: GameState | null } = { autosave: null, state: null };
+const errGuard = new ErrorGuard({
+  save: () => guardCtx.autosave?.saveNow('hidden'),
+  notify: () => showErrorBanner(!!guardCtx.autosave, guardCtx.state ? () => { void downloadFile(guardCtx.state!); } : null),
+});
+installErrorGuard(errGuard, window);
 
 function start(boot?: Boot): void {
   const cfg = loadConfig();
@@ -200,6 +213,9 @@ function start(boot?: Boot): void {
     onSaved: (reason) => { if (reason !== 'hidden') toast(t('save.done'), 'good'); },
     onError: (err) => { console.error(err); toast(t('save.failed'), 'bad'); },
   }) : null;
+  guardCtx.autosave = autosave;
+  guardCtx.state = state;
+  const audioWatch = new AudioWatcher(audio, cfg.time.sleepMinute, cfg.time.dayStartMinute);   // T-12: дууны суурь (сонсогч байхгүй бол зардалгүй)
   if (autosave) {
     attachSimEvents(sim, autosave);
     attachPageEvents(autosave, window, document);
@@ -497,7 +513,7 @@ function start(boot?: Boot): void {
     prompt.style.display = html ? 'block' : 'none';
   };
 
-  const frame = (now: number): void => {
+  const frameBody = (now: number): void => {
     const rawDt = (now - last) / 1000;
     const dt = Math.min(rawDt, 0.1);
     last = now;
@@ -640,6 +656,11 @@ function start(boot?: Boot): void {
         ? t('ui.fps_max_ms_draw', { x: fps.toFixed(0), x2: worstShown.toFixed(0), drawCalls: view.drawCalls, x3: view.triangleCount.toLocaleString(), length: state.animals.length, geometries: view.renderer.info.memory.geometries, textures: view.renderer.info.memory.textures })
         : t('ui.fps_max_ms_draw_78', { x: fps.toFixed(0), x2: worstShown.toFixed(0), drawCalls: view.drawCalls, length: state.animals.length });
     }
+    audioWatch.watch(state);
+  };
+  // Кадрын алдаа давталтыг зогсоохгүй: бариад дараагийн кадрыг төлөвлөнө
+  const frame = (now: number): void => {
+    try { frameBody(now); } catch (e) { errGuard.handle(e); }
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
