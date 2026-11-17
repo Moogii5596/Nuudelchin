@@ -1914,12 +1914,12 @@ DOC docs/CONTEXT.md:50-52 ## 4. `data/*.json` → аль файл хэрэглэ
 DOC docs/CONTEXT.md:53-61 ## 5. Архитектурын дүрэм ([[architecture]])
 DOC docs/CONTEXT.md:62-65 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
 DOC docs/CONTEXT.md:66-72 ## 7. Баримтын хэсгийн индекс (мөрийн муж)
-FILE docs/INDEX.md 15.9KB 149L
+FILE docs/INDEX.md 16.1KB 150L
 DOC docs/INDEX.md:16-30 ## 1. Унших дараалал ба давуу эрх
-DOC docs/INDEX.md:31-120 ## 2. Баримтууд
-DOC docs/INDEX.md:121-124 ## 3. Гол тоо
-DOC docs/INDEX.md:125-143 ## 4. Нэр томьёо
-DOC docs/INDEX.md:144-149 ## 5. Баримт засах дүрэм
+DOC docs/INDEX.md:31-121 ## 2. Баримтууд
+DOC docs/INDEX.md:122-125 ## 3. Гол тоо
+DOC docs/INDEX.md:126-144 ## 4. Нэр томьёо
+DOC docs/INDEX.md:145-150 ## 5. Баримт засах дүрэм
 FILE docs/architecture.md 20.3KB 236L
 DOC docs/architecture.md:16-29 ## 1. Технологи
 DOC docs/architecture.md:30-68 ## 2. Хавтасны бүтэц
@@ -1937,23 +1937,29 @@ DOC docs/character-design.md:28-52 ## 2. Үндсэн дүр — хэрэгжи�
 DOC docs/character-design.md:53-61 ## 3. NPC-үүд одоо
 DOC docs/character-design.md:62-147 ## 4. Нэг кодын сан: дүр бүрийг тохиргооноос угсрах (V4.5)
 DOC docs/character-design.md:148-157 ## 5. Нээлттэй шийдвэр 🙋
-FILE docs/decisions.md 23.8KB 144L
+FILE docs/decisions.md 24.7KB 147L
 DOC docs/decisions.md:16-137 ## 0. Хэрэглэгчийн шийдвэрийн түүх
-DOC docs/decisions.md:138-144 ## 13. MVP-ийн хүрээ хаагдсан (2026-11-15)
-FILE docs/events/winter-prep.md 29.8KB 311L
+DOC docs/decisions.md:138-147 ## 13. MVP-ийн хүрээ хаагдсан (2026-11-15)
+FILE docs/events/winter-prep.md 55.7KB 489L
 DOC docs/events/winter-prep.md:13-31 ## 1. Тойм
 DOC docs/events/winter-prep.md:32-45 ## 2. Эхлэлийн өв (B батлагдсан)
 DOC docs/events/winter-prep.md:46-63 ## 3. Бэлтгэлийн томьёо
-DOC docs/events/winter-prep.md:64-117 ## 3a. Хүнс, махны нөөц (Survival)
-DOC docs/events/winter-prep.md:118-133 ## 4. Өвлийн мөчлөг: бэлчээр ба тэжээл
-DOC docs/events/winter-prep.md:134-152 ## 5. Цаг агаар ба температур (ШИНЭ)
-DOC docs/events/winter-prep.md:153-168 ## 6. Утас (ШИНЭ) — event-ийн нүүр
-DOC docs/events/winter-prep.md:169-186 ## 7. Дуудлага, хөрш, садан (ШИНЭ)
-DOC docs/events/winter-prep.md:187-192 ## 8. Камер (ШИНЭ)
-DOC docs/events/winter-prep.md:193-272 ## 9. Үе шат бүрийн нарийвчлал
-DOC docs/events/winter-prep.md:273-289 ## 10. ШИНЭ механикийн жагсаалт
-DOC docs/events/winter-prep.md:290-300 ## 11. Хэрэгтэй data утга (санал)
-DOC docs/events/winter-prep.md:301-311 ## 12. Нээлттэй асуулт
+DOC docs/events/winter-prep.md:64-113 ## 3a. Хүнс, махны нөөц (Survival)
+DOC docs/events/winter-prep.md:114-162 ## 3b. Түлш ба түлшний овоо
+DOC docs/events/winter-prep.md:163-191 ## 3c. Зах зээлийн үнэ: өдөр бүр хэлбэлзэнэ
+DOC docs/events/winter-prep.md:192-203 ## 3d. Утсаар захиалга (хүргэлт)
+DOC docs/events/winter-prep.md:204-217 ## 3e. Өвөлжөөгөө сонгох (бууц ба нөөц)
+DOC docs/events/winter-prep.md:218-227 ## 3f. Хадлан (сонголтоор)
+DOC docs/events/winter-prep.md:228-243 ## 4. Өвлийн мөчлөг: бэлчээр ба тэжээл
+DOC docs/events/winter-prep.md:244-262 ## 5. Цаг агаар ба температур (ШИНЭ)
+DOC docs/events/winter-prep.md:263-278 ## 6. Утас (ШИНЭ) — event-ийн нүүр
+DOC docs/events/winter-prep.md:279-296 ## 7. Дуудлага, хөрш, садан (ШИНЭ)
+DOC docs/events/winter-prep.md:297-302 ## 8. Камер (ШИНЭ)
+DOC docs/events/winter-prep.md:303-420 ## 9. Үе шат бүрийн нарийвчлал
+DOC docs/events/winter-prep.md:421-443 ## 10. ШИНЭ механикийн жагсаалт
+DOC docs/events/winter-prep.md:444-458 ## 11. Хэрэгтэй data утга (санал)
+DOC docs/events/winter-prep.md:459-477 ## 12. Нээлттэй асуулт
+DOC docs/events/winter-prep.md:478-489 ## 13. Түүхийн чат руу хураангуй (10 мөр)
 FILE docs/grazing-livestock.md 27.4KB 316L
 DOC docs/grazing-livestock.md:17-125 ## 1. Малын үзүүлэлтүүд
 DOC docs/grazing-livestock.md:126-146 ## 2. Үнэ = амьдын жин × кг-ын үнэ
@@ -1993,16 +1999,18 @@ DOC docs/night-transport.md:45-68 ## 3. Сүү, ноос хоносон газр
 DOC docs/night-transport.md:69-87 ## 4. Шөнийн чоно (хэрэглэгчийн дүрэм)
 DOC docs/night-transport.md:88-103 ## 5. Тээвэр
 DOC docs/night-transport.md:104-106 ## 6. Хэрэглэгчийн шийдвэр 🙋
-FILE docs/plan/BOARD.md 19.4KB 107L
+FILE docs/plan/BOARD.md 23.9KB 129L
 DOC docs/plan/BOARD.md:14-24 ## MVP «дууссан» (D-шалгуур, дэлгэрэнгүй [[M6]])
-DOC docs/plan/BOARD.md:25-37 ## Агентын бүртгэл (дугаар = нэр; шинэ агент → дараагийн дугаар)
-DOC docs/plan/BOARD.md:38-56 ## Карт — Давалгаа A (шийдвэр гарсан, 11-17)
-DOC docs/plan/BOARD.md:57-61 ## Карт — Давалгаа A-ийн дараа (шийдвэр: зөвшөөрсөн)
-DOC docs/plan/BOARD.md:62-85 ## Давалгаа B — СУУРЬ, түүхээс хамааралгүй (⏳ хэрэглэгч батлахыг хүлээж байна)
-DOC docs/plan/BOARD.md:86-95 ## Санал, Давалгаа C+ (⏳ ШИЙДВЭР ХҮЛЭЭЖ БАЙНА — ахлах агентад хувиарлахгүй)
-DOC docs/plan/BOARD.md:96-102 ## Түүх ба тэнцвэр (хэрэглэгч, шинэ чат; суурийн дараа)
-DOC docs/plan/BOARD.md:103-105 ## Хэрэглэгчийн ажил (агент хийж чадахгүй)
-DOC docs/plan/BOARD.md:106-107 ## Ахлахын мөчлөг (хурдан)
+DOC docs/plan/BOARD.md:25-42 ## Агентын бүртгэл (дугаар = нэр; шинэ агент → дараагийн дугаар)
+DOC docs/plan/BOARD.md:43-61 ## Карт — Давалгаа A (шийдвэр гарсан, 11-17)
+DOC docs/plan/BOARD.md:62-66 ## Карт — Давалгаа A-ийн дараа (шийдвэр: зөвшөөрсөн)
+DOC docs/plan/BOARD.md:67-90 ## Давалгаа B — СУУРЬ, түүхээс хамааралгүй (⏳ хэрэглэгч батлахыг хүлээж байна)
+DOC docs/plan/BOARD.md:91-96 ## Карт — Давалгаа C (шийдвэр гарсан, 11-17; түүхээс хамааралгүй)
+DOC docs/plan/BOARD.md:97-107 ## Карт — Давалгаа D: түүхийн бэлтгэл (шийдвэр гарсан, 11-17; [[story]] Approved)
+DOC docs/plan/BOARD.md:108-117 ## Санал, Давалгаа C+ (⏳ ШИЙДВЭР ХҮЛЭЭЖ БАЙНА — ахлах агентад хувиарлахгүй)
+DOC docs/plan/BOARD.md:118-124 ## Түүх ба тэнцвэр (хэрэглэгч, шинэ чат; суурийн дараа)
+DOC docs/plan/BOARD.md:125-127 ## Хэрэглэгчийн ажил (агент хийж чадахгүй)
+DOC docs/plan/BOARD.md:128-129 ## Ахлахын мөчлөг (хурдан)
 FILE docs/plan/LEAD.md 4.5KB 48L
 DOC docs/plan/LEAD.md:12-31 ## A. Тогтвортой (ховор өөрчлөгдөнө)
 DOC docs/plan/LEAD.md:32-48 ## B. Хувирах төлөв (→ [[BOARD]], [[PROGRESS]])
@@ -2041,6 +2049,12 @@ DOC docs/seasons-camps.md:81-86 ## 6. Төллөлт
 DOC docs/seasons-camps.md:87-92 ## 7. Отор (M5-ын үргэлжлэл)
 DOC docs/seasons-camps.md:93-99 ## 8. Дүрслэл, UI
 DOC docs/seasons-camps.md:100-104 ## 9. Тэнцвэр ба 🙋
+FILE docs/story-loop.md 21.9KB 210L
+DOC docs/story-loop.md:12-20 ## 1. Зарчим
+DOC docs/story-loop.md:21-38 ## 2. Өдрийн хэмнэл
+DOC docs/story-loop.md:39-51 ## 3. Улирлын ажлын хуанли (1-р жил; 2-р жилд +50 өдөр)
+DOC docs/story-loop.md:52-108 ## 4. Даалгавар («Малчны дэвтэр»)
+DOC docs/story-loop.md:109-210 ## 5. Тэнцвэр
 FILE docs/story-research.md 14.7KB 116L
 DOC docs/story-research.md:12-18 ## 1. Гол дүгнэлт
 DOC docs/story-research.md:19-32 ## 2. Могод сум, Хульжийн рашаан
@@ -2050,15 +2064,17 @@ DOC docs/story-research.md:65-77 ## 5. Нэг өрхийн шат (ахицын 
 DOC docs/story-research.md:78-83 ## 6. Төстэй тоглоомоос
 DOC docs/story-research.md:84-96 ## 7. Зохиолд орох санаа (сонгоно)
 DOC docs/story-research.md:97-116 ## 8. Тэнцвэр: одоогийн `data/*.json` ба бодит үнэ
-FILE docs/story.md 18.2KB 165L
-DOC docs/story.md:12-17 ## 0. Тоглогчийн дүр ба санаа (батлагдсан 2026-11-17)
-DOC docs/story.md:18-28 ## 1. Шугам
-DOC docs/story.md:29-35 ## 2. Нээлттэй үйл явдлууд (хойно нарийвчилна)
-DOC docs/story.md:36-42 ## 3. Шинэ механик (MVP-д орох санал, шийдэгдээгүй)
-DOC docs/story.md:43-54 ## 4. Тэнцвэрийн асуудал (хойно)
-DOC docs/story.md:55-89 ## 5. Тоглоомын хэлбэр (хэрэглэгчийн шийдвэр 2026-11-17)
-DOC docs/story.md:90-161 ## 6. Санал (6.1, 6.2 батлагдаагүй; 6.3, 6.4 батлагдсан)
-DOC docs/story.md:162-165 ## 7. Шийдэх зүйл
+FILE docs/story.md 39.4KB 299L
+DOC docs/story.md:12-18 ## 1. Гол санаа
+DOC docs/story.md:19-39 ## 2. Тогтсон хүрээ (хэрэглэгчийн шийдвэр 2026-11-17)
+DOC docs/story.md:40-51 ## 3. Хуанли
+DOC docs/story.md:52-132 ## 4. Зохиол
+DOC docs/story.md:133-151 ## 5. Дүрүүд
+DOC docs/story.md:152-229 ## 6. Системүүд
+DOC docs/story.md:230-254 ## 7. Event-үүд (тус бүр `docs/events/`-д; энд зөвхөн нэгтгэл)
+DOC docs/story.md:255-275 ## 8. Тэнцвэрийн санал (ахлах агентаар; `npm run balance`-аар тааруулна)
+DOC docs/story.md:276-287 ## 9. ШИНЭ механик ба санал болгох дараалал
+DOC docs/story.md:288-299 ## 10. Ахлах чат шинэчлэх баримт (энэ зохиолоор солигдсон хуучин шийдвэр)
 FILE docs/summary.md 2.9KB 26L
 DOC docs/summary.md:12-20 ## 0. Гол 7 дүгнэлт
 DOC docs/summary.md:21-24 ## 3. Сэдвүүд (дэлгэрэнгүй → [[summary-full]] §3)
