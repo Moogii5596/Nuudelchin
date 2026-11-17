@@ -60,17 +60,17 @@ SYM game/src/input/skip.ts:61 method SkipRun.checkZones
 SYM game/src/input/skip.ts:78 method SkipRun.step
 SYM game/src/input/skip.ts:93 method SkipRun.cancel
 SYM game/src/input/skip.ts:97 method SkipRun.dispose
-FILE game/src/input/touch.ts 15.2KB 304L exports: TouchUI
+FILE game/src/input/touch.ts 16.1KB 317L exports: TouchUI
 SYM game/src/input/touch.ts:28 class TouchUI
-SYM game/src/input/touch.ts:222 method TouchUI.enterLandscape
-SYM game/src/input/touch.ts:226 method TouchUI.start
-SYM game/src/input/touch.ts:232 method TouchUI.refreshInstall
-SYM game/src/input/touch.ts:239 method TouchUI.install
-SYM game/src/input/touch.ts:248 method TouchUI.bind
-SYM game/src/input/touch.ts:266 method TouchUI.fullscreen
-SYM game/src/input/touch.ts:279 method TouchUI.paused
-SYM game/src/input/touch.ts:283 method TouchUI.portrait
-SYM game/src/input/touch.ts:288 method TouchUI.update
+SYM game/src/input/touch.ts:235 method TouchUI.enterLandscape
+SYM game/src/input/touch.ts:239 method TouchUI.start
+SYM game/src/input/touch.ts:245 method TouchUI.refreshInstall
+SYM game/src/input/touch.ts:252 method TouchUI.install
+SYM game/src/input/touch.ts:261 method TouchUI.bind
+SYM game/src/input/touch.ts:279 method TouchUI.fullscreen
+SYM game/src/input/touch.ts:292 method TouchUI.paused
+SYM game/src/input/touch.ts:296 method TouchUI.portrait
+SYM game/src/input/touch.ts:301 method TouchUI.update
 FILE game/src/main.ts 40.7KB 685L
 SYM game/src/main.ts:56 fn toast
 SYM game/src/main.ts:71 fn note

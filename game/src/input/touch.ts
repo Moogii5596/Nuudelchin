@@ -27,6 +27,7 @@ interface Btn {
 
 export class TouchUI {
   private joy: HTMLElement;
+  private zone: HTMLElement;
   private knob: HTMLElement;
   private joyId: number | null = null;
   private acts: Btn[] = [];
@@ -41,15 +42,15 @@ export class TouchUI {
   constructor(private cfg: GameConfig, private ctl: PlayerController, private bar: TimeBar, opts: { menuGate?: boolean } = {}) {
     document.body.classList.add('touch');
 
-    // --- Джойстик ---
+    // --- Джойстик: зүүн доод бүсийн хаана ч хуруугаа тавихад тэнд гарч ирнэ (хөвөгч) ---
     this.joy = el('div', 'joy');
     this.knob = el('div', 'knob');
     this.joy.appendChild(this.knob);
+    this.zone = el('div', 'joyzone');
+    let cx = 0, cy = 0, R = 60;
     const move = (e: PointerEvent): void => {
-      const r = this.joy.getBoundingClientRect();
-      const R = r.width / 2;
-      let dx = (e.clientX - (r.left + R)) / R;
-      let dy = (e.clientY - (r.top + R)) / R;
+      let dx = (e.clientX - cx) / R;
+      let dy = (e.clientY - cy) / R;
       const l = Math.hypot(dx, dy);
       if (l > 1) {
         dx /= l;
@@ -63,20 +64,32 @@ export class TouchUI {
       this.joyId = null;
       this.ctl.stick = { x: 0, y: 0 };
       this.knob.style.transform = '';
+      this.joy.classList.remove('live');
+      this.joy.style.left = this.joy.style.top = this.joy.style.bottom = '';
     };
-    this.joy.addEventListener('pointerdown', (e) => {
+    this.zone.addEventListener('pointerdown', (e) => {
+      if (this.joyId !== null) return;
       e.preventDefault();
-      this.joy.setPointerCapture(e.pointerId);
+      this.zone.setPointerCapture(e.pointerId);
       this.joyId = e.pointerId;
+      R = this.joy.offsetWidth / 2 || 60;
+      // Хуруу тавьсан цэг төв болно (дэлгэцээс гарахгүй)
+      cx = Math.min(Math.max(e.clientX, R + 4), window.innerWidth - R - 4);
+      cy = Math.min(Math.max(e.clientY, R + 4), window.innerHeight - R - 4);
+      this.joy.style.left = `${cx - R}px`;
+      this.joy.style.top = `${cy - R}px`;
+      this.joy.style.bottom = 'auto';
+      this.joy.classList.add('live');
       move(e);
     });
-    this.joy.addEventListener('pointermove', (e) => {
+    this.zone.addEventListener('pointermove', (e) => {
       if (e.pointerId === this.joyId) move(e);
     });
-    this.joy.addEventListener('pointerup', release);
-    this.joy.addEventListener('pointercancel', release);
+    this.zone.addEventListener('pointerup', release);
+    this.zone.addEventListener('pointercancel', release);
+    this.zone.addEventListener('contextmenu', (e) => e.preventDefault());
+    document.body.appendChild(this.zone);
     document.body.appendChild(this.joy);
-
     // --- Үйлдлийн товчнууд (нөхцөлөөс хамаарна) ---
     const camp = (s: GameState): boolean => s.player.place === 'camp' && !s.player.driving && !s.move && !s.player.interior;
     const actBox = el('div', 'acts');
@@ -289,7 +302,7 @@ export class TouchUI {
     this.rotateEl.style.display = this.portrait && this.sheetEl.style.display !== 'flex' ? 'flex' : 'none';
     const p = state.player;
     const hideAll = panelOpen;
-    this.joy.style.display = hideAll || p.place === 'map' || state.move ? 'none' : '';
+    this.joy.style.display = this.zone.style.display = hideAll || p.place === 'map' || state.move ? 'none' : '';
     let best: Btn | null = null, bestK = 0;
     for (const b of this.acts) {
       const on = !hideAll && b.show(state);
