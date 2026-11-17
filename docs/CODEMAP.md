@@ -1936,14 +1936,15 @@ DOC docs/night-transport.md:45-68 ## 3. Сүү, ноос хоносон газр
 DOC docs/night-transport.md:69-87 ## 4. Шөнийн чоно (хэрэглэгчийн дүрэм)
 DOC docs/night-transport.md:88-103 ## 5. Тээвэр
 DOC docs/night-transport.md:104-106 ## 6. Хэрэглэгчийн шийдвэр 🙋
-FILE docs/plan/BOARD.md 11.1KB 74L
+FILE docs/plan/BOARD.md 13.3KB 82L
 DOC docs/plan/BOARD.md:14-24 ## MVP «дууссан» (D-шалгуур, дэлгэрэнгүй [[M6]])
 DOC docs/plan/BOARD.md:25-34 ## Агентын бүртгэл (дугаар = нэр; шинэ агент → дараагийн дугаар)
 DOC docs/plan/BOARD.md:35-53 ## Карт — Давалгаа A (шийдвэр гарсан, 11-17)
 DOC docs/plan/BOARD.md:54-57 ## Карт — Давалгаа A-ийн дараа (шийдвэр: зөвшөөрсөн)
-DOC docs/plan/BOARD.md:58-69 ## Санал (⏳ ШИЙДВЭР ХҮЛЭЭЖ БАЙНА — ахлах агентад хувиарлахгүй)
-DOC docs/plan/BOARD.md:70-72 ## Хэрэглэгчийн ажил (агент хийж чадахгүй)
-DOC docs/plan/BOARD.md:73-74 ## Ахлахын мөчлөг (хурдан)
+DOC docs/plan/BOARD.md:58-70 ## Санал (⏳ ШИЙДВЭР ХҮЛЭЭЖ БАЙНА — ахлах агентад хувиарлахгүй)
+DOC docs/plan/BOARD.md:71-77 ## Түүх ба тэнцвэр (хэрэглэгч, шинэ чат; суурийн дараа)
+DOC docs/plan/BOARD.md:78-80 ## Хэрэглэгчийн ажил (агент хийж чадахгүй)
+DOC docs/plan/BOARD.md:81-82 ## Ахлахын мөчлөг (хурдан)
 FILE docs/plan/LEAD.md 4.5KB 48L
 DOC docs/plan/LEAD.md:12-31 ## A. Тогтвортой (ховор өөрчлөгдөнө)
 DOC docs/plan/LEAD.md:32-48 ## B. Хувирах төлөв (→ [[BOARD]], [[PROGRESS]])

@@ -11,8 +11,8 @@
  */
 import { gunzipSync } from 'node:zlib';
 import { createHash } from 'node:crypto';
-import { API_PATH, MAX_BYTES, TTL_SECONDS, newCode, normalizeCode, type TransferErrorKind } from '../src/persist/transferCode';
-import { UpstashStore, redisConfigFromEnv, type Store } from './_redis';
+import { API_PATH, MAX_BYTES, TTL_SECONDS, newCode, normalizeCode, type TransferErrorKind } from '../src/persist/transferCode.js';
+import { UpstashStore, redisConfigFromEnv, type Store } from './_redis.js';
 
 export interface Limits {
   /** IP тутамд цаг тутамд илгээх (POST) дээд тоо */
