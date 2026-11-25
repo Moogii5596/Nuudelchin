@@ -1,5 +1,5 @@
 /**
- * T-27 UI лаб — шугаман дүрс (emoji үгүй). 24×24, stroke = currentColor.
+ * Утасны HUD 2 — шугаман дүрс (emoji үгүй). 24×24, stroke = currentColor.
  */
 const P: Record<string, string> = {
   // морины толгой

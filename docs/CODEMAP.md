@@ -79,6 +79,40 @@ SYM game/src/input/controller.ts:244 method PlayerController.isDown
 SYM game/src/input/controller.ts:249 method PlayerController.moveTo
 SYM game/src/input/controller.ts:254 method PlayerController.update
 SYM game/src/input/controller.ts:360 method PlayerController.drive
+FILE game/src/input/hud2/bind.ts 9.8KB 193L exports: HUD2,Hud2Deps,Hud2,createHud2
+SYM game/src/input/hud2/bind.ts:22 const HUD2
+SYM game/src/input/hud2/bind.ts:31 interface Hud2Deps
+SYM game/src/input/hud2/bind.ts:56 interface Hud2
+SYM game/src/input/hud2/bind.ts:66 fn createHud2
+FILE game/src/input/hud2/context.ts 6.0KB 117L exports: TargetKind,Target,HorseMode,horseMode,wolfNear,contextTargets
+SYM game/src/input/hud2/context.ts:18 type TargetKind
+SYM game/src/input/hud2/context.ts:21 interface Target
+SYM game/src/input/hud2/context.ts:33 type HorseMode
+SYM game/src/input/hud2/context.ts:35 fn dist
+SYM game/src/input/hud2/context.ts:38 fn horseMode
+SYM game/src/input/hud2/context.ts:50 fn tradeSpot
+SYM game/src/input/hud2/context.ts:57 fn wolfNear
+SYM game/src/input/hud2/context.ts:65 fn contextTargets
+FILE game/src/input/hud2/hud.ts 16.8KB 383L exports: WHEEL_IDS,WheelId,TargetView,HudModel,HudLabels,HudHooks,LabHud
+SYM game/src/input/hud2/hud.ts:14 const WHEEL_IDS
+SYM game/src/input/hud2/hud.ts:15 type WheelId
+SYM game/src/input/hud2/hud.ts:17 interface TargetView
+SYM game/src/input/hud2/hud.ts:19 interface HudModel
+SYM game/src/input/hud2/hud.ts:37 interface HudLabels
+SYM game/src/input/hud2/hud.ts:44 interface HudHooks
+SYM game/src/input/hud2/hud.ts:69 class LabHud
+SYM game/src/input/hud2/hud.ts:178 method LabHud.portrait
+SYM game/src/input/hud2/hud.ts:182 method LabHud.closePops
+SYM game/src/input/hud2/hud.ts:188 method LabHud.tap
+SYM game/src/input/hud2/hud.ts:203 method LabHud.bindTarget
+SYM game/src/input/hud2/hud.ts:225 method LabHud.bindJoystick
+SYM game/src/input/hud2/hud.ts:265 method LabHud.bindWheel
+SYM game/src/input/hud2/hud.ts:318 method LabHud.setWheel
+SYM game/src/input/hud2/hud.ts:328 method LabHud.update
+SYM game/src/input/hud2/hud.ts:369 method LabHud.frame
+FILE game/src/input/hud2/icons.ts 3.7KB 41L exports: IconName,icon
+SYM game/src/input/hud2/icons.ts:37 type IconName
+SYM game/src/input/hud2/icons.ts:39 fn icon
 FILE game/src/input/skip.ts 4.7KB 100L exports: SkipTarget,SkipStop,SkipGoal,skipGoal,SkipRun
 SYM game/src/input/skip.ts:13 type SkipTarget
 SYM game/src/input/skip.ts:15 type SkipStop
@@ -91,22 +125,22 @@ SYM game/src/input/skip.ts:61 method SkipRun.checkZones
 SYM game/src/input/skip.ts:78 method SkipRun.step
 SYM game/src/input/skip.ts:93 method SkipRun.cancel
 SYM game/src/input/skip.ts:97 method SkipRun.dispose
-FILE game/src/input/touch.ts 16.1KB 317L exports: TouchUI
-SYM game/src/input/touch.ts:28 class TouchUI
-SYM game/src/input/touch.ts:235 method TouchUI.enterLandscape
-SYM game/src/input/touch.ts:239 method TouchUI.start
-SYM game/src/input/touch.ts:245 method TouchUI.refreshInstall
-SYM game/src/input/touch.ts:252 method TouchUI.install
-SYM game/src/input/touch.ts:261 method TouchUI.bind
-SYM game/src/input/touch.ts:279 method TouchUI.fullscreen
-SYM game/src/input/touch.ts:292 method TouchUI.paused
-SYM game/src/input/touch.ts:296 method TouchUI.portrait
-SYM game/src/input/touch.ts:301 method TouchUI.update
-FILE game/src/main.ts 42.1KB 707L
-SYM game/src/main.ts:61 fn toast
-SYM game/src/main.ts:76 fn note
-SYM game/src/main.ts:96 fn start
-SYM game/src/main.ts:682 fn boot
+FILE game/src/input/touch.ts 16.7KB 321L exports: TouchUI
+SYM game/src/input/touch.ts:30 class TouchUI
+SYM game/src/input/touch.ts:239 method TouchUI.enterLandscape
+SYM game/src/input/touch.ts:243 method TouchUI.start
+SYM game/src/input/touch.ts:249 method TouchUI.refreshInstall
+SYM game/src/input/touch.ts:256 method TouchUI.install
+SYM game/src/input/touch.ts:265 method TouchUI.bind
+SYM game/src/input/touch.ts:283 method TouchUI.fullscreen
+SYM game/src/input/touch.ts:296 method TouchUI.paused
+SYM game/src/input/touch.ts:300 method TouchUI.portrait
+SYM game/src/input/touch.ts:305 method TouchUI.update
+FILE game/src/main.ts 43.7KB 736L
+SYM game/src/main.ts:63 fn toast
+SYM game/src/main.ts:78 fn note
+SYM game/src/main.ts:98 fn start
+SYM game/src/main.ts:711 fn boot
 FILE game/src/persist/autosave.ts 4.7KB 102L exports: SaveReason,AutosaveDeps,Autosave,attachSimEvents,attachPageEvents
 SYM game/src/persist/autosave.ts:11 type SaveReason
 SYM game/src/persist/autosave.ts:13 interface AutosaveDeps
@@ -1845,39 +1879,11 @@ SYM game/src/sim/terrain.ts:22 fn waterDistance
 SYM game/src/sim/terrain.ts:28 fn baseHeightAt
 SYM game/src/sim/terrain.ts:54 fn heightAt
 SYM game/src/sim/terrain.ts:77 fn waterLevel
-FILE game/src/ui-lab/context.ts 5.2KB 107L exports: TargetKind,Target,HorseMode,horseMode,contextTargets
-SYM game/src/ui-lab/context.ts:17 type TargetKind
-SYM game/src/ui-lab/context.ts:20 interface Target
-SYM game/src/ui-lab/context.ts:32 type HorseMode
-SYM game/src/ui-lab/context.ts:34 fn dist
-SYM game/src/ui-lab/context.ts:37 fn horseMode
-SYM game/src/ui-lab/context.ts:49 fn tradeSpot
-SYM game/src/ui-lab/context.ts:56 fn contextTargets
-FILE game/src/ui-lab/hud.ts 16.5KB 381L exports: WHEEL_IDS,WheelId,TargetView,HudModel,HudLabels,HudHooks,LabHud
-SYM game/src/ui-lab/hud.ts:13 const WHEEL_IDS
-SYM game/src/ui-lab/hud.ts:14 type WheelId
-SYM game/src/ui-lab/hud.ts:16 interface TargetView
-SYM game/src/ui-lab/hud.ts:18 interface HudModel
-SYM game/src/ui-lab/hud.ts:36 interface HudLabels
-SYM game/src/ui-lab/hud.ts:43 interface HudHooks
-SYM game/src/ui-lab/hud.ts:68 class LabHud
-SYM game/src/ui-lab/hud.ts:176 method LabHud.portrait
-SYM game/src/ui-lab/hud.ts:180 method LabHud.closePops
-SYM game/src/ui-lab/hud.ts:186 method LabHud.tap
-SYM game/src/ui-lab/hud.ts:201 method LabHud.bindTarget
-SYM game/src/ui-lab/hud.ts:223 method LabHud.bindJoystick
-SYM game/src/ui-lab/hud.ts:263 method LabHud.bindWheel
-SYM game/src/ui-lab/hud.ts:316 method LabHud.setWheel
-SYM game/src/ui-lab/hud.ts:326 method LabHud.update
-SYM game/src/ui-lab/hud.ts:367 method LabHud.frame
-FILE game/src/ui-lab/icons.ts 3.7KB 41L exports: IconName,icon
-SYM game/src/ui-lab/icons.ts:37 type IconName
-SYM game/src/ui-lab/icons.ts:39 fn icon
-FILE game/src/ui-lab/main.ts 19.6KB 396L
-SYM game/src/ui-lab/main.ts:44 fn adoptGameStyles
-SYM game/src/ui-lab/main.ts:51 fn toast
-SYM game/src/ui-lab/main.ts:64 fn applyScene
-SYM game/src/ui-lab/main.ts:84 fn start
+FILE game/src/ui-lab/main.ts 13.3KB 285L
+SYM game/src/ui-lab/main.ts:39 fn adoptGameStyles
+SYM game/src/ui-lab/main.ts:46 fn toast
+SYM game/src/ui-lab/main.ts:59 fn applyScene
+SYM game/src/ui-lab/main.ts:73 fn start
 FILE tools/balance_sim/run.ts 27.6KB 463L
 SYM tools/balance_sim/run.ts:34 fn nextGerOrder
 SYM tools/balance_sim/run.ts:56 fn applyOverrides
@@ -1938,6 +1944,7 @@ FILE game/tests/herder.test.ts 6.3KB 139L
 FILE game/tests/herding.test.ts 6.5KB 131L
 FILE game/tests/herds.test.ts 5.1KB 112L
 FILE game/tests/homelights.test.ts 3.4KB 66L
+FILE game/tests/hud2Context.test.ts 5.5KB 121L
 FILE game/tests/i18n.test.ts 9.1KB 172L
 FILE game/tests/interior.test.ts 10.5KB 203L
 FILE game/tests/journal.test.ts 1.9KB 40L
@@ -1968,16 +1975,15 @@ FILE game/tests/town.test.ts 6.8KB 138L
 FILE game/tests/trader.test.ts 8.4KB 164L
 FILE game/tests/transfer.test.ts 14.2KB 255L
 FILE game/tests/trip.test.ts 9.2KB 173L
-FILE game/tests/uiLabContext.test.ts 4.8KB 107L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 11.5KB 73L
+FILE docs/CONTEXT.md 12.0KB 74L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-29 ## 2. Стек ба командууд
-DOC docs/CONTEXT.md:30-50 ## 3. Файлын зураглал (`game/src/`)
-DOC docs/CONTEXT.md:51-53 ## 4. `data/*.json` → аль файл хэрэглэдэг
-DOC docs/CONTEXT.md:54-62 ## 5. Архитектурын дүрэм ([[architecture]])
-DOC docs/CONTEXT.md:63-66 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
-DOC docs/CONTEXT.md:67-73 ## 7. Баримтын хэсгийн индекс (мөрийн муж)
+DOC docs/CONTEXT.md:30-51 ## 3. Файлын зураглал (`game/src/`)
+DOC docs/CONTEXT.md:52-54 ## 4. `data/*.json` → аль файл хэрэглэдэг
+DOC docs/CONTEXT.md:55-63 ## 5. Архитектурын дүрэм ([[architecture]])
+DOC docs/CONTEXT.md:64-67 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
+DOC docs/CONTEXT.md:68-74 ## 7. Баримтын хэсгийн индекс (мөрийн муж)
 FILE docs/INDEX.md 17.6KB 162L
 DOC docs/INDEX.md:16-30 ## 1. Унших дараалал ба давуу эрх
 DOC docs/INDEX.md:31-133 ## 2. Баримтууд
@@ -2001,9 +2007,9 @@ DOC docs/character-design.md:28-52 ## 2. Үндсэн дүр — хэрэгжи�
 DOC docs/character-design.md:53-61 ## 3. NPC-үүд одоо
 DOC docs/character-design.md:62-147 ## 4. Нэг кодын сан: дүр бүрийг тохиргооноос угсрах (V4.5)
 DOC docs/character-design.md:148-157 ## 5. Нээлттэй шийдвэр 🙋
-FILE docs/decisions.md 27.0KB 150L
+FILE docs/decisions.md 27.8KB 152L
 DOC docs/decisions.md:16-137 ## 0. Хэрэглэгчийн шийдвэрийн түүх
-DOC docs/decisions.md:138-150 ## 13. MVP-ийн хүрээ хаагдсан (2026-11-15)
+DOC docs/decisions.md:138-152 ## 13. MVP-ийн хүрээ хаагдсан (2026-11-15)
 FILE docs/events/airag.md 6.0KB 83L
 DOC docs/events/airag.md:13-19 ## 1. Тойм
 DOC docs/events/airag.md:20-32 ## 2. Ажлын механик
@@ -2119,7 +2125,7 @@ DOC docs/night-transport.md:45-68 ## 3. Сүү, ноос хоносон газр
 DOC docs/night-transport.md:69-87 ## 4. Шөнийн чоно (хэрэглэгчийн дүрэм)
 DOC docs/night-transport.md:88-103 ## 5. Тээвэр
 DOC docs/night-transport.md:104-106 ## 6. Хэрэглэгчийн шийдвэр 🙋
-FILE docs/plan/BOARD.md 27.4KB 142L
+FILE docs/plan/BOARD.md 27.6KB 142L
 DOC docs/plan/BOARD.md:14-24 ## MVP «дууссан» (D-шалгуур, дэлгэрэнгүй [[M6]])
 DOC docs/plan/BOARD.md:25-43 ## Агентын бүртгэл (дугаар = нэр; шинэ агент → дараагийн дугаар)
 DOC docs/plan/BOARD.md:44-62 ## Карт — Давалгаа A (шийдвэр гарсан, 11-17)
@@ -2150,7 +2156,7 @@ DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
 DOC docs/plan/V.md:24-32 ## Нээлттэй ажил
 DOC docs/plan/V.md:33-36 ## Зогссон цэг
-FILE docs/plan/playtest.md 26.7KB 166L
+FILE docs/plan/playtest.md 27.6KB 172L
 DOC docs/plan/playtest.md:15-20 ## A. FPS ба төхөөрөмж
 DOC docs/plan/playtest.md:21-41 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
 DOC docs/plan/playtest.md:42-115 ## C. Мэдрэмж, үе шат бүрээр
@@ -2163,6 +2169,7 @@ DOC docs/plan/playtest.md:140-146 ## Утасны HUD, удирдлага (2026-
 DOC docs/plan/playtest.md:147-155 ## UI лаб: утасны HUD 2 (T-27, 2026-11-25)
 DOC docs/plan/playtest.md:156-161 ## Үндсэн мэню, тохиргоо — UI handoff 1 (2026-11-25)
 DOC docs/plan/playtest.md:162-166 ## Бууцны саад — T-18 (2026-11-25)
+DOC docs/plan/playtest.md:167-172 ## Утасны HUD 2 тоглоомд (2026-11-25)
 FILE docs/seasons-camps.md 10.2KB 104L
 DOC docs/seasons-camps.md:17-40 ## 1. Хэрэглэгчийн шийдвэрүүд
 DOC docs/seasons-camps.md:41-54 ## 2. Улирал

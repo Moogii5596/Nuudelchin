@@ -2,7 +2,7 @@
 title: BOARD — MVP ажлын самбар (агент бүрийн карт)
 type: Plan
 status: Active
-last_updated: 2026-11-17
+last_updated: 2026-11-25
 tags: [plan, board, agents, lead]
 ---
 # BOARD: MVP-ийн нээлттэй ажил, агентын карт
@@ -36,7 +36,7 @@ tags: [plan, board, agents, lead]
 | 10 | Event тодорхойлолт: Наадам, Айраг, Хадлан | T-23 ✅ `3ccdb47` | `feat/ev-b` (`../wt-ev-b`) | чөлөөтэй; нэгтгэсэн (T-26), worktree дараа цэвэрлэнэ |
 | 11 | `winter-prep` хураангуй | T-24 ✅ `0fa0bee` | `feat/ev-wp` (`../wt-ev-wp`) | чөлөөтэй; нэгтгэсэн (T-26), worktree дараа цэвэрлэнэ |
 | 12 | `panels.ts` хуваах | T-25 ✅ `a846124` | `feat/panels` (`../wt-panels`) | чөлөөтэй; нэгтгэсэн (T-26), worktree дараа цэвэрлэнэ |
-| 13 | UI лаб: утасны HUD 2 (бодит туршилт) | T-27 | `feat/ui-lab` (`../wt-ui-lab`) | хуваарилсан 11-17 |
+| 13 | UI лаб: утасны HUD 2 (бодит туршилт) | T-27 ✅ `b1c2806` | `claude/development-continue-q0utvi` → main | дууссан 11-25 |
 | 4 | Sim (морь дуудах) | T-03 ✅ `adbd2c7` | `feat/callhorse` (`../wt-callhorse`) | чөлөөтэй (session хаах) |
 
 Session дугаарыг хадгалж үргэлжлүүлнэ; агент дуусмагц session хаана (AGENTS §13).
@@ -109,7 +109,7 @@ Session дугаарыг хадгалж үргэлжлүүлнэ; агент д�
 `feat/ev-a`, `feat/ev-b`, `feat/ev-wp`, `feat/panels`-г main-д merge. Шалга: event файл бүр ≤ 15 KB; `[[winter-prep]]` ба бусад холбоос ажиллана; `docs/INDEX.md` (Агент 9 хүрсэн) нэгдэнэ, шинэ файлуудыг бүртгэнэ; `story.md` §7 event хүснэгтийн «Төлөв»-ийг шинэчил. Дараа нь `npm run codemap`, tsc, `npm test`, build; panels хуваалтад draw call/ажиллагаа өөрчлөгдөөгүйг шалга. Untracked `docs/ui/` (хэрэглэгчийн UI загвар)-д хүрэхгүй. Push хийхгүй. Тайлан ≤ 10 мөр.
 
 ## Карт — UI шинэчлэл (шийдвэр гарсан, 11-17; загвар: Design canvas «UI загвар 3», самбар 17–21)
-### T-27 UI лаб: утасны HUD 2 — Агент 13 · Opus
+### T-27 ✅ `b1c2806` UI лаб: утасны HUD 2 — загвар батлагдаж (11-25) тоглоомд орсон (`input/hud2/`); UI handoff 1 (мэню, тохиргоо) ✅ `ea59236`; T-18 гэр/майхны саад ✅ `a793082` (хашааны хайс үлдсэн)
 Зорилго: хэрэглэгч шинэ HUD-ыг утсан дээр **бодитоор** туршиж санал өгнө. Зөвхөн утас, хэвтээ (800–932 × 360–430, safe-area ≥ 48 px).
 - Файл: `game/ui-lab.html`, `game/src/ui-lab/**`, `game/vite.config.ts` (оролт нэмэх). **`input/touch.ts`, `main.ts`, `render/ui/**`-д хүрэхгүй** (зөвхөн импорт).
 - Жинхэнэ тайз + `PlayerController` (бууц, гэр, уяан дээрх морь, тэрэг, сүү). `?screen=calm|near|wheel|riding` эхлэлийн байдал.

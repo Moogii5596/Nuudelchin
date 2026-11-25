@@ -1,13 +1,13 @@
 /**
- * T-27 UI лаб: HUD 2-ын контекст логик (src/ui-lab/context.ts) — алтан товчны жагсаалт, Horse товчны төлөв.
+ * T-27 UI лаб: HUD 2-ын контекст логик (src/input/hud2/context.ts) — алтан товчны жагсаалт, Horse товчны төлөв.
  */
 import { describe, expect, it } from 'vitest';
 import { loadConfig } from '../src/sim/config';
 import { createInitialState, type GameState } from '../src/sim/state';
 import { ridingHorse } from '../src/sim/systems/herder';
 import { addVehicle, fleetOf } from '../src/sim/systems/travel';
-import { contextTargets, horseMode } from '../src/ui-lab/context';
-import lab from '../../data/ui-lab.json';
+import { contextTargets, horseMode } from '../src/input/hud2/context';
+import lab from '../../data/hud2.json';
 
 const cfg = loadConfig();
 const REACH = lab.pickupReach;
@@ -74,6 +74,20 @@ describe('ui-lab: контекст товч', () => {
     st.player.driving = null;
     st.player.place = 'map';
     expect(contextTargets(cfg, st, REACH)).toEqual([{ kind: 'fast', d: -1, hold: true }]);
+  });
+});
+
+describe('HUD 2: чоно ойртоход «Үргээх» эхэнд', () => {
+  it('үргээх зайд чоно байвал алтан товч = scare; хол бол үгүй', () => {
+    const st = fresh();
+    const w = st.wolves.list[0];
+    if (!w) return;   // энэ seed-д чоно үүсээгүй бол шалгах зүйлгүй
+    for (const o of st.wolves.list) Object.assign(o, { x: 500, z: 500 });
+    expect(kinds(st)).not.toContain('scare');
+    Object.assign(w, { x: st.player.x + cfg.wolves.scareRadius.onFoot - 1, z: st.player.z, mode: 'stalk' });
+    expect(kinds(st)[0]).toBe('scare');
+    st.player.mounted = true;
+    expect(kinds(st).slice(0, 2)).toEqual(['scare', 'gallop']);
   });
 });
 

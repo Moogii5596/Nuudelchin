@@ -947,5 +947,6 @@
   "menu.code.enter": "Код оруулах",
   "menu.feedback.soon": "Тун удахгүй",
   "menu.saveData": "Хадгалалт",
-  "menu.transferCode": "Шилжүүлэх код"
+  "menu.transferCode": "Шилжүүлэх код",
+  "lab.wolf": "Чоно!"
 }

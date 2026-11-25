@@ -30,7 +30,9 @@ import { GameView } from './render/scene';
 import { Panels } from './render/ui/panels';
 import { PRODUCT_EMOJI, SEASON_EMOJI, SEASON_NAME, fmtMinutes, fmtMoney, fmtNum, productName } from './render/ui/names';
 import { PRODUCTS, type ProductId } from './sim/state';
-import { driverSendTarget, PlayerController } from './input/controller';
+import { driverSendTarget, PlayerController, type ActionKind } from './input/controller';
+import type { CommandResult } from './sim/commands';
+import { createHud2 } from './input/hud2/bind';
 import { t } from './i18n/i18n';
 import { tm } from './i18n/msg';
 import { nextStage, seasonGoal } from './sim/systems/milestones';
@@ -305,22 +307,23 @@ function start(boot?: Boot): void {
   };
   const controllerWalk = view.sum.playerWalk;   // сумын төвийн саад (барилга, хашаа) — тоглогч нэвтлэхгүй
   let speedIdx = Math.max(0, Math.min(cfg.time.speeds.length - 1, (Number(qs.get('speed')) || 1) - 1));
+  const onAction = (kind: ActionKind, res: CommandResult): void => {
+    if (res.ok && (kind === 'shout' || kind === 'scare' || kind === 'call')) view.characters.say(kind);
+    // Жижиг үйлдэл: мэдэгдэл биш — малчны дээр 1 секунд хөвөх текст («+3 ноос»); 📜-д орохгүй
+    const now = carryNow();
+    if (res.ok && (kind === 'pickup' || kind === 'deposit')) {
+      const parts = PRODUCTS.map((pr) => ({ pr, d: (now[pr] ?? 0) - (lastCarry[pr] ?? 0) })).filter((x) => Math.abs(x.d) > 1e-9)
+        .map((x) => `${kind === 'deposit' ? '📦 ' : ''}+${fmtNum(Math.abs(x.d))} ${PRODUCT_EMOJI[x.pr]} ${productName(x.pr).toLowerCase()}`);
+      floatText(parts.join(' · ') || tm(res.msg ?? t('ui.put_in_storage')));
+    } else if (res.ok && res.msg) floatText(tm(res.msg));
+    else if (res.msg) toast(res.msg, 'bad');
+    lastCarry = now;
+  };
   const controller = new PlayerController(cfg, {
     dispatch: (cmd) => sim.command(cmd),
     state: () => state,
     blocked: (code) => panels.isOpen || menu.isOpen || !!skip || (photoMode && code !== 'KeyP'),
-    onAction: (kind, res) => {
-      if (res.ok && (kind === 'shout' || kind === 'scare' || kind === 'call')) view.characters.say(kind);
-      // Жижиг үйлдэл: мэдэгдэл биш — малчны дээр 1 секунд хөвөх текст («+3 ноос»); 📜-д орохгүй
-      const now = carryNow();
-      if (res.ok && (kind === 'pickup' || kind === 'deposit')) {
-        const parts = PRODUCTS.map((pr) => ({ pr, d: (now[pr] ?? 0) - (lastCarry[pr] ?? 0) })).filter((x) => Math.abs(x.d) > 1e-9)
-          .map((x) => `${kind === 'deposit' ? '📦 ' : ''}+${fmtNum(Math.abs(x.d))} ${PRODUCT_EMOJI[x.pr]} ${productName(x.pr).toLowerCase()}`);
-        floatText(parts.join(' · ') || tm(res.msg ?? t('ui.put_in_storage')));
-      } else if (res.ok && res.msg) floatText(tm(res.msg));
-      else if (res.msg) toast(res.msg, 'bad');
-      lastCarry = now;
-    },
+    onAction,
     onSpeed: (i) => {
       speedIdx = i;
     },
@@ -375,7 +378,9 @@ function start(boot?: Boot): void {
     else bar?.showSkip(clockText(goal.minute));
   };
   // Баруун дээд: хурд (1× 2× 3× 4× цэс) + ⏭ алгасах — утас, компьютер хоёуланд
-  const bar = captureMode ? null : new TimeBar({
+  // Утас: HUD 2 (input/hud2/, 2026-11-25 батлагдсан) — хурд, алгасах, цэс, товчнууд тэнд; TimeBar зөвхөн компьютерт
+  const useHud2 = isTouch && !captureMode;
+  const bar = captureMode || useHud2 ? null : new TimeBar({
     speeds: cfg.time.speeds,
     speedIdx: () => speedIdx,
     setSpeed: (i) => controller.press('Digit' + (i + 1)),
@@ -386,7 +391,28 @@ function start(boot?: Boot): void {
     startSkip,
     stopSkip: () => skip?.cancel(),
   });
-  const touchUI = isTouch && bar ? new TouchUI(cfg, controller, bar, { menuGate: !!boot }) : null;
+  const touchUI = isTouch && !captureMode ? new TouchUI(cfg, controller, bar, { menuGate: !!boot }) : null;
+  const hud2 = useHud2 ? createHud2({
+    cfg, state, controller,
+    act: (kind, cmd) => onAction(kind, sim.command(cmd)),
+    blocked: () => panels.isOpen || menu.isOpen || !!skip,
+    hidden: () => panels.isOpen || menu.isOpen || help.style.display === 'block' || photoMode || !!touchUI?.paused,
+    speedIdx: () => speedIdx,
+    setSpeed: (i) => controller.press('Digit' + (i + 1)),
+    skip: { start: startSkip, stop: () => skip?.cancel(), active: () => !!skip },
+    project: (x, z, h) => view.screenPoint(x, view.heightAt(x, z) + h, z),
+    grass: () => grassAvg,
+    menuItems: [
+      { code: 'KeyB', icon: 'box', label: t('ui.storage') },
+      { code: 'KeyM', icon: 'camp', label: t('ui.move_camp') },
+      { code: 'KeyJ', icon: 'people', label: t('ui.helpers_319') },
+      { code: 'KeyK', icon: 'dog', label: t('ui.dogs') },
+      { code: 'KeyZ', icon: 'zones', label: t('ui.zones') },
+      { code: 'F1', icon: 'menu', label: t('ui.menu') },
+      { code: 'full', icon: 'full', label: t('ui.fullscreen') },
+    ],
+    rotate: false,
+  }) : null;
   if (isTouch) view.cam.touchRotate = (x) => x >= window.innerWidth / 2;   // зүүн хагас — джойстик, газар товших; баруун хагас — камер
   let hudCompact = isTouch;
   if (isTouch && !captureMode) {
@@ -422,7 +448,7 @@ function start(boot?: Boot): void {
     });
   }
   view.cam.onClick = (nx, ny, dbl) => {
-    if (panels.isOpen) return;
+    if (panels.isOpen || hud2?.hud.wheelIsOpen) return;
     if (state.player.place === 'map') {
       const g = view.map.pick(nx, ny);
       if (g) {
@@ -526,9 +552,11 @@ function start(boot?: Boot): void {
     const fast = state.player.place === 'map' && !state.move && (controller.isDown('ShiftLeft') || controller.isDown('ShiftRight'));
     // Алгасах (⏭): цаг үсрэхгүй — симуляц skip.speed× хурдаар жинхэнээр алхана; цонх нээгдвэл зогсоно
     if (skip && paused) skip.cancel();
-    const speed = skip ? cfg.time.skip.speed : (cfg.time.speeds[speedIdx] ?? 1) * (fast ? cfg.time.mapFastForward : 1);
+    // HUD 2: Actions дугуй нээлттэй үед тоглоом удааширна (data/hud2.json wheel.speed)
+    const slow = hud2?.slow() ?? 1;
+    const speed = skip ? cfg.time.skip.speed : (cfg.time.speeds[speedIdx] ?? 1) * (fast ? cfg.time.mapFastForward : 1) * slow;
     if (!paused) {
-      if (!skip) controller.update(dt, state, view.cam.forward());
+      if (!skip) controller.update(dt * slow, state, view.cam.forward());
       acc += dt * speed;
       const maxSteps = skip ? cfg.time.skip.maxStepsPerFrame : 60;
       let steps = 0;
@@ -555,7 +583,8 @@ function start(boot?: Boot): void {
     const spm = secPerMinuteNow();
     // Утсанд алгасах үед рендерийг сийрэгжүүлнэ (симуляцид CPU үлдээнэ)
     skipFrame = skip ? skipFrame + 1 : 0;
-    if (!skip || !isTouch || skipFrame % cfg.time.skip.touchRenderEvery === 0) view.frame(state, Math.min(1, acc / spm), paused && !menu.isStart ? 0 : dt, paused ? 0 : spm / speed);
+    if (!skip || !isTouch || skipFrame % cfg.time.skip.touchRenderEvery === 0) view.frame(state, Math.min(1, acc / spm), paused && !menu.isStart ? 0 : dt * slow, paused ? 0 : spm / speed);
+    hud2?.frame(dt);
 
     fpsFrames++;
     fpsT += rawDt;

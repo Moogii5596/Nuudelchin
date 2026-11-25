@@ -947,5 +947,6 @@
   "menu.code.enter": "Enter a code",
   "menu.feedback.soon": "Coming soon",
   "menu.saveData": "Saves",
-  "menu.transferCode": "Transfer code"
+  "menu.transferCode": "Transfer code",
+  "lab.wolf": "Wolf!"
 }

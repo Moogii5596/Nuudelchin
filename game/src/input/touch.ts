@@ -6,6 +6,8 @@
  *  - баруун дээд: хурд, ⏭ алгасах (render/ui/timebar.ts), бүтэн дэлгэц, ☰ цэс (агуулах, нүүх, туслах, нохой, бүс, тусламж); 🧺 ачаа бэлтгэх нь тэрэгний дэргэд үйлдлийн товчоор гарна
  * Товч бүр PlayerController.press(<товчны код>)-ийг дуудна — тоглоомын логик гартай яг адил.
  * Газар дээр дарах (тийш явах), чирэх (камер), хоёр хуруугаар чимхэх (томруулах) — render/camera.ts.
+ * 2026-11-25: HUD 2 (input/hud2/) батлагдсанаар джойстик, үйлдлийн товч, ☰ нь тэнд шилжсэн (энд body.hud2-оор нуугдана);
+ * энэ файлд босоо байрлалын сануулга, эхлэлийн хаалга, суулгах заавар, бүтэн дэлгэц үлдэнэ.
  */
 import { t } from '../i18n/i18n';
 import type { GameConfig } from '../sim/config';
@@ -39,7 +41,7 @@ export class TouchUI {
   private sheetEl: HTMLElement;
 
   /** opts.menuGate: «▶ Тоглох» хаалгыг эхлэлийн цэс (render/ui/menu.ts) орлоно — цэсний эхний товшилт нь хэвтээ/бүтэн дэлгэцийн зөвшөөрөл болно (M6.3) */
-  constructor(private cfg: GameConfig, private ctl: PlayerController, private bar: TimeBar, opts: { menuGate?: boolean } = {}) {
+  constructor(private cfg: GameConfig, private ctl: PlayerController, private bar: TimeBar | null, opts: { menuGate?: boolean } = {}) {
     document.body.classList.add('touch');
 
     // --- Джойстик: зүүн доод бүсийн хаана ч хуруугаа тавихад тэнд гарч ирнэ (хөвөгч) ---
@@ -146,11 +148,13 @@ export class TouchUI {
     document.body.appendChild(actBox);
 
     // --- Баруун дээд: хурд, ⏭ (TimeBar) + бүтэн дэлгэц + ☰ цэс ---
+    // bar === null: утасны HUD 2 (input/hud2/) идэвхтэй — хурд, алгасах, ☰ нь тэнд; энд зөвхөн нуугдмал загвар үлдэнэ
+    const topBox = this.bar?.box ?? el('div', 'tmenu');
     const top = (icon: string, title: string): HTMLButtonElement => {
       const b = el('button', 'tbtn sm', icon);
       b.title = title;
       b.setAttribute('aria-label', title);
-      this.bar.box.appendChild(b);
+      topBox.appendChild(b);
       return b;
     };
     if (document.fullscreenEnabled) {

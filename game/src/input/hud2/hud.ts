@@ -1,12 +1,13 @@
 /**
- * T-27 UI лаб — утасны HUD 2-ын DOM давхарга (хэвтээ утас). Загвар: game/ui-lab.html-ийн CSS (.l-*).
+ * Утасны HUD 2-ын DOM давхарга (хэвтээ утас; T-27 лабд туршиж 2026-11-25 батлагдсан). Загвар: hud2.css (.l-*).
  *  - зүүн доод: хөвөгч джойстик
  *  - баруун доод, эрхий хурууны 4 тогтмол байрлал: алтан контекст товч, Horse, Actions (дугуй), Map
  *  - ойр 2+ зүйл: алтан товчны хажууд жагсаалт (хамгийн ойрх нь сонгогдсон) + объект дээр тэмдэг
  *  - дээд: нэг мөр төлөв (дарахад дэлгэрнэ); баруун дээд: хурд, алгасах, цэс
- * Тоглоомын логик энд байхгүй: бүх үйлдэл HudHooks-оор гарна (main.ts → PlayerController / Command).
+ * Тоглоомын логик энд байхгүй: бүх үйлдэл HudHooks-оор гарна (bind.ts → PlayerController / Command).
  */
-import type { SkipTarget } from '../input/skip';
+import './hud2.css';
+import type { SkipTarget } from '../skip';
 import type { HorseMode, Target } from './context';
 import { icon } from './icons';
 
@@ -95,7 +96,8 @@ export class LabHud {
   private expanded = false;
   wheelIsOpen = false;
 
-  constructor(private L: HudLabels, private hooks: HudHooks, private wheelCfg: { slidePx: number; radius: number }) {
+  constructor(private L: HudLabels, private hooks: HudHooks, private wheelCfg: { slidePx: number; radius: number }, private opts: { rotate: boolean } = { rotate: true }) {
+    document.body.classList.add('hud2');   // хуучин утасны HUD-ыг нууна, мэдэгдлийг дээш шилжүүлнэ (hud2.css)
     const root = (this.root = mk('div', 'l-hud', '', document.body));
     this.marks = mk('div', 'l-marks', '', root);
 
@@ -131,7 +133,7 @@ export class LabHud {
       const b = mk('button', 'l-item', `${icon(it.icon, 20)}<span>${it.label}</span>`, this.menuPop);
       b.addEventListener('click', () => { this.closePops(); this.hooks.menu(it.code); });
     }
-    const scenes = mk('div', 'l-scenes', '', this.menuPop);
+    const scenes = L.scenes.length ? mk('div', 'l-scenes', '', this.menuPop) : this.menuPop;
     for (const s of L.scenes) mk('button', 'l-chip', s, scenes).addEventListener('click', () => this.hooks.scene(s));
 
     // --- Джойстик (зүүн доод бүсэд хуруу тавьсан газар гарч ирнэ) ---
@@ -326,7 +328,7 @@ export class LabHud {
   update(m: HudModel): void {
     this.model = m;
     const portrait = this.portrait;
-    this.rotateEl.classList.toggle('open', portrait);
+    this.rotateEl.classList.toggle('open', portrait && this.opts.rotate);
     this.root.classList.toggle('hide', m.hidden || portrait);
     if (m.hidden && this.wheelIsOpen) this.setWheel(false);
     this.statusEl.innerHTML = m.status;

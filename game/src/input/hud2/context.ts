@@ -1,21 +1,22 @@
 /**
- * T-27 UI лаб — HUD 2-ын «юу ойрхон байна» логик (цэвэр функц: DOM, Three.js үгүй; тест tests/uiLabContext.test.ts).
+ * Утасны HUD 2-ын «юу ойрхон байна» логик (цэвэр функц: DOM, Three.js үгүй; тест tests/hud2Context.test.ts).
  * Алтан контекст товч: ойрхон байгаа зүйлсийн жагсаалт (хамгийн ойрх нь эхэнд). Horse товч: дуудах / унах / буух.
  * Зай, босго бүгд тоглоомын тохиргооноос (player.mountRange, vehicles.road.enterRange, interiors.enterR, products.pickupRadius).
  */
-import type { GameConfig } from '../sim/config';
-import type { GameState } from '../sim/state';
-import { horseInScene, ridingHorse } from '../sim/systems/herder';
-import { nearestVehicle } from '../sim/systems/travel';
-import { atExit, interiorService, nearEnterDoor } from '../sim/systems/interior';
-import { nearLotSlot, nearTradeDoor } from '../sim/systems/sumtown';
-import { nearTownDoor } from '../sim/systems/town';
-import { nearTeahouse } from '../sim/systems/helpers';
-import { nearTrader } from '../sim/systems/trader';
-import { driverSendTarget } from '../input/controller';
+import type { GameConfig } from '../../sim/config';
+import type { GameState } from '../../sim/state';
+import { horseInScene, ridingHorse } from '../../sim/systems/herder';
+import { nearestVehicle } from '../../sim/systems/travel';
+import { atExit, interiorService, nearEnterDoor } from '../../sim/systems/interior';
+import { nearLotSlot, nearTradeDoor } from '../../sim/systems/sumtown';
+import { nearTownDoor } from '../../sim/systems/town';
+import { nearTeahouse } from '../../sim/systems/helpers';
+import { nearTrader } from '../../sim/systems/trader';
+import { driverSendTarget } from '../controller';
+import { huntingWolves } from '../../sim/systems/wolves';
 
 export type TargetKind =
-  | 'mount' | 'cart' | 'exitCart' | 'send' | 'enter' | 'exit' | 'service' | 'pickup' | 'deposit' | 'trade' | 'gallop' | 'fast';
+  | 'scare' | 'mount' | 'cart' | 'exitCart' | 'send' | 'enter' | 'exit' | 'service' | 'pickup' | 'deposit' | 'trade' | 'gallop' | 'fast';
 
 export interface Target {
   kind: TargetKind;
@@ -52,6 +53,14 @@ function tradeSpot(cfg: GameConfig, st: GameState): { x: number; z: number } | t
   return nearTownDoor(cfg, st) || nearTrader(cfg, st) || nearLotSlot(cfg, st) || nearTeahouse(cfg, st) ? true : null;
 }
 
+/** Чоно ойртсон: мал хөөж байгаа, эсвэл үргээх зайд чоно байна (хуучин утасны «Үргээх» товчны нөхцөл) */
+export function wolfNear(cfg: GameConfig, st: GameState): boolean {
+  const p = st.player;
+  if (p.place !== 'camp' || p.away || p.driving || p.interior || st.move) return false;
+  const r = cfg.wolves.scareRadius[p.mounted ? 'mounted' : 'onFoot'];
+  return huntingWolves(st).length > 0 || st.wolves.list.some((w) => w.mode !== 'flee' && dist(w, p) <= r);
+}
+
 /** Алтан товчны жагсаалт: ойрхон байгаа зүйлс, хамгийн ойрх нь эхэнд. Хоосон бол товч бүдэг */
 export function contextTargets(cfg: GameConfig, st: GameState, pickupReach: number): Target[] {
   const p = st.player;
@@ -64,6 +73,7 @@ export function contextTargets(cfg: GameConfig, st: GameState, pickupReach: numb
     return out;
   }
   const out: Target[] = [];
+  if (wolfNear(cfg, st)) out.push({ kind: 'scare', d: -2 });   // аюул: бүхнээс түрүүлнэ (морьтой үед ч)
   const sumTrade = (): void => {
     if (p.place !== 'sum') return;
     const s = tradeSpot(cfg, st);
