@@ -226,6 +226,8 @@ export interface HomeConfig {
   cowYard: { x: number; z: number; r: number };   // үхэр шөнө хэвтэх газар (M4.5)
   tentRadius: number;
   gerRadius: number;
+  /** T-18: бууцны саадын зай (м) — safety.ts campObstacles; animal = зөвхөн дүрслэлд */
+  solid: { foot: number; mounted: number; vehicle: number; animal: number; vehicleSlow: number };
 }
 
 /** Газрын зураг (data/worldmap.json, км) — M4.6 */

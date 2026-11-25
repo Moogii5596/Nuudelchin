@@ -13,7 +13,7 @@ import { riverZ } from '../sim/terrain';
 import { nearLotSlot, worldLimit } from '../sim/systems/sumtown';
 import { atExit, currentRoom, interiorService, nearEnterDoor } from '../sim/systems/interior';
 import { m } from '../sim/msg';
-import { gerRadiusFor } from '../sim/systems/gerLayout';
+import { campObstacles, pushOutOfObstacles } from '../sim/systems/safety';
 import { nearestFreeSpot, pushOut, slideMove, stuckStep, type StuckState, type WalkSolids } from '../sim/systems/sumwalk';
 
 export type ActionKind = 'shout' | 'scare' | 'call' | 'mount' | 'uurga' | 'pickup' | 'deposit' | 'dog' | 'vehicle' | 'map' | 'interior';
@@ -317,13 +317,11 @@ export class PlayerController {
     let x = p.x + (vx / l) * speed * dt;
     let z = p.z + (vz / l) * speed * dt;
 
-    // Майхан/гэрийг тойрно
-    const home = this.cfg.camps.home;
-    const hr = (state.home === 'ger' ? gerRadiusFor(this.cfg.ger, home.gerRadius, state.homeSize) : home.tentRadius) + (p.mounted ? 0.8 : 0.3);
-    const hd = Math.hypot(x - home.x, z - home.z);
-    if (p.place === 'camp' && hd < hr) {
-      x = home.x + ((x - home.x) / (hd || 1)) * hr;
-      z = home.z + ((z - home.z) / (hd || 1)) * hr;
+    // Гэр, майхан, туслахын байрыг тойрно (T-18: бүх саад — sim/systems/safety.ts campObstacles)
+    if (p.place === 'camp') {
+      const S = this.cfg.camps.home.solid;
+      const q = pushOutOfObstacles(campObstacles(this.cfg, state), x, z, p.mounted ? S.mounted : S.foot);
+      x = q.x; z = q.z;
     }
     // Сумын төв: барилга, хашааг нэвтлэхгүй (саадыг дагаж гулсана); N сек хөдлөхгүй бол чөлөөт цэг рүү түлхэнэ
     if (p.place === 'sum' && this.walk) {
@@ -379,16 +377,11 @@ export class PlayerController {
     let heading = p.heading + turn * dt;
     let x = p.x + Math.sin(heading) * v * dt;
     let z = p.z + Math.cos(heading) * v * dt;
-    // Майхан/гэрийг мөргөхгүй
+    // Гэр, майхан, туслахын байрыг мөргөхгүй (T-18)
     if (p.place === 'camp') {
-      const home = this.cfg.camps.home;
-      const hr = (state.home === 'ger' ? gerRadiusFor(this.cfg.ger, home.gerRadius, state.homeSize) : home.tentRadius) + 2.5;
-      const hd = Math.hypot(x - home.x, z - home.z);
-      if (hd < hr) {
-        x = home.x + ((x - home.x) / (hd || 1)) * hr;
-        z = home.z + ((z - home.z) / (hd || 1)) * hr;
-        v *= 0.3;
-      }
+      const S = this.cfg.camps.home.solid;
+      const q = pushOutOfObstacles(campObstacles(this.cfg, state), x, z, S.vehicle);
+      if (q.hit) { x = q.x; z = q.z; v *= S.vehicleSlow; }
     }
     if (p.place === 'sum' && this.walk) {   // тээвэр барилга, хашаа мөргөхгүй
       const q = pushOut(this.walk, x, z, this.cfg.worldmap.sum3d.walk.vehicleR);

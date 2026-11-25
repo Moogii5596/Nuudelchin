@@ -13,6 +13,7 @@ import { angDiff } from './util';
 import { visualStyle } from './style';
 import { quality as activeQuality, type Quality } from '../device';
 import { hasModel, ModelAnimals, placedOf } from './animal/view';
+import { campObstacles, pushOutOfObstacles } from '../sim/systems/safety';
 
 /** Мал бүрийн дүрслэлийн төлөв (sim-д хадгалахгүй) */
 interface Viz {
@@ -56,6 +57,8 @@ export class AnimalsView {
    */
   update(state: GameState, heightAt: (x: number, z: number) => number, alpha: number, dt: number, stepSec: number): void {
     if (dt > 0) this.frameNo++;
+    // T-18: мал гэр, майхан дундуур «нэвт» харагдахгүй — зөвхөн дүрслэлийн байрлалыг саадын ирмэг рүү түлхэнэ (sim хэвээр)
+    const obs = campObstacles(this.cfg, state), bodyR = this.cfg.camps.home.solid.animal;
     for (const a of state.animals) {
       if (a.riding) continue; // унаа морийг characters.ts зурна
       if (!hasModel(a.species)) continue;
@@ -65,8 +68,8 @@ export class AnimalsView {
         this.viz.set(a.id, v);
       }
       v.seen = this.frameNo;
-      const x = v.px + (a.x - v.px) * alpha;
-      const z = v.pz + (a.z - v.pz) * alpha;
+      const q = pushOutOfObstacles(obs, v.px + (a.x - v.px) * alpha, v.pz + (a.z - v.pz) * alpha, bodyR);
+      const x = q.x, z = q.z;
       const moved = Math.hypot(a.x - v.px, a.z - v.pz);
       const speed = stepSec > 0 ? moved / stepSec : 0; // м/сек (бодит)
       // Чиглэл: хөдөлж байвал хөдлөх зүг рүү, үгүй бол sim-ийн чиглэл рүү зөөлөн эргэнэ

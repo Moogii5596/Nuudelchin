@@ -63,7 +63,7 @@ FILE game/src/i18n/npcStrings.ts 0.8KB 16L exports: npcText,NPC_LINES,npcLine
 SYM game/src/i18n/npcStrings.ts:11 fn npcText
 SYM game/src/i18n/npcStrings.ts:14 const NPC_LINES
 SYM game/src/i18n/npcStrings.ts:16 const npcLine
-FILE game/src/input/controller.ts 17.7KB 403L exports: ActionKind,ControllerHooks,driverSendTarget,PlayerController
+FILE game/src/input/controller.ts 17.5KB 396L exports: ActionKind,ControllerHooks,driverSendTarget,PlayerController
 SYM game/src/input/controller.ts:19 type ActionKind
 SYM game/src/input/controller.ts:21 interface ControllerHooks
 SYM game/src/input/controller.ts:33 fn angDiff
@@ -78,7 +78,7 @@ SYM game/src/input/controller.ts:219 method PlayerController.useAction
 SYM game/src/input/controller.ts:244 method PlayerController.isDown
 SYM game/src/input/controller.ts:249 method PlayerController.moveTo
 SYM game/src/input/controller.ts:254 method PlayerController.update
-SYM game/src/input/controller.ts:362 method PlayerController.drive
+SYM game/src/input/controller.ts:360 method PlayerController.drive
 FILE game/src/input/skip.ts 4.7KB 100L exports: SkipTarget,SkipStop,SkipGoal,skipGoal,SkipRun
 SYM game/src/input/skip.ts:13 type SkipTarget
 SYM game/src/input/skip.ts:15 type SkipStop
@@ -338,12 +338,12 @@ SYM game/src/render/animal/view.ts:152 method ModelAnimals.place
 SYM game/src/render/animal/view.ts:182 method ModelAnimals.newLight
 FILE game/src/render/animal/wolf.ts 0.2KB 4L exports: wolfModel
 SYM game/src/render/animal/wolf.ts:4 const wolfModel
-FILE game/src/render/animals.ts 4.0KB 87L exports: AnimalsView
-SYM game/src/render/animals.ts:25 class AnimalsView
-SYM game/src/render/animals.ts:37 method AnimalsView.setQuality
-SYM game/src/render/animals.ts:43 method AnimalsView.snapshot
-SYM game/src/render/animals.ts:57 method AnimalsView.update
-SYM game/src/render/animals.ts:83 method AnimalsView.reset
+FILE game/src/render/animals.ts 4.5KB 90L exports: AnimalsView
+SYM game/src/render/animals.ts:26 class AnimalsView
+SYM game/src/render/animals.ts:38 method AnimalsView.setQuality
+SYM game/src/render/animals.ts:44 method AnimalsView.snapshot
+SYM game/src/render/animals.ts:58 method AnimalsView.update
+SYM game/src/render/animals.ts:86 method AnimalsView.reset
 FILE game/src/render/building/civic.ts 41.6KB 327L exports: hipRoof,buildPublic,bandQuad,flares,buildTemple,railRun,buildMarket,floodlight,buildStadium,buildWrestle
 SYM game/src/render/building/civic.ts:9 fn hipRoof
 SYM game/src/render/building/civic.ts:19 fn buildPublic
@@ -1170,7 +1170,7 @@ SYM game/src/sim/commands.ts:98 fn nearHome
 SYM game/src/sim/commands.ts:110 fn ok
 SYM game/src/sim/commands.ts:111 fn fail
 SYM game/src/sim/commands.ts:113 fn applyCommand
-FILE game/src/sim/config.ts 25.3KB 469L exports: Species,Sex,Season,SeasonsConfig,SPECIES,TimeConfig,SpeciesConfig,AnimalsConfig,PastureTypeConfig,GrazingConfig,HerdConfig,PastureConfig,WaterShape,TerrainConfig,+9
+FILE game/src/sim/config.ts 25.6KB 471L exports: Species,Sex,Season,SeasonsConfig,SPECIES,TimeConfig,SpeciesConfig,AnimalsConfig,PastureTypeConfig,GrazingConfig,HerdConfig,PastureConfig,WaterShape,TerrainConfig,+9
 SYM game/src/sim/config.ts:42 type Species
 SYM game/src/sim/config.ts:43 type Sex
 SYM game/src/sim/config.ts:44 type Season
@@ -1187,13 +1187,13 @@ SYM game/src/sim/config.ts:194 type WaterShape
 SYM game/src/sim/config.ts:199 interface TerrainConfig
 SYM game/src/sim/config.ts:210 interface CampConfig
 SYM game/src/sim/config.ts:220 interface HomeConfig
-SYM game/src/sim/config.ts:232 interface WorldLocation
-SYM game/src/sim/config.ts:237 interface WorldMapConfig
-SYM game/src/sim/config.ts:259 interface StartAnimal
-SYM game/src/sim/config.ts:267 interface GameConfig
-SYM game/src/sim/config.ts:305 fn loadConfig
-SYM game/src/sim/config.ts:342 fn validateConfig
-SYM game/src/sim/config.ts:410 fn validateSumLayout
+SYM game/src/sim/config.ts:234 interface WorldLocation
+SYM game/src/sim/config.ts:239 interface WorldMapConfig
+SYM game/src/sim/config.ts:261 interface StartAnimal
+SYM game/src/sim/config.ts:269 interface GameConfig
+SYM game/src/sim/config.ts:307 fn loadConfig
+SYM game/src/sim/config.ts:344 fn validateConfig
+SYM game/src/sim/config.ts:412 fn validateSumLayout
 FILE game/src/sim/msg.ts 0.9KB 18L exports: MsgParam,Msg,raw,m
 SYM game/src/sim/msg.ts:5 type MsgParam
 SYM game/src/sim/msg.ts:6 interface Msg
@@ -1583,16 +1583,19 @@ SYM game/src/sim/systems/production.ts:14 fn groundAgingStep
 FILE game/src/sim/systems/publicLayout.ts 6.5KB 78L exports: publicInteriorKinds,publicBlockers
 SYM game/src/sim/systems/publicLayout.ts:15 const publicInteriorKinds
 SYM game/src/sim/systems/publicLayout.ts:18 fn publicBlockers
-FILE game/src/sim/systems/safety.ts 7.4KB 130L exports: StuckConfig,stuckCfg,waterDepthAt,inBounds,isWalkable,nearDen,nearestWalkable,safeFleeTarget,detectStuck
-SYM game/src/sim/systems/safety.ts:12 interface StuckConfig
-SYM game/src/sim/systems/safety.ts:32 const stuckCfg
-SYM game/src/sim/systems/safety.ts:35 fn waterDepthAt
-SYM game/src/sim/systems/safety.ts:46 fn inBounds
-SYM game/src/sim/systems/safety.ts:54 fn isWalkable
-SYM game/src/sim/systems/safety.ts:59 fn nearDen
-SYM game/src/sim/systems/safety.ts:66 fn nearestWalkable
-SYM game/src/sim/systems/safety.ts:83 fn safeFleeTarget
-SYM game/src/sim/systems/safety.ts:108 fn detectStuck
+FILE game/src/sim/systems/safety.ts 9.5KB 167L exports: StuckConfig,stuckCfg,waterDepthAt,inBounds,isWalkable,nearDen,nearestWalkable,safeFleeTarget,detectStuck,CampObstacle,campObstacles,pushOutOfObstacles
+SYM game/src/sim/systems/safety.ts:13 interface StuckConfig
+SYM game/src/sim/systems/safety.ts:33 const stuckCfg
+SYM game/src/sim/systems/safety.ts:36 fn waterDepthAt
+SYM game/src/sim/systems/safety.ts:47 fn inBounds
+SYM game/src/sim/systems/safety.ts:55 fn isWalkable
+SYM game/src/sim/systems/safety.ts:60 fn nearDen
+SYM game/src/sim/systems/safety.ts:67 fn nearestWalkable
+SYM game/src/sim/systems/safety.ts:84 fn safeFleeTarget
+SYM game/src/sim/systems/safety.ts:109 fn detectStuck
+SYM game/src/sim/systems/safety.ts:135 interface CampObstacle
+SYM game/src/sim/systems/safety.ts:142 fn campObstacles
+SYM game/src/sim/systems/safety.ts:155 fn pushOutOfObstacles
 FILE game/src/sim/systems/seasons.ts 11.2KB 232L exports: yearDay,seasonStart,seasonOf,seasonProgress,yearOf,snowAccess,applyAccess,campAccess,dailySnow,dailyGrass,dailyAwayGrass,ShelterFn,coldNight,feedHay,+3
 SYM game/src/sim/systems/seasons.ts:17 fn yearDay
 SYM game/src/sim/systems/seasons.ts:22 fn seasonStart
@@ -1916,6 +1919,7 @@ FILE game/tests/breeding.test.ts 1.4KB 33L
 FILE game/tests/buildings.test.ts 18.9KB 250L
 FILE game/tests/callHorse.test.ts 2.5KB 65L
 FILE game/tests/camclip.test.ts 3.9KB 68L
+FILE game/tests/campObstacles.test.ts 3.8KB 75L
 FILE game/tests/characters.test.ts 30.1KB 507L
 FILE game/tests/clock.test.ts 2.7KB 52L
 FILE game/tests/config.test.ts 1.4KB 29L
@@ -2146,7 +2150,7 @@ DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
 DOC docs/plan/V.md:24-32 ## Нээлттэй ажил
 DOC docs/plan/V.md:33-36 ## Зогссон цэг
-FILE docs/plan/playtest.md 25.9KB 161L
+FILE docs/plan/playtest.md 26.7KB 166L
 DOC docs/plan/playtest.md:15-20 ## A. FPS ба төхөөрөмж
 DOC docs/plan/playtest.md:21-41 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
 DOC docs/plan/playtest.md:42-115 ## C. Мэдрэмж, үе шат бүрээр
@@ -2158,6 +2162,7 @@ DOC docs/plan/playtest.md:136-139 ## Мэдэгдэж буй дутагдал: N
 DOC docs/plan/playtest.md:140-146 ## Утасны HUD, удирдлага (2026-11-16)
 DOC docs/plan/playtest.md:147-155 ## UI лаб: утасны HUD 2 (T-27, 2026-11-25)
 DOC docs/plan/playtest.md:156-161 ## Үндсэн мэню, тохиргоо — UI handoff 1 (2026-11-25)
+DOC docs/plan/playtest.md:162-166 ## Бууцны саад — T-18 (2026-11-25)
 FILE docs/seasons-camps.md 10.2KB 104L
 DOC docs/seasons-camps.md:17-40 ## 1. Хэрэглэгчийн шийдвэрүүд
 DOC docs/seasons-camps.md:41-54 ## 2. Улирал

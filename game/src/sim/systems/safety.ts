@@ -5,6 +5,7 @@
  *  - `detectStuck`: зорилготой мал N алхам < minMove м хөдлөөгүй бол ойрын чөлөөтэй цэг рүү шилжүүлж `state.stuckEvents`-д бүртгэнэ
  * Тоо `data/pasture.json → grazing.stuck`.
  */
+import { gerRadiusFor } from './gerLayout';
 import type { GameConfig } from '../config';
 import type { Animal, GameState } from '../state';
 import { heightAt, waterDistance, waterLevel } from '../terrain';
@@ -128,3 +129,39 @@ export function detectStuck(cfg: GameConfig, state: GameState): number {
   }
   return n;
 }
+
+// ======================= T-18: бууцны саад (гэр, майхан, туслахын байр) =======================
+
+export interface CampObstacle { x: number; z: number; r: number }
+
+/**
+ * Гэрийн бууцны хатуу саадууд (тойрог): тоглогчийн гэр/майхан, нэмэлт гэрүүд, туслахын гэр/майхан, адуучны майхан.
+ * Малчин, жолоодож буй тээвэр эдгээрийг нэвтлэхгүй (input/controller.ts); малыг зурахдаа тойруулна (render/animals.ts).
+ * Sim-ийн малын хөдөлгөөн өөрчлөгдөхгүй (тэнцвэр, seed хэвээр).
+ */
+export function campObstacles(cfg: GameConfig, state: GameState): CampObstacle[] {
+  const home = cfg.camps.home, I = cfg.interiors;
+  const out: CampObstacle[] = [];
+  out.push({ x: home.x, z: home.z, r: state.home === 'ger' ? gerRadiusFor(cfg.ger, home.gerRadius, state.homeSize) : home.tentRadius });
+  for (const g of state.extraGers) out.push({ x: g.x, z: g.z, r: gerRadiusFor(cfg.ger, home.gerRadius, g.size) });
+  for (const d of state.helpers.dwellings) {
+    const scale = I.dwellingScale[d.kind];
+    out.push({ x: d.x, z: d.z, r: scale !== undefined ? I.dwellingBaseRadius * scale : home.tentRadius });
+  }
+  return out;
+}
+
+/** (x, z)-г саадуудаас гадагш түлхэнэ (саадын радиус + margin). Төвд яг давхцвал +z тийш. hit = түлхэгдсэн эсэх */
+export function pushOutOfObstacles(obs: readonly CampObstacle[], x: number, z: number, margin: number): { x: number; z: number; hit: boolean } {
+  let hit = false;
+  for (let pass = 0; pass < 2; pass++) {   // зэргэлдээ хоёр гэрийн завсарт нэг дахин
+    for (const o of obs) {
+      const r = o.r + margin, dx = x - o.x, dz = z - o.z, d = Math.hypot(dx, dz);
+      if (d >= r) continue;
+      hit = true;
+      if (d < 1e-6) { z = o.z + r; x = o.x; } else { x = o.x + (dx / d) * r; z = o.z + (dz / d) * r; }
+    }
+  }
+  return { x, z, hit };
+}
+

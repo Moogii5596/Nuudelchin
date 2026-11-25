@@ -260,6 +260,14 @@
       "z": 6
     },
     "tentRadius": 2.2,
+    "solid": {
+      "_doc": "T-18: бууцны саад (гэр, майхан, туслахын байр) — sim/systems/safety.ts campObstacles. Зай (м) саадын радиус дээр нэмэгдэнэ: foot = явган малчин, mounted = морьтой, vehicle = жолоодож буй тээвэр, animal = малын ДҮРСЛЭЛ (sim-ийн байрлал өөрчлөгдөхгүй, зөвхөн зурахдаа гэрийг тойруулна). vehicleSlow = мөргөхөд хурдны үржүүлэгч.",
+      "foot": 0.3,
+      "mounted": 0.8,
+      "vehicle": 2.5,
+      "animal": 0.7,
+      "vehicleSlow": 0.3
+    },
     "gerRadius": 2.5,
     "cowYard": {
       "x": 12,
