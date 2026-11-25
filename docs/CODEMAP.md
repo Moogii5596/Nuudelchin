@@ -15,6 +15,13 @@ SYM game/src/audio/bus.ts:35 method AudioBus.hasListeners
 SYM game/src/audio/bus.ts:41 const audio
 SYM game/src/audio/bus.ts:42 const emit
 SYM game/src/audio/bus.ts:43 const on
+FILE game/src/audio/volume.ts 1.8KB 39L exports: VOLUME_KEY,VOLUME_STEP,parseVolume,getVolume,setVolume,onVolume
+SYM game/src/audio/volume.ts:7 const VOLUME_KEY
+SYM game/src/audio/volume.ts:8 const VOLUME_STEP
+SYM game/src/audio/volume.ts:11 fn parseVolume
+SYM game/src/audio/volume.ts:20 fn getVolume
+SYM game/src/audio/volume.ts:29 fn setVolume
+SYM game/src/audio/volume.ts:36 fn onVolume
 FILE game/src/audio/watch.ts 2.8KB 64L exports: diffEvents,snapshot,AudioWatcher
 SYM game/src/audio/watch.ts:19 fn sumIncome
 SYM game/src/audio/watch.ts:26 fn diffEvents
@@ -40,7 +47,7 @@ SYM game/src/feedback.ts:6 const FEEDBACK_URL
 SYM game/src/feedback.ts:8 const feedbackEnabled
 SYM game/src/feedback.ts:11 fn buildFeedbackUrl
 SYM game/src/feedback.ts:19 fn openFeedback
-FILE game/src/i18n/i18n.ts 1.7KB 41L exports: Lang,LANG_KEY,resolveLang,setLang,getLang,t
+FILE game/src/i18n/i18n.ts 2.0KB 47L exports: Lang,LANG_KEY,resolveLang,setLang,getLang,t,tIn
 SYM game/src/i18n/i18n.ts:4 type Lang
 SYM game/src/i18n/i18n.ts:6 const LANG_KEY
 SYM game/src/i18n/i18n.ts:13 fn resolveLang
@@ -48,6 +55,7 @@ SYM game/src/i18n/i18n.ts:19 fn initialLang
 SYM game/src/i18n/i18n.ts:29 fn setLang
 SYM game/src/i18n/i18n.ts:33 fn getLang
 SYM game/src/i18n/i18n.ts:38 fn t
+SYM game/src/i18n/i18n.ts:44 fn tIn
 FILE game/src/i18n/msg.ts 0.9KB 20L exports: tm
 SYM game/src/i18n/msg.ts:8 fn param
 SYM game/src/i18n/msg.ts:14 fn tm
@@ -147,7 +155,7 @@ SYM game/src/persist/transfer.ts:23 fn isOnline
 SYM game/src/persist/transfer.ts:26 fn failFrom
 SYM game/src/persist/transfer.ts:38 fn createTransfer
 SYM game/src/persist/transfer.ts:56 fn redeemTransfer
-FILE game/src/persist/transferCode.ts 2.1KB 38L exports: CODE_ALPHABET,CODE_LENGTH,TTL_SECONDS,MAX_BYTES,API_PATH,newCode,normalizeCode,formatCode,TransferErrorKind
+FILE game/src/persist/transferCode.ts 2.5KB 45L exports: CODE_ALPHABET,CODE_LENGTH,TTL_SECONDS,MAX_BYTES,API_PATH,newCode,normalizeCode,formatCodeInput,formatCode,TransferErrorKind
 SYM game/src/persist/transferCode.ts:5 const CODE_ALPHABET
 SYM game/src/persist/transferCode.ts:6 const CODE_LENGTH
 SYM game/src/persist/transferCode.ts:8 const TTL_SECONDS
@@ -155,8 +163,9 @@ SYM game/src/persist/transferCode.ts:10 const MAX_BYTES
 SYM game/src/persist/transferCode.ts:11 const API_PATH
 SYM game/src/persist/transferCode.ts:14 fn newCode
 SYM game/src/persist/transferCode.ts:26 fn normalizeCode
-SYM game/src/persist/transferCode.ts:34 fn formatCode
-SYM game/src/persist/transferCode.ts:38 type TransferErrorKind
+SYM game/src/persist/transferCode.ts:34 fn formatCodeInput
+SYM game/src/persist/transferCode.ts:41 fn formatCode
+SYM game/src/persist/transferCode.ts:45 type TransferErrorKind
 FILE game/src/pwa.ts 4.9KB 107L exports: isIOS,isAndroid,inAppBrowser,installed,canLockLandscape,pwa,landscapeFullscreen,registerServiceWorker,onConnectionChange
 SYM game/src/pwa.ts:17 const isIOS
 SYM game/src/pwa.ts:18 const isAndroid
@@ -944,45 +953,48 @@ SYM game/src/render/terrain.ts:1304 method TerrainView.buildDens
 SYM game/src/render/terrain.ts:1341 method TerrainView.buildHome
 FILE game/src/render/ui/errorBanner.ts 1.1KB 27L exports: showErrorBanner
 SYM game/src/render/ui/errorBanner.ts:6 fn showErrorBanner
-FILE game/src/render/ui/menu.ts 26.8KB 513L exports: Intent,takeIntent,putIntent,MenuDeps,MenuUI
-SYM game/src/render/ui/menu.ts:26 type Intent
-SYM game/src/render/ui/menu.ts:31 fn takeIntent
-SYM game/src/render/ui/menu.ts:43 fn putIntent
-SYM game/src/render/ui/menu.ts:47 interface MenuDeps
-SYM game/src/render/ui/menu.ts:70 fn esc
-SYM game/src/render/ui/menu.ts:72 class MenuUI
-SYM game/src/render/ui/menu.ts:115 method MenuUI.showStart
-SYM game/src/render/ui/menu.ts:120 method MenuUI.toggleGame
-SYM game/src/render/ui/menu.ts:126 method MenuUI.close
-SYM game/src/render/ui/menu.ts:133 method MenuUI.showIntro
-SYM game/src/render/ui/menu.ts:140 method MenuUI.go
-SYM game/src/render/ui/menu.ts:155 method MenuUI.refreshSlots
-SYM game/src/render/ui/menu.ts:165 method MenuUI.onKey
-SYM game/src/render/ui/menu.ts:176 method MenuUI.render
-SYM game/src/render/ui/menu.ts:184 method MenuUI.feedbackBtn
-SYM game/src/render/ui/menu.ts:188 method MenuUI.ver
-SYM game/src/render/ui/menu.ts:192 method MenuUI.back
-SYM game/src/render/ui/menu.ts:196 method MenuUI.rStart
-SYM game/src/render/ui/menu.ts:216 method MenuUI.netBtn
-SYM game/src/render/ui/menu.ts:221 method MenuUI.rTransfer
-SYM game/src/render/ui/menu.ts:235 method MenuUI.rCode
-SYM game/src/render/ui/menu.ts:252 method MenuUI.xferError
-SYM game/src/render/ui/menu.ts:257 method MenuUI.rGame
-SYM game/src/render/ui/menu.ts:275 method MenuUI.slotInfoHtml
-SYM game/src/render/ui/menu.ts:284 method MenuUI.rSlots
-SYM game/src/render/ui/menu.ts:298 method MenuUI.rangeRow
-SYM game/src/render/ui/menu.ts:303 method MenuUI.difficultyHtml
-SYM game/src/render/ui/menu.ts:309 method MenuUI.rNew
-SYM game/src/render/ui/menu.ts:324 method MenuUI.firstFreeSlot
-SYM game/src/render/ui/menu.ts:329 method MenuUI.rFile
-SYM game/src/render/ui/menu.ts:339 method MenuUI.rSettings
-SYM game/src/render/ui/menu.ts:353 method MenuUI.rIntro
-SYM game/src/render/ui/menu.ts:363 method MenuUI.finishIntro
-SYM game/src/render/ui/menu.ts:370 method MenuUI.onInput
-SYM game/src/render/ui/menu.ts:381 method MenuUI.onChange
-SYM game/src/render/ui/menu.ts:395 method MenuUI.setDie
-SYM game/src/render/ui/menu.ts:400 method MenuUI.onClick
-SYM game/src/render/ui/menu.ts:509 method MenuUI.busyDo
+FILE game/src/render/ui/menu.ts 34.1KB 614L exports: Intent,takeIntent,putIntent,MenuDeps,MenuUI
+SYM game/src/render/ui/menu.ts:29 type Intent
+SYM game/src/render/ui/menu.ts:34 fn takeIntent
+SYM game/src/render/ui/menu.ts:46 fn putIntent
+SYM game/src/render/ui/menu.ts:50 interface MenuDeps
+SYM game/src/render/ui/menu.ts:73 fn esc
+SYM game/src/render/ui/menu.ts:75 class MenuUI
+SYM game/src/render/ui/menu.ts:122 method MenuUI.showStart
+SYM game/src/render/ui/menu.ts:127 method MenuUI.toggleGame
+SYM game/src/render/ui/menu.ts:133 method MenuUI.close
+SYM game/src/render/ui/menu.ts:140 method MenuUI.showIntro
+SYM game/src/render/ui/menu.ts:147 method MenuUI.go
+SYM game/src/render/ui/menu.ts:163 method MenuUI.refreshSlots
+SYM game/src/render/ui/menu.ts:173 method MenuUI.onKey
+SYM game/src/render/ui/menu.ts:184 method MenuUI.render
+SYM game/src/render/ui/menu.ts:193 method MenuUI.bi
+SYM game/src/render/ui/menu.ts:200 method MenuUI.biLine
+SYM game/src/render/ui/menu.ts:207 method MenuUI.feedbackCard
+SYM game/src/render/ui/menu.ts:213 method MenuUI.feedbackBtn
+SYM game/src/render/ui/menu.ts:217 method MenuUI.ver
+SYM game/src/render/ui/menu.ts:221 method MenuUI.back
+SYM game/src/render/ui/menu.ts:225 method MenuUI.rStart
+SYM game/src/render/ui/menu.ts:245 method MenuUI.netBtn
+SYM game/src/render/ui/menu.ts:250 method MenuUI.rTransfer
+SYM game/src/render/ui/menu.ts:264 method MenuUI.rCode
+SYM game/src/render/ui/menu.ts:281 method MenuUI.xferError
+SYM game/src/render/ui/menu.ts:286 method MenuUI.rGame
+SYM game/src/render/ui/menu.ts:304 method MenuUI.slotInfoHtml
+SYM game/src/render/ui/menu.ts:313 method MenuUI.rSlots
+SYM game/src/render/ui/menu.ts:327 method MenuUI.rangeRow
+SYM game/src/render/ui/menu.ts:332 method MenuUI.difficultyHtml
+SYM game/src/render/ui/menu.ts:338 method MenuUI.rNew
+SYM game/src/render/ui/menu.ts:357 method MenuUI.firstFreeSlot
+SYM game/src/render/ui/menu.ts:362 method MenuUI.rFile
+SYM game/src/render/ui/menu.ts:372 method MenuUI.rSettings
+SYM game/src/render/ui/menu.ts:410 method MenuUI.rIntro
+SYM game/src/render/ui/menu.ts:420 method MenuUI.finishIntro
+SYM game/src/render/ui/menu.ts:427 method MenuUI.onInput
+SYM game/src/render/ui/menu.ts:451 method MenuUI.onChange
+SYM game/src/render/ui/menu.ts:465 method MenuUI.setDie
+SYM game/src/render/ui/menu.ts:470 method MenuUI.onClick
+SYM game/src/render/ui/menu.ts:610 method MenuUI.busyDo
 FILE game/src/render/ui/names.ts 4.7KB 111L exports: stageName,speciesEmoji,PRODUCT_EMOJI,productName,unitOf,expenseName,PROCESSOR_NAME,fmtMoney,fmtNum,fmtMinutes,PASTURE_NAME,SEASON_NAME,SEASON_EMOJI,CAMP_HINT,+2
 SYM game/src/render/ui/names.ts:22 fn stageName
 SYM game/src/render/ui/names.ts:33 fn speciesEmoji
@@ -1925,6 +1937,7 @@ FILE game/tests/homelights.test.ts 3.4KB 66L
 FILE game/tests/i18n.test.ts 9.1KB 172L
 FILE game/tests/interior.test.ts 10.5KB 203L
 FILE game/tests/journal.test.ts 1.9KB 40L
+FILE game/tests/menuSettings.test.ts 2.2KB 44L
 FILE game/tests/milestones.test.ts 6.7KB 125L
 FILE game/tests/night.test.ts 6.5KB 127L
 FILE game/tests/npcs.test.ts 8.2KB 137L
@@ -1953,7 +1966,7 @@ FILE game/tests/transfer.test.ts 14.2KB 255L
 FILE game/tests/trip.test.ts 9.2KB 173L
 FILE game/tests/uiLabContext.test.ts 4.8KB 107L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 11.4KB 73L
+FILE docs/CONTEXT.md 11.5KB 73L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-29 ## 2. Стек ба командууд
 DOC docs/CONTEXT.md:30-50 ## 3. Файлын зураглал (`game/src/`)
@@ -1984,9 +1997,9 @@ DOC docs/character-design.md:28-52 ## 2. Үндсэн дүр — хэрэгжи�
 DOC docs/character-design.md:53-61 ## 3. NPC-үүд одоо
 DOC docs/character-design.md:62-147 ## 4. Нэг кодын сан: дүр бүрийг тохиргооноос угсрах (V4.5)
 DOC docs/character-design.md:148-157 ## 5. Нээлттэй шийдвэр 🙋
-FILE docs/decisions.md 25.3KB 148L
+FILE docs/decisions.md 27.0KB 150L
 DOC docs/decisions.md:16-137 ## 0. Хэрэглэгчийн шийдвэрийн түүх
-DOC docs/decisions.md:138-148 ## 13. MVP-ийн хүрээ хаагдсан (2026-11-15)
+DOC docs/decisions.md:138-150 ## 13. MVP-ийн хүрээ хаагдсан (2026-11-15)
 FILE docs/events/airag.md 6.0KB 83L
 DOC docs/events/airag.md:13-19 ## 1. Тойм
 DOC docs/events/airag.md:20-32 ## 2. Ажлын механик
@@ -2133,7 +2146,7 @@ DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
 DOC docs/plan/V.md:24-32 ## Нээлттэй ажил
 DOC docs/plan/V.md:33-36 ## Зогссон цэг
-FILE docs/plan/playtest.md 25.0KB 155L
+FILE docs/plan/playtest.md 25.9KB 161L
 DOC docs/plan/playtest.md:15-20 ## A. FPS ба төхөөрөмж
 DOC docs/plan/playtest.md:21-41 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
 DOC docs/plan/playtest.md:42-115 ## C. Мэдрэмж, үе шат бүрээр
@@ -2144,6 +2157,7 @@ DOC docs/plan/playtest.md:129-135 ## Сумын төвийн NPC жигд алх
 DOC docs/plan/playtest.md:136-139 ## Мэдэгдэж буй дутагдал: NPC хашаа гаталгах (sumwalk, 2026-11-16)
 DOC docs/plan/playtest.md:140-146 ## Утасны HUD, удирдлага (2026-11-16)
 DOC docs/plan/playtest.md:147-155 ## UI лаб: утасны HUD 2 (T-27, 2026-11-25)
+DOC docs/plan/playtest.md:156-161 ## Үндсэн мэню, тохиргоо — UI handoff 1 (2026-11-25)
 FILE docs/seasons-camps.md 10.2KB 104L
 DOC docs/seasons-camps.md:17-40 ## 1. Хэрэглэгчийн шийдвэрүүд
 DOC docs/seasons-camps.md:41-54 ## 2. Улирал
@@ -2184,7 +2198,7 @@ FILE docs/summary.md 2.9KB 26L
 DOC docs/summary.md:12-20 ## 0. Гол 7 дүгнэлт
 DOC docs/summary.md:21-24 ## 3. Сэдвүүд (дэлгэрэнгүй → [[summary-full]] §3)
 DOC docs/summary.md:25-26 ## 6–7. Зах зээл, ялгарах байр суурь
-FILE docs/ui/handoff-1-menu-settings.md 7.0KB 68L
+FILE docs/ui/handoff-1-menu-settings.md 7.2KB 68L
 DOC docs/ui/handoff-1-menu-settings.md:5-11 ## 0. Шийдвэр
 DOC docs/ui/handoff-1-menu-settings.md:12-29 ## 1. Токен
 DOC docs/ui/handoff-1-menu-settings.md:30-38 ## 2. Мэню (844×390)

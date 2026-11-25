@@ -30,6 +30,13 @@ export function normalizeCode(input: string): string | null {
   return s;
 }
 
+/** Оруулах талбар бичих явцад: том үсэг, буруу тэмдэгтийг хасна, 8 хүртэл, 4-ийн дараа `-` автоматаар (K7M2-9QXA) */
+export function formatCodeInput(input: string): string {
+  let s = '';
+  for (const ch of input.toUpperCase()) if (CODE_ALPHABET.includes(ch) && s.length < CODE_LENGTH) s += ch;
+  return s.length > 4 ? `${s.slice(0, 4)}-${s.slice(4)}` : s;
+}
+
 /** Харуулах хэлбэр: K7M2-9QXA */
 export function formatCode(code: string): string {
   return `${code.slice(0, 4)}-${code.slice(4)}`;

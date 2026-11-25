@@ -1,0 +1,5 @@
+{
+  "_doc": "Дууны тохиргоо (⚙ Settings → Sound, docs/ui/handoff-1-menu-settings.md §3). defaultVolume = анхдагч дууны түвшин 0–100; step = гулсуурын алхам. MVP дуугүй: утга хадгалагдаж, дуу залгахад audio/volume.ts-ээс уншина.",
+  "defaultVolume": 70,
+  "step": 5
+}

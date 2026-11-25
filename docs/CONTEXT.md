@@ -44,7 +44,7 @@ TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `gam
 - `src/ui-lab/` (T-27, **лаб** — тоглоомын үндсэн горимд ороогүй; оролт `game/ui-lab.html`, тохиргоо `data/ui-lab.json`): `ui-lab/main.ts` (жинхэнэ тайз + `PlayerController`, `?screen=calm|near|wheel|riding`, `?shot=`), `ui-lab/context.ts` (цэвэр: `contextTargets` — алтан товчны жагсаалт, `horseMode`), `ui-lab/hud.ts` (`LabHud`: джойстик, 4 тогтмол товч, Actions дугуй, төлөвийн мөр, объектын тэмдэг), `ui-lab/icons.ts` (шугаман SVG дүрс). Зураг: `node tools/ui-lab-shots.mjs` → `tools/shots/ui-lab/`.
 - `input/`: `controller.ts` (`moveTo` — товшиж явах), `touch.ts` (утасны хөвөгч джойстик, контекстуал `.prime` гол товч; салбарын `primaryAction` хаясан — [[decisions]] 2026-11-17), `skip.ts`.
 - `persist/`: `idb.ts`, `autosave.ts`, `file.ts`, `transfer.ts`, `transferCode.ts` (шилжүүлэх код; сервер `api/transfer.ts`), `errorGuard.ts` (`window.onerror` → алдаа барих, хадгалалт).
-- `audio/`: `bus.ts` (дууны суваг, суурь), `watch.ts`.
+- `audio/`: `bus.ts` (дууны суваг, суурь), `watch.ts`, `volume.ts` (дууны түвшин 0–100, ⚙ Settings → Sound; анхдагч `data/audio.json`, `localStorage`).
 - `i18n/`: `i18n.ts`, `msg.ts`, `npcStrings.ts`; `mn.json`, `en.json`, `npc.mn.json`, `npc.en.json`.
 - `game/tests/<сэдэв>.test.ts` (дундын `helpers.ts`); `tools/`: `codemap.ts`, `balance_sim/run.ts`, `character-lab/`, `shots/`.
 

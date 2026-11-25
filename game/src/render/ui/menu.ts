@@ -2,10 +2,12 @@
  * Эхлэлийн дэлгэц, тоглоомын цэс, шинэ тоглоом, слот, файл, тохиргоо, оршил (M6.3).
  * Тоглоомын `state` объект нэг амьдралын туршид хуваалцагддаг тул ӨӨР тоглоом (шинэ, өөр слот, файл) эхлэх нь
  * «зорилго» (Intent) sessionStorage-д бичээд хуудсыг дахин ачаалж, `main.ts → boot()` уншина. «Үргэлжлүүлэх» нь дахин ачаалахгүй.
+ * Загвар: docs/ui/handoff-1-menu-settings.md (2026-11-17 батлагдсан) — эхлэл = 2 багана, 4 карт; тохиргоо = 2 багана
+ * (хэл, дуу, чанар | шилжүүлэх код, хадгалалт, санал); хос хэлтэй шошго (одоогийн хэл дээр, нөгөө хэл доор); өнгө menu.css-ийн токен.
  */
 import './menu.css';
 import pkg from '../../../package.json';
-import { t, setLang, getLang, LANG_KEY, type Lang } from '../../i18n/i18n';
+import { t, tIn, setLang, getLang, LANG_KEY, type Lang } from '../../i18n/i18n';
 import type { GameConfig } from '../../sim/config';
 import type { GameState } from '../../sim/state';
 import { SAVE_VERSION } from '../../sim/state';
@@ -17,9 +19,10 @@ import type { Autosave } from '../../persist/autosave';
 import { downloadFile, readFile } from '../../persist/file';
 import { saveMeta, serialize } from '../../sim/save';
 import { TransferError, createTransfer, redeemTransfer } from '../../persist/transfer';
-import { normalizeCode } from '../../persist/transferCode';
+import { formatCodeInput, normalizeCode } from '../../persist/transferCode';
+import { VOLUME_STEP, getVolume, setVolume } from '../../audio/volume';
 import { pwa } from '../../pwa';
-import { QUALITIES, QUALITY_NAME, type Quality } from '../../device';
+import { QUALITIES, type Quality } from '../../device';
 import { feedbackEnabled, openFeedback } from '../../feedback';
 import { SEASON_EMOJI, SEASON_NAME, fmtMoney } from './names';
 
@@ -89,6 +92,10 @@ export class MenuUI {
   private codeSlot = 1;
   private confirmCode = false;
   private codeMsg = '';
+  /** Шинэ тоглоом: сонгосон слотод тоглолт байвал баталгаажуулах цонх */
+  private confirmNew = false;
+  /** «Хуулсан ✓» 2 сек */
+  private copied = false;
   private online = typeof navigator === 'undefined' || navigator.onLine !== false;
 
   constructor(private readonly d: MenuDeps) {
@@ -141,6 +148,7 @@ export class MenuUI {
     this.screen = screen;
     this.open_ = true;
     this.confirmDelete = 0;
+    this.confirmNew = false;
     this.el.classList.add('open');
     document.body.classList.add('menu-open');
     this.el.classList.toggle('start', this.root === 'start' && screen !== 'intro');
@@ -177,7 +185,28 @@ export class MenuUI {
     const h = this.screen === 'start' ? this.rStart() : this.screen === 'game' ? this.rGame() : this.screen === 'slots' ? this.rSlots()
       : this.screen === 'new' ? this.rNew() : this.screen === 'file' ? this.rFile() : this.screen === 'settings' ? this.rSettings()
         : this.screen === 'transfer' ? this.rTransfer() : this.screen === 'code' ? this.rCode() : this.rIntro();
-    this.el.innerHTML = `<div class="mbox ${this.screen === 'new' ? 'wide' : ''}">${h}</div>`;
+    const full = this.screen === 'start' || this.screen === 'settings';
+    this.el.innerHTML = `<div class="mbox ${this.screen === 'new' ? 'wide' : ''} ${full ? 'full' : ''}">${h}</div>`;
+  }
+
+  /** Хос хэлтэй шошго: одоогийн хэл дээр (том), нөгөө хэл доор (жижиг) */
+  private bi(key: string): string {
+    const other: Lang = getLang() === 'en' ? 'mn' : 'en';
+    const a = t(key), b = tIn(other, key);
+    return `<b>${a}</b>${b !== a ? `<small>${b}</small>` : ''}`;
+  }
+
+  /** Нэг мөрт хос хэл: «Settings · Тохиргоо» */
+  private biLine(key: string): string {
+    const other: Lang = getLang() === 'en' ? 'mn' : 'en';
+    const a = t(key), b = tIn(other, key);
+    return b !== a ? `${a} · ${b}` : a;
+  }
+
+  /** Эхлэл, тохиргооны «Санал илгээх» карт: url тохируулаагүй бол идэвхгүй */
+  private feedbackCard(cls: string): string {
+    const on = feedbackEnabled();
+    return `<button class="${cls}" data-a="feedback" ${on ? '' : 'disabled aria-disabled="true"'}><span class="lbl">${this.bi('menu.feedback')}</span>${on ? '<i class="arr">→</i>' : `<em>${t('menu.feedback.soon')}</em>`}</button>`;
   }
 
   /** «💬 Санал» — data/feedback.json-ийн url хоосон бол нуугдана */
@@ -195,21 +224,21 @@ export class MenuUI {
 
   private rStart(): string {
     const persist = !!this.d.store;
-    const canInstall = pwa.available;
-    const lang = getLang();
-    const langBar = `<div class="langbar"><button class="mb sm ${lang === 'en' ? 'on' : ''}" data-a="lang" data-v="en">English</button><button class="mb sm ${lang === 'mn' ? 'on' : ''}" data-a="lang" data-v="mn">Монгол</button></div>`;   // i18n-skip: хэлний нэр өөрийн хэл дээр
-    return `${langBar}<h1>${t('menu.title')}</h1><div class="sub">${t('menu.subtitle')}</div>
-      <div class="grid">
-        <button class="mb gold wide" data-a="continue" ${this.d.hasGame ? '' : 'disabled'}>▶ ${t('menu.continue')}</button>
-        <button class="mb" data-a="new" ${persist ? '' : 'disabled'}>🆕 ${t('menu.new')}</button>
-        <button class="mb" data-a="slots" ${persist ? '' : 'disabled'}>📂 ${t('menu.slots')}</button>
-        <button class="mb" data-a="file">📄 ${t('menu.file')}</button>
-        <button class="mb" data-a="settings">⚙ ${t('menu.settings')}</button>
-        ${canInstall ? `<button class="mb" data-a="install">📲 ${t('menu.install')}</button>` : ''}
-        ${this.netBtn('transfer', '📤', t('menu.transfer'), !this.d.hasGame)}
-        ${this.netBtn('code', '📥', t('menu.enterCode'), !persist)}
-      </div>
-      ${persist ? '' : `<div class="note">${t('menu.noStorage')}</div>`}${this.ver()}`;
+    const st = this.d.state;
+    const season = seasonOf(this.d.cfg, st.time.day);
+    const saved = this.d.hasGame
+      ? `${t('hud.day', { day: st.time.day })} · ${esc(SEASON_NAME[season] ?? season)} · ${fmtMoney(st.money)}`
+      : t('menu.continue.none');
+    return `<div class="ms"><div class="ms-left">
+        <h1>${this.bi('menu.brand')}</h1><i class="rule"></i><p>${t('menu.tagline')}</p>
+        <div class="ms-foot">${t('menu.build', { v: pkg.version.split('.').slice(0, 2).join('.') })}<br>${t('menu.place')}</div>
+      </div><div class="ms-right">
+        <button class="mc primary" data-a="continue" ${this.d.hasGame ? 'autofocus' : 'disabled aria-disabled="true"'}><span class="lbl">${this.bi('menu.continue')}</span><em>${saved}</em></button>
+        <button class="mc" data-a="new" ${persist ? '' : 'disabled aria-disabled="true"'}><span class="lbl">${this.bi('menu.new')}</span><em>${t('menu.new.hint')}</em></button>
+        <button class="mc" data-a="settings"><span class="lbl">${this.bi('menu.settings')}</span><i class="arr">→</i></button>
+        ${this.feedbackCard('mc')}
+        ${persist ? '' : `<div class="note">${t('menu.noStorage')}</div>`}
+      </div></div>`;
   }
 
   /** Интернет шаардсан товч: офлайн үед идэвхгүй, «Интернет хэрэгтэй» гэж бичнэ */
@@ -318,6 +347,10 @@ export class MenuUI {
     }
     h += `</div><div><h2 class="dh">${t('menu.diff.title')}</h2>${this.difficultyHtml(dr.difficulty)}</div></div>`;
     h += `<div class="macts stick"><button class="mb gold" data-a="begin">▶ ${t('menu.begin')}</button></div>`;
+    if (this.confirmNew) {
+      h += `<div class="mdlg" role="alertdialog" aria-label="${t('menu.new.confirm')}"><div class="mdlg-box"><p>${t('menu.new.confirm')}</p>
+        <div class="macts"><button class="mb" data-a="beginNo">${t('menu.cancel')}</button><button class="mb gold" data-a="beginYes">${t('menu.new.confirmYes')}</button></div></div></div>`;
+    }
     return h;
   }
 
@@ -337,17 +370,41 @@ export class MenuUI {
   }
 
   private rSettings(): string {
-    const q = this.d.getQuality(), lang = getLang();
-    let h = this.back('⚙ ' + t('menu.settings'));
-    h += `<div class="row"><label>${t('menu.graphics')}</label><div class="pick">${QUALITIES.map((x) => `<button class="mb ${x === q ? 'on' : ''}" data-a="quality" data-v="${x}">${esc(QUALITY_NAME[x])}</button>`).join('')}</div></div>`;
-    h += `<div class="row"><label>${t('menu.language')}</label><div class="pick"><button class="mb ${lang === 'mn' ? 'on' : ''}" data-a="lang" data-v="mn">Монгол</button><button class="mb ${lang === 'en' ? 'on' : ''}" data-a="lang" data-v="en">English</button></div></div>`;   // i18n-skip: хэлний нэр өөрийн хэл дээр
+    const q = this.d.getQuality(), lang = getLang(), vol = getVolume();
+    const other: Lang = lang === 'en' ? 'mn' : 'en';
+    const radio = (a: string, v: string, on: boolean, body: string): string =>
+      `<button class="seg ${on ? 'on' : ''}" role="radio" aria-checked="${on}" data-a="${a}" data-v="${v}">${body}${on ? '<i class="chk">✓</i>' : ''}</button>`;
+    const QKEY: Record<Quality, string> = { low: 'ui.light', mid: 'ui.medium_395', high: 'ui.high_396' };
+    let left = `<div class="sc rowc" role="radiogroup" aria-label="${t('menu.language')}"><label>${this.bi('menu.language')}</label><div class="segs">
+        ${radio('lang', 'en', lang === 'en', '<b>English</b>')}${radio('lang', 'mn', lang === 'mn', '<b>Монгол</b>')}</div></div>`;   // i18n-skip: хэлний нэр өөрийн хэл дээр
+    left += `<div class="sc rowc"><label for="menuVol">${this.bi('menu.sound')}</label><input id="menuVol" type="range" role="slider" min="0" max="100" step="${VOLUME_STEP}" value="${vol}" aria-label="${t('menu.sound')}"><output>${vol}</output></div>`;
+    left += `<div class="sc" role="radiogroup" aria-label="${t('menu.graphics')}"><label>${this.biLine('menu.graphics')}</label><div class="segs three">
+        ${QUALITIES.map((x) => radio('quality', x, x === q, `<b>${esc(t(QKEY[x]))} · ${esc(tIn(other, QKEY[x]))}</b><small>${t(`menu.q.${x}.desc`)}</small>`)).join('')}</div></div>`;
     if (this.root === 'game') {
       const on = this.d.state.settings.showMilestones;
-      h += `<div class="row"><label>${t('menu.showMilestones')}</label><div class="pick"><button class="mb ${on ? 'on' : ''}" data-a="showMs" data-v="1">${t('menu.yes')}</button><button class="mb ${on ? '' : 'on'}" data-a="showMs" data-v="0">${t('menu.no')}</button></div></div>`;
-      h += `<h2 style="margin-top:10px">${t('menu.diff.title')}</h2>${this.difficultyHtml(this.d.state.settings.difficulty)}`;
+      left += `<div class="sc"><div class="row"><label>${t('menu.showMilestones')}</label><div class="pick"><button class="mb ${on ? 'on' : ''}" data-a="showMs" data-v="1">${t('menu.yes')}</button><button class="mb ${on ? '' : 'on'}" data-a="showMs" data-v="0">${t('menu.no')}</button></div></div>
+        <h3>${t('menu.diff.title')}</h3>${this.difficultyHtml(this.d.state.settings.difficulty)}</div>`;
     }
-    else h += `<div class="hint">${t('menu.diff.atNew')}</div>`;
-    return h;
+    // Шилжүүлэх код: (1) өөрийн код + Хуулах, (2) оруулах талбар + Хэрэглэх, (3) анхааруулгын мөр
+    const x = this.xfer, canMake = this.online && (this.d.hasGame || this.root === 'game');
+    const mine = x.phase === 'done' && x.display
+      ? `<span class="code">${esc(x.display)}</span><button class="mb out" data-a="copyCode" aria-label="${t('menu.copy')}">${this.copied ? t('menu.copiedShort') : this.biLine('menu.copy')}</button>`
+      : `<span class="codeoff">${t('menu.code.mine')}</span><button class="mb out" data-a="makeCode" ${canMake && x.phase !== 'busy' ? '' : 'disabled'}>${x.phase === 'busy' ? '…' : t('menu.code.create')}</button>`;
+    const ok = !!normalizeCode(this.codeText);
+    const warn = this.codeMsg || x.msg || (this.online ? '' : t('menu.needNet'));
+    let right = `<div class="sc xfer"><label>${this.biLine('menu.transferCode')}</label>
+        <div class="xr">${mine}</div>
+        <div class="xr"><input id="menuCode" class="codein ${this.codeMsg ? 'err' : ''}" type="text" inputmode="text" autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="9" placeholder="XXXX-XXXX" aria-label="${t('menu.code.enter')}" value="${esc(this.codeText)}">
+          <button class="mb gold" data-a="apply" ${ok && this.online && this.d.store ? '' : 'disabled'}>${t('menu.apply')}</button></div>
+        ${warn ? `<div class="warn" role="status">${esc(warn)}</div>` : ''}</div>`;
+    right += `<div class="segs three">
+        <button class="mb" data-a="slots" ${this.d.store ? '' : 'disabled'}>${t('menu.saveData')}</button>
+        <button class="mb" data-a="file">${t('menu.file')}</button>
+        <button class="mb" data-a="install" ${pwa.available ? '' : 'disabled'}>${t('menu.install')}</button></div>`;
+    right += this.feedbackCard('mc slim');
+    return `<div class="st"><header><button class="mback" data-a="back" aria-label="${t('menu.back')}">←</button><h2>${this.biLine('menu.settings')}</h2></header>
+      <div class="st-cols"><div class="st-col">${left}</div><div class="st-col">${right}</div></div>
+      </div>`;
   }
 
   private rIntro(): string {
@@ -369,7 +426,20 @@ export class MenuUI {
 
   private onInput(e: Event): void {
     const el = e.target as HTMLInputElement;
-    if (el.id === 'menuCode') { this.codeText = el.value.toUpperCase(); this.confirmCode = false; return; }
+    if (el.id === 'menuCode') {
+      // Том үсэг, `-` автоматаар; «Хэрэглэх» товч код бүрэн болмогц идэвхжинэ (дахин зурахгүй — фокус алдагдахгүй)
+      this.codeText = el.value = formatCodeInput(el.value);
+      this.confirmCode = false;
+      const apply = this.el.querySelector<HTMLButtonElement>('[data-a="apply"]');
+      if (apply) apply.disabled = !(normalizeCode(this.codeText) && this.online && this.d.store);
+      if (this.codeMsg && this.screen === 'settings') { this.codeMsg = ''; el.classList.remove('err'); this.el.querySelector('.warn')?.remove(); }
+      return;
+    }
+    if (el.id === 'menuVol') {
+      setVolume(Number(el.value));
+      (el.nextElementSibling as HTMLOutputElement).textContent = String(getVolume());
+      return;
+    }
     const k = el.dataset.k as (typeof DIFFICULTY_KEYS)[number] | undefined;
     if (!k) return;
     const v = Number(el.value);
@@ -419,8 +489,35 @@ export class MenuUI {
         return;
       case 'newCode': this.xfer = { phase: 'idle' }; this.render(); return;
       case 'copyCode':
-        try { await navigator.clipboard.writeText(this.xfer.display ?? ''); this.d.toast(t('menu.copied'), 'good'); } catch { this.d.toast(this.xfer.display ?? '', ''); }
+        try {
+          await navigator.clipboard.writeText(this.xfer.display ?? '');
+          if (this.screen === 'settings') {
+            this.copied = true;
+            this.render();
+            setTimeout(() => { this.copied = false; if (this.open_ && this.screen === 'settings') this.render(); }, 2000);
+          } else this.d.toast(t('menu.copied'), 'good');
+        } catch { this.d.toast(this.xfer.display ?? '', ''); }
         return;
+      case 'apply': {
+        // Тохиргооны карт: хоосон слот байвал тэнд шууд татна; бүгд дүүрэн бол аль слотыг дарахыг сонгуулна
+        const code = normalizeCode(this.codeText);
+        if (!code || !this.d.store) { this.codeMsg = t('menu.code.mismatch'); this.render(); return; }
+        await this.refreshSlots();
+        const free = this.slots.find((sl) => sl.empty);
+        if (!free) { this.go('code'); return; }
+        await this.busyDo(async () => {
+          try {
+            const st = await redeemTransfer(this.d.cfg, code);
+            await this.d.store!.write(free.slot, serialize(st), saveMeta(st));
+            putIntent({ kind: 'slot', slot: free.slot });
+            this.d.reload();
+          } catch (err) {
+            this.codeMsg = err instanceof TransferError && (err.kind === 'not_found' || err.kind === 'bad_code') ? t('menu.code.mismatch') : this.xferError(err);
+            this.render();
+          }
+        });
+        return;
+      }
       case 'codeSlot': this.codeSlot = n; this.confirmCode = false; this.render(); return;
       case 'redeem': {
         const code = normalizeCode(this.codeText);
@@ -451,7 +548,7 @@ export class MenuUI {
         if (pwa.native) await pwa.prompt();
         else this.d.toast(t('menu.install.ios'), 'good');
         return;
-      case 'pickSlot': if (this.draft) this.draft.slot = n; this.render(); return;
+      case 'pickSlot': if (this.draft) this.draft.slot = n; this.confirmNew = false; this.render(); return;
       case 'die': this.setDie(v === '1'); this.render(); return;
       case 'quality': this.d.setQuality(v as Quality); this.render(); return;
       case 'lang':
@@ -472,8 +569,12 @@ export class MenuUI {
       case 'export':
         try { await downloadFile(this.d.state); } catch (err) { this.d.toast(String((err as Error).message), 'bad'); }
         return;
-      case 'begin': {
+      case 'beginNo': this.confirmNew = false; this.render(); return;
+      case 'begin': case 'beginYes': {
         if (!this.draft) return;
+        // Сонгосон слотод тоглолт байвал нэг өгүүлбэрийн баталгаажуулалт (шийтгэл, тоолуургүй)
+        const taken = this.slots.find((sl) => sl.slot === this.draft!.slot);
+        if (a === 'begin' && taken && !taken.empty) { this.confirmNew = true; this.render(); return; }
         putIntent({ kind: 'new', slot: this.draft.slot, difficulty: this.draft.difficulty, seed: Math.floor(Math.random() * 2_000_000_000) + 1 });
         this.d.reload();
         return;

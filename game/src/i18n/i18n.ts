@@ -39,3 +39,9 @@ export function t(key: string, vars: Record<string, unknown> = {}): string {
   const s = tables[lang][key] ?? tables.mn[key] ?? key;
   return s.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? ''));
 }
+
+/** Заасан хэлээр (хос хэлтэй товч: EN · MN хоёр мөр — docs/ui/handoff-1-menu-settings.md) */
+export function tIn(l: Lang, key: string, vars: Record<string, unknown> = {}): string {
+  const s = tables[l][key] ?? tables.mn[key] ?? key;
+  return s.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? ''));
+}
