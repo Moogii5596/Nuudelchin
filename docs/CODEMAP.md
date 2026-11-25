@@ -1974,12 +1974,12 @@ DOC docs/CONTEXT.md:51-53 ## 4. `data/*.json` → аль файл хэрэглэ
 DOC docs/CONTEXT.md:54-62 ## 5. Архитектурын дүрэм ([[architecture]])
 DOC docs/CONTEXT.md:63-66 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
 DOC docs/CONTEXT.md:67-73 ## 7. Баримтын хэсгийн индекс (мөрийн муж)
-FILE docs/INDEX.md 17.4KB 161L
+FILE docs/INDEX.md 17.6KB 162L
 DOC docs/INDEX.md:16-30 ## 1. Унших дараалал ба давуу эрх
-DOC docs/INDEX.md:31-132 ## 2. Баримтууд
-DOC docs/INDEX.md:133-136 ## 3. Гол тоо
-DOC docs/INDEX.md:137-155 ## 4. Нэр томьёо
-DOC docs/INDEX.md:156-161 ## 5. Баримт засах дүрэм
+DOC docs/INDEX.md:31-133 ## 2. Баримтууд
+DOC docs/INDEX.md:134-137 ## 3. Гол тоо
+DOC docs/INDEX.md:138-156 ## 4. Нэр томьёо
+DOC docs/INDEX.md:157-162 ## 5. Баримт засах дүрэм
 FILE docs/architecture.md 20.3KB 236L
 DOC docs/architecture.md:16-29 ## 1. Технологи
 DOC docs/architecture.md:30-68 ## 2. Хавтасны бүтэц
