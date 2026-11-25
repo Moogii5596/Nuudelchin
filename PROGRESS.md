@@ -1,2 +1,2 @@
 # PROGRESS
-Төлөв: wave 2 нэгтгэгдсэн, push хүлээгдэж байна (2026-11-17) · үе шат V → `docs/plan/V.md`. Session, шийдвэр → `docs/plan/LEAD.md`.
+Төлөв: T-27 UI лаб (утасны HUD 2) бэлэн — хэрэглэгч утсаар туршиж санал өгөхийг хүлээж байна (2026-11-25) · үе шат V → `docs/plan/V.md`. Session, шийдвэр → `docs/plan/LEAD.md`.

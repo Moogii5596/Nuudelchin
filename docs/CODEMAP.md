@@ -1830,6 +1830,39 @@ SYM game/src/sim/terrain.ts:22 fn waterDistance
 SYM game/src/sim/terrain.ts:28 fn baseHeightAt
 SYM game/src/sim/terrain.ts:54 fn heightAt
 SYM game/src/sim/terrain.ts:77 fn waterLevel
+FILE game/src/ui-lab/context.ts 5.2KB 107L exports: TargetKind,Target,HorseMode,horseMode,contextTargets
+SYM game/src/ui-lab/context.ts:17 type TargetKind
+SYM game/src/ui-lab/context.ts:20 interface Target
+SYM game/src/ui-lab/context.ts:32 type HorseMode
+SYM game/src/ui-lab/context.ts:34 fn dist
+SYM game/src/ui-lab/context.ts:37 fn horseMode
+SYM game/src/ui-lab/context.ts:49 fn tradeSpot
+SYM game/src/ui-lab/context.ts:56 fn contextTargets
+FILE game/src/ui-lab/hud.ts 16.5KB 381L exports: WHEEL_IDS,WheelId,TargetView,HudModel,HudLabels,HudHooks,LabHud
+SYM game/src/ui-lab/hud.ts:13 const WHEEL_IDS
+SYM game/src/ui-lab/hud.ts:14 type WheelId
+SYM game/src/ui-lab/hud.ts:16 interface TargetView
+SYM game/src/ui-lab/hud.ts:18 interface HudModel
+SYM game/src/ui-lab/hud.ts:36 interface HudLabels
+SYM game/src/ui-lab/hud.ts:43 interface HudHooks
+SYM game/src/ui-lab/hud.ts:68 class LabHud
+SYM game/src/ui-lab/hud.ts:176 method LabHud.portrait
+SYM game/src/ui-lab/hud.ts:180 method LabHud.closePops
+SYM game/src/ui-lab/hud.ts:186 method LabHud.tap
+SYM game/src/ui-lab/hud.ts:201 method LabHud.bindTarget
+SYM game/src/ui-lab/hud.ts:223 method LabHud.bindJoystick
+SYM game/src/ui-lab/hud.ts:263 method LabHud.bindWheel
+SYM game/src/ui-lab/hud.ts:316 method LabHud.setWheel
+SYM game/src/ui-lab/hud.ts:326 method LabHud.update
+SYM game/src/ui-lab/hud.ts:367 method LabHud.frame
+FILE game/src/ui-lab/icons.ts 3.7KB 41L exports: IconName,icon
+SYM game/src/ui-lab/icons.ts:37 type IconName
+SYM game/src/ui-lab/icons.ts:39 fn icon
+FILE game/src/ui-lab/main.ts 19.6KB 396L
+SYM game/src/ui-lab/main.ts:44 fn adoptGameStyles
+SYM game/src/ui-lab/main.ts:51 fn toast
+SYM game/src/ui-lab/main.ts:64 fn applyScene
+SYM game/src/ui-lab/main.ts:84 fn start
 FILE tools/balance_sim/run.ts 27.6KB 463L
 SYM tools/balance_sim/run.ts:34 fn nextGerOrder
 SYM tools/balance_sim/run.ts:56 fn applyOverrides
@@ -1918,15 +1951,16 @@ FILE game/tests/town.test.ts 6.8KB 138L
 FILE game/tests/trader.test.ts 8.4KB 164L
 FILE game/tests/transfer.test.ts 14.2KB 255L
 FILE game/tests/trip.test.ts 9.2KB 173L
+FILE game/tests/uiLabContext.test.ts 4.8KB 107L
 FILE game/tests/wolves.test.ts 14.7KB 337L
-FILE docs/CONTEXT.md 10.8KB 72L
+FILE docs/CONTEXT.md 11.4KB 73L
 DOC docs/CONTEXT.md:12-18 ## 1. Тоглоом юу вэ
 DOC docs/CONTEXT.md:19-29 ## 2. Стек ба командууд
-DOC docs/CONTEXT.md:30-49 ## 3. Файлын зураглал (`game/src/`)
-DOC docs/CONTEXT.md:50-52 ## 4. `data/*.json` → аль файл хэрэглэдэг
-DOC docs/CONTEXT.md:53-61 ## 5. Архитектурын дүрэм ([[architecture]])
-DOC docs/CONTEXT.md:62-65 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
-DOC docs/CONTEXT.md:66-72 ## 7. Баримтын хэсгийн индекс (мөрийн муж)
+DOC docs/CONTEXT.md:30-50 ## 3. Файлын зураглал (`game/src/`)
+DOC docs/CONTEXT.md:51-53 ## 4. `data/*.json` → аль файл хэрэглэдэг
+DOC docs/CONTEXT.md:54-62 ## 5. Архитектурын дүрэм ([[architecture]])
+DOC docs/CONTEXT.md:63-66 ## 6. Баримтын давуу эрх (зөрчилдвөл дээд нь хүчинтэй)
+DOC docs/CONTEXT.md:67-73 ## 7. Баримтын хэсгийн индекс (мөрийн муж)
 FILE docs/INDEX.md 17.4KB 161L
 DOC docs/INDEX.md:16-30 ## 1. Унших дараалал ба давуу эрх
 DOC docs/INDEX.md:31-132 ## 2. Баримтууд
@@ -1950,9 +1984,9 @@ DOC docs/character-design.md:28-52 ## 2. Үндсэн дүр — хэрэгжи�
 DOC docs/character-design.md:53-61 ## 3. NPC-үүд одоо
 DOC docs/character-design.md:62-147 ## 4. Нэг кодын сан: дүр бүрийг тохиргооноос угсрах (V4.5)
 DOC docs/character-design.md:148-157 ## 5. Нээлттэй шийдвэр 🙋
-FILE docs/decisions.md 24.7KB 147L
+FILE docs/decisions.md 25.3KB 148L
 DOC docs/decisions.md:16-137 ## 0. Хэрэглэгчийн шийдвэрийн түүх
-DOC docs/decisions.md:138-147 ## 13. MVP-ийн хүрээ хаагдсан (2026-11-15)
+DOC docs/decisions.md:138-148 ## 13. MVP-ийн хүрээ хаагдсан (2026-11-15)
 FILE docs/events/airag.md 6.0KB 83L
 DOC docs/events/airag.md:13-19 ## 1. Тойм
 DOC docs/events/airag.md:20-32 ## 2. Ажлын механик
@@ -2068,18 +2102,19 @@ DOC docs/night-transport.md:45-68 ## 3. Сүү, ноос хоносон газр
 DOC docs/night-transport.md:69-87 ## 4. Шөнийн чоно (хэрэглэгчийн дүрэм)
 DOC docs/night-transport.md:88-103 ## 5. Тээвэр
 DOC docs/night-transport.md:104-106 ## 6. Хэрэглэгчийн шийдвэр 🙋
-FILE docs/plan/BOARD.md 24.8KB 131L
+FILE docs/plan/BOARD.md 27.4KB 142L
 DOC docs/plan/BOARD.md:14-24 ## MVP «дууссан» (D-шалгуур, дэлгэрэнгүй [[M6]])
-DOC docs/plan/BOARD.md:25-42 ## Агентын бүртгэл (дугаар = нэр; шинэ агент → дараагийн дугаар)
-DOC docs/plan/BOARD.md:43-61 ## Карт — Давалгаа A (шийдвэр гарсан, 11-17)
-DOC docs/plan/BOARD.md:62-66 ## Карт — Давалгаа A-ийн дараа (шийдвэр: зөвшөөрсөн)
-DOC docs/plan/BOARD.md:67-90 ## Давалгаа B — СУУРЬ, түүхээс хамааралгүй (⏳ хэрэглэгч батлахыг хүлээж байна)
-DOC docs/plan/BOARD.md:91-96 ## Карт — Давалгаа C (шийдвэр гарсан, 11-17; түүхээс хамааралгүй)
-DOC docs/plan/BOARD.md:97-109 ## Карт — Давалгаа D: түүхийн бэлтгэл (шийдвэр гарсан, 11-17; [[story]] Approved)
-DOC docs/plan/BOARD.md:110-119 ## Санал, Давалгаа C+ (⏳ ШИЙДВЭР ХҮЛЭЭЖ БАЙНА — ахлах агентад хувиарлахгүй)
-DOC docs/plan/BOARD.md:120-126 ## Түүх ба тэнцвэр (хэрэглэгч, шинэ чат; суурийн дараа)
-DOC docs/plan/BOARD.md:127-129 ## Хэрэглэгчийн ажил (агент хийж чадахгүй)
-DOC docs/plan/BOARD.md:130-131 ## Ахлахын мөчлөг (хурдан)
+DOC docs/plan/BOARD.md:25-43 ## Агентын бүртгэл (дугаар = нэр; шинэ агент → дараагийн дугаар)
+DOC docs/plan/BOARD.md:44-62 ## Карт — Давалгаа A (шийдвэр гарсан, 11-17)
+DOC docs/plan/BOARD.md:63-67 ## Карт — Давалгаа A-ийн дараа (шийдвэр: зөвшөөрсөн)
+DOC docs/plan/BOARD.md:68-91 ## Давалгаа B — СУУРЬ, түүхээс хамааралгүй (⏳ хэрэглэгч батлахыг хүлээж байна)
+DOC docs/plan/BOARD.md:92-97 ## Карт — Давалгаа C (шийдвэр гарсан, 11-17; түүхээс хамааралгүй)
+DOC docs/plan/BOARD.md:98-110 ## Карт — Давалгаа D: түүхийн бэлтгэл (шийдвэр гарсан, 11-17; [[story]] Approved)
+DOC docs/plan/BOARD.md:111-120 ## Карт — UI шинэчлэл (шийдвэр гарсан, 11-17; загвар: Design canvas «UI загвар 3», самбар 17…
+DOC docs/plan/BOARD.md:121-130 ## Санал, Давалгаа C+ (⏳ ШИЙДВЭР ХҮЛЭЭЖ БАЙНА — ахлах агентад хувиарлахгүй)
+DOC docs/plan/BOARD.md:131-137 ## Түүх ба тэнцвэр (хэрэглэгч, шинэ чат; суурийн дараа)
+DOC docs/plan/BOARD.md:138-140 ## Хэрэглэгчийн ажил (агент хийж чадахгүй)
+DOC docs/plan/BOARD.md:141-142 ## Ахлахын мөчлөг (хурдан)
 FILE docs/plan/LEAD.md 4.5KB 48L
 DOC docs/plan/LEAD.md:12-31 ## A. Тогтвортой (ховор өөрчлөгдөнө)
 DOC docs/plan/LEAD.md:32-48 ## B. Хувирах төлөв (→ [[BOARD]], [[PROGRESS]])
@@ -2098,7 +2133,7 @@ DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
 DOC docs/plan/V.md:24-32 ## Нээлттэй ажил
 DOC docs/plan/V.md:33-36 ## Зогссон цэг
-FILE docs/plan/playtest.md 23.7KB 145L
+FILE docs/plan/playtest.md 25.0KB 155L
 DOC docs/plan/playtest.md:15-20 ## A. FPS ба төхөөрөмж
 DOC docs/plan/playtest.md:21-41 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
 DOC docs/plan/playtest.md:42-115 ## C. Мэдрэмж, үе шат бүрээр
@@ -2107,7 +2142,8 @@ DOC docs/plan/playtest.md:120-125 ## V4.6 S2 үхэр, адуу, нохой, ч�
 DOC docs/plan/playtest.md:126-128 ## Хүний масштаб 1.7 м (characters.json scale 0.70) (🧑 мэдрэмж)
 DOC docs/plan/playtest.md:129-135 ## Сумын төвийн NPC жигд алхалт ба мөргөлдөөн (🧑 мэдрэмж, 2026-11-16)
 DOC docs/plan/playtest.md:136-139 ## Мэдэгдэж буй дутагдал: NPC хашаа гаталгах (sumwalk, 2026-11-16)
-DOC docs/plan/playtest.md:140-145 ## Утасны HUD, удирдлага (2026-11-16)
+DOC docs/plan/playtest.md:140-146 ## Утасны HUD, удирдлага (2026-11-16)
+DOC docs/plan/playtest.md:147-155 ## UI лаб: утасны HUD 2 (T-27, 2026-11-25)
 FILE docs/seasons-camps.md 10.2KB 104L
 DOC docs/seasons-camps.md:17-40 ## 1. Хэрэглэгчийн шийдвэрүүд
 DOC docs/seasons-camps.md:41-54 ## 2. Улирал
@@ -2133,7 +2169,7 @@ DOC docs/story-research.md:65-77 ## 5. Нэг өрхийн шат (ахицын 
 DOC docs/story-research.md:78-83 ## 6. Төстэй тоглоомоос
 DOC docs/story-research.md:84-96 ## 7. Зохиолд орох санаа (сонгоно)
 DOC docs/story-research.md:97-116 ## 8. Тэнцвэр: одоогийн `data/*.json` ба бодит үнэ
-FILE docs/story.md 39.4KB 299L
+FILE docs/story.md 39.3KB 299L
 DOC docs/story.md:12-18 ## 1. Гол санаа
 DOC docs/story.md:19-39 ## 2. Тогтсон хүрээ (хэрэглэгчийн шийдвэр 2026-11-17)
 DOC docs/story.md:40-51 ## 3. Хуанли

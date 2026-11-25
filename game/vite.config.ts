@@ -13,7 +13,7 @@ function offlineServiceWorker(): Plugin {
     name: 'nuudel-offline-sw',
     apply: 'build',
     generateBundle(_opts, bundle) {
-      const built = Object.keys(bundle).filter((f) => !f.endsWith('.map')).sort();
+      const built = Object.keys(bundle).filter((f) => !f.endsWith('.map') && !f.includes('ui-lab')).sort();
       const files = ['./', ...built, ...publicFiles];
       // Файлын нэрс хэштэй (index-AbC123.js) тул тэдгээрийн жагсаалт өөрчлөгдвөл шинэ хувилбар
       const version = createHash('sha1').update(built.join('|')).digest('hex').slice(0, 10);
@@ -33,7 +33,8 @@ export default defineConfig({
   server: { host: true, fs: { allow: ['..'] } },
   preview: { host: true },
   // three.js нь дангаараа ~500 kB (бүтэн тоглоом ~870 kB, gzip ~240 kB) тул анхааруулгын хязгаарыг өсгөнө
-  build: { chunkSizeWarningLimit: 1000 },
+  // T-27: ui-lab.html — утасны HUD 2-ын лаб (deploy-д хамт гарна: /ui-lab.html; sw.js-ийн кэшид орохгүй)
+  build: { chunkSizeWarningLimit: 1000, rollupOptions: { input: { main: 'index.html', 'ui-lab': 'ui-lab.html' } } },
   // *.perf.test.ts (хугацаа хэмждэг) ердийн тестэд орохгүй — `npm run test:perf` (vitest.perf.config.ts)
   test: { testTimeout: 30_000, environment: 'node', include: ['tests/**/*.test.ts'], exclude: [...configDefaults.exclude, 'tests/**/*.perf.test.ts'] },
 });

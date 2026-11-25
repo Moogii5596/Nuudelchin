@@ -41,6 +41,7 @@ TypeScript, Three.js 0.187, Vite, Vitest, Node 20+. Бүх npm команд `gam
 - `render/ui/` цонх, HUD: `panels.ts`, `menu.ts`, `timebar.ts`, `sleepPanel.ts`, `names.ts`, `panelCtx.ts` (дундын контекст), `panelHerd.ts`, `panelReport.ts`, `panelStorage.ts`, `panelTown.ts`, `panelTrade.ts` (panels.ts-ээс хуваагдсан цонхнууд), `errorBanner.ts` (алдааны туг).
 ### Бусад
 - `src/` үндэс: `main.ts`, `device.ts` (чанар low/mid/high), `pwa.ts`, `animalPreview.ts` (dev), `feedback.ts` (санал илгээх линк, `data/feedback.json`).
+- `src/ui-lab/` (T-27, **лаб** — тоглоомын үндсэн горимд ороогүй; оролт `game/ui-lab.html`, тохиргоо `data/ui-lab.json`): `ui-lab/main.ts` (жинхэнэ тайз + `PlayerController`, `?screen=calm|near|wheel|riding`, `?shot=`), `ui-lab/context.ts` (цэвэр: `contextTargets` — алтан товчны жагсаалт, `horseMode`), `ui-lab/hud.ts` (`LabHud`: джойстик, 4 тогтмол товч, Actions дугуй, төлөвийн мөр, объектын тэмдэг), `ui-lab/icons.ts` (шугаман SVG дүрс). Зураг: `node tools/ui-lab-shots.mjs` → `tools/shots/ui-lab/`.
 - `input/`: `controller.ts` (`moveTo` — товшиж явах), `touch.ts` (утасны хөвөгч джойстик, контекстуал `.prime` гол товч; салбарын `primaryAction` хаясан — [[decisions]] 2026-11-17), `skip.ts`.
 - `persist/`: `idb.ts`, `autosave.ts`, `file.ts`, `transfer.ts`, `transferCode.ts` (шилжүүлэх код; сервер `api/transfer.ts`), `errorGuard.ts` (`window.onerror` → алдаа барих, хадгалалт).
 - `audio/`: `bus.ts` (дууны суваг, суурь), `watch.ts`.

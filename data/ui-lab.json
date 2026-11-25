@@ -1,0 +1,46 @@
+{
+  "_doc": "T-27 UI лаб (game/ui-lab.html, game/src/ui-lab/): утасны HUD 2-ын туршилтын тохиргоо. Тоглоомын үндсэн горим уншихгүй. wheel.speed = Actions дугуй нээлттэй үеийн тоглоомын хурдны үржүүлэгч (¼). wheel.slidePx = дараад гулсуулахад сегмент сонгогдох хамгийн бага зай (px). pickupReach = түүх зүйл товчинд гарах зай (products.pickupRadius-ийн үржүүлэгч; 1-ээс дотогш бол алхахад автоматаар түүгдэнэ). listMax = алтан товчны хажуугийн жагсаалтын дээд тоо. hudRefreshSec = товч, төлөвийн мөр шинэчлэгдэх давтамж. shotFrames = ?shot горимд зураг авахаас өмнө зурах кадр. scenes = ?screen=calm|near|wheel|riding эхлэлийн байдал (minute = тоглоомын цаг; player/horse/cart/milk = бууцны координат, м; cam = камер).",
+  "wheel": { "speed": 0.25, "slidePx": 26, "radius": 84 },
+  "pickupReach": 1.6,
+  "listMax": 4,
+  "hudRefreshSec": 0.15,
+  "shotFrames": 45,
+  "scenes": {
+    "calm": {
+      "minute": 600,
+      "player": { "x": 6, "z": 10, "heading": 3.6, "mounted": false },
+      "horse": { "x": -7, "z": 7.2 },
+      "cart": { "x": -11.5, "z": 10.5, "heading": 1.2 },
+      "milk": [{ "x": -5.8, "z": 10.6, "amount": 2 }],
+      "cam": { "yaw": 0.75, "pitch": 0.42, "dist": 24 },
+      "wheel": false
+    },
+    "near": {
+      "minute": 600,
+      "player": { "x": -8.4, "z": 9.2, "heading": 2.6, "mounted": false },
+      "horse": { "x": -7, "z": 7.2 },
+      "cart": { "x": -11.5, "z": 10.5, "heading": 1.2 },
+      "milk": [{ "x": -5.8, "z": 10.6, "amount": 2 }],
+      "cam": { "yaw": 0.35, "pitch": 0.46, "dist": 17 },
+      "wheel": false
+    },
+    "wheel": {
+      "minute": 600,
+      "player": { "x": 6, "z": 10, "heading": 3.6, "mounted": false },
+      "horse": { "x": -7, "z": 7.2 },
+      "cart": { "x": -11.5, "z": 10.5, "heading": 1.2 },
+      "milk": [{ "x": -5.8, "z": 10.6, "amount": 2 }],
+      "cam": { "yaw": 0.75, "pitch": 0.42, "dist": 24 },
+      "wheel": true
+    },
+    "riding": {
+      "minute": 1080,
+      "player": { "x": 12, "z": 18, "heading": 2.2, "mounted": true },
+      "horse": { "x": 12, "z": 18 },
+      "cart": { "x": -11.5, "z": 10.5, "heading": 1.2 },
+      "milk": [{ "x": -5.8, "z": 10.6, "amount": 2 }],
+      "cam": { "yaw": 0.9, "pitch": 0.36, "dist": 22 },
+      "wheel": false
+    }
+  }
+}

@@ -2,7 +2,7 @@
 title: CHANGELOG — дууссан үе шатууд
 type: Log
 status: Active
-last_updated: 2026-11-17
+last_updated: 2026-11-25
 tags: [changelog, history]
 ---
 # CHANGELOG — дууссан үе шатууд
@@ -364,3 +364,4 @@ tags: [changelog, history]
 
 
 - 2026-11-17 Утасны хөвөгч джойстик (зүүн доод бүс, хуруу тавьсан газар төвлөрнө) нэгтгэв. Салбарын «гол товч (E)» нь main-ийн `.prime` тодруулгатай давхцсан тул оруулаагүй (`claude/driver-sum-center-9am-trip-pi5p6y`).
+- 2026-11-25 T-27 UI лаб: утасны HUD 2 (`game/ui-lab.html`, `src/ui-lab/`, `data/ui-lab.json`) — жинхэнэ тайз + `PlayerController`; алтан контекст товч (+ жагсаалт, объектын тэмдэг), Horse, Actions дугуй (¼ хурд), Map, нэг мөр төлөв; `?screen=calm|near|wheel|riding`, зураг `node tools/ui-lab-shots.mjs` → `tools/shots/ui-lab/`. `sw-template.js`: лабын хуудсыг кэшлэхгүй. Тоглоомын үндсэн горим өөрчлөгдөөгүй.

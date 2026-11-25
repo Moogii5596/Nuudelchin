@@ -914,5 +914,16 @@
   "ui.bank_min": "Min",
   "ui.bank_max": "Limit",
   "ui.bank_daily": "Repaid automatically every day: about <b>{x}</b>/day (plus interest).",
-  "ui.bank_daily_now": "<p>Today’s automatic payment (20:00): <b>{x}</b> — balance ÷ days left.</p>"
+  "ui.bank_daily_now": "<p>Today’s automatic payment (20:00): <b>{x}</b> — balance ÷ days left.</p>",
+  "lab.mount": "Mount",
+  "lab.dismount": "Dismount",
+  "lab.coming": "Coming",
+  "lab.actions": "Actions",
+  "lab.nothing": "Nothing near",
+  "lab.get_out": "Get out",
+  "lab.leave": "Leave",
+  "lab.counter": "Counter",
+  "lab.store": "Store",
+  "lab.log": "Log",
+  "lab.year": "year {n}"
 }
