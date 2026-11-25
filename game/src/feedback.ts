@@ -5,7 +5,11 @@ import type { Quality } from './device';
 
 export const FEEDBACK_URL: string = (feedbackJson as { url: string }).url.trim();
 
-export const feedbackEnabled = (url: string = FEEDBACK_URL): boolean => url.length > 0;
+/** Хоосон эсвэл буруу (харьцангуй, http(s) биш) url → товч нуугдана; буруу тохиргоо алдааны мэдэгдэл болохгүй */
+export const feedbackEnabled = (url: string = FEEDBACK_URL): boolean => {
+  if (!url.length) return false;
+  try { return /^https?:$/.test(new URL(url).protocol); } catch { return false; }
+};
 
 /** Цэвэр: параметр залгасан URL (байгаа query-г хадгална) */
 export function buildFeedbackUrl(base: string, version: string, day: number, dev: Quality): string {

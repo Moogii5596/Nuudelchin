@@ -35,11 +35,11 @@ SYM game/src/device.ts:50 const QUALITY_SPEC
 SYM game/src/device.ts:56 const Q
 SYM game/src/device.ts:59 const KEY_ICON
 SYM game/src/device.ts:64 fn touchKeys
-FILE game/src/feedback.ts 1.0KB 22L exports: FEEDBACK_URL,feedbackEnabled,buildFeedbackUrl,openFeedback
+FILE game/src/feedback.ts 1.3KB 26L exports: FEEDBACK_URL,feedbackEnabled,buildFeedbackUrl,openFeedback
 SYM game/src/feedback.ts:6 const FEEDBACK_URL
-SYM game/src/feedback.ts:8 const feedbackEnabled
-SYM game/src/feedback.ts:11 fn buildFeedbackUrl
-SYM game/src/feedback.ts:19 fn openFeedback
+SYM game/src/feedback.ts:9 const feedbackEnabled
+SYM game/src/feedback.ts:15 fn buildFeedbackUrl
+SYM game/src/feedback.ts:23 fn openFeedback
 FILE game/src/i18n/i18n.ts 1.7KB 41L exports: Lang,LANG_KEY,resolveLang,setLang,getLang,t
 SYM game/src/i18n/i18n.ts:4 type Lang
 SYM game/src/i18n/i18n.ts:6 const LANG_KEY
@@ -109,12 +109,12 @@ SYM game/src/persist/autosave.ts:54 method Autosave.saveNow
 SYM game/src/persist/autosave.ts:81 method Autosave.idle
 SYM game/src/persist/autosave.ts:87 fn attachSimEvents
 SYM game/src/persist/autosave.ts:96 fn attachPageEvents
-FILE game/src/persist/errorGuard.ts 3.4KB 59L exports: ErrorGuardDeps,describeError,ErrorGuard,installErrorGuard
+FILE game/src/persist/errorGuard.ts 4.1KB 73L exports: ErrorGuardDeps,describeError,ErrorGuard,installErrorGuard
 SYM game/src/persist/errorGuard.ts:5 interface ErrorGuardDeps
-SYM game/src/persist/errorGuard.ts:16 fn describeError
-SYM game/src/persist/errorGuard.ts:21 class ErrorGuard
-SYM game/src/persist/errorGuard.ts:33 method ErrorGuard.handle
-SYM game/src/persist/errorGuard.ts:53 fn installErrorGuard
+SYM game/src/persist/errorGuard.ts:18 fn describeError
+SYM game/src/persist/errorGuard.ts:23 class ErrorGuard
+SYM game/src/persist/errorGuard.ts:37 method ErrorGuard.handle
+SYM game/src/persist/errorGuard.ts:67 fn installErrorGuard
 FILE game/src/persist/file.ts 2.3KB 54L exports: FILE_EXT,exportBytes,importBytes,fileName,downloadFile,readFile
 SYM game/src/persist/file.ts:9 const FILE_EXT
 SYM game/src/persist/file.ts:11 fn pipe
@@ -862,7 +862,7 @@ SYM game/src/render/style.ts:724 const visualStyle
 SYM game/src/render/style.ts:727 fn fogRange
 SYM game/src/render/style.ts:732 fn fogDistanceAt
 SYM game/src/render/style.ts:743 fn paletteHex
-FILE game/src/render/sumcenter.ts 35.9KB 652L exports: SumCenterView
+FILE game/src/render/sumcenter.ts 36.5KB 657L exports: SumCenterView
 SYM game/src/render/sumcenter.ts:44 fn residentMatrix
 SYM game/src/render/sumcenter.ts:48 fn residents
 SYM game/src/render/sumcenter.ts:75 fn darkWindowMaterials
@@ -870,21 +870,21 @@ SYM game/src/render/sumcenter.ts:98 class SumCenterView
 SYM game/src/render/sumcenter.ts:272 method SumCenterView.buildFloodLights
 SYM game/src/render/sumcenter.ts:282 method SumCenterView.syncFloodLights
 SYM game/src/render/sumcenter.ts:298 method SumCenterView.spinWheelAt
-SYM game/src/render/sumcenter.ts:312 method SumCenterView.updateWheels
-SYM game/src/render/sumcenter.ts:325 method SumCenterView.buildLamps
-SYM game/src/render/sumcenter.ts:358 method SumCenterView.syncLamps
-SYM game/src/render/sumcenter.ts:394 method SumCenterView.buildGates
-SYM game/src/render/sumcenter.ts:412 method SumCenterView.setLeaves
-SYM game/src/render/sumcenter.ts:428 method SumCenterView.syncGates
-SYM game/src/render/sumcenter.ts:460 method SumCenterView.syncTown
-SYM game/src/render/sumcenter.ts:478 method SumCenterView.buildTown
-SYM game/src/render/sumcenter.ts:505 method SumCenterView.buildGers
-SYM game/src/render/sumcenter.ts:543 method SumCenterView.syncTalk
-SYM game/src/render/sumcenter.ts:587 method SumCenterView.syncNight
-SYM game/src/render/sumcenter.ts:599 method SumCenterView.syncCrowd
-SYM game/src/render/sumcenter.ts:625 method SumCenterView.takeLive
-SYM game/src/render/sumcenter.ts:642 method SumCenterView.releaseLive
-SYM game/src/render/sumcenter.ts:649 method SumCenterView.syncLot
+SYM game/src/render/sumcenter.ts:317 method SumCenterView.updateWheels
+SYM game/src/render/sumcenter.ts:330 method SumCenterView.buildLamps
+SYM game/src/render/sumcenter.ts:363 method SumCenterView.syncLamps
+SYM game/src/render/sumcenter.ts:399 method SumCenterView.buildGates
+SYM game/src/render/sumcenter.ts:417 method SumCenterView.setLeaves
+SYM game/src/render/sumcenter.ts:433 method SumCenterView.syncGates
+SYM game/src/render/sumcenter.ts:465 method SumCenterView.syncTown
+SYM game/src/render/sumcenter.ts:483 method SumCenterView.buildTown
+SYM game/src/render/sumcenter.ts:510 method SumCenterView.buildGers
+SYM game/src/render/sumcenter.ts:548 method SumCenterView.syncTalk
+SYM game/src/render/sumcenter.ts:592 method SumCenterView.syncNight
+SYM game/src/render/sumcenter.ts:604 method SumCenterView.syncCrowd
+SYM game/src/render/sumcenter.ts:630 method SumCenterView.takeLive
+SYM game/src/render/sumcenter.ts:647 method SumCenterView.releaseLive
+SYM game/src/render/sumcenter.ts:654 method SumCenterView.syncLot
 FILE game/src/render/sumlayout.ts 52.4KB 897L exports: Rect,VehicleSlotView,HomeDoor,SumPlotView,SumGer,GateView,GateView,SumCenterBuild,buildSumCenter
 SYM game/src/render/sumlayout.ts:20 interface Rect
 SYM game/src/render/sumlayout.ts:22 interface VehicleSlotView
@@ -1223,7 +1223,7 @@ SYM game/src/sim/sim.ts:181 method Sim.runDays
 SYM game/src/sim/sim.ts:186 method Sim.endDay
 SYM game/src/sim/sim.ts:270 method Sim.spend
 SYM game/src/sim/sim.ts:276 method Sim.random
-FILE game/src/sim/state.ts 22.3KB 430L exports: SAVE_VERSION,ProductId,PRODUCTS,AnimalMode,Animal,GroundItem,Batch,ProcessorKind,ProcessorState,VehicleId,VEHICLES,BuyOrder,Place,InteriorState,+16
+FILE game/src/sim/state.ts 23.1KB 439L exports: SAVE_VERSION,ProductId,PRODUCTS,AnimalMode,Animal,GroundItem,Batch,ProcessorKind,ProcessorState,VehicleId,VEHICLES,BuyOrder,Place,InteriorState,+16
 SYM game/src/sim/state.ts:21 const SAVE_VERSION
 SYM game/src/sim/state.ts:23 type ProductId
 SYM game/src/sim/state.ts:24 const PRODUCTS
@@ -1252,8 +1252,8 @@ SYM game/src/sim/state.ts:267 fn emptyDayStats
 SYM game/src/sim/state.ts:271 fn newAnimal
 SYM game/src/sim/state.ts:304 fn createInitialState
 SYM game/src/sim/state.ts:373 const MIGRATIONS
-SYM game/src/sim/state.ts:418 const MIN_SAVE_VERSION
-SYM game/src/sim/state.ts:421 fn migrateState
+SYM game/src/sim/state.ts:427 const MIN_SAVE_VERSION
+SYM game/src/sim/state.ts:430 fn migrateState
 FILE game/src/sim/systems/animals.ts 5.6KB 130L exports: AnimalBody,frameKg,liveWeightKg,salePrice,buyPrice,sheepUnits,herdSheepUnits,grazingSheepUnits,dailyConditionDelta,dailyAnimals
 SYM game/src/sim/systems/animals.ts:8 interface AnimalBody
 SYM game/src/sim/systems/animals.ts:21 fn frameKg
@@ -1869,7 +1869,7 @@ FILE game/tests/animals.test.ts 2.3KB 39L
 FILE game/tests/audioBus.test.ts 2.8KB 65L
 FILE game/tests/breeding.test.ts 1.4KB 33L
 FILE game/tests/buildings.test.ts 18.9KB 250L
-FILE game/tests/callHorse.test.ts 2.5KB 65L
+FILE game/tests/callHorse.test.ts 3.2KB 77L
 FILE game/tests/camclip.test.ts 3.9KB 68L
 FILE game/tests/characters.test.ts 30.1KB 507L
 FILE game/tests/clock.test.ts 2.7KB 52L
@@ -1878,7 +1878,7 @@ FILE game/tests/difficulty.test.ts 4.9KB 99L
 FILE game/tests/docs.test.ts 4.0KB 76L
 FILE game/tests/dogs.test.ts 7.5KB 190L
 FILE game/tests/driver.test.ts 6.6KB 132L
-FILE game/tests/errorGuard.test.ts 3.9KB 85L
+FILE game/tests/errorGuard.test.ts 4.6KB 101L
 FILE game/tests/flee.test.ts 4.3KB 83L
 FILE game/tests/ger.test.ts 9.5KB 181L
 FILE game/tests/gerSize.test.ts 8.6KB 155L
@@ -2099,7 +2099,7 @@ DOC docs/plan/V.md:13-15 ## Зорилго
 DOC docs/plan/V.md:16-23 ## Гарах шалгуур ([[visuals-plan]] §V3–V5, §7.1)
 DOC docs/plan/V.md:24-32 ## Нээлттэй ажил
 DOC docs/plan/V.md:33-36 ## Зогссон цэг
-FILE docs/plan/playtest.md 23.7KB 145L
+FILE docs/plan/playtest.md 24.3KB 149L
 DOC docs/plan/playtest.md:15-20 ## A. FPS ба төхөөрөмж
 DOC docs/plan/playtest.md:21-41 ## B. Харааны ба соёлын баталгаажуулалт ([[V]])
 DOC docs/plan/playtest.md:42-115 ## C. Мэдрэмж, үе шат бүрээр
@@ -2108,7 +2108,8 @@ DOC docs/plan/playtest.md:120-125 ## V4.6 S2 үхэр, адуу, нохой, ч�
 DOC docs/plan/playtest.md:126-128 ## Хүний масштаб 1.7 м (characters.json scale 0.70) (🧑 мэдрэмж)
 DOC docs/plan/playtest.md:129-135 ## Сумын төвийн NPC жигд алхалт ба мөргөлдөөн (🧑 мэдрэмж, 2026-11-16)
 DOC docs/plan/playtest.md:136-139 ## Мэдэгдэж буй дутагдал: NPC хашаа гаталгах (sumwalk, 2026-11-16)
-DOC docs/plan/playtest.md:140-145 ## Утасны HUD, удирдлага (2026-11-16)
+DOC docs/plan/playtest.md:140-146 ## Утасны HUD, удирдлага (2026-11-16)
+DOC docs/plan/playtest.md:147-149 ## Сумын төвийн шөнийн гэрэл (T-16, 2026-11-25)
 FILE docs/seasons-camps.md 10.2KB 104L
 DOC docs/seasons-camps.md:17-40 ## 1. Хэрэглэгчийн шийдвэрүүд
 DOC docs/seasons-camps.md:41-54 ## 2. Улирал

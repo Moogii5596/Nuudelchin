@@ -18,7 +18,7 @@ import { newHelpersState, type HelpersState } from './systems/helpers';
 import { newTownState, type TownState } from './systems/town';
 import { newJournal, type JournalState } from './systems/journal';
 
-export const SAVE_VERSION = 22;   // 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих · 6: нохой, чонын дайралт, сүргийн нүүдэл (M4) · 7: шөнө, хотлох, өглөөний бүтээгдэхүүн, Портер/Амжиргаа, шөнийн чоно (M4.5) · 8: газрын зураг, тээвэр жолоодох, ачаа, Худалдаачин (M4.6) · 9: туслах малчид, цайны газар, отор, туслахын мал (M5) · 10: улирал, цас, боодол өвс, 4 бууц, отрын бүтээгдэхүүн (M5.5) · 11: сумын төвийн амьдрал — байшин, нэр хүнд, зээл, хамаатан (V3.4) · 12: орж болдог барилга — player.interior (V6.1) · 13: Sim-ийн нуугдмал төлөв state-д — dayStartMoney, flockCenters (M6.1) · 14: settings.difficulty — тайван тохиргооны гулсуурууд (M6.10) · 15: homeSize — гэрийн хэмжээ, BuyOrder ger.size (M6.13) · 16: stats, milestones, settings.showMilestones (M6.5) · 20: trader — явуулын худалдаачин (M6.12) · 19: leaders — сүргийн удирдагч (M6.9) · 18: stuckEvents, Animal.sn/sx/sz (M6.8) · 17: extraGers (олон гэр), BuyOrder gerAdd; helperGer/helperTent байр → гэр (M6.13)
+export const SAVE_VERSION = 23;   // 23: унаа морины Animal.place (T-03) · 4: малчин унах/чиглэл, чоно (M2) · 5: шилбүүр/уурга барих · 6: нохой, чонын дайралт, сүргийн нүүдэл (M4) · 7: шөнө, хотлох, өглөөний бүтээгдэхүүн, Портер/Амжиргаа, шөнийн чоно (M4.5) · 8: газрын зураг, тээвэр жолоодох, ачаа, Худалдаачин (M4.6) · 9: туслах малчид, цайны газар, отор, туслахын мал (M5) · 10: улирал, цас, боодол өвс, 4 бууц, отрын бүтээгдэхүүн (M5.5) · 11: сумын төвийн амьдрал — байшин, нэр хүнд, зээл, хамаатан (V3.4) · 12: орж болдог барилга — player.interior (V6.1) · 13: Sim-ийн нуугдмал төлөв state-д — dayStartMoney, flockCenters (M6.1) · 14: settings.difficulty — тайван тохиргооны гулсуурууд (M6.10) · 15: homeSize — гэрийн хэмжээ, BuyOrder ger.size (M6.13) · 16: stats, milestones, settings.showMilestones (M6.5) · 20: trader — явуулын худалдаачин (M6.12) · 19: leaders — сүргийн удирдагч (M6.9) · 18: stuckEvents, Animal.sn/sx/sz (M6.8) · 17: extraGers (олон гэр), BuyOrder gerAdd; helperGer/helperTent байр → гэр (M6.13)
 
 export type ProductId = 'milk' | 'tarag' | 'aaruul' | 'urum' | 'wool' | 'felt' | 'cashmere';
 export const PRODUCTS: readonly ProductId[] = ['milk', 'tarag', 'aaruul', 'urum', 'wool', 'felt', 'cashmere'];
@@ -371,6 +371,15 @@ export function createInitialState(cfg: GameConfig, seed: number): GameState {
  * 11 → 12: player.interior (хуучин хадгалалтад байхгүй → null) · 12 → 13: dayStartMoney, flockCenters.
  */
 export const MIGRATIONS: Record<number, (s: GameState) => void> = {
+  // 22 → 23: T-03-аас өмнө морь place-гүй байсан. Суманд морьгүй, тээвэргүй ирсэн тоглогчийн буусан морь сумд байгаа →
+  // place='sum' (үгүй бол «гэрт» гэж тооцогдоод дуудагдахгүй, сумын координатаар бууцанд гацдаг байсан)
+  22: (s) => {
+    const p = s.player;
+    if (p.place !== 'sum' || p.mounted || p.driving) return;
+    if ((s.fleet ?? []).some((f) => f.place === 'sum')) return;   // тээврээр ирсэн → морь гэртээ
+    const horse = s.animals.find((a) => a.riding);
+    if (horse && horse.place === undefined) horse.place = 'sum';
+  },
   // 21 → 22: цалин өдөр бүр. Хуучин wage нь 5 хоногийн «сар»-д ×5-аар төлөгддөг байсан → сарын дүн / 30. Сөрөг урьдчилгаа (өр) → owed
   21: (s) => {
     const day = (w: number): number => Math.round((w * 5) / 30);

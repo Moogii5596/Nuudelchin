@@ -10,6 +10,8 @@ export interface ErrorGuardDeps {
   log?: (...a: unknown[]) => void;
   now?: () => number;
   throttleMs?: number;
+  /** throttle цонхонд console-д бичих алдааны дээд тоо (кадр бүр унахад секундэд 60 stack бичихгүй) */
+  logPerWindow?: number;
 }
 
 /** Алдаанаас console-д бичих мөр (цэвэр) */
@@ -26,17 +28,29 @@ export class ErrorGuard {
   /** Алдааны хадгалалтыг session-д НЭГ л удаа: давтагдах алдаа (эвдэрсэн төлөв) сайн autosave-ийг дарж бичихгүй */
   private saveTried = false;
   private savedOk = false;
+  private windowLogs = 0;
+  private suppressed = 0;
 
   constructor(private readonly d: ErrorGuardDeps) {}
 
   /** Алдаа бүрийг console-д бичнэ; мэдэгдэл + хадгалалт нь throttle-ээр. Хэзээ ч throw хийхгүй */
   handle(err: unknown): boolean {
     this.caught++;
-    try { (this.d.log ?? console.error)('[error]', describeError(err)); } catch { /* console байхгүй */ }
     const now = (this.d.now ?? Date.now)();
-    if (now - this.last < (this.d.throttleMs ?? 5000)) return false;
+    const quiet = now - this.last < (this.d.throttleMs ?? 5000);
+    // console: throttle цонхонд эхний logPerWindow алдаа; үлдсэнийг тоолж дараагийн мэдэгдэлд нэг мөрөөр
+    if (!quiet || this.windowLogs < (this.d.logPerWindow ?? 5)) {
+      this.windowLogs++;
+      try { (this.d.log ?? console.error)('[error]', describeError(err)); } catch { /* console байхгүй */ }
+    } else this.suppressed++;
+    if (quiet) return false;
     this.last = now;
     this.notified++;
+    if (this.suppressed) {
+      try { (this.d.log ?? console.error)(`[error] … ${this.suppressed} давтагдсан алдааг алгаслаа`); } catch { /* */ }
+      this.suppressed = 0;
+    }
+    this.windowLogs = 1;
     const log = this.d.log ?? console.error;
     const notify = (): void => { try { this.d.notify(this.savedOk); } catch { /* мэдэгдэл бүтэлгүйтвэл ч тоглоом үргэлжилнэ */ } };
     if (this.saveTried) { notify(); return true; }

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { newSim, steps } from './helpers';
 import { ridingHorse, horseInScene } from '../src/sim/systems/herder';
 import { syncAway } from '../src/sim/systems/travel';
-import { SAVE_VERSION } from '../src/sim/state';
+import { MIGRATIONS, SAVE_VERSION } from '../src/sim/state';
 
 /** Тоглогчийг сумын төвд (place='sum') байрлуулна */
 function toSum(sim: ReturnType<typeof newSim>, x = 300, z = 300): void {
@@ -58,8 +58,20 @@ describe('Морь дуудах same-scene (T-03)', () => {
     expect(Math.hypot(horse.x - 340, horse.z - 300)).toBeLessThan(d0);
   });
 
-  it('SAVE_VERSION өөрчлөгдөөгүй, place талбар заавал биш', () => {
+  it('SAVE_VERSION шинэ төлөвтэй тэнцүү, place талбар заавал биш', () => {
     expect(SAVE_VERSION).toBe(newSim(1).state.version);
     expect(ridingHorse(newSim(1).state)!.place).toBeUndefined();
+  });
+
+  it('migration 22: суманд морьгүй буусан хуучин хадгалалт → морь place=sum; тээврээр ирсэн бол гэртээ', () => {
+    const a = newSim(1).state;
+    a.player.place = 'sum'; a.player.mounted = false; a.player.driving = null;
+    MIGRATIONS[22]!(a);
+    expect(ridingHorse(a)!.place).toBe('sum');
+    const b = newSim(1).state;
+    b.player.place = 'sum'; b.player.mounted = false; b.player.driving = null;
+    if (b.fleet[0]) b.fleet[0].place = 'sum'; else b.fleet.push({ id: 'cart', place: 'sum', x: 0, z: 0, heading: 0, cargo: {}, animals: [], orders: [] } as never);
+    MIGRATIONS[22]!(b);
+    expect(ridingHorse(b)!.place).toBeUndefined();
   });
 });

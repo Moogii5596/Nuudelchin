@@ -304,6 +304,11 @@ export class SumCenterView {
       if (d < bestD && c.distanceToSquared(ray.ray.origin) < 60 * 60) { best = w; bestD = d; }
     }
     if (!best) return false;
+    // Халхлалт: хүрдний өмнө харагдах өөр зүйл (байшин, хашаа) тусвал эргүүлэхгүй
+    const along = c.copy(best.mesh.position).setY(best.mesh.position.y + 0.3).sub(ray.ray.origin).dot(ray.ray.direction);
+    const shown = (o: THREE.Object3D | null): boolean => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
+    const first = ray.intersectObject(this.group, true).find((h) => shown(h.object) && !(h.object instanceof THREE.Sprite));
+    if (first && first.object !== best.mesh && first.distance < along - 0.8) return false;
     best.left = visualStyle.night.wheelSpin.seconds;
     return true;
   }

@@ -51,6 +51,22 @@ describe('Алдаа барилт (T-12)', () => {
     expect(notify).toHaveBeenCalledWith(false);
   });
 
+  it('давтагдах алдаа console-ийг дүүргэхгүй: цонхонд logPerWindow, үлдсэнийг нэг мөрөөр', () => {
+    const { g, log, adv } = mk({ logPerWindow: 3 });
+    for (let i = 0; i < 100; i++) g.handle(new Error('frame'));
+    expect(log).toHaveBeenCalledTimes(3);
+    adv(6000);
+    g.handle(new Error('frame'));
+    expect(log.mock.calls.some((c) => String(c[0]).includes('97'))).toBe(true);
+    expect(g.caught).toBe(101);
+  });
+
+  it('feedbackEnabled: харьцангуй, http(s) биш url-д товч нуугдана', () => {
+    expect(feedbackEnabled('/feedback')).toBe(false);
+    expect(feedbackEnabled('javascript:alert(1)')).toBe(false);
+    expect(feedbackEnabled('not a url')).toBe(false);
+  });
+
   it('describeError: Error-ийн stack, string, объект', () => {
     expect(describeError(new Error('boom'))).toContain('boom');
     expect(describeError('s')).toBe('s');
