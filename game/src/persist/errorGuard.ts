@@ -1,12 +1,12 @@
 /**
- * Алдаа барилт (T-12): `window.onerror` / `unhandledrejection` тоглоомыг зогсоохгүй. Нэг товч мэдэгдэл + шууд autosave
- * (throttleMs дотор давтахгүй) + «Файл татах». Алдааны мессеж, stack-ыг зөвхөн console-д; хэрэглэгчид нууц мэдээлэл харуулахгүй.
+ * Алдаа барилт (T-12): `window.onerror` / `unhandledrejection` тоглоомыг зогсоохгүй. Нэг товч мэдэгдэл (throttleMs дотор давтахгүй)
+ * + эхний алдаан дээр нэг удаа autosave + «Файл татах». Алдааны мессеж, stack-ыг зөвхөн console-д; хэрэглэгчид нууц мэдээлэл харуулахгүй.
  */
 export interface ErrorGuardDeps {
   /** Тоглолтыг тэр дор хадгална (Autosave.saveNow('hidden')) */
   save: () => Promise<void> | void;
-  /** Хэрэглэгчид нэг товч мэдэгдэл (+ «Файл татах») */
-  notify: () => void;
+  /** Хэрэглэгчид нэг товч мэдэгдэл (+ «Файл татах»). saved = энэ session-д алдааны хадгалалт амжилттай болсон эсэх */
+  notify: (saved: boolean) => void;
   log?: (...a: unknown[]) => void;
   now?: () => number;
   throttleMs?: number;
@@ -23,6 +23,9 @@ export class ErrorGuard {
   /** Нийт барьсан, мэдэгдсэн тоо (тест, оношлогоо) */
   caught = 0;
   notified = 0;
+  /** Алдааны хадгалалтыг session-д НЭГ л удаа: давтагдах алдаа (эвдэрсэн төлөв) сайн autosave-ийг дарж бичихгүй */
+  private saveTried = false;
+  private savedOk = false;
 
   constructor(private readonly d: ErrorGuardDeps) {}
 
@@ -34,8 +37,14 @@ export class ErrorGuard {
     if (now - this.last < (this.d.throttleMs ?? 5000)) return false;
     this.last = now;
     this.notified++;
-    try { void Promise.resolve(this.d.save()).catch((e) => (this.d.log ?? console.error)('[error] save', describeError(e))); } catch (e) { (this.d.log ?? console.error)('[error] save', describeError(e)); }
-    try { this.d.notify(); } catch { /* мэдэгдэл бүтэлгүйтвэл ч тоглоом үргэлжилнэ */ }
+    const log = this.d.log ?? console.error;
+    const notify = (): void => { try { this.d.notify(this.savedOk); } catch { /* мэдэгдэл бүтэлгүйтвэл ч тоглоом үргэлжилнэ */ } };
+    if (this.saveTried) { notify(); return true; }
+    this.saveTried = true;
+    // Мэдэгдлийг хадгалалт дууссаны дараа: «хадгаллаа» гэж худал хэлэхгүй
+    let p: Promise<void>;
+    try { p = Promise.resolve(this.d.save()); } catch (e) { p = Promise.reject(e); }
+    void p.then(() => { this.savedOk = true; }, (e) => { log('[error] save', describeError(e)); }).then(notify);
     return true;
   }
 }

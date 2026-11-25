@@ -41,6 +41,14 @@ describe('Дууны bus (T-12)', () => {
     expect(diffEvents(null, b)).toEqual([]);
   });
 
+  it('snapshot: зээл, түрээс «sale» орлогод орохгүй', () => {
+    const sim = newSim(2);
+    sim.state.today.income = { loan: 5000, rent: 300 };
+    expect(snapshot(sim.state, 1200, 360).income).toBe(0);
+    sim.state.today.income = { loan: 5000, animals: 200 };
+    expect(snapshot(sim.state, 1200, 360).income).toBe(200);
+  });
+
   it('AudioWatcher: сонсогчгүй үед юу ч гаргахгүй; sim-ээс dusk/dawn гарна', () => {
     const sim = newSim(2);
     const bus = new AudioBus();

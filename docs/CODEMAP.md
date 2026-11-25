@@ -15,12 +15,12 @@ SYM game/src/audio/bus.ts:35 method AudioBus.hasListeners
 SYM game/src/audio/bus.ts:41 const audio
 SYM game/src/audio/bus.ts:42 const emit
 SYM game/src/audio/bus.ts:43 const on
-FILE game/src/audio/watch.ts 2.8KB 64L exports: diffEvents,snapshot,AudioWatcher
+FILE game/src/audio/watch.ts 3.0KB 65L exports: diffEvents,snapshot,AudioWatcher
 SYM game/src/audio/watch.ts:19 fn sumIncome
-SYM game/src/audio/watch.ts:26 fn diffEvents
-SYM game/src/audio/watch.ts:40 fn snapshot
-SYM game/src/audio/watch.ts:54 class AudioWatcher
-SYM game/src/audio/watch.ts:58 method AudioWatcher.watch
+SYM game/src/audio/watch.ts:27 fn diffEvents
+SYM game/src/audio/watch.ts:41 fn snapshot
+SYM game/src/audio/watch.ts:55 class AudioWatcher
+SYM game/src/audio/watch.ts:59 method AudioWatcher.watch
 FILE game/src/device.ts 3.1KB 71L exports: isTouch,Quality,QUALITIES,QUALITY_NAME,quality,setQuality,QualitySpec,QUALITY_SPEC,Q,KEY_ICON,touchKeys
 SYM game/src/device.ts:11 fn mq
 SYM game/src/device.ts:14 const isTouch
@@ -94,11 +94,11 @@ SYM game/src/input/touch.ts:279 method TouchUI.fullscreen
 SYM game/src/input/touch.ts:292 method TouchUI.paused
 SYM game/src/input/touch.ts:296 method TouchUI.portrait
 SYM game/src/input/touch.ts:301 method TouchUI.update
-FILE game/src/main.ts 42.1KB 707L
+FILE game/src/main.ts 42.3KB 713L
 SYM game/src/main.ts:61 fn toast
 SYM game/src/main.ts:76 fn note
-SYM game/src/main.ts:96 fn start
-SYM game/src/main.ts:682 fn boot
+SYM game/src/main.ts:102 fn start
+SYM game/src/main.ts:688 fn boot
 FILE game/src/persist/autosave.ts 4.7KB 102L exports: SaveReason,AutosaveDeps,Autosave,attachSimEvents,attachPageEvents
 SYM game/src/persist/autosave.ts:11 type SaveReason
 SYM game/src/persist/autosave.ts:13 interface AutosaveDeps
@@ -109,12 +109,12 @@ SYM game/src/persist/autosave.ts:54 method Autosave.saveNow
 SYM game/src/persist/autosave.ts:81 method Autosave.idle
 SYM game/src/persist/autosave.ts:87 fn attachSimEvents
 SYM game/src/persist/autosave.ts:96 fn attachPageEvents
-FILE game/src/persist/errorGuard.ts 2.7KB 50L exports: ErrorGuardDeps,describeError,ErrorGuard,installErrorGuard
+FILE game/src/persist/errorGuard.ts 3.4KB 59L exports: ErrorGuardDeps,describeError,ErrorGuard,installErrorGuard
 SYM game/src/persist/errorGuard.ts:5 interface ErrorGuardDeps
 SYM game/src/persist/errorGuard.ts:16 fn describeError
 SYM game/src/persist/errorGuard.ts:21 class ErrorGuard
-SYM game/src/persist/errorGuard.ts:30 method ErrorGuard.handle
-SYM game/src/persist/errorGuard.ts:44 fn installErrorGuard
+SYM game/src/persist/errorGuard.ts:33 method ErrorGuard.handle
+SYM game/src/persist/errorGuard.ts:53 fn installErrorGuard
 FILE game/src/persist/file.ts 2.3KB 54L exports: FILE_EXT,exportBytes,importBytes,fileName,downloadFile,readFile
 SYM game/src/persist/file.ts:9 const FILE_EXT
 SYM game/src/persist/file.ts:11 fn pipe
@@ -1866,7 +1866,7 @@ SYM tools/codemap.ts:141 fn generate
 SYM tools/codemap.ts:195 fn main
 FILE game/tests/animalLook.test.ts 11.0KB 192L
 FILE game/tests/animals.test.ts 2.3KB 39L
-FILE game/tests/audioBus.test.ts 2.4KB 57L
+FILE game/tests/audioBus.test.ts 2.8KB 65L
 FILE game/tests/breeding.test.ts 1.4KB 33L
 FILE game/tests/buildings.test.ts 18.9KB 250L
 FILE game/tests/callHorse.test.ts 2.5KB 65L
@@ -1878,7 +1878,7 @@ FILE game/tests/difficulty.test.ts 4.9KB 99L
 FILE game/tests/docs.test.ts 4.0KB 76L
 FILE game/tests/dogs.test.ts 7.5KB 190L
 FILE game/tests/driver.test.ts 6.6KB 132L
-FILE game/tests/errorGuard.test.ts 3.1KB 71L
+FILE game/tests/errorGuard.test.ts 3.9KB 85L
 FILE game/tests/flee.test.ts 4.3KB 83L
 FILE game/tests/ger.test.ts 9.5KB 181L
 FILE game/tests/gerSize.test.ts 8.6KB 155L
@@ -1950,9 +1950,9 @@ DOC docs/character-design.md:28-52 ## 2. Үндсэн дүр — хэрэгжи�
 DOC docs/character-design.md:53-61 ## 3. NPC-үүд одоо
 DOC docs/character-design.md:62-147 ## 4. Нэг кодын сан: дүр бүрийг тохиргооноос угсрах (V4.5)
 DOC docs/character-design.md:148-157 ## 5. Нээлттэй шийдвэр 🙋
-FILE docs/decisions.md 24.7KB 147L
+FILE docs/decisions.md 25.3KB 148L
 DOC docs/decisions.md:16-137 ## 0. Хэрэглэгчийн шийдвэрийн түүх
-DOC docs/decisions.md:138-147 ## 13. MVP-ийн хүрээ хаагдсан (2026-11-15)
+DOC docs/decisions.md:138-148 ## 13. MVP-ийн хүрээ хаагдсан (2026-11-15)
 FILE docs/events/airag.md 6.0KB 83L
 DOC docs/events/airag.md:13-19 ## 1. Тойм
 DOC docs/events/airag.md:20-32 ## 2. Ажлын механик
@@ -2068,18 +2068,19 @@ DOC docs/night-transport.md:45-68 ## 3. Сүү, ноос хоносон газр
 DOC docs/night-transport.md:69-87 ## 4. Шөнийн чоно (хэрэглэгчийн дүрэм)
 DOC docs/night-transport.md:88-103 ## 5. Тээвэр
 DOC docs/night-transport.md:104-106 ## 6. Хэрэглэгчийн шийдвэр 🙋
-FILE docs/plan/BOARD.md 24.8KB 131L
+FILE docs/plan/BOARD.md 27.4KB 142L
 DOC docs/plan/BOARD.md:14-24 ## MVP «дууссан» (D-шалгуур, дэлгэрэнгүй [[M6]])
-DOC docs/plan/BOARD.md:25-42 ## Агентын бүртгэл (дугаар = нэр; шинэ агент → дараагийн дугаар)
-DOC docs/plan/BOARD.md:43-61 ## Карт — Давалгаа A (шийдвэр гарсан, 11-17)
-DOC docs/plan/BOARD.md:62-66 ## Карт — Давалгаа A-ийн дараа (шийдвэр: зөвшөөрсөн)
-DOC docs/plan/BOARD.md:67-90 ## Давалгаа B — СУУРЬ, түүхээс хамааралгүй (⏳ хэрэглэгч батлахыг хүлээж байна)
-DOC docs/plan/BOARD.md:91-96 ## Карт — Давалгаа C (шийдвэр гарсан, 11-17; түүхээс хамааралгүй)
-DOC docs/plan/BOARD.md:97-109 ## Карт — Давалгаа D: түүхийн бэлтгэл (шийдвэр гарсан, 11-17; [[story]] Approved)
-DOC docs/plan/BOARD.md:110-119 ## Санал, Давалгаа C+ (⏳ ШИЙДВЭР ХҮЛЭЭЖ БАЙНА — ахлах агентад хувиарлахгүй)
-DOC docs/plan/BOARD.md:120-126 ## Түүх ба тэнцвэр (хэрэглэгч, шинэ чат; суурийн дараа)
-DOC docs/plan/BOARD.md:127-129 ## Хэрэглэгчийн ажил (агент хийж чадахгүй)
-DOC docs/plan/BOARD.md:130-131 ## Ахлахын мөчлөг (хурдан)
+DOC docs/plan/BOARD.md:25-43 ## Агентын бүртгэл (дугаар = нэр; шинэ агент → дараагийн дугаар)
+DOC docs/plan/BOARD.md:44-62 ## Карт — Давалгаа A (шийдвэр гарсан, 11-17)
+DOC docs/plan/BOARD.md:63-67 ## Карт — Давалгаа A-ийн дараа (шийдвэр: зөвшөөрсөн)
+DOC docs/plan/BOARD.md:68-91 ## Давалгаа B — СУУРЬ, түүхээс хамааралгүй (⏳ хэрэглэгч батлахыг хүлээж байна)
+DOC docs/plan/BOARD.md:92-97 ## Карт — Давалгаа C (шийдвэр гарсан, 11-17; түүхээс хамааралгүй)
+DOC docs/plan/BOARD.md:98-110 ## Карт — Давалгаа D: түүхийн бэлтгэл (шийдвэр гарсан, 11-17; [[story]] Approved)
+DOC docs/plan/BOARD.md:111-120 ## Карт — UI шинэчлэл (шийдвэр гарсан, 11-17; загвар: Design canvas «UI загвар 3», самбар 17…
+DOC docs/plan/BOARD.md:121-130 ## Санал, Давалгаа C+ (⏳ ШИЙДВЭР ХҮЛЭЭЖ БАЙНА — ахлах агентад хувиарлахгүй)
+DOC docs/plan/BOARD.md:131-137 ## Түүх ба тэнцвэр (хэрэглэгч, шинэ чат; суурийн дараа)
+DOC docs/plan/BOARD.md:138-140 ## Хэрэглэгчийн ажил (агент хийж чадахгүй)
+DOC docs/plan/BOARD.md:141-142 ## Ахлахын мөчлөг (хурдан)
 FILE docs/plan/LEAD.md 4.5KB 48L
 DOC docs/plan/LEAD.md:12-31 ## A. Тогтвортой (ховор өөрчлөгдөнө)
 DOC docs/plan/LEAD.md:32-48 ## B. Хувирах төлөв (→ [[BOARD]], [[PROGRESS]])
@@ -2133,7 +2134,7 @@ DOC docs/story-research.md:65-77 ## 5. Нэг өрхийн шат (ахицын 
 DOC docs/story-research.md:78-83 ## 6. Төстэй тоглоомоос
 DOC docs/story-research.md:84-96 ## 7. Зохиолд орох санаа (сонгоно)
 DOC docs/story-research.md:97-116 ## 8. Тэнцвэр: одоогийн `data/*.json` ба бодит үнэ
-FILE docs/story.md 39.4KB 299L
+FILE docs/story.md 39.3KB 299L
 DOC docs/story.md:12-18 ## 1. Гол санаа
 DOC docs/story.md:19-39 ## 2. Тогтсон хүрээ (хэрэглэгчийн шийдвэр 2026-11-17)
 DOC docs/story.md:40-51 ## 3. Хуанли

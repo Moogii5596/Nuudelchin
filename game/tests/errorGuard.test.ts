@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { ErrorGuard, describeError, installErrorGuard } from '../src/persist/errorGuard';
 import { buildFeedbackUrl, feedbackEnabled } from '../src/feedback';
 
+const flush = async (): Promise<void> => { for (let i = 0; i < 5; i++) await Promise.resolve(); };
+
 function mk(over: Partial<ConstructorParameters<typeof ErrorGuard>[0]> = {}) {
   let t = 1000;
   const save = vi.fn(async () => {});
@@ -12,16 +14,20 @@ function mk(over: Partial<ConstructorParameters<typeof ErrorGuard>[0]> = {}) {
 }
 
 describe('Алдаа барилт (T-12)', () => {
-  it('нэг мэдэгдэл + хадгалалт, 5 сек дотор давтахгүй, дараа нь дахин', () => {
+  it('нэг мэдэгдэл, 5 сек дотор давтахгүй, дараа нь дахин; хадгалалт session-д нэг л удаа', async () => {
     const { g, save, notify, log, adv } = mk();
     expect(g.handle(new Error('a'))).toBe(true);
     expect(g.handle(new Error('b'))).toBe(false);
     adv(4000);
     expect(g.handle('c')).toBe(false);
+    await flush();
     adv(1500);
     expect(g.handle('d')).toBe(true);
-    expect(save).toHaveBeenCalledTimes(2);
+    await flush();
+    // Давтагдах алдаа (эвдэрсэн төлөв) сайн хадгалалтыг дарж бичихгүй
+    expect(save).toHaveBeenCalledTimes(1);
     expect(notify).toHaveBeenCalledTimes(2);
+    expect(notify.mock.calls).toEqual([[true], [true]]);
     expect(log).toHaveBeenCalledTimes(4);   // алдаа бүр console-д
     expect(g.caught).toBe(4);
   });
@@ -35,6 +41,14 @@ describe('Алдаа барилт (T-12)', () => {
     await Promise.resolve();
     expect(r.log.mock.calls.some((c) => String(c[0]).includes('save'))).toBe(true);
     expect(log).toHaveBeenCalled();
+  });
+
+  it('хадгалалт бүтэлгүйтвэл мэдэгдэл «хадгалсангүй» гэнэ (худал «хадгаллаа» биш)', async () => {
+    const { g, notify } = mk({ save: () => Promise.reject(new Error('quota')) });
+    g.handle('x');
+    expect(notify).not.toHaveBeenCalled();   // хадгалалт дуусахыг хүлээнэ
+    await flush();
+    expect(notify).toHaveBeenCalledWith(false);
   });
 
   it('describeError: Error-ийн stack, string, объект', () => {

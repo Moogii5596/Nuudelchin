@@ -88,8 +88,14 @@ interface Boot {
 /** T-12: алдаа барилт. Тоглоом эхэлмэгц start() ctx-ийг бөглөнө; тэр хүртэл хадгалах зүйлгүй */
 const guardCtx: { autosave: Autosave | null; state: GameState | null } = { autosave: null, state: null };
 const errGuard = new ErrorGuard({
-  save: () => guardCtx.autosave?.saveNow('hidden'),
-  notify: () => showErrorBanner(!!guardCtx.autosave, guardCtx.state ? () => { void downloadFile(guardCtx.state!); } : null),
+  save: async () => {
+    const a = guardCtx.autosave;
+    if (!a) throw new Error('no autosave yet');
+    const f = a.failures;
+    await a.saveNow('hidden'); // алдааг залгидаг → failures-аар шалгана
+    if (a.failures > f) throw new Error('autosave failed');
+  },
+  notify: (saved) => showErrorBanner(saved, guardCtx.state ? () => { void downloadFile(guardCtx.state!); } : null),
 });
 installErrorGuard(errGuard, window);
 

@@ -18,7 +18,8 @@ interface Snap {
 
 const sumIncome = (s: GameState): number => {
   let t = 0;
-  for (const v of Object.values(s.today.income)) t += v ?? 0;
+  // Зээл, түрээс борлуулалт биш — «sale» дуу гаргахгүй
+  for (const [k, v] of Object.entries(s.today.income)) if (k !== 'loan' && k !== 'rent') t += v ?? 0;
   return t;
 };
 
